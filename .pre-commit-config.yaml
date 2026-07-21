@@ -1,4 +1,5 @@
-# Frontend Jinja templates use .html paths; djlint profile=jinja via pyproject.toml.
+# ShipGate dogfood: apply formatters, then check the pre-commit suite.
+# djlint is outside the catalog (Jinja templates only).
 repos:
   - repo: local
     hooks:
@@ -7,11 +8,47 @@ repos:
         entry: uv run djlint --reformat
         language: system
         files: ^src/shipgate/frontend/templates/.*\.html$
+
   - repo: local
     hooks:
-      - id: check-commit
-        name: make check-commit
-        entry: make check-commit
+      - id: shipgate-sync
+        name: uv sync dev dependencies
+        entry: uv sync --group dev
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: shipgate-install
+        name: shipgate install (pre-commit suite)
+        entry: uv run shipgate install --suite pre-commit
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: shipgate-apply-ruff-format
+        name: shipgate apply — ruff format
+        entry: uv run shipgate format --target .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: shipgate-apply-mdformat
+        name: shipgate apply — mdformat
+        entry: uv run shipgate format --check mdformat.apply --target .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: shipgate-apply-shfmt
+        name: shipgate apply — shfmt
+        entry: uv run shipgate format --check shfmt.apply --target .
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: shipgate-check
+        name: shipgate check — pre-commit suite
+        entry: uv run shipgate check --suite pre-commit --target .
         language: system
         pass_filenames: false
         always_run: true

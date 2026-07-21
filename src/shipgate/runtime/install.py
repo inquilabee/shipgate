@@ -5,14 +5,17 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import Catalog, InstallDefinition
 from shipgate.errors import InstallError
 from shipgate.paths import managed_python_env, tools_dir
 from shipgate.planning.suites import expand_suite
 from shipgate.runtime.environment import tools_manifest_path
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.domain.catalog import Catalog, InstallDefinition
 
 MANIFEST_SCHEMA = "shipgate.install.v1"
 

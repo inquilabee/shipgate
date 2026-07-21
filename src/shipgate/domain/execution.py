@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import ToolDefinition
-from shipgate.domain.modes import RunMode
-from shipgate.domain.options import NormalizedOptions
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from pathlib import Path
+
+    from shipgate.domain.catalog import ToolDefinition
+    from shipgate.domain.modes import RunMode
+    from shipgate.domain.options import NormalizedOptions
 
 
 @dataclass(frozen=True)

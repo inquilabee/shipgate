@@ -44,21 +44,21 @@ Replace the weak part: tool behavior must not live as hardcoded runtime branches
 Build in this order:
 
 1. Package skeleton and CLI shell
-2. Domain models
-3. Project config parser
-4. Catalog model and bundled catalog loader
-5. Workflow and suite resolver
-6. Execution Request and Resolved Request planner
-7. CLI adapter
-8. Executor
-9. Canonical report schema
-10. Normalizers
-11. Formatters
-12. Managed installs
-13. First bundled suite
-14. CI integration behavior
-15. Local gate support
-16. SonarQube-inspired report frontend only after the CLI/report model is stable
+1. Domain models
+1. Project config parser
+1. Catalog model and bundled catalog loader
+1. Workflow and suite resolver
+1. Execution Request and Resolved Request planner
+1. CLI adapter
+1. Executor
+1. Canonical report schema
+1. Normalizers
+1. Formatters
+1. Managed installs
+1. First bundled suite
+1. CI integration behavior
+1. Local gate support
+1. SonarQube-inspired report frontend only after the CLI/report model is stable
 
 Do not start with the report frontend, custom plugin API, parallel execution, or remote runners. Those depend on contracts that need to harden first.
 
@@ -251,8 +251,8 @@ Quiet success means no stdout and no stderr unless `--verbose` is set.
 On failure:
 
 1. write canonical JSON to `reports/failures/<run-id>/report.json`
-2. render the selected `error-format` to stderr
-3. exit `1`
+1. render the selected `error-format` to stderr
+1. exit `1`
 
 If ShipGate itself fails before a tool runs, print a short diagnostic to stderr and exit with the right non-`1` code.
 
@@ -520,9 +520,9 @@ Responsibilities:
 Search order:
 
 1. `--config`
-2. `shipgate.yaml`
-3. `.shipgate.yaml`
-4. no file, use defaults
+1. `shipgate.yaml`
+1. `.shipgate.yaml`
+1. no file, use defaults
 
 No config file should still work.
 
@@ -773,8 +773,8 @@ First implementation:
 Do not implement a full gitignore engine by hand. Use one of these approaches:
 
 1. call `git check-ignore` when inside a git repo
-2. use a small dependency later if the repo needs full matching
-3. initially pass target paths to tools that already respect `.gitignore`
+1. use a small dependency later if the repo needs full matching
+1. initially pass target paths to tools that already respect `.gitignore`
 
 For the first ruff path, prefer passing the project target and let ruff handle file discovery. Scope Resolver still records the policy.
 
@@ -798,10 +798,10 @@ Build `ExecutionRequest` from CLI/API input, then produce `ResolvedRequest`.
 Resolution order:
 
 1. direct CLI/API values
-2. project config
-3. environment
-4. ShipGate defaults
-5. tool defaults
+1. project config
+1. environment
+1. ShipGate defaults
+1. tool defaults
 
 The planner must produce an explanation for conflicts:
 
@@ -860,11 +860,11 @@ Output:
 Algorithm:
 
 1. start with executable
-2. append subcommand
-3. append config args
-4. append normalized option args in catalog-defined order
-5. append extra args
-6. append positional paths
+1. append subcommand
+1. append config args
+1. append normalized option args in catalog-defined order
+1. append extra args
+1. append positional paths
 
 Catalog order matters. Do not rely on dict order from user config for command stability.
 
@@ -1146,18 +1146,18 @@ The CLI should do orchestration only.
 Flow for `shipgate check`:
 
 1. parse args
-2. load project config
-3. load bundled catalog
-4. build Execution Request
-5. resolve workflow and suites
-6. build Resolved Requests
-7. build argv for each request
-8. execute each request
-9. normalize each result
-10. aggregate RunReport
-11. write report if failed
-12. render selected formatter if failed or verbose
-13. exit with mapped code
+1. load project config
+1. load bundled catalog
+1. build Execution Request
+1. resolve workflow and suites
+1. build Resolved Requests
+1. build argv for each request
+1. execute each request
+1. normalize each result
+1. aggregate RunReport
+1. write report if failed
+1. render selected formatter if failed or verbose
+1. exit with mapped code
 
 The CLI should not:
 
@@ -1447,27 +1447,27 @@ Tests:
 Add tools one by one:
 
 1. `ty.check`
-2. `bandit.scan`
-3. `codespell.check`
-4. `gitleaks.scan`
-5. `semgrep.scan`
-6. `deadcode.check`
-7. `vulture.check`
-8. `radon.cc`
-9. `radon.mi`
-10. `pytest.run`
-11. `pydeps.graph`
-12. `markdownlint.check`
-13. `mdformat.apply`
-14. `yamllint.check`
-15. `yamlfmt.apply`
-16. `shellcheck.check`
-17. `shfmt.apply`
-18. `hadolint.check`
-19. `jscpd.check`
-20. `mutmut.run`
-21. `sourcery.review`
-22. `gate.script`
+1. `bandit.scan`
+1. `codespell.check`
+1. `gitleaks.scan`
+1. `semgrep.scan`
+1. `deadcode.check`
+1. `vulture.check`
+1. `radon.cc`
+1. `radon.mi`
+1. `pytest.run`
+1. `pydeps.graph`
+1. `markdownlint.check`
+1. `mdformat.apply`
+1. `yamllint.check`
+1. `yamlfmt.apply`
+1. `shellcheck.check`
+1. `shfmt.apply`
+1. `hadolint.check`
+1. `jscpd.check`
+1. `mutmut.run`
+1. `sourcery.review`
+1. `gate.script`
 
 Each tool requires:
 
@@ -1496,10 +1496,10 @@ Files:
 Steps:
 
 1. Write import test.
-2. Add package files.
-3. Add CLI returning help text.
-4. Run `pytest`.
-5. Run `python -m shipgate --help`.
+1. Add package files.
+1. Add CLI returning help text.
+1. Run `pytest`.
+1. Run `python -m shipgate --help`.
 
 Success:
 

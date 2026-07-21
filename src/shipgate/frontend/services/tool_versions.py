@@ -5,11 +5,15 @@ from __future__ import annotations
 import re
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import Catalog, ToolDefinition
 from shipgate.paths import managed_python_env
 from shipgate.runtime.environment import resolve_executable, system_environment
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.domain.catalog import Catalog, ToolDefinition
 
 VERSION_ATTEMPTS = ("--version", "-version", "-V", "version")
 TIMEOUT_S = 3.0

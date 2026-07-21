@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import asdict, dataclass, field
-from typing import Any
+from dataclasses import asdict, dataclass, field, is_dataclass
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 SCHEMA_VERSION = "shipgate.report.v1"
 
@@ -147,6 +149,9 @@ class RunReport:
 
 
 def to_dict(obj: object) -> dict[str, Any]:
-    if hasattr(obj, "to_dict"):
-        return obj.to_dict()  # type: ignore[union-attr]
-    return asdict(obj)  # type: ignore[arg-type]
+    to_dict_method = getattr(obj, "to_dict", None)
+    if callable(to_dict_method):
+        return to_dict_method()
+    if is_dataclass(obj) and not isinstance(obj, type):
+        return asdict(obj)
+    raise TypeError(f"cannot serialize {type(obj)!r}")

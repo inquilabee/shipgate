@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.domain.reports import RunReport
 from shipgate.paths import reports_root
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class ReportStore:

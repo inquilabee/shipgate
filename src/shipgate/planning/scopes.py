@@ -4,7 +4,6 @@ from pathlib import Path
 
 from shipgate.domain.project import ProjectConfig, Scope
 
-
 DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "reports/", "__pycache__/")
 
 

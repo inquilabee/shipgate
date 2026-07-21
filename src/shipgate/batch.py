@@ -34,7 +34,7 @@ def load_batch_file(path: Path) -> list[BatchRequest]:
     for item in items:
         options = item.get("options", {}) or {}
         paths = options.get("paths", ["."])
-        target = Path(paths[0]) if paths else Path(".")
+        target = Path(paths[0]) if paths else Path()
         requests.append(
             BatchRequest(
                 runnable=str(item["runnable"]),

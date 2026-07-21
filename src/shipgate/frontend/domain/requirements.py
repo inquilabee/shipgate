@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.paths import server_dir
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def requirements_path(primary: Path) -> Path:

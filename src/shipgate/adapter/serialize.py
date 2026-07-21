@@ -21,6 +21,10 @@ def serialize_option(
     if not definition.flag:
         return []
     if style == "scalar":
+        if isinstance(value, (list, tuple)):
+            if not value:
+                return []
+            value = value[0]
         return [definition.flag, str(value)]
     if style == "repeated":
         values = value if isinstance(value, (list, tuple)) else (value,)

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import Catalog
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.domain.catalog import Catalog
 
 
 def discover_gates(project_root: Path) -> list[Path]:

@@ -5,10 +5,14 @@ from __future__ import annotations
 import json
 import secrets
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.reports import RunReport
 from shipgate.paths import failure_report_dir, raw_reports_dir
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.domain.reports import RunReport
 
 
 def generate_run_id() -> str:

@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from shipgate.frontend.domain.models import (
-    FindingCategory,
-    FindingRecord,
-    RunRecord,
-    RunStatus,
-    RunSummaryRecord,
-)
+if TYPE_CHECKING:
+    from shipgate.frontend.domain.models import (
+        FindingCategory,
+        FindingRecord,
+        RunRecord,
+        RunStatus,
+        RunSummaryRecord,
+    )
 
 MAX_RUNS = 50
 

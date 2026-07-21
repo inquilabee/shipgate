@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.errors import InstallError
 from shipgate.paths import managed_python_env, tools_dir
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def system_environment() -> ExecutionEnvironment:

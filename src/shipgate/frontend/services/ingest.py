@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import uuid
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.reports import CheckReport, Finding, RunReport
 from shipgate.frontend.domain.models import FindingCategory, FindingRecord, RunSummaryRecord
-from shipgate.frontend.storage.base import Storage
 from shipgate.paths import normalize_finding_path
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.domain.reports import CheckReport, Finding, RunReport
+    from shipgate.frontend.storage.base import Storage
 
 TOOL_RULE_IDS = frozenset({"exit_code", "TOOL_EXIT", "setup", "parser_error"})
 TOOL_MESSAGE_MARKERS = (

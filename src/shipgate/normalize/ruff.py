@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 
-from shipgate.domain.execution import ResolvedRequest
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
-from shipgate.runtime.executor import ProcessResult
+
+if TYPE_CHECKING:
+    from shipgate.domain.execution import ResolvedRequest
+    from shipgate.runtime.executor import ProcessResult
 
 
 class RuffNormalizer:

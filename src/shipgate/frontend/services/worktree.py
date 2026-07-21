@@ -52,7 +52,8 @@ class WorktreeManager:
             checked_out = self._checked_out_branch(target)
             if checked_out != branch:
                 raise WorktreeError(
-                    f"worktree branch mismatch at {target}: expected {branch!r}, found {checked_out!r}"
+                    "worktree branch mismatch at "
+                    f"{target}: expected {branch!r}, found {checked_out!r}"
                 )
             return target
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 from shipgate.gates.catalog import discover_gates, merge_gate_catalog
 from shipgate.gates.init import init_gate
 

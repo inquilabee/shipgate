@@ -5,10 +5,9 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
-from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.frontend.domain.models import (
     FindingCategory,
@@ -19,6 +18,10 @@ from shipgate.frontend.domain.models import (
 )
 from shipgate.frontend.storage.base import MAX_RUNS
 from shipgate.paths import normalize_finding_path
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
 
 COMPLETED_STATUSES = (
     RunStatus.SUCCEEDED.value,

@@ -3,18 +3,14 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from shipgate.adapter.argv import build_argv
 from shipgate.adapter.config_resolve import resolve_config_paths
 from shipgate.baseline import load_baseline, save_baseline
 from shipgate.catalog.loader import load_catalog
 from shipgate.config.loader import load_config
-from shipgate.domain.catalog import Catalog
-from shipgate.domain.execution import ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import SCHEMA_VERSION, CheckReport, RunReport
@@ -29,6 +25,13 @@ from shipgate.runtime.executor import Executor, ProcessResult
 from shipgate.runtime.install import install_suite
 from shipgate.runtime.lockfile import write_lockfile
 from shipgate.runtime.reports import generate_run_id, write_raw_output, write_run_report
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from shipgate.domain.catalog import Catalog
+    from shipgate.domain.execution import ResolvedRequest
 
 
 @dataclass(frozen=True)
@@ -152,24 +155,21 @@ class ShipGateApp:
             quiet=command.quiet,
             check=mode == RunMode.CHECK if mode == RunMode.APPLY else None,
         )
-        config_paths = ()
         check_reports: list[CheckReport] = []
         run_id = run_id or generate_run_id()
         checks_total = len(tool_ids)
-        checks_completed = 0
 
-        for tool_id in tool_ids:
+        for index, tool_id in enumerate(tool_ids):
             if on_progress is not None:
                 on_progress(
                     RunProgress(
                         current_check_id=tool_id,
-                        checks_completed=checks_completed,
+                        checks_completed=index,
                         checks_total=checks_total,
                     )
                 )
             tool = self.catalog.get_tool(tool_id)
-            if not config_paths:
-                config_paths = resolve_config_paths(tool, project, project_root)
+            config_paths = resolve_config_paths(tool, project, project_root)
             tool_options = NormalizedOptions(
                 paths=paths,
                 config=config_paths,
@@ -202,12 +202,11 @@ class ShipGateApp:
             )
             check_report = self._execute_check(resolved, run_id)
             check_reports.append(check_report)
-            checks_completed += 1
             if on_progress is not None:
                 on_progress(
                     RunProgress(
                         current_check_id=tool_id,
-                        checks_completed=checks_completed,
+                        checks_completed=index + 1,
                         checks_total=checks_total,
                     )
                 )
@@ -385,10 +384,7 @@ class ShipGateApp:
                 target=req.target,
                 extra_args=req.extra_args,
             )
-            if req.mode == RunMode.APPLY:
-                code = self.format(cmd)
-            else:
-                code = self.check(cmd)
+            code = self.format(cmd) if req.mode == RunMode.APPLY else self.check(cmd)
             worst = max(worst, code)
         return worst
 

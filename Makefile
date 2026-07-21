@@ -13,9 +13,12 @@ ruff:
 	uv run ruff check src tests --fix
 
 check-commit:
-	uv run shipgate install
-	@for t in $(TARGETS); do uv run shipgate format --target $$t; done
-	@for t in $(TARGETS); do uv run shipgate check --suite pre-commit --target $$t; done
+	uv sync --group dev
+	uv run shipgate install --suite pre-commit
+	uv run shipgate format --target .
+	uv run shipgate format --check mdformat.apply --target .
+	uv run shipgate format --check shfmt.apply --target .
+	uv run shipgate check --suite pre-commit --target .
 
 install-hooks:
 	uv run pre-commit install

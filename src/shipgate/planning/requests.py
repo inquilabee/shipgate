@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ExecutionRequest, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.errors import PlanningError
 from shipgate.planning.defaults import apply_defaults
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.domain.catalog import ToolDefinition
 
 
 def build_execution_request(

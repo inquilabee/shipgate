@@ -1,3 +1,3 @@
 # ty type checker defaults
 [tool.ty]
-strict = false
+strict = true

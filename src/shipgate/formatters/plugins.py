@@ -5,7 +5,6 @@ from shipgate.formatters.github import GitHubFormatter
 from shipgate.formatters.json import JsonFormatter
 from shipgate.formatters.text import TextFormatter
 
-
 FORMATTERS = {
     "json": JsonFormatter(),
     "compact": CompactFormatter(),

@@ -1,11 +1,9 @@
 import json
 
-
-from shipgate.domain.execution import ResolvedRequest
 from shipgate.domain.catalog import ToolDefinition
+from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.normalize.ruff import RuffNormalizer
 from shipgate.runtime.executor import ProcessResult
 

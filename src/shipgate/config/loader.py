@@ -98,10 +98,23 @@ def _parse_scopes(raw: object, path: Path) -> dict[str, Scope] | None:
     for name, value in raw.items():
         if not isinstance(value, dict):
             raise ConfigError(f"scope {name!r} must be a mapping", path=str(path))
-        include = tuple(str(i) for i in value.get("include", []) or [])
-        exclude = tuple(str(e) for e in value.get("exclude", []) or [])
+        include_raw = value.get("include", [])
+        if include_raw is None:
+            include_raw = []
+        if not isinstance(include_raw, list):
+            raise ConfigError(f"scope {name!r} include must be a list", path=str(path))
+        exclude_raw = value.get("exclude", [])
+        if exclude_raw is None:
+            exclude_raw = []
+        if not isinstance(exclude_raw, list):
+            raise ConfigError(f"scope {name!r} exclude must be a list", path=str(path))
+        target_raw = value.get("target", ".")
+        if not isinstance(target_raw, (str, Path)):
+            raise ConfigError(f"scope {name!r} target must be a string", path=str(path))
+        include = tuple(str(i) for i in include_raw)
+        exclude = tuple(str(e) for e in exclude_raw)
         scopes[str(name)] = Scope(
-            target=Path(value.get("target", ".")),
+            target=Path(target_raw),
             include=include,
             exclude=exclude,
             respect_gitignore=bool(value.get("respect-gitignore", True)),

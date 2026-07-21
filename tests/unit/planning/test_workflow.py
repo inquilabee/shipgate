@@ -20,7 +20,7 @@ def test_default_selects_standard(catalog):
         catalog=catalog,
     )
     assert suite_id == "standard"
-    assert tools == ["ruff.lint"]
+    assert tools == ["ruff.lint", "ty.check"]
 
 
 def test_suite_override(catalog):
@@ -30,7 +30,7 @@ def test_suite_override(catalog):
         catalog=catalog,
         suite_override="python-quality",
     )
-    assert tools == ["ruff.lint"]
+    assert tools == ["ruff.lint", "ty.check"]
 
 
 def test_check_override(catalog):
@@ -56,7 +56,7 @@ def test_unknown_suite_fails(catalog):
 
 def test_nested_suite_expands(catalog):
     tools = expand_suite("standard", catalog)
-    assert tools == ["ruff.lint"]
+    assert tools == ["ruff.lint", "ty.check"]
 
 
 def test_duplicate_leaves_deduped(catalog):

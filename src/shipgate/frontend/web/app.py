@@ -538,12 +538,13 @@ def _safe_branches(worktrees: WorktreeManager) -> list[str]:
 
 
 def _default_suite(catalog, primary: Path) -> str:
+    project = None
     try:
         project = load_config(project_root=primary)
-        if project.suite in catalog.suites:
-            return project.suite
     except Exception:
-        pass
+        project = None
+    if project is not None and project.suite is not None and project.suite in catalog.suites:
+        return project.suite
     if "standard" in catalog.suites:
         return "standard"
     return next(iter(sorted(catalog.suites.keys())), "")

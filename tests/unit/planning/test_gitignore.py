@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 from shipgate.planning.gitignore import expand_scope, should_ignore
 
 

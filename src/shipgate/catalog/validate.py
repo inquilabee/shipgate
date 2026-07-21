@@ -4,11 +4,14 @@ from __future__ import annotations
 
 from importlib import resources
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import Catalog, ToolDefinition
-from shipgate.domain.modes import RunMode
 from shipgate.domain.ids import validate_id
+from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
+
+if TYPE_CHECKING:
+    from shipgate.domain.catalog import Catalog, ToolDefinition
 
 VALID_CLI_STYLES = frozenset({"positional", "scalar", "repeated", "joined", "boolean"})
 VALID_NORMALIZERS = frozenset(

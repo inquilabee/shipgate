@@ -1,0 +1,4 @@
+title = "ShipGate bundled gitleaks policy"
+
+[extend]
+useDefault = true

@@ -1,7 +1,7 @@
 # ShipGate software design document
 
-**Version:** 1.0  
-**Status:** Draft  
+**Version:** 1.0\
+**Status:** Draft\
 **Audience:** framework maintainers, catalog authors, plugin developers
 
 **Implementation guide:** `docs/implementation.md`
@@ -442,10 +442,10 @@ The planner produces a Resolved Request by applying defaults and configuration s
 Precedence order:
 
 1. CLI or direct API request
-2. Project configuration
-3. Environment
-4. ShipGate defaults
-5. Tool defaults
+1. Project configuration
+1. Environment
+1. ShipGate defaults
+1. Tool defaults
 
 Every resolved option should retain its source. That makes diagnostics clearer and prevents silent surprises.
 
@@ -747,9 +747,9 @@ The design still needs exact rules for:
 Supporting a new tool should usually require:
 
 1. Tool Definition
-2. Bundled configuration
-3. Output Normalizer
-4. Optional installer metadata
+1. Bundled configuration
+1. Output Normalizer
+1. Optional installer metadata
 
 The execution engine, planner, adapter, executor, and formatters should not need tool-specific branches.
 

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 @dataclass(frozen=True)
@@ -19,7 +22,7 @@ class Scope:
 class ProjectConfig:
     suite: str | None = "standard"
     env: str = "managed"
-    target: Path = Path(".")
+    target: Path = Path()
     error_format: str = "json"
     config_mode: str = "auto"
     checks: tuple[str, ...] = ()

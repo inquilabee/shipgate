@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
 from shipgate.errors import CatalogError
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def merge_catalogs(base: Catalog, *extensions: Catalog) -> Catalog:

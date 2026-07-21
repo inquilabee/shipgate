@@ -1,9 +1,9 @@
 """Run modes."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class RunMode(str, Enum):
+class RunMode(StrEnum):
     CHECK = "check"
     APPLY = "apply"
     INSTALL = "install"

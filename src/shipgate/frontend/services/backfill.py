@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import contextlib
 from datetime import UTC, datetime
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.frontend.domain.models import RunStatus
 from shipgate.frontend.services.ingest import ingest_run_report
 from shipgate.frontend.services.worktree import current_branch
-from shipgate.frontend.storage.sqlite import SqliteStorage
 from shipgate.runtime.report_store import ReportStore
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from shipgate.frontend.storage.sqlite import SqliteStorage
 
 
 def backfill_from_report_store(project_root: Path, storage: SqliteStorage) -> int:
@@ -28,10 +33,8 @@ def backfill_from_report_store(project_root: Path, storage: SqliteStorage) -> in
         timestamp = entry.get("timestamp")
         started_at = datetime.now(UTC)
         if timestamp:
-            try:
+            with contextlib.suppress(ValueError):
                 started_at = datetime.fromisoformat(str(timestamp))
-            except ValueError:
-                pass
         status = RunStatus.SUCCEEDED if report.status == "passed" else RunStatus.FAILED
         storage.create_run(branch=branch, suite_id=suite_id, run_id=run_id)
         summary = ingest_run_report(storage, run_id, report, project_root)

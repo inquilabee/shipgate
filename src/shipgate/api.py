@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.app import InstallCommand, RunCommand, ShipGateApp
 from shipgate.catalog.loader import load_catalog as _load_catalog
 from shipgate.config.loader import load_config as _load_config
-from shipgate.domain.catalog import Catalog
-from shipgate.domain.project import ProjectConfig
+
+if TYPE_CHECKING:
+    from shipgate.domain.catalog import Catalog
+    from shipgate.domain.project import ProjectConfig
 
 
 def load_config(

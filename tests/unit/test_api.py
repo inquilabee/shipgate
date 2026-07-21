@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 from shipgate import __version__, load_catalog
 from shipgate.app import RunCommand, ShipGateApp
 from shipgate.runtime.executor import Executor, ProcessResult

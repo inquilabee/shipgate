@@ -10,7 +10,7 @@ def test_missing_config_returns_defaults(tmp_path):
     config = load_config(project_root=tmp_path)
     assert config.suite == "standard"
     assert config.env == "managed"
-    assert config.target == Path(".")
+    assert config.target == Path()
 
 
 def test_minimal_config_parses(tmp_path):

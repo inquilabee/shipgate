@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from shipgate.domain.reports import Finding, RunReport
-from shipgate.frontend.domain.models import FindingRecord
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from shipgate.domain.reports import Finding, RunReport
+    from shipgate.frontend.domain.models import FindingRecord
 
 
 def finding_fingerprint(

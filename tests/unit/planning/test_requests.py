@@ -1,9 +1,9 @@
 import pytest
 
+from shipgate.catalog.loader import load_catalog
+from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.domain.execution import ExecutionEnvironment
-from shipgate.catalog.loader import load_catalog
 from shipgate.errors import PlanningError
 from shipgate.planning.requests import build_execution_request, resolve_request
 

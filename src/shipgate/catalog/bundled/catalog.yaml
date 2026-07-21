@@ -140,7 +140,15 @@ tools:
       paths:
         flag: --source
         style: scalar
-    option_order: [paths]
+      config:
+        flag: --config
+        style: scalar
+    configuration:
+      bundled: configs/gitleaks.toml
+      discover: [".gitleaks.toml", "gitleaks.toml"]
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, paths]
 
   semgrep.scan:
     executable: semgrep
@@ -155,11 +163,19 @@ tools:
     cli:
       paths:
         style: positional
-    option_order: [paths]
+      config:
+        flag: --config
+        style: repeated
+    configuration:
+      bundled: configs/semgrep.yaml
+      discover: [".semgrep.yml", ".semgrep.yaml", "semgrep.yaml", "semgrep.yml"]
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, paths]
 
   deadcode.check:
     executable: deadcode
-    subcommand: []
+    subcommand: ["--confidence", "80"]
     modes: ["check"]
     capabilities: ["Quality"]
     normalizer: generic_exit
@@ -174,7 +190,7 @@ tools:
 
   vulture.check:
     executable: vulture
-    subcommand: []
+    subcommand: ["--min-confidence", "80"]
     modes: ["check"]
     capabilities: ["Quality"]
     normalizer: vulture
@@ -261,7 +277,15 @@ tools:
     cli:
       paths:
         style: positional
-    option_order: [paths]
+      config:
+        flag: --config
+        style: scalar
+    configuration:
+      bundled: configs/markdownlint.json
+      discover: [".markdownlint.json", ".markdownlint.yaml", ".markdownlint.yml"]
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, paths]
 
   mdformat.apply:
     executable: mdformat
@@ -294,7 +318,15 @@ tools:
     cli:
       paths:
         style: positional
-    option_order: [paths]
+      config:
+        flag: --config-file
+        style: scalar
+    configuration:
+      bundled: configs/yamllint.yaml
+      discover: [".yamllint", ".yamllint.yaml", ".yamllint.yml", "yamllint.yaml", "yamllint.yml"]
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, paths]
 
   yamlfmt.apply:
     executable: yamlfmt
@@ -421,7 +453,7 @@ tools:
 
 suites:
   python-quality:
-    members: [ruff.lint]
+    members: [ruff.lint, ty.check]
     parallel: false
     fail_fast: false
 

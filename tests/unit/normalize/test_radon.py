@@ -19,7 +19,7 @@ def _resolved(tmp_path: Path, tool_id: str, subcommand: tuple[str, ...]) -> Reso
         runnable=tool_id,
         tool=tool,
         mode=RunMode.CHECK,
-        options=NormalizedOptions(paths=(".",)),
+        options=NormalizedOptions(paths=(tmp_path,)),
         option_sources={},
         extra_args=(),
         project_root=tmp_path,
