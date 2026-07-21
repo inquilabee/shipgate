@@ -1,0 +1,43 @@
+from shipgate.adapter.argv import build_argv
+from shipgate.catalog.loader import load_catalog
+from shipgate.domain.execution import ExecutionEnvironment
+from shipgate.domain.modes import RunMode
+from shipgate.domain.options import NormalizedOptions
+from shipgate.planning.requests import build_execution_request, resolve_request
+
+
+def test_ruff_lint_argv(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("ruff.lint")
+    request = build_execution_request(
+        runnable="ruff.lint",
+        mode=RunMode.CHECK,
+        project_root=tmp_path,
+        options=NormalizedOptions(
+            paths=(tmp_path / "src",),
+            format="json",
+            output=tmp_path / "out.json",
+        ),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert argv[0] == "ruff"
+    assert "check" in argv
+    assert "--output-format" in argv
+    assert str(tmp_path / "src") in argv
+
+
+def test_ruff_format_check_mode(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("ruff.format")
+    request = build_execution_request(
+        runnable="ruff.format",
+        mode=RunMode.CHECK,
+        project_root=tmp_path,
+        options=NormalizedOptions(paths=(tmp_path,), check=True),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert "--check" in argv

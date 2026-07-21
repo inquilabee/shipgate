@@ -1,0 +1,37 @@
+---
+description: Agent workflow, verification, git safety
+alwaysApply: true
+---
+
+# Agent Workflow
+
+Rules for Cursor agents. Entry index: `AGENTS.md`.
+
+## Modes
+
+| Mode | Agent may | Agent must not |
+|------|-----------|----------------|
+| Ask | Read, search, explain | Edit files, implement |
+| Plan | Refine plans, commit lists | Implement code |
+| Agent | Execute agreed plan | Edit without plan agreement |
+
+## Verify before claiming
+
+Read or search the repo before stating how code, APIs, or paths work. Run commands when possible. Never fabricate paths, flags, or test results.
+
+### Pre-edit checklist
+
+1. Search for existing helpers — extend before inventing.
+2. Read `pyproject.toml` for established dependencies.
+3. Confirm paths with glob/read — never assume layout from memory.
+4. Name the architecture layer before implementing (see `architecture.mdc`).
+
+## Merge authorization
+
+Agents **must not** `git commit`, `git push`, or open a PR unless the user explicitly asks in the **current task**.
+
+## Scope
+
+- Keep changes tied to the requested scope.
+- After ~20 file edits: short status update.
+- One plan chunk per session unless user expands scope.

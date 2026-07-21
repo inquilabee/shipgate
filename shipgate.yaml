@@ -1,0 +1,6 @@
+suite: standard
+env: managed
+target: .
+error-format: compact
+configs:
+  mode: auto

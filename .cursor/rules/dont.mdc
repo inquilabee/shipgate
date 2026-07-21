@@ -1,0 +1,14 @@
+---
+description: Codebase hygiene don'ts
+alwaysApply: true
+---
+
+# Don't
+
+- Do not bypass pre-commit hooks (`--no-verify`, `SKIP=...`).
+- Do not embed ticket/issue IDs in source comments — use plain-language rationale.
+- Do not add repo-root `reports/` — use `.shipgate/reports/`.
+- Do not edit bundled catalog for repo-specific paths or thresholds.
+- Do not add broad allowlists to skip structural cleanup.
+- Do not delete dead code by commenting out — delete it.
+- Hook output: pass/fail only; actionable stderr on failure.

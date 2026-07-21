@@ -1,0 +1,16 @@
+tools:
+  org.lint:
+    executable: echo
+    subcommand: ["org-check"]
+    modes: ["check"]
+    capabilities: ["Linting"]
+    normalizer: generic_exit
+    cli: {}
+    configuration: {}
+    option_order: []
+
+suites:
+  org-standard:
+    members: [org.lint]
+    parallel: false
+    fail_fast: false

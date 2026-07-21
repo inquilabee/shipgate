@@ -1,0 +1,17 @@
+# Frontend Jinja templates use .html paths; djlint profile=jinja via pyproject.toml.
+repos:
+  - repo: local
+    hooks:
+      - id: djlint-reformat-templates
+        name: djlint reformat Jinja templates
+        entry: uv run djlint --reformat
+        language: system
+        files: ^src/shipgate/frontend/templates/.*\.html$
+  - repo: local
+    hooks:
+      - id: check-commit
+        name: make check-commit
+        entry: make check-commit
+        language: system
+        pass_filenames: false
+        always_run: true

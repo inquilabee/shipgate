@@ -1,0 +1,27 @@
+---
+description: Layer boundaries and red flags for ShipGate
+alwaysApply: true
+---
+
+# Architecture
+
+Before implementing, name the layer:
+
+1. **Policy** — project config, scopes, checks (no subprocess details)
+2. **Planning** — workflows, suites, request resolution
+3. **Adapter** — argv serialization only
+4. **Runtime** — executor, install, environment (no finding parsing)
+5. **Normalize** — tool output → canonical JSON only
+6. **Format** — canonical JSON → human/CI text only
+
+## Red flags (stop and redesign)
+
+- Tool-specific `if tool_id == "ruff"` in planner, adapter, executor, or formatters
+- CLI building argv directly
+- Normalizer reading project config
+- God file >250 lines without split plan
+- Loose `dict[str, Any]` crossing layer boundaries
+
+## Extension path
+
+Tool Definition + bundled config + normalizer — not runtime branches.

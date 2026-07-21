@@ -1,0 +1,514 @@
+tools:
+  ruff.lint:
+    executable: ruff
+    subcommand: ["check"]
+    modes: ["check"]
+    capabilities: ["Linting", "Quality"]
+    normalizer: ruff
+    install:
+      manager: python
+      package: ruff
+      version: ">=0.6"
+    cli:
+      paths:
+        style: positional
+      config:
+        flag: --config
+        style: repeated
+      exclude:
+        flag: --exclude
+        style: repeated
+      output:
+        flag: --output-file
+        style: scalar
+      format:
+        flag: --output-format
+        style: scalar
+    configuration:
+      bundled: configs/ruff.toml
+      discover: [".ruff.toml", "ruff.toml", "pyproject.toml"]
+      pyproject_section: tool.ruff
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, exclude, format, output, paths]
+
+  ruff.format:
+    executable: ruff
+    subcommand: ["format"]
+    modes: ["apply", "check"]
+    capabilities: ["Formatting"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: ruff
+      version: ">=0.6"
+    cli:
+      paths:
+        style: positional
+      config:
+        flag: --config
+        style: repeated
+      check:
+        flag: --check
+        style: boolean
+    configuration:
+      bundled: configs/ruff.toml
+      discover: [".ruff.toml", "ruff.toml", "pyproject.toml"]
+      pyproject_section: tool.ruff
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, check, paths]
+
+  ty.check:
+    executable: ty
+    subcommand: ["check"]
+    modes: ["check"]
+    capabilities: ["TypeChecking"]
+    normalizer: ty
+    install:
+      manager: python
+      package: ty
+      version: ">=0.0.1"
+    cli:
+      paths:
+        style: positional
+    configuration:
+      bundled: configs/ty.toml
+      discover: ["ty.toml", "pyproject.toml"]
+      pyproject_section: tool.ty
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [paths]
+
+  bandit.scan:
+    executable: bandit
+    subcommand: ["-r"]
+    modes: ["check"]
+    capabilities: ["Security"]
+    normalizer: bandit
+    install:
+      manager: python
+      package: bandit
+      version: ">=1.7"
+    cli:
+      paths:
+        style: positional
+      config:
+        flag: -c
+        style: scalar
+      format:
+        flag: -f
+        style: scalar
+      output:
+        flag: -o
+        style: scalar
+    configuration:
+      bundled: configs/bandit.yaml
+      discover: [".bandit", "bandit.yaml", "pyproject.toml"]
+      pyproject_section: tool.bandit
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, format, output, paths]
+
+  codespell.check:
+    executable: codespell
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Spelling"]
+    normalizer: codespell
+    install:
+      manager: python
+      package: codespell
+      version: ">=2.2"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  gitleaks.scan:
+    executable: gitleaks
+    subcommand: ["detect", "--no-banner"]
+    modes: ["check"]
+    capabilities: ["Security", "Secrets"]
+    normalizer: gitleaks
+    install:
+      manager: binary
+      package: gitleaks
+      version: ">=8.0"
+      binary: gitleaks
+    cli:
+      paths:
+        flag: --source
+        style: scalar
+    option_order: [paths]
+
+  semgrep.scan:
+    executable: semgrep
+    subcommand: ["scan", "--json"]
+    modes: ["check"]
+    capabilities: ["Security", "Quality"]
+    normalizer: semgrep
+    install:
+      manager: python
+      package: semgrep
+      version: ">=1.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  deadcode.check:
+    executable: deadcode
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Quality"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: deadcode
+      version: ">=1.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  vulture.check:
+    executable: vulture
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Quality"]
+    normalizer: vulture
+    install:
+      manager: python
+      package: vulture
+      version: ">=2.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  radon.cc:
+    executable: radon
+    subcommand: ["cc", "-j"]
+    modes: ["check"]
+    capabilities: ["Metrics"]
+    normalizer: radon
+    install:
+      manager: python
+      package: radon
+      version: ">=6.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  radon.mi:
+    executable: radon
+    subcommand: ["mi", "-j"]
+    modes: ["check"]
+    capabilities: ["Metrics"]
+    normalizer: radon
+    install:
+      manager: python
+      package: radon
+      version: ">=6.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  pytest.run:
+    executable: pytest
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Testing"]
+    normalizer: pytest
+    install:
+      manager: python
+      package: pytest
+      version: ">=8.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  pydeps.graph:
+    executable: pydeps
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Dependencies"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: pydeps
+      version: ">=1.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  markdownlint.check:
+    executable: markdownlint
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Documentation"]
+    normalizer: markdownlint
+    install:
+      manager: binary
+      package: markdownlint-cli
+      version: ">=0.37"
+      binary: markdownlint
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  mdformat.apply:
+    executable: mdformat
+    subcommand: []
+    modes: ["apply", "check"]
+    capabilities: ["Documentation", "Formatting"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: mdformat
+      version: ">=0.7"
+    cli:
+      paths:
+        style: positional
+      check:
+        flag: --check
+        style: boolean
+    option_order: [check, paths]
+
+  yamllint.check:
+    executable: yamllint
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Quality"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: yamllint
+      version: ">=1.30"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  yamlfmt.apply:
+    executable: yamlfmt
+    subcommand: []
+    modes: ["apply", "check"]
+    capabilities: ["Formatting"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: yamlfmt
+      version: ">=0.0.1"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  shellcheck.check:
+    executable: shellcheck
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Shell"]
+    normalizer: generic_exit
+    install:
+      manager: binary
+      package: shellcheck
+      version: ">=0.9"
+      binary: shellcheck
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  shfmt.apply:
+    executable: shfmt
+    subcommand: []
+    modes: ["apply", "check"]
+    capabilities: ["Shell", "Formatting"]
+    normalizer: generic_exit
+    install:
+      manager: binary
+      package: shfmt
+      version: ">=3.0"
+      binary: shfmt
+    cli:
+      paths:
+        style: positional
+      check:
+        flag: -d
+        style: boolean
+    option_order: [check, paths]
+
+  hadolint.check:
+    executable: hadolint
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Docker"]
+    normalizer: generic_exit
+    install:
+      manager: binary
+      package: hadolint
+      version: ">=2.0"
+      binary: hadolint
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  jscpd.check:
+    executable: jscpd
+    subcommand: []
+    modes: ["check"]
+    capabilities: ["Quality"]
+    normalizer: generic_exit
+    install:
+      manager: binary
+      package: jscpd
+      version: ">=3.0"
+      binary: jscpd
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  mutmut.run:
+    executable: mutmut
+    subcommand: ["run"]
+    modes: ["check"]
+    capabilities: ["Testing"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: mutmut
+      version: ">=2.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  sourcery.review:
+    executable: sourcery
+    subcommand: ["review"]
+    modes: ["check"]
+    capabilities: ["Quality"]
+    normalizer: generic_exit
+    install:
+      manager: python
+      package: sourcery
+      version: ">=1.0"
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+  gate.script:
+    executable: python
+    subcommand: []
+    modes: ["check", "apply"]
+    capabilities: ["Gates"]
+    normalizer: generic_exit
+    cli:
+      paths:
+        style: positional
+    option_order: [paths]
+
+suites:
+  python-quality:
+    members: [ruff.lint]
+    parallel: false
+    fail_fast: false
+
+  format:
+    members: [ruff.format]
+    parallel: false
+    fail_fast: true
+
+  security:
+    members: [bandit.scan, gitleaks.scan, semgrep.scan]
+    parallel: false
+    fail_fast: false
+
+  extended:
+    members:
+      - ty.check
+      - codespell.check
+      - deadcode.check
+      - vulture.check
+      - radon.cc
+      - markdownlint.check
+      - yamllint.check
+    parallel: false
+    fail_fast: false
+
+  standard:
+    members: [python-quality]
+    parallel: false
+    fail_fast: false
+
+  full:
+    members: [standard, security, extended]
+    parallel: false
+    fail_fast: false
+
+  docs:
+    members: [markdownlint.check, mdformat.apply, yamllint.check]
+    parallel: false
+    fail_fast: false
+
+  shell:
+    members: [shellcheck.check, shfmt.apply]
+    parallel: false
+    fail_fast: false
+
+  docker:
+    members: [hadolint.check]
+    parallel: false
+    fail_fast: false
+
+  ci:
+    members: [standard, security]
+    parallel: false
+    fail_fast: true
+
+  nightly:
+    members: [full, mutmut.run]
+    parallel: false
+    fail_fast: false
+
+  release:
+    members: [full]
+    parallel: false
+    fail_fast: true
+
+  pre-commit:
+    members: [format, python-quality]
+    parallel: false
+    fail_fast: true
+
+workflows:
+  default:
+    - check: [standard]
+  ci:
+    - check: [ci]
+  quality:
+    - check: [python-quality]
+  release:
+    - check: [release]
+  pre-commit:
+    - apply: [format]
+    - check: [python-quality]
+  nightly:
+    - check: [nightly]
+
+capabilities:
+  Linting: [ruff.lint]
+  Formatting: [ruff.format]
+  TypeChecking: [ty.check]
+  Security: [bandit.scan, gitleaks.scan, semgrep.scan]

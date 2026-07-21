@@ -1,0 +1,24 @@
+---
+description: Quality gates and testing policy
+alwaysApply: true
+---
+
+# Quality Gates
+
+Lint and test failures are defects. Fix on the branch; do not bypass hooks.
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `pytest tests/unit -q` | Default deterministic suite |
+| `pytest -m integration` | External tools, network, pip install |
+| `ruff check src tests` | Lint |
+| `ruff format --check src tests` | Format check |
+
+## Rules
+
+- Never use `git commit --no-verify` or `SKIP=...`.
+- Default tests must not require external tool binaries.
+- Run the smallest relevant command after each risky change.
+- Before claiming done, run fresh commands and report actual results.

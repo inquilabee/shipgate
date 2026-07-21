@@ -1,0 +1,37 @@
+---
+description: Python style, typing, ShipGate architecture principles
+alwaysApply: true
+---
+
+# Python
+
+Target **Python 3.11–3.14** (`pyproject.toml`). Stdlib-first; add third-party deps only with justification.
+
+## Style
+
+- Max line length **100** (ruff). Selects: `B`, `E`, `F`, `I`, `UP`.
+- Imports: stdlib → third-party → local. No wildcard imports.
+- Frozen dataclasses for domain objects; `Protocol` for normalizers, formatters, executors.
+- Built-in generics: `list[str]`, `str | None`. **Avoid `Any`** — narrow at boundaries.
+- No module-level `_` on functions, classes, or constants (nested helpers and class methods may use `_`).
+- `from __future__ import annotations` only when forward refs or import-cycle reduction require it.
+
+## Architecture principles
+
+- Clarity over cleverness; single responsibility.
+- Pure logic separate from I/O; side effects at edges.
+- Dependency injection in `app.py`.
+- DRY via shared helpers — not parallel abstractions.
+
+## ShipGate-specific
+
+- **Execution Request** is the internal API — CLI, Python API, and batch files all produce it.
+- Catalog metadata drives argv — no tool-specific branches in planner, adapter, or executor.
+- Normalizers own tool output parsing; formatters consume canonical JSON only.
+- Prefer `argparse` for CLI.
+
+## Testing
+
+- Default suite: `pytest tests/unit` — no external tools.
+- `@pytest.mark.integration` for ruff, pip install, network, browser.
+- Regression test before or alongside every bug fix.

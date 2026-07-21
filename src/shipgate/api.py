@@ -1,0 +1,61 @@
+"""Public Python API."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from shipgate.app import InstallCommand, RunCommand, ShipGateApp
+from shipgate.catalog.loader import load_catalog as _load_catalog
+from shipgate.config.loader import load_config as _load_config
+from shipgate.domain.catalog import Catalog
+from shipgate.domain.project import ProjectConfig
+
+
+def load_config(
+    *,
+    config_path: Path | None = None,
+    project_root: Path | None = None,
+) -> ProjectConfig:
+    return _load_config(config_path=config_path, project_root=project_root)
+
+
+def load_catalog(path: Path | None = None) -> Catalog:
+    return _load_catalog(path)
+
+
+def install(
+    *,
+    project_root: Path | None = None,
+    suite: str | None = None,
+    config_path: Path | None = None,
+) -> int:
+    root = project_root or Path.cwd()
+    app = ShipGateApp()
+    return app.install(InstallCommand(project_root=root, suite=suite, config_path=config_path))
+
+
+def run(
+    *,
+    mode: str = "check",
+    project_root: Path | None = None,
+    suite: str | None = None,
+    check: str | None = None,
+    target: Path | None = None,
+    config_path: Path | None = None,
+    verbose: bool = False,
+    quiet: bool = False,
+) -> int:
+    root = project_root or Path.cwd()
+    app = ShipGateApp()
+    cmd = RunCommand(
+        project_root=root,
+        config_path=config_path,
+        suite=suite,
+        check=check,
+        target=target,
+        verbose=verbose,
+        quiet=quiet,
+    )
+    if mode == "apply" or mode == "format":
+        return app.format(cmd)
+    return app.check(cmd)
