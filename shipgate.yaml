@@ -1,4 +1,4 @@
-suite: standard
+suite: full
 env: system
 target: .
 error-format: compact

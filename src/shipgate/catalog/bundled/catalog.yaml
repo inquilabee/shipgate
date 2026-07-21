@@ -467,7 +467,7 @@ suites:
     fail_fast: false
 
   format:
-    members: [ruff.format]
+    members: [ruff.format, mdformat.apply, shfmt.apply]
     parallel: false
     fail_fast: true
 
@@ -550,6 +550,6 @@ workflows:
 
 capabilities:
   Linting: [ruff.lint]
-  Formatting: [ruff.format]
+  Formatting: [ruff.format, mdformat.apply, shfmt.apply]
   TypeChecking: [ty.check]
   Security: [bandit.scan, gitleaks.scan, semgrep.scan]

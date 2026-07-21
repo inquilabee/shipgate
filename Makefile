@@ -1,5 +1,3 @@
-TARGETS := src tests docs
-
 test:
 	uv run pytest tests/ -q
 
@@ -14,11 +12,9 @@ ruff:
 
 check-commit:
 	uv sync --group dev
-	uv run shipgate install --suite full
+	uv run shipgate install
 	uv run shipgate format --target .
-	uv run shipgate format --check mdformat.apply --target .
-	uv run shipgate format --check shfmt.apply --target .
-	@for t in $(TARGETS); do uv run shipgate check --suite full --target $$t; done
+	uv run shipgate check --target .
 
 install-hooks:
 	uv run pre-commit install

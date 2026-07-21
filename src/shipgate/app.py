@@ -200,7 +200,7 @@ class ShipGateApp:
             tool_ids=tuple(tool_ids),
             environment=environment,
             scope=scope,
-            paths=scope_paths(scope),
+            paths=scope_paths(scope, project_root, mode=mode),
         )
 
     def _run_all_checks(

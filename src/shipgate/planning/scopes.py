@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
+from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
+from shipgate.planning.gitignore import should_ignore
 
 DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "reports/", "__pycache__/")
 
@@ -23,5 +25,58 @@ def resolve_scope(
     return Scope(target=target, exclude=exclude, respect_gitignore=True)
 
 
-def scope_paths(scope: Scope) -> tuple[Path, ...]:
-    return (scope.target,)
+def scope_paths(scope: Scope, project_root: Path, *, mode: RunMode) -> tuple[Path, ...]:
+    if mode == RunMode.APPLY:
+        return (scope.target,)
+    if not scope.respect_gitignore and not scope.include and not scope.exclude:
+        return (scope.target,)
+    paths = _scope_entry_paths(project_root, scope)
+    return tuple(paths) if paths else (scope.target,)
+
+
+def _scope_entry_paths(project_root: Path, scope: Scope) -> list[Path]:
+    target = scope.target.resolve()
+    project_root = project_root.resolve()
+    if target.is_file():
+        return _scope_file_path(project_root, target, scope)
+    if target != project_root:
+        return _scope_directory_path(project_root, target, scope)
+    return _scope_project_root_dirs(project_root, scope)
+
+
+def _scope_file_path(project_root: Path, target: Path, scope: Scope) -> list[Path]:
+    if should_ignore(project_root, target, extra_excludes=scope.exclude):
+        return []
+    if scope.include and not _path_matches_include(project_root, target, scope.include):
+        return []
+    return [target]
+
+
+def _scope_directory_path(project_root: Path, target: Path, scope: Scope) -> list[Path]:
+    if should_ignore(project_root, target, extra_excludes=scope.exclude):
+        return []
+    if scope.include and not _path_matches_include(project_root, target, scope.include):
+        return []
+    return [target]
+
+
+def _scope_project_root_dirs(project_root: Path, scope: Scope) -> list[Path]:
+    entries: list[Path] = []
+    for child in sorted(project_root.iterdir()):
+        if not child.is_dir():
+            continue
+        if should_ignore(project_root, child, extra_excludes=scope.exclude):
+            continue
+        if scope.include and not _path_matches_include(project_root, child, scope.include):
+            continue
+        entries.append(child)
+    return entries
+
+
+def _path_matches_include(project_root: Path, path: Path, include: tuple[str, ...]) -> bool:
+    rel = path.relative_to(project_root).as_posix()
+    if path.is_file():
+        return any(rel.startswith(inc.rstrip("/")) for inc in include)
+    return any(
+        rel.startswith(inc.rstrip("/")) or inc.rstrip("/").startswith(rel) for inc in include
+    )
