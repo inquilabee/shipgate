@@ -76,8 +76,8 @@ class WorktreeManager:
 
     def _checked_out_branch(self, worktree_path: Path) -> str:
         try:
-            result = subprocess.run(
-                ["git", "-C", str(worktree_path), "rev-parse", "--abbrev-ref", "HEAD"],
+            result = subprocess.run(  # noqa: S603
+                ["git", "-C", str(worktree_path), "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
                 check=True,
                 capture_output=True,
                 text=True,
@@ -106,8 +106,8 @@ class WorktreeManager:
 
     def _run_git(self, args: list[str]) -> subprocess.CompletedProcess[str]:
         try:
-            return subprocess.run(
-                ["git", *args],
+            return subprocess.run(  # noqa: S603
+                ["git", *args],  # noqa: S607
                 cwd=self._primary_root,
                 check=True,
                 capture_output=True,
@@ -121,8 +121,8 @@ class WorktreeManager:
 
 def current_branch(project_root: Path) -> str:
     try:
-        result = subprocess.run(
-            ["git", "-C", str(project_root), "rev-parse", "--abbrev-ref", "HEAD"],
+        result = subprocess.run(  # noqa: S603
+            ["git", "-C", str(project_root), "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
             capture_output=True,
             text=True,
             check=False,

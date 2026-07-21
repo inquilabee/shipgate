@@ -45,8 +45,25 @@ def test_radon_cc_allows_rank_a(tmp_path: Path):
     assert report.findings == ()
 
 
-def test_radon_cc_fails_rank_b(tmp_path: Path):
-    payload = '{"src/app.py": [{"type": "function", "name": "bad", "rank": "B", "lineno": 10}]}'
+def test_radon_cc_allows_rank_b(tmp_path: Path):
+    payload = '{"src/app.py": [{"type": "function", "name": "ok", "rank": "B", "lineno": 10}]}'
+    report = RadonNormalizer().normalize(
+        _resolved(tmp_path, "radon.cc", ("cc", "-j")),
+        ProcessResult(
+            argv=(),
+            cwd=tmp_path,
+            exit_code=0,
+            stdout=payload,
+            stderr="",
+            duration_ms=1,
+        ),
+    )
+    assert report.status == "passed"
+    assert report.findings == ()
+
+
+def test_radon_cc_fails_rank_c(tmp_path: Path):
+    payload = '{"src/app.py": [{"type": "function", "name": "bad", "rank": "C", "lineno": 10}]}'
     report = RadonNormalizer().normalize(
         _resolved(tmp_path, "radon.cc", ("cc", "-j")),
         ProcessResult(
@@ -61,10 +78,10 @@ def test_radon_cc_fails_rank_b(tmp_path: Path):
     assert report.status == "failed"
     assert len(report.findings) == 1
     assert report.findings[0].rule_id == "complexity"
-    assert "rank B" in report.findings[0].message
+    assert "rank C" in report.findings[0].message
 
 
-def test_radon_mi_fails_rank_below_a(tmp_path: Path):
+def test_radon_mi_fails_rank_below_b(tmp_path: Path):
     payload = '{"src/app.py": {"rank": "C", "mi": 12.5}}'
     report = RadonNormalizer().normalize(
         _resolved(tmp_path, "radon.mi", ("mi", "-j")),

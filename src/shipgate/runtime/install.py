@@ -37,7 +37,7 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
     venv = managed_python_env(project_root)
     tools_dir(project_root).mkdir(parents=True, exist_ok=True)
     if not venv.exists():
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [sys.executable, "-m", "venv", str(venv)],
             check=True,
             capture_output=True,
@@ -51,7 +51,7 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
         spec = package
         if install_def.version:
             spec = f"{package}{install_def.version}"
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: S603
             [str(pip), "install", spec],
             capture_output=True,
             text=True,

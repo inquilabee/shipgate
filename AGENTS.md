@@ -23,8 +23,17 @@ shipgate check
 shipgate format
 shipgate list suites
 make install-hooks   # pre-commit
-make check-commit    # format + pre-commit suite (dogfood)
+make check-commit    # format + full suite (dogfood)
 ```
+
+## Dogfooding (this repo)
+
+- Use Python **3.13** locally (see `.python-version`). `semgrep` does not run on 3.14 yet; library `requires-python` stays `>=3.11,<3.15`.
+- `make check-commit` and pre-commit run apply formatters, then `shipgate check --suite full`.
+- Binary tools must be on `PATH` for the full suite: `gitleaks`, `markdownlint`, `shfmt`, `yamlfmt` (google/yamlfmt), `shellcheck`.
+- Reports root: `.shipgate/reports/` (not repo-root `reports/`).
+- Bundled catalog under `src/shipgate/catalog/bundled/` is product defaults — do not hardcode repo paths there.
+- Project overrides: `shipgate.yaml`, `.shipgate/gates/`, `.shipgate/configs/`.
 
 ## Architecture layers (one responsibility each)
 
@@ -33,13 +42,6 @@ domain/ → config/ → catalog/ → planning/ → adapter/ → runtime/ → nor
 ```
 
 **Boundary rule:** Does this belong in project policy, catalog metadata, planning, execution, normalization, or formatting? If unclear, stop.
-
-## Dogfooding (this repo)
-
-- ShipGate must run its own `standard` suite against `src/` and `tests/` without broad allowlist hacks.
-- Reports root: `.shipgate/reports/` (not repo-root `reports/`).
-- Bundled catalog under `src/shipgate/catalog/bundled/` is product defaults — do not hardcode repo paths there.
-- Project overrides: `shipgate.yaml`, `.shipgate/gates/`, `.shipgate/configs/`.
 
 ## Agent rules
 

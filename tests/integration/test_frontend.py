@@ -13,10 +13,8 @@ from shipgate.runtime.report_store import ReportStore
 pytest.importorskip("fastapi")
 
 
-def test_frontend_health_and_overview(tmp_path: Path):
-    storage = SqliteStorage(tmp_path / ".shipgate" / "server" / "report.db")
-    run = storage.create_run(branch="main", suite_id="standard", run_id="test-run-001")
-    report = RunReport(
+def _sample_failed_report() -> RunReport:
+    return RunReport(
         run_id="test-run-001",
         suite="standard",
         mode="check",
@@ -39,18 +37,45 @@ def test_frontend_health_and_overview(tmp_path: Path):
             ),
         ),
     )
+
+
+def _seed_frontend_client(tmp_path: Path) -> TestClient:
+    storage = SqliteStorage(tmp_path / ".shipgate" / "server" / "report.db")
+    run = storage.create_run(branch="main", suite_id="standard", run_id="test-run-001")
+    report = _sample_failed_report()
     summary = ingest_run_report(storage, run.id, report, tmp_path)
     storage.update_run(run.id, status=RunStatus.FAILED, finished=True, summary=summary)
     ReportStore(tmp_path).save(report)
+    return TestClient(create_app(tmp_path))
 
-    client = TestClient(create_app(tmp_path))
+
+def test_frontend_health(tmp_path: Path):
+    client = _seed_frontend_client(tmp_path)
     health = client.get("/health")
     assert health.status_code == 200
     assert health.json() == {"ok": True}
 
+
+def test_frontend_overview_pages(tmp_path: Path):
+    client = _seed_frontend_client(tmp_path)
     overview = client.get("/")
     assert overview.status_code == 200
     assert "Overview" in overview.text
+
+    findings_page = client.get("/runs/test-run-001/findings")
+    assert findings_page.status_code == 200
+    assert "unused import" in findings_page.text
+
+    tools = client.get("/tools")
+    assert tools.status_code == 200
+    assert "ruff.lint" in tools.text
+
+    static = client.get("/static/css/app.css")
+    assert static.status_code == 200
+
+
+def test_frontend_api_routes(tmp_path: Path):
+    client = _seed_frontend_client(tmp_path)
 
     runs = client.get("/api/runs")
     assert runs.status_code == 200
@@ -60,10 +85,6 @@ def test_frontend_health_and_overview(tmp_path: Path):
     assert detail.status_code == 200
     assert detail.json()["run_id"] == "test-run-001"
 
-    findings_page = client.get("/runs/test-run-001/findings")
-    assert findings_page.status_code == 200
-    assert "unused import" in findings_page.text
-
     summary_api = client.get("/api/runs/test-run-001/summary")
     assert summary_api.status_code == 200
     assert summary_api.json()["finding_count"] == 1
@@ -71,10 +92,3 @@ def test_frontend_health_and_overview(tmp_path: Path):
     findings_api = client.get("/api/runs/test-run-001/findings")
     assert findings_api.status_code == 200
     assert findings_api.json()["total"] == 1
-
-    tools = client.get("/tools")
-    assert tools.status_code == 200
-    assert "ruff.lint" in tools.text
-
-    static = client.get("/static/css/app.css")
-    assert static.status_code == 200

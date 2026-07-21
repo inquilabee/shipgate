@@ -7,9 +7,3 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "PTH", "TCH", "ASYNC", "
 
 [lint.per-file-ignores]
 "tests/**" = ["S101"]
-"src/shipgate/runtime/executor.py" = ["S603"]
-"src/shipgate/runtime/install.py" = ["S603"]
-"src/shipgate/planning/gitignore.py" = ["S603", "S607"]
-"src/shipgate/frontend/services/worktree.py" = ["S603", "S607"]
-"src/shipgate/frontend/services/tool_versions.py" = ["S603"]
-"src/shipgate/frontend/storage/sqlite.py" = ["S608"]

@@ -27,7 +27,7 @@ def merge_catalogs(base: Catalog, *extensions: Catalog) -> Catalog:
     return Catalog(tools=tools, suites=suites)
 
 
-def load_catalog_pack(path: Path, parse_fn=None) -> Catalog:
+def load_catalog_pack(path: Path) -> Catalog:
     if not path.is_file():
         raise CatalogError(f"catalog pack not found: {path}")
     try:

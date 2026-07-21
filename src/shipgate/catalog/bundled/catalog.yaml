@@ -82,7 +82,7 @@ tools:
 
   bandit.scan:
     executable: bandit
-    subcommand: ["-r"]
+    subcommand: ["-r", "-ll"]
     modes: ["check"]
     capabilities: ["Security"]
     normalizer: bandit
@@ -152,7 +152,15 @@ tools:
 
   semgrep.scan:
     executable: semgrep
-    subcommand: ["scan", "--json"]
+    subcommand:
+      - scan
+      - --json
+      - --config
+      - p/python
+      - --config
+      - p/security-audit
+      - --config
+      - p/secrets
     modes: ["check"]
     capabilities: ["Security", "Quality"]
     normalizer: semgrep
@@ -175,7 +183,7 @@ tools:
 
   deadcode.check:
     executable: deadcode
-    subcommand: ["--confidence", "80"]
+    subcommand: []
     modes: ["check"]
     capabilities: ["Quality"]
     normalizer: generic_exit
@@ -335,9 +343,10 @@ tools:
     capabilities: ["Formatting"]
     normalizer: generic_exit
     install:
-      manager: python
+      manager: binary
       package: yamlfmt
       version: ">=0.0.1"
+      binary: yamlfmt
     cli:
       paths:
         style: positional

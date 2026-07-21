@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
     from shipgate.domain.catalog import Catalog
     from shipgate.domain.execution import ResolvedRequest
+    from shipgate.domain.project import ProjectConfig, Scope
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,17 @@ class RunProgress:
     current_check_id: str
     checks_completed: int
     checks_total: int
+
+
+@dataclass(frozen=True)
+class _RunContext:
+    project: ProjectConfig
+    project_root: Path
+    suite_id: str
+    tool_ids: tuple[str, ...]
+    environment: object
+    scope: Scope
+    paths: tuple[Path, ...]
 
 
 class ExecutorProtocol(Protocol):
@@ -132,6 +144,41 @@ class ShipGateApp:
         write_reports: bool = True,
         emit_failure_output: bool = True,
     ) -> tuple[int, RunReport]:
+        context = self._prepare_run_context(command, mode)
+        run_id = run_id or generate_run_id()
+        check_reports = self._run_all_checks(
+            command=command,
+            mode=mode,
+            context=context,
+            run_id=run_id,
+            on_progress=on_progress,
+        )
+        report = self._build_run_report(
+            run_id=run_id,
+            suite_id=context.suite_id,
+            mode=mode,
+            check_reports=check_reports,
+        )
+        if report.status == "failed":
+            error_format = command.error_format or context.project.error_format
+            if command.ci:
+                error_format = "github"
+            return self._finalize_failed_run(
+                command,
+                context.project_root,
+                report,
+                error_format,
+                write_reports=write_reports,
+                emit_failure_output=emit_failure_output,
+            )
+        return self._finalize_successful_run(
+            command,
+            context.project_root,
+            report,
+            write_reports=write_reports,
+        )
+
+    def _prepare_run_context(self, command: RunCommand, mode: RunMode):
         project = load_config(
             config_path=command.config_path,
             project_root=command.project_root,
@@ -146,76 +193,63 @@ class ShipGateApp:
         )
         environment = resolve_environment(project_root, project.env)
         scope = resolve_scope(project_root, project, target_override=command.target)
-        paths = scope_paths(scope)
+        return _RunContext(
+            project=project,
+            project_root=project_root,
+            suite_id=suite_id,
+            tool_ids=tuple(tool_ids),
+            environment=environment,
+            scope=scope,
+            paths=scope_paths(scope),
+        )
 
+    def _run_all_checks(
+        self,
+        *,
+        command: RunCommand,
+        mode: RunMode,
+        context: _RunContext,
+        run_id: str,
+        on_progress: Callable[[RunProgress], None] | None,
+    ) -> list[CheckReport]:
         options = NormalizedOptions(
-            paths=paths,
+            paths=context.paths,
             format="json",
             verbose=command.verbose,
             quiet=command.quiet,
             check=mode == RunMode.CHECK if mode == RunMode.APPLY else None,
         )
         check_reports: list[CheckReport] = []
-        run_id = run_id or generate_run_id()
-        checks_total = len(tool_ids)
+        checks_total = len(context.tool_ids)
+        for index, tool_id in enumerate(context.tool_ids):
+            self._emit_progress(on_progress, tool_id, index, checks_total)
+            check_reports.append(
+                self._run_tool_check(
+                    tool_id=tool_id,
+                    mode=mode,
+                    command=command,
+                    project=context.project,
+                    project_root=context.project_root,
+                    paths=context.paths,
+                    scope_target=context.scope.target,
+                    environment=context.environment,
+                    options=options,
+                    run_id=run_id,
+                )
+            )
+            self._emit_progress(on_progress, tool_id, index + 1, checks_total)
+        return check_reports
 
-        for index, tool_id in enumerate(tool_ids):
-            if on_progress is not None:
-                on_progress(
-                    RunProgress(
-                        current_check_id=tool_id,
-                        checks_completed=index,
-                        checks_total=checks_total,
-                    )
-                )
-            tool = self.catalog.get_tool(tool_id)
-            config_paths = resolve_config_paths(tool, project, project_root)
-            tool_options = NormalizedOptions(
-                paths=paths,
-                config=config_paths,
-                format="json",
-                output=options.output,
-                verbose=command.verbose,
-                quiet=command.quiet,
-                check=True if mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None,
-            )
-            if mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
-                tool_options = NormalizedOptions(
-                    paths=paths,
-                    config=config_paths,
-                    verbose=command.verbose,
-                    quiet=command.quiet,
-                    check=False,
-                )
-            request = build_execution_request(
-                runnable=tool_id,
-                mode=mode if mode in tool.modes else RunMode.CHECK,
-                project_root=project_root,
-                options=tool_options,
-                extra_args=command.extra_args,
-            )
-            resolved = resolve_request(
-                request,
-                tool,
-                environment,
-                target=scope.target,
-            )
-            check_report = self._execute_check(resolved, run_id)
-            check_reports.append(check_report)
-            if on_progress is not None:
-                on_progress(
-                    RunProgress(
-                        current_check_id=tool_id,
-                        checks_completed=index + 1,
-                        checks_total=checks_total,
-                    )
-                )
-
+    def _build_run_report(
+        self,
+        *,
+        run_id: str,
+        suite_id: str,
+        mode: RunMode,
+        check_reports: list[CheckReport],
+    ) -> RunReport:
         status = "passed" if all(r.status == "passed" for r in check_reports) else "failed"
-        error_format = command.error_format or project.error_format
-        if command.ci:
-            error_format = "github"
-        report = RunReport(
+        return RunReport(
             run_id=run_id,
             suite=suite_id,
             mode=mode.value,
@@ -223,39 +257,120 @@ class ShipGateApp:
             reports=tuple(check_reports),
         )
 
-        if status == "failed":
-            if write_reports:
-                report_path = write_run_report(project_root, report)
-                report = RunReport(
-                    run_id=report.run_id,
-                    suite=report.suite,
-                    mode=report.mode,
-                    status=report.status,
-                    reports=report.reports,
-                    report_path=str(report_path.relative_to(project_root)),
-                )
-            if emit_failure_output:
-                output = get_formatter(error_format).render(report)
-                if output:
-                    import sys
-
-                    sys.stderr.write(output)
-            if write_reports:
-                from shipgate.runtime.report_store import ReportStore
-
-                ReportStore(project_root).save(report)
-            return 1, report
-
+    def _finalize_successful_run(
+        self,
+        command: RunCommand,
+        project_root: Path,
+        report: RunReport,
+        *,
+        write_reports: bool,
+    ) -> tuple[int, RunReport]:
         if write_reports:
             from shipgate.runtime.report_store import ReportStore
 
             ReportStore(project_root).save(report)
-
         if command.verbose:
             import sys
 
             sys.stdout.write(get_formatter("json").render(report))
         return 0, report
+
+    def _emit_progress(
+        self,
+        on_progress: Callable[[RunProgress], None] | None,
+        tool_id: str,
+        checks_completed: int,
+        checks_total: int,
+    ) -> None:
+        if on_progress is None:
+            return
+        on_progress(
+            RunProgress(
+                current_check_id=tool_id,
+                checks_completed=checks_completed,
+                checks_total=checks_total,
+            )
+        )
+
+    def _run_tool_check(
+        self,
+        *,
+        tool_id: str,
+        mode: RunMode,
+        command: RunCommand,
+        project,
+        project_root: Path,
+        paths,
+        scope_target: Path,
+        environment,
+        options: NormalizedOptions,
+        run_id: str,
+    ) -> CheckReport:
+        tool = self.catalog.get_tool(tool_id)
+        config_paths = resolve_config_paths(tool, project, project_root)
+        tool_options = NormalizedOptions(
+            paths=paths,
+            config=config_paths,
+            format="json",
+            output=options.output,
+            verbose=command.verbose,
+            quiet=command.quiet,
+            check=True if mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None,
+        )
+        if mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
+            tool_options = NormalizedOptions(
+                paths=paths,
+                config=config_paths,
+                verbose=command.verbose,
+                quiet=command.quiet,
+                check=False,
+            )
+        request = build_execution_request(
+            runnable=tool_id,
+            mode=mode if mode in tool.modes else RunMode.CHECK,
+            project_root=project_root,
+            options=tool_options,
+            extra_args=command.extra_args,
+        )
+        resolved = resolve_request(
+            request,
+            tool,
+            environment,
+            target=scope_target,
+        )
+        return self._execute_check(resolved, run_id)
+
+    def _finalize_failed_run(
+        self,
+        command: RunCommand,
+        project_root: Path,
+        report: RunReport,
+        error_format: str,
+        *,
+        write_reports: bool,
+        emit_failure_output: bool,
+    ) -> tuple[int, RunReport]:
+        if write_reports:
+            report_path = write_run_report(project_root, report)
+            report = RunReport(
+                run_id=report.run_id,
+                suite=report.suite,
+                mode=report.mode,
+                status=report.status,
+                reports=report.reports,
+                report_path=str(report_path.relative_to(project_root)),
+            )
+        if emit_failure_output:
+            output = get_formatter(error_format).render(report)
+            if output:
+                import sys
+
+                sys.stderr.write(output)
+        if write_reports:
+            from shipgate.runtime.report_store import ReportStore
+
+            ReportStore(project_root).save(report)
+        return 1, report
 
     def _execute_check(self, resolved: ResolvedRequest, run_id: str) -> CheckReport:
         if self._executor_is_default:

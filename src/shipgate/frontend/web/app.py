@@ -281,14 +281,7 @@ def _overview_context(
     previous = storage.previous_completed_run(branch=run.branch, before_run_id=run.id)
     context["previous"] = previous
     context["deltas"] = _severity_deltas(run.summary, previous.summary if previous else None)
-    if run.summary and baseline and baseline.reports:
-        baseline_sev: dict[str, int] = {}
-        for check in baseline.reports:
-            for finding in check.findings:
-                baseline_sev[finding.severity] = baseline_sev.get(finding.severity, 0) + 1
-        context["baseline_deltas"] = severity_deltas_vs_baseline(
-            run.summary.by_severity, baseline_sev
-        )
+    _attach_baseline_context(context, run, baseline)
     code_findings = storage.list_findings(run.id, category=FindingCategory.CODE)
     context["hotspots"] = _file_hotspots(code_findings)
     context["by_check"] = _by_check_rows(run.summary)
@@ -300,6 +293,21 @@ def _overview_context(
         else None
     )
     return context
+
+
+def _attach_baseline_context(
+    context: dict[str, Any],
+    run: RunRecord,
+    baseline,
+) -> None:
+    if run.summary and baseline and baseline.reports:
+        baseline_sev: dict[str, int] = {}
+        for check in baseline.reports:
+            for finding in check.findings:
+                baseline_sev[finding.severity] = baseline_sev.get(finding.severity, 0) + 1
+        context["baseline_deltas"] = severity_deltas_vs_baseline(
+            run.summary.by_severity, baseline_sev
+        )
 
 
 def _gate_status(run: RunRecord) -> str | None:

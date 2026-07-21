@@ -304,7 +304,7 @@ class SqliteStorage:
             category=category,
         )
         with self._connect() as conn:
-            row = conn.execute(f"SELECT COUNT(*) FROM findings WHERE {where}", params).fetchone()  # nosec B608
+            row = conn.execute(f"SELECT COUNT(*) FROM findings WHERE {where}", params).fetchone()  # noqa: S608  # nosec B608
         return int(row[0])
 
     def set_started_at(self, run_id: str, started_at: datetime) -> None:
@@ -324,8 +324,7 @@ class SqliteStorage:
             return None
         placeholders = ", ".join("?" for _ in COMPLETED_STATUSES)
         query = (
-            "SELECT * FROM runs WHERE branch = ? "
-            f"AND status IN ({placeholders}) "  # nosec B608
+            f"SELECT * FROM runs WHERE branch = ? AND status IN ({placeholders}) "  # noqa: S608  # nosec B608
             "AND started_at < ? ORDER BY started_at DESC LIMIT 1"
         )
         with self._connect() as conn:
@@ -355,8 +354,8 @@ class SqliteStorage:
             if not ids:
                 return 0
             placeholders = ", ".join("?" for _ in ids)
-            conn.execute(f"DELETE FROM findings WHERE run_id IN ({placeholders})", ids)  # nosec B608
-            conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # nosec B608
+            conn.execute(f"DELETE FROM findings WHERE run_id IN ({placeholders})", ids)  # noqa: S608  # nosec B608
+            conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # noqa: S608  # nosec B608
             return len(ids)
 
 
@@ -408,7 +407,7 @@ def _findings_filter_query(
         file=file,
         category=category,
     )
-    return f"SELECT * FROM findings WHERE {where}", params  # nosec B608
+    return f"SELECT * FROM findings WHERE {where}", params  # noqa: S608  # nosec B608
 
 
 def _apply_run_fields(run: RunRecord, updates: dict[str, object | None]) -> None:

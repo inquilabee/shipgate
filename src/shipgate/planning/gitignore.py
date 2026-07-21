@@ -42,8 +42,8 @@ def is_ignored_by_git(project_root: Path, path: Path) -> bool:
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
-    result = subprocess.run(
-        ["git", "check-ignore", "-q", rel_str],
+    result = subprocess.run(  # noqa: S603
+        ["git", "check-ignore", "-q", rel_str],  # noqa: S607
         cwd=project_root,
         capture_output=True,
         check=False,

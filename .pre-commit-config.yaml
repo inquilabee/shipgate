@@ -1,4 +1,4 @@
-# ShipGate dogfood: apply formatters, then check the pre-commit suite.
+# ShipGate dogfood: apply formatters, then check the full bundled suite.
 # djlint is outside the catalog (Jinja templates only).
 repos:
   - repo: local
@@ -19,8 +19,8 @@ repos:
         always_run: true
 
       - id: shipgate-install
-        name: shipgate install (pre-commit suite)
-        entry: uv run shipgate install --suite pre-commit
+        name: shipgate install (full suite)
+        entry: uv run shipgate install --suite full
         language: system
         pass_filenames: false
         always_run: true
@@ -47,8 +47,8 @@ repos:
         always_run: true
 
       - id: shipgate-check
-        name: shipgate check — pre-commit suite
-        entry: uv run shipgate check --suite pre-commit --target .
+        name: shipgate check — full suite
+        entry: bash -c 'for t in src tests docs; do uv run shipgate check --suite full --target "$t" || exit 1; done'
         language: system
         pass_filenames: false
         always_run: true

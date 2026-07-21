@@ -37,7 +37,7 @@ class Executor:
     ) -> ProcessResult:
         start = time.monotonic()
         try:
-            completed = subprocess.run(
+            completed = subprocess.run(  # noqa: S603
                 list(argv),
                 cwd=cwd,
                 env=env,

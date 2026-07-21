@@ -88,7 +88,7 @@ def _installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
 def _run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
     command = [binary, flag]
     try:
-        completed = subprocess.run(
+        completed = subprocess.run(  # noqa: S603
             command,
             capture_output=True,
             text=True,
@@ -141,7 +141,7 @@ def _pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
     if not python.is_file():
         return None
     try:
-        completed = subprocess.run(
+        completed = subprocess.run(  # noqa: S603
             [str(python), "-m", "pip", "show", package_name],
             capture_output=True,
             text=True,

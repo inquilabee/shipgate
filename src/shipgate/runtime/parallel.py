@@ -28,19 +28,28 @@ def run_parallel(
         return [fn(items[0])]
 
     results: dict[int, R] = {}
-    failed = False
     with ThreadPoolExecutor(max_workers=min(len(items), 8)) as pool:
         futures = {pool.submit(fn, item): index for index, item in enumerate(items)}
-        for future in as_completed(futures):
-            index = futures[future]
-            try:
-                results[index] = future.result()
-            except Exception:
-                failed = True
-                if fail_fast:
-                    for pending in futures:
-                        pending.cancel()
-                    raise
-            if fail_fast and failed:
-                break
+        _collect_parallel_results(futures, results, fail_fast=fail_fast)
     return [results[i] for i in range(len(items))]
+
+
+def _collect_parallel_results(
+    futures: dict,
+    results: dict[int, R],
+    *,
+    fail_fast: bool,
+) -> None:
+    failed = False
+    for future in as_completed(futures):
+        index = futures[future]
+        try:
+            results[index] = future.result()
+        except Exception:
+            failed = True
+            if fail_fast:
+                for pending in futures:
+                    pending.cancel()
+                raise
+        if fail_fast and failed:
+            break

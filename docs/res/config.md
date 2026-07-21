@@ -12,7 +12,7 @@ The table below maps ShipGate's normalized options onto the starting tool set. G
 | --------------- | ----- | --------------- | ----------- | --------------------- | ------------------ | ----------------------- | ----------- | ---------- | ----------------- | ------------------------------- | ----------------------------------------- | --------- | ------------- |
 | bandit | ✓ | `--config` | `--exclude` | x | `--format` | `--output` | `-v` | `-q` | x | `--tests` / `--skip` | `--severity-level` / `--confidence-level` | x | `--exit-zero` |
 | codespell | ✓ | x | `--skip` | x | x | x | `-v` | `-q` | `--write-changes` | `--builtin` / `--ignore-words*` | x | x | x |
-| deadcode | ✓ | x | `--exclude` | x | `--json` | x | x | x | x | x | `--confidence` | x | x |
+| deadcode | ✓ | x | `--exclude` | x | `--json` | x | x | x | x | x | x | x | x |
 | gitleaks-detect | ✓ | `--config` | x | x | `--report-format` | `--report-path` | `-v` | x | x | x | x | x | `--exit-code` |
 | gitleaks-git | ✓ | `--config` | x | x | `--report-format` | `--report-path` | `-v` | x | x | x | x | x | `--exit-code` |
 | hadolint | ✓ | `--config` | x | x | `--format` | `--file-path-in-report` | `-V` | x | x | `--ignore` | `--failure-threshold` | `-` | `--no-fail` |

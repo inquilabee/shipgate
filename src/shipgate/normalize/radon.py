@@ -1,4 +1,4 @@
-"""Radon JSON normalizer with bundled grade policy: rank A only."""
+"""Radon JSON normalizer with bundled grade policy: ranks A and B allowed."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from shipgate.runtime.executor import ProcessResult
 
 RANK_ORDER = {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6}
-DEFAULT_MAX_COMPLEXITY_RANK = "A"
+DEFAULT_MAX_COMPLEXITY_RANK = "B"
 
 
 class RadonNormalizer:
