@@ -11,6 +11,7 @@ def test_missing_config_returns_defaults(tmp_path):
     assert config.suite == "standard"
     assert config.env == "managed"
     assert config.target == Path()
+    assert config.error_format is None
 
 
 def test_minimal_config_parses(tmp_path):

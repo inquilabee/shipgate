@@ -19,6 +19,7 @@ def _shared_parser() -> argparse.ArgumentParser:
     shared = argparse.ArgumentParser(add_help=False)
     shared.add_argument("--config", type=Path, help="Path to shipgate.yaml")
     shared.add_argument("--suite", help="Suite to run")
+    shared.add_argument("--workflow", help="Workflow to run")
     shared.add_argument("--check", help="Single check to run")
     shared.add_argument("--target", type=Path, help="Target path")
     shared.add_argument("--error-format", dest="error_format", help="Error output format")
@@ -139,7 +140,7 @@ def _dispatch_command(
         ),
         "check": lambda: app.check(_run_command(args, project_root)),
         "format": lambda: app.format(_run_command(args, project_root)),
-        "list": lambda: _dispatch_list(app, args),
+        "list": lambda: _dispatch_list(app, args, project_root),
         "schema": lambda: _write_schema(app),
         "serve": lambda: app.serve(
             project_root,
@@ -171,14 +172,17 @@ def _dispatch_gates(app: ShipGateApp, args: argparse.Namespace, project_root: Pa
     return 0
 
 
-def _dispatch_list(app: ShipGateApp, args: argparse.Namespace) -> int:
+def _dispatch_list(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
     if args.list_target == "suites":
         if not getattr(args, "quiet", False) or getattr(args, "verbose", False):
             sys.stdout.write(app.list_suites())
         return 0
     if args.list_target in ("tools", "checks"):
         if not getattr(args, "quiet", False) or getattr(args, "verbose", False):
-            sys.stdout.write(app.list_tools())
+            if args.list_target == "checks":
+                sys.stdout.write(app.list_checks(project_root))
+            else:
+                sys.stdout.write(app.list_tools())
         return 0
     return 0
 
@@ -198,6 +202,7 @@ def _run_command(args: argparse.Namespace, project_root: Path) -> RunCommand:
         config_path=getattr(args, "config", None),
         suite=getattr(args, "suite", None),
         check=getattr(args, "check", None),
+        workflow=getattr(args, "workflow", None),
         target=getattr(args, "target", None),
         error_format=getattr(args, "error_format", None),
         extra_args=tuple(getattr(args, "extra_args", []) or []),

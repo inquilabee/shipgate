@@ -155,3 +155,65 @@ def to_dict(obj: object) -> dict[str, Any]:
     if is_dataclass(obj) and not isinstance(obj, type):
         return asdict(obj)
     raise TypeError(f"cannot serialize {type(obj)!r}")
+
+
+def report_json_schema() -> dict[str, Any]:
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "ShipGate Run Report",
+        "type": "object",
+        "required": ["schema_version", "run_id", "mode", "status", "reports"],
+        "properties": {
+            "schema_version": {"const": SCHEMA_VERSION},
+            "run_id": {"type": "string"},
+            "suite": {"type": ["string", "null"]},
+            "mode": {"type": "string", "enum": ["check", "apply"]},
+            "status": {"type": "string", "enum": ["passed", "failed"]},
+            "report_path": {"type": "string"},
+            "reports": {
+                "type": "array",
+                "items": {"$ref": "#/$defs/check_report"},
+            },
+        },
+        "$defs": {
+            "finding_location": {
+                "type": "object",
+                "required": ["path"],
+                "properties": {
+                    "path": {"type": "string"},
+                    "line": {"type": "integer"},
+                    "column": {"type": "integer"},
+                },
+            },
+            "finding": {
+                "type": "object",
+                "required": ["check_id", "rule_id", "severity", "message"],
+                "properties": {
+                    "check_id": {"type": "string"},
+                    "rule_id": {"type": "string"},
+                    "severity": {"type": "string"},
+                    "message": {"type": "string"},
+                    "location": {"$ref": "#/$defs/finding_location"},
+                    "report_path": {"type": "string"},
+                    "extra": {"type": "object"},
+                },
+            },
+            "check_report": {
+                "type": "object",
+                "required": ["check_id", "tool_id", "status", "exit_code", "findings"],
+                "properties": {
+                    "check_id": {"type": "string"},
+                    "tool_id": {"type": "string"},
+                    "status": {"type": "string", "enum": ["passed", "failed"]},
+                    "exit_code": {"type": "integer"},
+                    "findings": {
+                        "type": "array",
+                        "items": {"$ref": "#/$defs/finding"},
+                    },
+                    "stdout_path": {"type": "string"},
+                    "stderr_path": {"type": "string"},
+                    "extra": {"type": "object"},
+                },
+            },
+        },
+    }

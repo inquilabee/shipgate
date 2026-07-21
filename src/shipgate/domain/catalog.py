@@ -60,9 +60,23 @@ class SuiteDefinition:
 
 
 @dataclass(frozen=True)
+class WorkflowStep:
+    mode: RunMode
+    members: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class WorkflowDefinition:
+    id: str
+    steps: tuple[WorkflowStep, ...]
+
+
+@dataclass(frozen=True)
 class Catalog:
     tools: Mapping[str, ToolDefinition]
     suites: Mapping[str, SuiteDefinition]
+    workflows: Mapping[str, WorkflowDefinition] = field(default_factory=dict)
+    capabilities: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
     def get_tool(self, tool_id: str) -> ToolDefinition:
         if tool_id not in self.tools:
@@ -74,8 +88,16 @@ class Catalog:
             raise KeyError(suite_id)
         return self.suites[suite_id]
 
+    def get_workflow(self, workflow_id: str) -> WorkflowDefinition:
+        if workflow_id not in self.workflows:
+            raise KeyError(workflow_id)
+        return self.workflows[workflow_id]
+
     def is_tool(self, runnable_id: str) -> bool:
         return runnable_id in self.tools
 
     def is_suite(self, runnable_id: str) -> bool:
         return runnable_id in self.suites
+
+    def is_workflow(self, runnable_id: str) -> bool:
+        return runnable_id in self.workflows

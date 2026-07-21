@@ -19,14 +19,28 @@ class Scope:
 
 
 @dataclass(frozen=True)
+class CheckBinding:
+    runnable: str
+    scope: str | None = None
+
+
+@dataclass(frozen=True)
 class ProjectConfig:
     suite: str | None = "standard"
+    workflow: str | None = None
     env: str = "managed"
     target: Path = Path()
-    error_format: str = "json"
+    error_format: str | None = None
     config_mode: str = "auto"
     checks: tuple[str, ...] = ()
+    check_bindings: tuple[CheckBinding, ...] = ()
     scopes: Mapping[str, Scope] | None = None
     auto_install: bool = False
     parallel: bool = False
     fail_fast: bool = False
+
+    def scope_for_check(self, runnable: str) -> str | None:
+        for binding in self.check_bindings:
+            if binding.runnable == runnable:
+                return binding.scope
+        return None

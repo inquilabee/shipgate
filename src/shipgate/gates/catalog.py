@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
+from shipgate.domain.modes import RunMode
+
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from shipgate.domain.catalog import Catalog
 
 
 def discover_gates(project_root: Path) -> list[Path]:
@@ -18,6 +19,35 @@ def discover_gates(project_root: Path) -> list[Path]:
 
 
 def merge_gate_catalog(base: Catalog, project_root: Path) -> Catalog:
-    """Return base catalog; gate scripts are discovered at runtime."""
-    _ = discover_gates(project_root)
-    return base
+    gates = discover_gates(project_root)
+    if not gates:
+        return base
+    tools = dict(base.tools)
+    suites = dict(base.suites)
+    gate_members: list[str] = []
+    for gate_path in gates:
+        gate_id = f"gate.{gate_path.stem}"
+        gate_members.append(gate_id)
+        tools[gate_id] = ToolDefinition(
+            id=gate_id,
+            executable=str(gate_path),
+            subcommand=(),
+            cli={},
+            capabilities=("Gates",),
+            normalizer="generic_exit",
+            modes=(RunMode.CHECK, RunMode.APPLY),
+            option_order=(),
+        )
+    if "local-gates" not in suites:
+        suites["local-gates"] = SuiteDefinition(
+            id="local-gates",
+            members=tuple(gate_members),
+            parallel=False,
+            fail_fast=True,
+        )
+    return Catalog(
+        tools=tools,
+        suites=suites,
+        workflows=base.workflows,
+        capabilities=base.capabilities,
+    )

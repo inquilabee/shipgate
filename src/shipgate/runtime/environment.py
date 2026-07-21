@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.errors import InstallError
-from shipgate.paths import managed_python_env, tools_dir
+from shipgate.paths import managed_bin_dir, managed_python_env, tools_dir
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -20,14 +20,20 @@ def system_environment() -> ExecutionEnvironment:
 
 def managed_environment(project_root: Path) -> ExecutionEnvironment:
     venv = managed_python_env(project_root)
+    bin_dir = managed_bin_dir(project_root)
     if sys.platform == "win32":
         scripts = venv / "Scripts"
     else:
         scripts = venv / "bin"
     env = dict(os.environ)
+    path_parts: list[str] = []
+    if bin_dir.is_dir():
+        path_parts.append(str(bin_dir))
     if scripts.is_dir():
-        env["PATH"] = f"{scripts}{os.pathsep}{env.get('PATH', '')}"
+        path_parts.append(str(scripts))
         env["VIRTUAL_ENV"] = str(venv)
+    if path_parts:
+        env["PATH"] = f"{os.pathsep.join(path_parts)}{os.pathsep}{env.get('PATH', '')}"
     return ExecutionEnvironment(kind="managed", root=venv, env=env)
 
 
@@ -44,8 +50,18 @@ def resolve_executable(
     environment: ExecutionEnvironment,
     *,
     install_binary: str | None = None,
+    project_root: Path | None = None,
 ) -> str:
     name = install_binary or tool_executable
+    if project_root is not None:
+        bin_dir = managed_bin_dir(project_root)
+        if sys.platform == "win32":
+            candidate = bin_dir / f"{name}.exe"
+            if candidate.is_file():
+                return str(candidate)
+        candidate = bin_dir / name
+        if candidate.is_file():
+            return str(candidate)
     if environment.kind == "managed" and environment.root is not None:
         if sys.platform == "win32":
             candidate = environment.root / "Scripts" / f"{name}.exe"

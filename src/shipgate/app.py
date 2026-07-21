@@ -10,20 +10,25 @@ from shipgate.adapter.argv import build_argv
 from shipgate.adapter.config_resolve import resolve_config_paths
 from shipgate.baseline import load_baseline, save_baseline
 from shipgate.catalog.loader import load_catalog
+from shipgate.ci import apply_ci_defaults, is_ci_environment, write_github_step_summary
 from shipgate.config.loader import load_config
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.domain.reports import SCHEMA_VERSION, CheckReport, RunReport
+from shipgate.domain.reports import CheckReport, RunReport, report_json_schema
 from shipgate.formatters.plugins import get_formatter
+from shipgate.gates.catalog import merge_gate_catalog
 from shipgate.gates.init import init_gate
 from shipgate.normalize.base import get_normalizer
+from shipgate.planning.checks import list_project_checks
+from shipgate.planning.incremental import filter_changed
 from shipgate.planning.requests import build_execution_request, resolve_request
 from shipgate.planning.scopes import resolve_scope, scope_paths
-from shipgate.planning.workflow import resolve_runnables
+from shipgate.planning.workflow import PlannedCheck, resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment, resolve_executable
 from shipgate.runtime.executor import Executor, ProcessResult
 from shipgate.runtime.install import install_suite
 from shipgate.runtime.lockfile import write_lockfile
+from shipgate.runtime.parallel import run_parallel
 from shipgate.runtime.reports import generate_run_id, write_raw_output, write_run_report
 
 if TYPE_CHECKING:
@@ -31,7 +36,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from shipgate.domain.catalog import Catalog
-    from shipgate.domain.execution import ResolvedRequest
+    from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
     from shipgate.domain.project import ProjectConfig, Scope
 
 
@@ -41,6 +46,7 @@ class RunCommand:
     config_path: Path | None = None
     suite: str | None = None
     check: str | None = None
+    workflow: str | None = None
     target: Path | None = None
     error_format: str | None = None
     extra_args: tuple[str, ...] = ()
@@ -71,10 +77,11 @@ class _RunContext:
     project: ProjectConfig
     project_root: Path
     suite_id: str
-    tool_ids: tuple[str, ...]
-    environment: object
-    scope: Scope
-    paths: tuple[Path, ...]
+    planned_checks: tuple[PlannedCheck, ...]
+    environment: ExecutionEnvironment
+    default_scope: Scope
+    parallel: bool
+    fail_fast: bool
 
 
 class ExecutorProtocol(Protocol):
@@ -87,6 +94,11 @@ class ExecutorProtocol(Protocol):
     ) -> ProcessResult: ...
 
 
+class _FailFastError(Exception):
+    def __init__(self, report: CheckReport) -> None:
+        self.report = report
+
+
 class ShipGateApp:
     def __init__(
         self,
@@ -94,17 +106,21 @@ class ShipGateApp:
         catalog: Catalog | None = None,
         executor: ExecutorProtocol | None = None,
     ) -> None:
-        self.catalog = catalog or load_catalog()
+        self._base_catalog = catalog or load_catalog()
         self._executor_is_default = executor is None
         self.executor = executor or Executor()
 
+    def _catalog_for(self, project_root: Path) -> Catalog:
+        return merge_gate_catalog(self._base_catalog, project_root)
+
     def install(self, command: InstallCommand) -> int:
+        catalog = self._catalog_for(command.project_root)
         project = load_config(
             config_path=command.config_path,
             project_root=command.project_root,
         )
         suite_id = command.suite or project.suite or "standard"
-        install_suite(command.project_root, suite_id, self.catalog)
+        install_suite(command.project_root, suite_id, catalog)
         return 0
 
     def check(self, command: RunCommand) -> int:
@@ -144,12 +160,13 @@ class ShipGateApp:
         write_reports: bool = True,
         emit_failure_output: bool = True,
     ) -> tuple[int, RunReport]:
-        context = self._prepare_run_context(command, mode)
+        catalog = self._catalog_for(command.project_root)
+        context = self._prepare_run_context(command, mode, catalog)
         run_id = run_id or generate_run_id()
         check_reports = self._run_all_checks(
             command=command,
-            mode=mode,
             context=context,
+            catalog=catalog,
             run_id=run_id,
             on_progress=on_progress,
         )
@@ -159,10 +176,8 @@ class ShipGateApp:
             mode=mode,
             check_reports=check_reports,
         )
+        error_format = self._resolve_error_format(command, context.project)
         if report.status == "failed":
-            error_format = command.error_format or context.project.error_format
-            if command.ci:
-                error_format = "github"
             return self._finalize_failed_run(
                 command,
                 context.project_root,
@@ -171,6 +186,10 @@ class ShipGateApp:
                 write_reports=write_reports,
                 emit_failure_output=emit_failure_output,
             )
+        if command.ci or is_ci_environment():
+            write_github_step_summary(
+                f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n"
+            )
         return self._finalize_successful_run(
             command,
             context.project_root,
@@ -178,67 +197,149 @@ class ShipGateApp:
             write_reports=write_reports,
         )
 
-    def _prepare_run_context(self, command: RunCommand, mode: RunMode):
+    def _resolve_error_format(self, command: RunCommand, project: ProjectConfig) -> str:
+        explicit = command.error_format or project.error_format
+        if command.ci or is_ci_environment():
+            return apply_ci_defaults(explicit)
+        return explicit or "json"
+
+    def _prepare_run_context(
+        self,
+        command: RunCommand,
+        mode: RunMode,
+        catalog: Catalog,
+    ) -> _RunContext:
         project = load_config(
             config_path=command.config_path,
             project_root=command.project_root,
         )
         project_root = command.project_root.resolve()
-        suite_id, tool_ids = resolve_runnables(
+        suite_id, planned_checks = resolve_runnables(
             mode=mode,
             project=project,
-            catalog=self.catalog,
+            catalog=catalog,
             suite_override=command.suite,
             check_override=command.check,
+            workflow_override=command.workflow,
         )
+        parallel, fail_fast = suite_execution_flags(catalog, suite_id, project)
         environment = resolve_environment(project_root, project.env)
-        scope = resolve_scope(project_root, project, target_override=command.target)
+        default_scope = resolve_scope(project_root, project, target_override=command.target)
         return _RunContext(
             project=project,
             project_root=project_root,
             suite_id=suite_id,
-            tool_ids=tuple(tool_ids),
+            planned_checks=tuple(planned_checks),
             environment=environment,
-            scope=scope,
-            paths=scope_paths(scope, project_root, mode=mode),
+            default_scope=default_scope,
+            parallel=parallel,
+            fail_fast=fail_fast,
         )
 
     def _run_all_checks(
         self,
         *,
         command: RunCommand,
-        mode: RunMode,
         context: _RunContext,
+        catalog: Catalog,
         run_id: str,
         on_progress: Callable[[RunProgress], None] | None,
     ) -> list[CheckReport]:
-        options = NormalizedOptions(
-            paths=context.paths,
-            format="json",
+        checks_total = len(context.planned_checks)
+
+        def run_one(planned: PlannedCheck) -> CheckReport:
+            report = self._run_planned_check(
+                planned=planned,
+                command=command,
+                context=context,
+                catalog=catalog,
+                run_id=run_id,
+            )
+            if context.fail_fast and report.status == "failed":
+                raise _FailFastError(report)
+            return report
+
+        if context.parallel:
+            try:
+                reports = run_parallel(
+                    list(context.planned_checks),
+                    run_one,
+                    fail_fast=context.fail_fast,
+                )
+            except _FailFastError as exc:
+                reports = [exc.report]
+        else:
+            reports = []
+            for planned in context.planned_checks:
+                try:
+                    report = run_one(planned)
+                except _FailFastError as exc:
+                    reports.append(exc.report)
+                    break
+                reports.append(report)
+        for index, planned in enumerate(context.planned_checks[: len(reports)]):
+            self._emit_progress(on_progress, planned.tool_id, index, checks_total)
+            self._emit_progress(on_progress, planned.tool_id, index + 1, checks_total)
+        return reports
+
+    def _run_planned_check(
+        self,
+        *,
+        planned: PlannedCheck,
+        command: RunCommand,
+        context: _RunContext,
+        catalog: Catalog,
+        run_id: str,
+    ) -> CheckReport:
+        scope = resolve_scope(
+            context.project_root,
+            context.project,
+            target_override=command.target,
+            scope_name=planned.scope_name,
+        )
+        paths = scope_paths(scope, context.project_root, mode=planned.mode)
+        paths = filter_changed(
+            paths,
+            command.since,
+            project_root=context.project_root,
+            changed_only=command.changed_only,
+        )
+        tool = catalog.get_tool(planned.tool_id)
+        config_paths = resolve_config_paths(tool, context.project, context.project_root)
+        exclude = (
+            tuple(entry.rstrip("/") for entry in scope.exclude) if "exclude" in tool.cli else ()
+        )
+        tool_options = NormalizedOptions(
+            paths=paths,
+            config=config_paths,
+            exclude=exclude,
             verbose=command.verbose,
             quiet=command.quiet,
-            check=mode == RunMode.CHECK if mode == RunMode.APPLY else None,
+            check=True if planned.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None,
         )
-        check_reports: list[CheckReport] = []
-        checks_total = len(context.tool_ids)
-        for index, tool_id in enumerate(context.tool_ids):
-            self._emit_progress(on_progress, tool_id, index, checks_total)
-            check_reports.append(
-                self._run_tool_check(
-                    tool_id=tool_id,
-                    mode=mode,
-                    command=command,
-                    project=context.project,
-                    project_root=context.project_root,
-                    paths=context.paths,
-                    scope_target=context.scope.target,
-                    environment=context.environment,
-                    options=options,
-                    run_id=run_id,
-                )
+        if planned.mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
+            tool_options = NormalizedOptions(
+                paths=paths,
+                config=config_paths,
+                verbose=command.verbose,
+                quiet=command.quiet,
+                check=False,
             )
-            self._emit_progress(on_progress, tool_id, index + 1, checks_total)
-        return check_reports
+        request = build_execution_request(
+            runnable=planned.tool_id,
+            mode=planned.mode if planned.mode in tool.modes else RunMode.CHECK,
+            project_root=context.project_root,
+            options=tool_options,
+            extra_args=command.extra_args,
+        )
+        resolved = resolve_request(
+            request,
+            tool,
+            context.environment,
+            target=scope.target,
+            project=context.project,
+        )
+        return self._execute_check(resolved, run_id)
 
     def _build_run_report(
         self,
@@ -292,54 +393,6 @@ class ShipGateApp:
             )
         )
 
-    def _run_tool_check(
-        self,
-        *,
-        tool_id: str,
-        mode: RunMode,
-        command: RunCommand,
-        project,
-        project_root: Path,
-        paths,
-        scope_target: Path,
-        environment,
-        options: NormalizedOptions,
-        run_id: str,
-    ) -> CheckReport:
-        tool = self.catalog.get_tool(tool_id)
-        config_paths = resolve_config_paths(tool, project, project_root)
-        tool_options = NormalizedOptions(
-            paths=paths,
-            config=config_paths,
-            format="json",
-            output=options.output,
-            verbose=command.verbose,
-            quiet=command.quiet,
-            check=True if mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None,
-        )
-        if mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
-            tool_options = NormalizedOptions(
-                paths=paths,
-                config=config_paths,
-                verbose=command.verbose,
-                quiet=command.quiet,
-                check=False,
-            )
-        request = build_execution_request(
-            runnable=tool_id,
-            mode=mode if mode in tool.modes else RunMode.CHECK,
-            project_root=project_root,
-            options=tool_options,
-            extra_args=command.extra_args,
-        )
-        resolved = resolve_request(
-            request,
-            tool,
-            environment,
-            target=scope_target,
-        )
-        return self._execute_check(resolved, run_id)
-
     def _finalize_failed_run(
         self,
         command: RunCommand,
@@ -360,7 +413,7 @@ class ShipGateApp:
                 reports=report.reports,
                 report_path=str(report_path.relative_to(project_root)),
             )
-        if emit_failure_output:
+        if emit_failure_output and not command.quiet:
             output = get_formatter(error_format).render(report)
             if output:
                 import sys
@@ -370,6 +423,10 @@ class ShipGateApp:
             from shipgate.runtime.report_store import ReportStore
 
             ReportStore(project_root).save(report)
+        if command.ci or is_ci_environment():
+            write_github_step_summary(
+                f"## ShipGate {report.mode}\n\nStatus: **{report.status}**\n"
+            )
         return 1, report
 
     def _execute_check(self, resolved: ResolvedRequest, run_id: str) -> CheckReport:
@@ -378,6 +435,7 @@ class ShipGateApp:
                 resolved.tool.executable,
                 resolved.environment,
                 install_binary=resolved.tool.install.binary if resolved.tool.install else None,
+                project_root=resolved.project_root,
             )
         else:
             executable = resolved.tool.executable
@@ -386,30 +444,15 @@ class ShipGateApp:
         argv = tuple(argv_list)
         env = dict(resolved.environment.env)
         result = self.executor.run(argv, cwd=resolved.project_root, env=env)
-        tool_output = result.stdout
-        if resolved.tool.normalizer == "ruff" and resolved.options.output:
-            out_file = resolved.options.output
-            if out_file.is_file():
-                tool_output = out_file.read_text(encoding="utf-8")
         stdout_path, stderr_path, _ = write_raw_output(
             resolved.project_root,
             run_id,
             resolved.tool.id,
             stdout=result.stdout,
             stderr=result.stderr,
-            tool_output=tool_output if resolved.tool.normalizer == "ruff" else None,
         )
         normalizer = get_normalizer(resolved.tool.normalizer)
-        normalize_result = ProcessResult(
-            argv=result.argv,
-            cwd=result.cwd,
-            exit_code=result.exit_code,
-            stdout=tool_output,
-            stderr=result.stderr,
-            duration_ms=result.duration_ms,
-            output_files=result.output_files,
-        )
-        check_report = normalizer.normalize(resolved, normalize_result)
+        check_report = normalizer.normalize(resolved, result)
         return CheckReport(
             check_id=check_report.check_id,
             tool_id=check_report.tool_id,
@@ -422,24 +465,27 @@ class ShipGateApp:
         )
 
     def list_suites(self) -> str:
-        return "\n".join(sorted(self.catalog.suites.keys())) + "\n"
+        catalog = self._base_catalog
+        lines = sorted(catalog.suites.keys())
+        if catalog.workflows:
+            lines.extend(sorted(catalog.workflows.keys()))
+        return "\n".join(sorted(set(lines))) + "\n"
 
     def list_tools(self) -> str:
-        return "\n".join(sorted(self.catalog.tools.keys())) + "\n"
+        return "\n".join(sorted(self._base_catalog.tools.keys())) + "\n"
 
-    def list_checks(self) -> str:
-        return self.list_tools()
+    def list_checks(self, project_root: Path | None = None) -> str:
+        if project_root is None:
+            from shipgate.paths import find_project_root
+
+            project_root = find_project_root()
+        project = load_config(project_root=project_root)
+        catalog = self._catalog_for(project_root)
+        checks = list_project_checks(project, catalog)
+        return "\n".join(checks) + ("\n" if checks else "")
 
     def schema(self) -> str:
-        sample = {
-            "schema_version": SCHEMA_VERSION,
-            "run_id": "example",
-            "suite": "standard",
-            "mode": "check",
-            "status": "passed",
-            "reports": [],
-        }
-        return json.dumps(sample, indent=2) + "\n"
+        return json.dumps(report_json_schema(), indent=2) + "\n"
 
     def serve(
         self,

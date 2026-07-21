@@ -75,3 +75,78 @@ def test_failing_report_exits_one(tmp_path, capsys):
     captured = capsys.readouterr()
     assert code == 1
     assert "F401" in captured.err
+
+
+def test_ci_defaults_to_github_format(tmp_path, capsys, monkeypatch):
+    class FailExecutor(Executor):
+        def run(self, argv, *, cwd, env=None):
+            import json
+
+            return ProcessResult(
+                argv=argv,
+                cwd=cwd,
+                exit_code=1,
+                stdout=json.dumps(
+                    [
+                        {
+                            "code": "F401",
+                            "message": "unused",
+                            "filename": "app.py",
+                            "location": {"row": 1, "column": 1},
+                        }
+                    ]
+                ),
+                stderr="",
+                duration_ms=1,
+            )
+
+    monkeypatch.setenv("CI", "true")
+    app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
+    code = app.check(
+        RunCommand(
+            project_root=tmp_path,
+            check="ruff.lint",
+            target=tmp_path,
+        )
+    )
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "::error" in captured.err
+
+
+def test_quiet_failure_suppresses_stderr(tmp_path, capsys):
+    class FailExecutor(Executor):
+        def run(self, argv, *, cwd, env=None):
+            import json
+
+            return ProcessResult(
+                argv=argv,
+                cwd=cwd,
+                exit_code=1,
+                stdout=json.dumps(
+                    [
+                        {
+                            "code": "F401",
+                            "message": "unused",
+                            "filename": "app.py",
+                            "location": {"row": 1, "column": 1},
+                        }
+                    ]
+                ),
+                stderr="",
+                duration_ms=1,
+            )
+
+    app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
+    code = app.check(
+        RunCommand(
+            project_root=tmp_path,
+            check="ruff.lint",
+            target=tmp_path,
+            quiet=True,
+            error_format="compact",
+        )
+    )
+    captured = capsys.readouterr()
+    assert code == 1
+    assert captured.err == ""

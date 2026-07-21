@@ -1,10 +1,25 @@
 """Workflow planning."""
 
-from shipgate.domain.catalog import Catalog
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
 from shipgate.domain.modes import RunMode
-from shipgate.domain.project import ProjectConfig
 from shipgate.errors import PlanningError
+from shipgate.planning.capabilities import expand_capability
 from shipgate.planning.suites import expand_suite
+
+if TYPE_CHECKING:
+    from shipgate.domain.catalog import Catalog
+    from shipgate.domain.project import ProjectConfig
+
+
+@dataclass(frozen=True)
+class PlannedCheck:
+    tool_id: str
+    mode: RunMode
+    scope_name: str | None = None
 
 
 def resolve_runnables(
@@ -14,26 +29,118 @@ def resolve_runnables(
     catalog: Catalog,
     suite_override: str | None = None,
     check_override: str | None = None,
-) -> tuple[str, list[str]]:
-    """Return (suite_id, tool_ids) for the given mode and overrides."""
+    workflow_override: str | None = None,
+) -> tuple[str, list[PlannedCheck]]:
+    """Return (run_label, planned checks) for the given mode and overrides."""
     if check_override:
         if not catalog.is_tool(check_override):
             raise PlanningError(
                 f"unknown check {check_override!r}",
                 hint='run "shipgate list checks" to see bundled checks',
             )
-        return check_override, [check_override]
+        scope_name = project.scope_for_check(check_override)
+        return check_override, [
+            PlannedCheck(
+                tool_id=check_override,
+                mode=mode,
+                scope_name=scope_name,
+            )
+        ]
 
-    if mode == RunMode.APPLY:
-        suite_id = suite_override or "format"
+    if project.checks and not suite_override and not workflow_override:
+        planned = _planned_from_check_names(project, catalog, mode)
+        return project.suite or "custom", planned
+
+    workflow_id = workflow_override or project.workflow
+    if workflow_id and workflow_id in catalog.workflows:
+        return _resolve_workflow(workflow_id, catalog, project)
+
+    if suite_override:
+        suite_id = suite_override
+    elif mode == RunMode.APPLY:
+        suite_id = "format"
     else:
-        suite_id = suite_override or project.suite or "standard"
+        suite_id = project.suite or "standard"
 
-    if project.checks and not suite_override:
-        tools: list[str] = []
-        for check in project.checks:
-            tools.extend(expand_suite(check, catalog))
-        return suite_id, tools
+    if catalog.is_workflow(suite_id):
+        return _resolve_workflow(suite_id, catalog, project)
 
-    tools = expand_suite(suite_id, catalog)
-    return suite_id, tools
+    tool_ids = expand_suite(suite_id, catalog)
+    planned = [
+        PlannedCheck(
+            tool_id=tool_id,
+            mode=mode,
+            scope_name=project.scope_for_check(tool_id),
+        )
+        for tool_id in tool_ids
+    ]
+    return suite_id, planned
+
+
+def _planned_from_check_names(
+    project: ProjectConfig,
+    catalog: Catalog,
+    mode: RunMode,
+) -> list[PlannedCheck]:
+    planned: list[PlannedCheck] = []
+    seen: set[str] = set()
+    check_names = project.checks or tuple(
+        binding.runnable for binding in project.check_bindings
+    )
+    for check_name in check_names:
+        for tool_id in expand_suite(check_name, catalog):
+            if tool_id in seen:
+                continue
+            seen.add(tool_id)
+            planned.append(
+                PlannedCheck(
+                    tool_id=tool_id,
+                    mode=mode,
+                    scope_name=project.scope_for_check(tool_id)
+                    or project.scope_for_check(check_name),
+                )
+            )
+    return planned
+
+
+def _resolve_workflow(
+    workflow_id: str,
+    catalog: Catalog,
+    project: ProjectConfig,
+) -> tuple[str, list[PlannedCheck]]:
+    workflow = catalog.get_workflow(workflow_id)
+    planned: list[PlannedCheck] = []
+    seen: set[tuple[str, RunMode]] = set()
+    for step in workflow.steps:
+        for member in step.members:
+            tool_ids = _expand_workflow_member(member, catalog)
+            for tool_id in tool_ids:
+                key = (tool_id, step.mode)
+                if key in seen:
+                    continue
+                seen.add(key)
+                planned.append(
+                    PlannedCheck(
+                        tool_id=tool_id,
+                        mode=step.mode,
+                        scope_name=project.scope_for_check(tool_id),
+                    )
+                )
+    return workflow_id, planned
+
+
+def _expand_workflow_member(member: str, catalog: Catalog) -> list[str]:
+    if member in catalog.capabilities:
+        return expand_capability(catalog, member)
+    return expand_suite(member, catalog)
+
+
+def suite_execution_flags(
+    catalog: Catalog,
+    suite_id: str,
+    project: ProjectConfig,
+) -> tuple[bool, bool]:
+    if catalog.is_suite(suite_id):
+        suite = catalog.get_suite(suite_id)
+        return suite.parallel, suite.fail_fast
+    return project.parallel, project.fail_fast

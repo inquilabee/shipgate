@@ -42,6 +42,10 @@ def tools_dir(project_root: Path) -> Path:
     return shipgate_dir(project_root) / "tools"
 
 
+def managed_bin_dir(project_root: Path) -> Path:
+    return tools_dir(project_root) / "bin"
+
+
 def managed_python_env(project_root: Path) -> Path:
     return tools_dir(project_root) / "python"
 

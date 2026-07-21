@@ -3,4 +3,12 @@ env: system
 target: .
 error-format: compact
 configs:
-  mode: bundled
+  mode: auto
+checks:
+  semgrep.scan:
+    scope: semgrep
+scopes:
+  semgrep:
+    target: .
+    exclude:
+      - src/shipgate/frontend/templates/

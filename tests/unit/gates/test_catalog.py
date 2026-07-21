@@ -18,5 +18,6 @@ def test_merge_gate_catalog(tmp_path: Path):
 
     base = load_catalog()
     merged = merge_gate_catalog(base, tmp_path)
-    assert "gate.script" in merged.tools
+    assert "gate.sample" in merged.tools
+    assert "local-gates" in merged.suites
     assert discover_gates(tmp_path)

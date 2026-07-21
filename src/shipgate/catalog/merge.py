@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
+from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition, WorkflowDefinition
 from shipgate.errors import CatalogError
 
 if TYPE_CHECKING:
@@ -16,15 +16,19 @@ if TYPE_CHECKING:
 def merge_catalogs(base: Catalog, *extensions: Catalog) -> Catalog:
     tools: dict[str, ToolDefinition] = dict(base.tools)
     suites: dict[str, SuiteDefinition] = dict(base.suites)
+    workflows: dict[str, WorkflowDefinition] = dict(base.workflows)
+    capabilities: dict[str, tuple[str, ...]] = dict(base.capabilities)
     for ext in extensions:
-        for tool_id, tool in ext.tools.items():
-            if tool_id in tools:
-                tools[tool_id] = tool
-            else:
-                tools[tool_id] = tool
-        for suite_id, suite in ext.suites.items():
-            suites[suite_id] = suite
-    return Catalog(tools=tools, suites=suites)
+        tools.update(ext.tools)
+        suites.update(ext.suites)
+        workflows.update(ext.workflows)
+        capabilities.update(ext.capabilities)
+    return Catalog(
+        tools=tools,
+        suites=suites,
+        workflows=workflows,
+        capabilities=capabilities,
+    )
 
 
 def load_catalog_pack(path: Path) -> Catalog:

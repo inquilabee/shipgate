@@ -14,6 +14,7 @@ FORMATTERS = {
 
 
 def get_formatter(name: str):
-    if name not in FORMATTERS:
-        return FORMATTERS["json"]
-    return FORMATTERS[name]
+    try:
+        return FORMATTERS[name]
+    except KeyError as exc:
+        raise ValueError(f"unknown error format: {name!r}") from exc

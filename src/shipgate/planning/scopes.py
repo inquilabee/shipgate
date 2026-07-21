@@ -6,7 +6,7 @@ from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
 from shipgate.planning.gitignore import should_ignore
 
-DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "reports/", "__pycache__/")
+DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "build/", "reports/", "__pycache__/")
 
 
 def resolve_scope(
@@ -61,6 +61,20 @@ def _scope_directory_path(project_root: Path, target: Path, scope: Scope) -> lis
 
 
 def _scope_project_root_dirs(project_root: Path, scope: Scope) -> list[Path]:
+    if scope.include:
+        entries: list[Path] = []
+        for inc in scope.include:
+            path = (project_root / inc).resolve()
+            try:
+                path.relative_to(project_root.resolve())
+            except ValueError:
+                continue
+            if not path.exists():
+                continue
+            if should_ignore(project_root, path, extra_excludes=scope.exclude):
+                continue
+            entries.append(path)
+        return sorted(entries)
     entries: list[Path] = []
     for child in sorted(project_root.iterdir()):
         if not child.is_dir():

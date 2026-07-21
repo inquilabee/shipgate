@@ -17,8 +17,8 @@ def catalog():
 
 
 def test_collect_install_requirements(catalog):
-    packages = collect_install_requirements("python-quality", catalog)
-    assert "ruff" in packages
+    python_packages, _binaries = collect_install_requirements("python-quality", catalog)
+    assert "ruff" in python_packages
 
 
 @pytest.mark.skipif(
@@ -48,7 +48,8 @@ def test_ruff_clean_fixture(catalog, tmp_path):
 def test_ruff_failure_fixture(catalog, tmp_path, capsys):
     from shipgate.app import RunCommand, ShipGateApp
 
-    target = FIXTURES / "python_ruff_failure"
+    target = tmp_path / "bad.py"
+    target.write_text("import os\n", encoding="utf-8")
     app = ShipGateApp(catalog=catalog)
     code = app.check(
         RunCommand(

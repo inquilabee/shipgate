@@ -9,6 +9,10 @@ class GitHubFormatter:
         for check in report.reports:
             for finding in check.findings:
                 lines.append(_format_annotation(check.check_id, finding))
+            if not check.findings and check.status != "passed":
+                title = _escape(f"{check.check_id}/TOOL_EXIT")
+                message = _escape("Tool failed")
+                lines.append(f"::error title={title}::{message}")
         return "\n".join(lines) + ("\n" if lines else "")
 
 

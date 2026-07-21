@@ -15,6 +15,8 @@ from shipgate.domain.catalog import (
     InstallDefinition,
     SuiteDefinition,
     ToolDefinition,
+    WorkflowDefinition,
+    WorkflowStep,
 )
 from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
@@ -43,9 +45,18 @@ def load_catalog(path: Path | None = None) -> Catalog:
 def _parse_catalog(raw: dict) -> Catalog:
     tools_raw = raw.get("tools", {}) or {}
     suites_raw = raw.get("suites", {}) or {}
+    workflows_raw = raw.get("workflows", {}) or {}
+    capabilities_raw = raw.get("capabilities", {}) or {}
     tools = {tid: _parse_tool(tid, tdata) for tid, tdata in tools_raw.items()}
     suites = {sid: _parse_suite(sid, sdata) for sid, sdata in suites_raw.items()}
-    return Catalog(tools=tools, suites=suites)
+    workflows = {
+        wid: _parse_workflow(wid, wdata) for wid, wdata in workflows_raw.items()
+    }
+    capabilities = {
+        str(name): tuple(str(tool_id) for tool_id in (members or []))
+        for name, members in capabilities_raw.items()
+    }
+    return Catalog(tools=tools, suites=suites, workflows=workflows, capabilities=capabilities)
 
 
 def _parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
@@ -99,3 +110,34 @@ def _parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:
         parallel=bool(raw.get("parallel", False)),
         fail_fast=bool(raw.get("fail_fast", raw.get("fail-fast", False))),
     )
+
+
+def _parse_workflow(workflow_id: str, raw: list) -> WorkflowDefinition:
+    if not isinstance(raw, list):
+        raise CatalogError(f"workflow {workflow_id!r} must be a list of steps")
+    steps: list[WorkflowStep] = []
+    for index, step_raw in enumerate(raw):
+        if not isinstance(step_raw, dict) or len(step_raw) != 1:
+            raise CatalogError(
+                f"workflow {workflow_id!r} step {index} must be a single-mode mapping"
+            )
+        mode_name, members_raw = next(iter(step_raw.items()))
+        try:
+            mode = RunMode(mode_name)
+        except ValueError as exc:
+            raise CatalogError(
+                f"workflow {workflow_id!r} step {index} has invalid mode {mode_name!r}"
+            ) from exc
+        if not isinstance(members_raw, list):
+            raise CatalogError(
+                f"workflow {workflow_id!r} step {index} members must be a list"
+            )
+        steps.append(
+            WorkflowStep(
+                mode=mode,
+                members=tuple(str(member) for member in members_raw),
+            )
+        )
+    if not steps:
+        raise CatalogError(f"workflow {workflow_id!r} has no steps")
+    return WorkflowDefinition(id=workflow_id, steps=tuple(steps))

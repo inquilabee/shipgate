@@ -49,6 +49,26 @@ def validate_catalog(catalog: Catalog, bundled_root: Path | None = None) -> None
                 )
     for suite_id in catalog.suites:
         _detect_cycle(catalog, suite_id)
+    for workflow_id, workflow in catalog.workflows.items():
+        _validate_tool_id(workflow_id)
+        if not workflow.steps:
+            raise CatalogError(f"workflow {workflow_id!r} has no steps")
+        for step in workflow.steps:
+            for member in step.members:
+                if (
+                    member not in catalog.tools
+                    and member not in catalog.suites
+                    and member not in catalog.capabilities
+                ):
+                    raise CatalogError(
+                        f"workflow {workflow_id!r} references unknown member {member!r}",
+                    )
+    for capability, members in catalog.capabilities.items():
+        for member in members:
+            if member not in catalog.tools:
+                raise CatalogError(
+                    f"capability {capability!r} references unknown tool {member!r}",
+                )
 
 
 def _validate_tool_id(tool_id: str) -> None:

@@ -13,7 +13,7 @@ from shipgate.config.schema import (
     ALLOWED_ERROR_FORMATS,
     ALLOWED_TOP_LEVEL_KEYS,
 )
-from shipgate.domain.project import ProjectConfig, Scope
+from shipgate.domain.project import CheckBinding, ProjectConfig, Scope
 from shipgate.errors import ConfigError
 from shipgate.paths import find_project_root
 
@@ -60,11 +60,24 @@ def _require_allowed(
     return str(value)
 
 
-def _parse_checks(raw: dict, path: Path) -> tuple[str, ...]:
+def _parse_checks(raw: dict, path: Path) -> tuple[tuple[str, ...], tuple[CheckBinding, ...]]:
     checks_raw = raw.get("checks", []) or []
-    if not isinstance(checks_raw, list):
-        raise ConfigError("checks must be a list", path=str(path))
-    return tuple(str(c) for c in checks_raw)
+    if isinstance(checks_raw, list):
+        return tuple(str(c) for c in checks_raw), ()
+    if isinstance(checks_raw, dict):
+        bindings: list[CheckBinding] = []
+        names: list[str] = []
+        for runnable, value in checks_raw.items():
+            runnable_id = str(runnable)
+            names.append(runnable_id)
+            scope_name = None
+            if isinstance(value, dict):
+                scope_name = value.get("scope")
+                if scope_name is not None:
+                    scope_name = str(scope_name)
+            bindings.append(CheckBinding(runnable=runnable_id, scope=scope_name))
+        return tuple(names), tuple(bindings)
+    raise ConfigError("checks must be a list or mapping", path=str(path))
 
 
 def _parse_config_mode(raw: dict, path: Path) -> str:
@@ -108,25 +121,33 @@ def _parse_scopes(raw: object, path: Path) -> dict[str, Scope] | None:
 def _parse_config(raw: dict, path: Path) -> ProjectConfig:
     _validate_top_level_keys(raw, path)
     env = _require_allowed(raw.get("env", "managed"), ALLOWED_ENV_VALUES, "env", path)
-    error_format = _require_allowed(
-        raw.get("error-format", "json"),
-        ALLOWED_ERROR_FORMATS,
-        "error-format",
-        path,
-    )
+    error_format_raw = raw.get("error-format")
+    error_format = None
+    if error_format_raw is not None:
+        error_format = _require_allowed(
+            error_format_raw,
+            ALLOWED_ERROR_FORMATS,
+            "error-format",
+            path,
+        )
     config_mode = _parse_config_mode(raw, path)
-    checks = _parse_checks(raw, path)
+    checks, check_bindings = _parse_checks(raw, path)
     scopes = _parse_scopes(raw.get("scopes"), path)
     suite = raw.get("suite", "standard")
     if suite is not None:
         suite = str(suite)
+    workflow = raw.get("workflow")
+    if workflow is not None:
+        workflow = str(workflow)
     return ProjectConfig(
         suite=suite,
+        workflow=workflow,
         env=env,
         target=Path(raw.get("target", ".")),
         error_format=error_format,
         config_mode=config_mode,
         checks=checks,
+        check_bindings=check_bindings,
         scopes=scopes,
         auto_install=bool(raw.get("auto-install", False)),
         parallel=bool(raw.get("parallel", False)),

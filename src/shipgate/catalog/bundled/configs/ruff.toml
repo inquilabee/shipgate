@@ -6,4 +6,4 @@ src = ["src", "tests"]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "PTH", "TCH", "ASYNC", "S", "N", "W"]
 
 [lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "S603"]

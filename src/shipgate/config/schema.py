@@ -9,6 +9,7 @@ ALLOWED_TOP_LEVEL_KEYS = frozenset(
         "configs",
         "checks",
         "scopes",
+        "workflow",
         "error-formatters",
         "auto-install",
         "parallel",

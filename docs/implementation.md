@@ -250,7 +250,7 @@ Quiet success means no stdout and no stderr unless `--verbose` is set.
 
 On failure:
 
-1. write canonical JSON to `reports/failures/<run-id>/report.json`
+1. write canonical JSON to `.shipgate/reports/failures/<run-id>/report.json`
 1. render the selected `error-format` to stderr
 1. exit `1`
 
@@ -766,7 +766,7 @@ Output:
 First implementation:
 
 - always respect `.gitignore`
-- always ignore `.shipgate/`, `.venv/`, and `reports/`
+- always ignore `.shipgate/`, `.venv/`, and `.shipgate/reports/`
 - support target path
 - support explicit include/exclude strings
 
@@ -783,7 +783,7 @@ For the first ruff path, prefer passing the project target and let ruff handle f
 Default option rules:
 
 - `format`: `json` for tool output when supported
-- `output`: `reports/raw/<check-id>.json`
+- `output`: `.shipgate/reports/raw/<check-id>.json`
 - `verbose`: false
 - `quiet`: false
 - `fix`: true only in apply mode when tool supports mutation
@@ -924,7 +924,7 @@ Responsibilities:
 Directory layout:
 
 ```text
-reports/
+.shipgate/reports/
   raw/
     <run-id>/
       <check-id>/
@@ -1252,7 +1252,7 @@ Expected behavior:
 - `check` runs ruff check
 - success is quiet and exits `0`
 - failure exits `1`
-- failure writes `reports/failures/<run-id>/report.json`
+- failure writes `.shipgate/reports/failures/<run-id>/report.json`
 - failure prints configured `error-format`
 
 Use fixture files under:

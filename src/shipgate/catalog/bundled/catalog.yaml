@@ -72,17 +72,20 @@ tools:
     cli:
       paths:
         style: positional
+      format:
+        flag: --output-format
+        style: scalar
     configuration:
       bundled: configs/ty.toml
       discover: ["ty.toml", "pyproject.toml"]
       pyproject_section: tool.ty
       precedence: [cli, repo, bundled]
       merge: false
-    option_order: [paths]
+    option_order: [format, paths]
 
   bandit.scan:
     executable: bandit
-    subcommand: ["-r", "-ll"]
+    subcommand: ["-r", "-ll", "-q"]
     modes: ["check"]
     capabilities: ["Security"]
     normalizer: bandit
@@ -174,12 +177,15 @@ tools:
       config:
         flag: --config
         style: repeated
+      exclude:
+        flag: --exclude
+        style: repeated
     configuration:
       bundled: configs/semgrep.yaml
       discover: [".semgrep.yml", ".semgrep.yaml", "semgrep.yaml", "semgrep.yml"]
       precedence: [cli, repo, bundled]
       merge: false
-    option_order: [config, paths]
+    option_order: [config, exclude, paths]
 
   deadcode.check:
     executable: deadcode

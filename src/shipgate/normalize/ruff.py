@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
+from shipgate.normalize.output import read_tool_output
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
@@ -49,14 +50,15 @@ def _parse_ruff_items(stdout: str) -> list[dict]:
 class RuffNormalizer:
     def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport:
         check_id = request.tool.id
-        if result.exit_code == 0 and not result.stdout.strip():
+        stdout = read_tool_output(request, result)
+        if result.exit_code == 0 and not stdout.strip():
             return CheckReport(
                 check_id=check_id,
                 tool_id=check_id,
                 status="passed",
                 exit_code=0,
             )
-        items = _parse_ruff_items(result.stdout)
+        items = _parse_ruff_items(stdout)
         findings = tuple(_ruff_item_to_finding(item, check_id) for item in items)
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(

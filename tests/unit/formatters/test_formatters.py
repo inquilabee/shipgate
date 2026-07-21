@@ -73,3 +73,46 @@ def test_github_escapes():
     )
     output = GitHubFormatter().render(report)
     assert "%3A" in output
+
+
+def _tool_exit_report() -> RunReport:
+    check = CheckReport(
+        check_id="shellcheck",
+        tool_id="shellcheck",
+        status="failed",
+        exit_code=1,
+        findings=(),
+    )
+    return RunReport(
+        run_id="run",
+        suite="standard",
+        mode="check",
+        status="failed",
+        reports=(check,),
+    )
+
+
+def test_compact_formatter_tool_exit():
+    output = CompactFormatter().render(_tool_exit_report())
+    assert "shellcheck: error: TOOL_EXIT Tool failed" in output
+
+
+def test_text_formatter_tool_exit():
+    output = TextFormatter().render(_tool_exit_report())
+    assert "TOOL_EXIT" in output
+    assert "Tool failed" in output
+
+
+def test_github_formatter_tool_exit():
+    output = GitHubFormatter().render(_tool_exit_report())
+    assert "TOOL_EXIT" in output
+    assert "Tool failed" in output
+
+
+def test_get_formatter_unknown_raises():
+    import pytest
+
+    from shipgate.formatters.plugins import get_formatter
+
+    with pytest.raises(ValueError, match="unknown error format"):
+        get_formatter("xml")

@@ -17,4 +17,7 @@ class TextFormatter:
                         loc_part += f":{finding.location.line}"
                     loc = f" ({loc_part})"
                 lines.append(f"- [{finding.severity}] {finding.rule_id}: {finding.message}{loc}")
+            if not check.findings and check.status != "passed":
+                lines.append(f"[{check.check_id}]")
+                lines.append("- [error] TOOL_EXIT: Tool failed")
         return "\n".join(lines) + ("\n" if lines else "")

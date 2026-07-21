@@ -14,34 +14,34 @@ def catalog():
 
 
 def test_default_selects_standard(catalog):
-    suite_id, tools = resolve_runnables(
+    suite_id, planned = resolve_runnables(
         mode=RunMode.CHECK,
         project=ProjectConfig(),
         catalog=catalog,
     )
     assert suite_id == "standard"
-    assert tools == ["ruff.lint", "ty.check"]
+    assert [item.tool_id for item in planned] == ["ruff.lint", "ty.check"]
 
 
 def test_suite_override(catalog):
-    _, tools = resolve_runnables(
+    _, planned = resolve_runnables(
         mode=RunMode.CHECK,
         project=ProjectConfig(),
         catalog=catalog,
         suite_override="python-quality",
     )
-    assert tools == ["ruff.lint", "ty.check"]
+    assert [item.tool_id for item in planned] == ["ruff.lint", "ty.check"]
 
 
 def test_check_override(catalog):
-    suite_id, tools = resolve_runnables(
+    suite_id, planned = resolve_runnables(
         mode=RunMode.CHECK,
         project=ProjectConfig(),
         catalog=catalog,
         check_override="ruff.lint",
     )
     assert suite_id == "ruff.lint"
-    assert tools == ["ruff.lint"]
+    assert [item.tool_id for item in planned] == ["ruff.lint"]
 
 
 def test_unknown_suite_fails(catalog):
@@ -63,3 +63,14 @@ def test_duplicate_leaves_deduped(catalog):
     catalog_data = catalog
     tools = expand_suite("full", catalog_data)
     assert tools.count("ruff.lint") == 1
+
+
+def test_workflow_resolves_ci(catalog):
+    suite_id, planned = resolve_runnables(
+        mode=RunMode.CHECK,
+        project=ProjectConfig(),
+        catalog=catalog,
+        workflow_override="ci",
+    )
+    assert suite_id == "ci"
+    assert [item.tool_id for item in planned][:2] == ["ruff.lint", "ty.check"]

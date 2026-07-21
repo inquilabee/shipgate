@@ -4,7 +4,7 @@ from typing import Protocol
 
 from shipgate.domain.execution import ResolvedRequest
 from shipgate.domain.reports import CheckReport
-from shipgate.normalize import generic, radon, ruff
+from shipgate.normalize import bandit, generic, gitleaks, radon, ruff, semgrep, ty
 from shipgate.runtime.executor import ProcessResult
 
 
@@ -15,12 +15,12 @@ class Normalizer(Protocol):
 NORMALIZERS: dict[str, Normalizer] = {
     "ruff": ruff.RuffNormalizer(),
     "generic_exit": generic.GenericExitNormalizer(),
-    "bandit": generic.GenericExitNormalizer(),
-    "semgrep": generic.GenericExitNormalizer(),
+    "bandit": bandit.BanditNormalizer(),
+    "semgrep": semgrep.SemgrepNormalizer(),
     "codespell": generic.GenericExitNormalizer(),
-    "gitleaks": generic.GenericExitNormalizer(),
+    "gitleaks": gitleaks.GitleaksNormalizer(),
     "markdownlint": generic.GenericExitNormalizer(),
-    "ty": generic.GenericExitNormalizer(),
+    "ty": ty.TyNormalizer(),
     "pytest": generic.GenericExitNormalizer(),
     "radon": radon.RadonNormalizer(),
     "vulture": generic.GenericExitNormalizer(),

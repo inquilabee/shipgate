@@ -7,8 +7,10 @@ from typing import TYPE_CHECKING
 from shipgate.domain.execution import ExecutionEnvironment, ExecutionRequest, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
+from shipgate.domain.project import ProjectConfig
 from shipgate.errors import PlanningError
 from shipgate.planning.defaults import apply_defaults
+from shipgate.planning.options import resolve_option_sources
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -39,6 +41,7 @@ def resolve_request(
     environment: ExecutionEnvironment,
     *,
     target: Path,
+    project: ProjectConfig | None = None,
     option_sources: dict[str, str] | None = None,
 ) -> ResolvedRequest:
     if request.mode not in tool.modes:
@@ -50,8 +53,14 @@ def resolve_request(
         raise PlanningError("cannot set both verbose and quiet")
 
     sources = dict(option_sources or {})
+    merged_options, precedence_sources = resolve_option_sources(
+        cli_options=request.options,
+        project=project or ProjectConfig(),
+        tool=tool,
+    )
+    sources.update(precedence_sources)
     options, sources = apply_defaults(
-        request.options,
+        merged_options,
         mode=request.mode,
         check_id=tool.id,
         project_root=request.project_root,
@@ -65,6 +74,7 @@ def resolve_request(
     output_path = options.output or (
         request.project_root / ".shipgate" / "reports" / "raw" / f"{tool.id}.json"
     )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     return ResolvedRequest(
         runnable=request.runnable,

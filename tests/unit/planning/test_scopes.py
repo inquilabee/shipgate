@@ -47,6 +47,19 @@ def test_scope_paths_honors_include(tmp_path: Path):
     assert paths == (tmp_path / "src",)
 
 
+def test_scope_paths_honors_nested_include(tmp_path: Path):
+    package = tmp_path / "src" / "reslab"
+    package.mkdir(parents=True)
+    tests = tmp_path / "src" / "tests"
+    tests.mkdir(parents=True)
+
+    scope = Scope(target=tmp_path, include=("src/reslab",), respect_gitignore=True)
+    paths = scope_paths(scope, tmp_path, mode=RunMode.CHECK)
+
+    assert paths == (package,)
+    assert tests not in paths
+
+
 def test_scope_paths_returns_target_when_disabled(tmp_path: Path):
     target = tmp_path / "src"
     target.mkdir()
