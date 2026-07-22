@@ -1,0 +1,24 @@
+gate.folder-breadth:
+  executable: bash
+  script: gates/folder-breadth.sh
+  modes:
+    - check
+  capabilities:
+    - Gates
+    - Policy
+  normalizer: gate_json
+  configuration:
+    bundled: configs/gates/folder-breadth.yaml
+    discover:
+      - .shipgate/configs/gates/gate.folder-breadth.yaml
+    precedence:
+      - repo
+      - bundled
+  option_order: []
+  scope:
+    extensions:
+      - .py
+      - .md
+      - .yaml
+      - .sh
+    delivery: dirs

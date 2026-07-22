@@ -154,6 +154,19 @@ def test_expand_scope_filters_extensions(tmp_path: Path):
     assert names == {"ok.py"}
 
 
+def test_scope_paths_for_tool_excludes_venv_yaml(tmp_path: Path):
+    (tmp_path / ".gitignore").write_text(".venv/\n", encoding="utf-8")
+    (tmp_path / "config.yaml").write_text("key: value\n", encoding="utf-8")
+    venv = tmp_path / ".venv"
+    venv.mkdir()
+    (venv / "ignored.yaml").write_text("key: ignored\n", encoding="utf-8")
+    catalog = load_catalog()
+    tool = catalog.get_tool("yamlfmt.apply")
+    scope = Scope(target=tmp_path, respect_gitignore=True)
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    assert paths == (Path("config.yaml"),)
+
+
 def test_expand_scope_include_prefix(tmp_path: Path):
     included = tmp_path / "src" / "reslab"
     included.mkdir(parents=True)

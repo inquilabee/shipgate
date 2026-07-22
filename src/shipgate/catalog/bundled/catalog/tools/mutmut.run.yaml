@@ -1,0 +1,20 @@
+mutmut.run:
+  executable: mutmut
+  subcommand:
+    - run
+  modes:
+    - check
+  capabilities:
+    - Testing
+  normalizer: generic_exit
+  install:
+    manager: python
+    package: mutmut
+    version: '>=2.0'
+  cli:
+    paths:
+      style: positional
+  option_order:
+    - paths
+  scope:
+    delivery: root

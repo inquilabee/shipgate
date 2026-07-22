@@ -1,0 +1,29 @@
+mdformat.apply:
+  executable: mdformat
+  subcommand: []
+  modes:
+    - apply
+    - check
+  capabilities:
+    - Documentation
+    - Formatting
+  normalizer: generic_exit
+  install:
+    manager: python
+    package: mdformat
+    version: '>=0.7'
+  cli:
+    paths:
+      style: positional
+    check:
+      flag: --check
+      style: boolean
+  option_order:
+    - check
+    - paths
+  scope:
+    extensions:
+      - .md
+    globs:
+      - '**/*.mdc'
+    delivery: files

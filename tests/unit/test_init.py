@@ -16,6 +16,9 @@ def assert_init_layout(root):
     assert (sg / "allowlists" / "acronyms.yaml").is_file()
     assert (sg / "allowlists" / "module-private-vars.txt").is_file()
     assert (sg / "configs" / "ruff.toml").is_file()
+    gitignore = (sg / ".gitignore").read_text(encoding="utf-8")
+    assert "tools/" in gitignore
+    assert "!configs/" in gitignore
 
 
 def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):

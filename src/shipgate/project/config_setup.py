@@ -52,6 +52,16 @@ def scaffold_file_if_missing(
     return target
 
 
+def scaffold_shipgate_gitignore(project_root: Path) -> Path | None:
+    """Copy bundled .shipgate/.gitignore when missing."""
+    bundled = bundled_root_path() / "setup" / ".gitignore"
+    return scaffold_file_if_missing(
+        project_root,
+        Path(".shipgate/.gitignore"),
+        bundled_template=bundled,
+    )
+
+
 def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]:
     """Copy missing tool configs from bundled templates; deduplicate shared configs."""
     root = project_root.resolve()

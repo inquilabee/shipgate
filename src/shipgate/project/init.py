@@ -8,7 +8,7 @@ from shipgate.catalog.loader import load_catalog
 from shipgate.errors import ShipGateError
 from shipgate.gates.setup import setup_bundled_gates
 from shipgate.paths import shipgate_dir
-from shipgate.project.config_setup import scaffold_bundled_configs
+from shipgate.project.config_setup import scaffold_bundled_configs, scaffold_shipgate_gitignore
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -30,6 +30,9 @@ def scaffold_project_layout(project_root: Path) -> list[Path]:
     (shipgate_dir(root) / "gates").mkdir(parents=True, exist_ok=True)
     (shipgate_dir(root) / "configs").mkdir(parents=True, exist_ok=True)
     created = scaffold_bundled_configs(root, catalog)
+    gitignore = scaffold_shipgate_gitignore(root)
+    if gitignore is not None:
+        created.append(gitignore)
     setup_bundled_gates(root, catalog)
     return created
 

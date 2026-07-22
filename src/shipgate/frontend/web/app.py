@@ -67,10 +67,21 @@ def create_app(primary_root: Path) -> FastAPI:
 
 
 def register_routes(app: FastAPI) -> None:
+    register_health_routes(app)
+    register_overview_routes(app)
+    register_run_routes(app)
+    register_run_log_routes(app)
+    register_tool_routes(app)
+    register_api_routes(app)
+
+
+def register_health_routes(app: FastAPI) -> None:
     @app.get("/health")
     def health() -> dict[str, bool]:
         return {"ok": True}
 
+
+def register_overview_routes(app: FastAPI) -> None:
     @app.get("/", response_class=HTMLResponse)
     def overview(request: Request, run_id: str | None = None) -> HTMLResponse:
         storage: SqliteStorage = request.app.state.storage
@@ -79,6 +90,8 @@ def register_routes(app: FastAPI) -> None:
             request, "overview.html", overview_context(request, storage, run_id)
         )
 
+
+def register_run_routes(app: FastAPI) -> None:
     @app.get("/runs", response_class=HTMLResponse)
     def runs_list(request: Request) -> HTMLResponse:
         storage: SqliteStorage = request.app.state.storage
@@ -134,6 +147,8 @@ def register_routes(app: FastAPI) -> None:
             {"request": request, "run": run},
         )
 
+
+def register_run_log_routes(app: FastAPI) -> None:
     @app.get("/runs/{run_id}/checks/{check_id}/log")
     def check_log(
         request: Request, run_id: str, check_id: str, stream: str = "stdout"
@@ -157,6 +172,8 @@ def register_routes(app: FastAPI) -> None:
             raise HTTPException(status_code=404, detail="log file missing")
         return PlainTextResponse(path.read_text(encoding="utf-8", errors="replace"))
 
+
+def register_tool_routes(app: FastAPI) -> None:
     @app.get("/tools", response_class=HTMLResponse)
     def tool_docs(request: Request) -> HTMLResponse:
         catalog = request.app.state.catalog
@@ -167,6 +184,8 @@ def register_routes(app: FastAPI) -> None:
             {"request": request, "tools": tool_docs_rows(catalog, primary)},
         )
 
+
+def register_api_routes(app: FastAPI) -> None:
     @app.get("/api/runs")
     def api_runs(request: Request) -> dict[str, list[dict]]:
         store = ReportStore(request.app.state.primary_root)

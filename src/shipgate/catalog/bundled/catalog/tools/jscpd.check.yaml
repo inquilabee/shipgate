@@ -1,0 +1,40 @@
+jscpd.check:
+  executable: jscpd
+  subcommand: []
+  modes:
+    - check
+  capabilities:
+    - Quality
+  normalizer: generic_exit
+  install:
+    manager: binary
+    package: jscpd
+    version: '>=3.0'
+    binary: jscpd
+  cli:
+    paths:
+      style: positional
+    config:
+      flag: --config
+      style: scalar
+    threshold:
+      flag: --threshold
+      style: scalar
+      default: '2'
+  configuration:
+    bundled: configs/jscpd.json
+    discover:
+      - .shipgate/configs/jscpd.json
+      - .jscpd.json
+      - jscpd.json
+    precedence:
+      - cli
+      - repo
+      - bundled
+    merge: false
+  option_order:
+    - config
+    - threshold
+    - paths
+  scope:
+    delivery: root

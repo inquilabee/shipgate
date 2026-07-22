@@ -26,21 +26,65 @@ from shipgate.errors import CatalogError
 def load_catalog(path: Path | None = None) -> Catalog:
     if path is None:
         bundled = resources.files("shipgate.catalog.bundled")
-        catalog_path = bundled / "catalog.yaml"
-        raw_text = catalog_path.read_text(encoding="utf-8")
         bundled_root = Path(str(bundled))
+        raw = load_bundled_catalog_raw(bundled)
     else:
-        raw_text = path.read_text(encoding="utf-8")
+        try:
+            raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        except yaml.YAMLError as exc:
+            raise CatalogError(f"invalid catalog YAML: {exc}") from exc
         bundled_root = path.parent
-    try:
-        raw = yaml.safe_load(raw_text)
-    except yaml.YAMLError as exc:
-        raise CatalogError(f"invalid catalog YAML: {exc}") from exc
     if not isinstance(raw, dict):
         raise CatalogError("catalog must be a mapping")
     catalog = parse_catalog(raw)
     validate_catalog(catalog, bundled_root)
     return catalog
+
+
+def load_bundled_catalog_raw(bundled: object) -> dict:
+    """Load split catalog from bundled/catalog/ directory."""
+    bundled_root = Path(str(bundled))
+    catalog_dir = bundled_root / "catalog"
+    raw: dict = {"tools": load_bundled_tools(catalog_dir / "tools")}
+    for section in ("suites", "workflows", "capabilities"):
+        raw[section] = load_catalog_section(catalog_dir, section)
+    return raw
+
+
+def load_bundled_tools(tools_dir: Path) -> dict:
+    tools: dict = {}
+    for tool_path in sorted(tools_dir.iterdir()):
+        if tool_path.suffix != ".yaml":
+            continue
+        tool_id, tool_data = parse_tool_file(tool_path)
+        tools[tool_id] = tool_data
+    return tools
+
+
+def parse_tool_file(tool_path: Path) -> tuple[str, dict]:
+    try:
+        tool_raw = yaml.safe_load(tool_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise CatalogError(f"invalid catalog YAML: {tool_path.name}: {exc}") from exc
+    if not isinstance(tool_raw, dict):
+        raise CatalogError(f"tool file must be a mapping: {tool_path.name}")
+    expected_id = tool_path.stem
+    if len(tool_raw) != 1 or expected_id not in tool_raw:
+        raise CatalogError(
+            f"tool file {tool_path.name!r} must contain exactly one key {expected_id!r}"
+        )
+    return expected_id, tool_raw[expected_id]
+
+
+def load_catalog_section(catalog_dir: Path, section: str) -> dict:
+    section_path = catalog_dir / f"{section}.yaml"
+    try:
+        section_raw = yaml.safe_load(section_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise CatalogError(f"invalid catalog YAML: {section_path.name}: {exc}") from exc
+    if not isinstance(section_raw, dict) or section not in section_raw:
+        raise CatalogError(f"expected top-level {section!r} key in {section_path.name}")
+    return section_raw[section]
 
 
 def parse_catalog(raw: dict) -> Catalog:

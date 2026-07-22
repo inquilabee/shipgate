@@ -3,7 +3,10 @@ target-version = "py311"
 src = ["src", "tests"]
 
 [lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "PTH", "TCH", "ASYNC", "S", "N", "W"]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "PTH", "TCH", "ASYNC", "S", "N", "W", "C901"]
+
+[lint.mccabe]
+max-complexity = 10
 
 [lint.per-file-ignores]
 "tests/**" = ["S101", "S603"]

@@ -1,10 +1,11 @@
-from shipgate.adapter.serialize import serialize_option
+from shipgate.adapter.serialize import CliSerializer, serialize_option
 from shipgate.domain.catalog import CliOptionDefinition
 
 
 def test_scalar():
     opt = CliOptionDefinition(flag="--config", style="scalar")
     assert serialize_option(opt, "cfg.toml") == ["--config", "cfg.toml"]
+    assert CliSerializer().serialize(opt, "cfg.toml") == ["--config", "cfg.toml"]
 
 
 def test_scalar_tuple_uses_first_path():

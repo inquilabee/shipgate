@@ -1,8 +1,14 @@
 """Generic exit-code normalizer."""
 
-from shipgate.domain.execution import ResolvedRequest
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from shipgate.domain.reports import CheckReport, Finding
-from shipgate.runtime.executor import ProcessResult
+
+if TYPE_CHECKING:
+    from shipgate.domain.execution import ResolvedRequest
+    from shipgate.runtime.executor import ProcessResult
 
 
 class GenericExitNormalizer:

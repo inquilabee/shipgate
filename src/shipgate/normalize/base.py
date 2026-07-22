@@ -1,11 +1,25 @@
 """Normalizer protocol and registry."""
 
-from typing import Protocol
+from __future__ import annotations
 
-from shipgate.domain.execution import ResolvedRequest
-from shipgate.domain.reports import CheckReport
-from shipgate.normalize import bandit, gate_json, generic, gitleaks, radon, ruff, semgrep, ty
-from shipgate.runtime.executor import ProcessResult
+from typing import TYPE_CHECKING, Protocol
+
+from shipgate.normalize import (
+    bandit,
+    exit_normalizers,
+    gate_json,
+    generic,
+    gitleaks,
+    radon,
+    ruff,
+    semgrep,
+    ty,
+)
+
+if TYPE_CHECKING:
+    from shipgate.domain.execution import ResolvedRequest
+    from shipgate.domain.reports import CheckReport
+    from shipgate.runtime.executor import ProcessResult
 
 
 class Normalizer(Protocol):
@@ -17,14 +31,14 @@ NORMALIZERS: dict[str, Normalizer] = {
     "generic_exit": generic.GenericExitNormalizer(),
     "bandit": bandit.BanditNormalizer(),
     "semgrep": semgrep.SemgrepNormalizer(),
-    "codespell": generic.GenericExitNormalizer(),
+    "codespell": exit_normalizers.CodespellNormalizer(),
     "gitleaks": gitleaks.GitleaksNormalizer(),
-    "markdownlint": generic.GenericExitNormalizer(),
+    "markdownlint": exit_normalizers.MarkdownlintNormalizer(),
     "ty": ty.TyNormalizer(),
-    "pytest": generic.GenericExitNormalizer(),
+    "pytest": exit_normalizers.PytestNormalizer(),
     "radon": radon.RadonNormalizer(),
-    "vulture": generic.GenericExitNormalizer(),
-    "deadcode": generic.GenericExitNormalizer(),
+    "vulture": exit_normalizers.VultureNormalizer(),
+    "deadcode": exit_normalizers.DeadcodeNormalizer(),
     "gate_json": gate_json.GateJsonNormalizer(),
 }
 

@@ -1,0 +1,24 @@
+capabilities:
+  Linting:
+    - ruff.lint
+  Formatting:
+    - ruff.format
+    - mdformat.apply
+    - shfmt.apply
+    - yamlfmt.apply
+  TypeChecking:
+    - ty.check
+  Security:
+    - bandit.scan
+    - gitleaks.scan
+    - semgrep.scan
+  Policy:
+    - gate.module-size
+    - gate.module-private-vars
+    - gate.folder-breadth
+    - gate.acronym-allowlist
+  Gates:
+    - gate.module-size
+    - gate.module-private-vars
+    - gate.folder-breadth
+    - gate.acronym-allowlist

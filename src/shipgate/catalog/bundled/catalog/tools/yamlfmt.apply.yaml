@@ -1,0 +1,39 @@
+yamlfmt.apply:
+  executable: yamlfmt
+  subcommand: []
+  modes:
+    - apply
+    - check
+  capabilities:
+    - Formatting
+  normalizer: generic_exit
+  install:
+    manager: binary
+    package: yamlfmt
+    version: '>=0.0.1'
+    binary: yamlfmt
+  cli:
+    paths:
+      style: positional
+    config:
+      flag: -conf
+      style: scalar
+  configuration:
+    bundled: configs/yamlfmt.yaml
+    discover:
+      - .shipgate/configs/yamlfmt.yaml
+      - .yamlfmt
+      - yamlfmt.yaml
+    precedence:
+      - cli
+      - repo
+      - bundled
+    merge: false
+  option_order:
+    - config
+    - paths
+  scope:
+    extensions:
+      - .yaml
+      - .yml
+    delivery: files

@@ -1,0 +1,23 @@
+gate.acronym-allowlist:
+  executable: bash
+  script: gates/acronym-allowlist.sh
+  modes:
+    - check
+  capabilities:
+    - Gates
+    - Policy
+  normalizer: gate_json
+  configuration:
+    bundled: configs/gates/acronym-allowlist.yaml
+    discover:
+      - .shipgate/configs/gates/gate.acronym-allowlist.yaml
+    precedence:
+      - repo
+      - bundled
+  option_order: []
+  scope:
+    extensions:
+      - .md
+    globs:
+      - '**/*.mdc'
+    delivery: files

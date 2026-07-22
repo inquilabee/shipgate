@@ -1,0 +1,21 @@
+gate.module-size:
+  executable: bash
+  script: gates/module-size.sh
+  modes:
+    - check
+  capabilities:
+    - Gates
+    - Policy
+  normalizer: gate_json
+  configuration:
+    bundled: configs/gates/module-size.yaml
+    discover:
+      - .shipgate/configs/gates/gate.module-size.yaml
+    precedence:
+      - repo
+      - bundled
+  option_order: []
+  scope:
+    extensions:
+      - .py
+    delivery: files

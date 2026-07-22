@@ -123,6 +123,71 @@ def iter_scope_files(
     )
 
 
+def include_allowed(rel: str, include: tuple[str, ...]) -> bool:
+    if not include:
+        return True
+    return any(rel.startswith(inc.rstrip("/")) for inc in include)
+
+
+def consider_scope_file(
+    path: Path,
+    *,
+    project_root: Path,
+    paths: list[Path],
+    include: tuple[str, ...],
+    extensions: tuple[str, ...],
+    globs: tuple[str, ...],
+) -> None:
+    rel = str(path.relative_to(project_root)).replace("\\", "/")
+    if not include_allowed(rel, include):
+        return
+    if not matches_tool_criteria(rel, extensions=extensions, globs=globs):
+        return
+    paths.append(path)
+
+
+def walk_scope_dir(
+    directory: Path,
+    *,
+    project_root: Path,
+    paths: list[Path],
+    include: tuple[str, ...],
+    exclude: tuple[str, ...],
+    extensions: tuple[str, ...],
+    globs: tuple[str, ...],
+    respect_gitignore: bool,
+    spec: pathspec.PathSpec | None,
+) -> None:
+    if not directory.is_dir():
+        return
+    for child in sorted(directory.iterdir()):
+        if respect_gitignore and should_ignore(
+            project_root, child, extra_excludes=exclude, spec=spec
+        ):
+            continue
+        if child.is_file():
+            consider_scope_file(
+                child,
+                project_root=project_root,
+                paths=paths,
+                include=include,
+                extensions=extensions,
+                globs=globs,
+            )
+        elif child.is_dir():
+            walk_scope_dir(
+                child,
+                project_root=project_root,
+                paths=paths,
+                include=include,
+                exclude=exclude,
+                extensions=extensions,
+                globs=globs,
+                respect_gitignore=respect_gitignore,
+                spec=spec,
+            )
+
+
 def expand_scope(
     project_root: Path,
     target: Path,
@@ -139,40 +204,31 @@ def expand_scope(
     spec = load_gitignore_spec(project_root) if respect_gitignore else None
     paths: list[Path] = []
 
-    def include_allowed(rel: str) -> bool:
-        if not include:
-            return True
-        return any(rel.startswith(inc.rstrip("/")) for inc in include)
-
-    def consider_file(path: Path) -> None:
-        rel = str(path.relative_to(project_root)).replace("\\", "/")
-        if not include_allowed(rel):
-            return
-        if not matches_tool_criteria(rel, extensions=extensions, globs=globs):
-            return
-        paths.append(path)
-
-    def walk(directory: Path) -> None:
-        if not directory.is_dir():
-            return
-        for child in sorted(directory.iterdir()):
-            if respect_gitignore and should_ignore(
-                project_root, child, extra_excludes=exclude, spec=spec
-            ):
-                continue
-            if child.is_file():
-                consider_file(child)
-            elif child.is_dir():
-                walk(child)
-
     if target.is_file():
         if respect_gitignore and should_ignore(
             project_root, target, extra_excludes=exclude, spec=spec
         ):
             return ()
-        consider_file(target)
+        consider_scope_file(
+            target,
+            project_root=project_root,
+            paths=paths,
+            include=include,
+            extensions=extensions,
+            globs=globs,
+        )
     else:
-        walk(target)
+        walk_scope_dir(
+            target,
+            project_root=project_root,
+            paths=paths,
+            include=include,
+            exclude=exclude,
+            extensions=extensions,
+            globs=globs,
+            respect_gitignore=respect_gitignore,
+            spec=spec,
+        )
     return tuple(paths)
 
 

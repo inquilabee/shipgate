@@ -1,20 +1,5 @@
-"""Formatter registry."""
+"""Formatter registry (re-exports from base)."""
 
-from shipgate.formatters.compact import CompactFormatter
-from shipgate.formatters.github import GitHubFormatter
-from shipgate.formatters.json import JsonFormatter
-from shipgate.formatters.text import TextFormatter
+from shipgate.formatters.base import FORMATTERS, Formatter, get_formatter
 
-FORMATTERS = {
-    "json": JsonFormatter(),
-    "compact": CompactFormatter(),
-    "text": TextFormatter(),
-    "github": GitHubFormatter(),
-}
-
-
-def get_formatter(name: str):
-    try:
-        return FORMATTERS[name]
-    except KeyError as exc:
-        raise ValueError(f"unknown error format: {name!r}") from exc
+__all__ = ["FORMATTERS", "Formatter", "get_formatter"]

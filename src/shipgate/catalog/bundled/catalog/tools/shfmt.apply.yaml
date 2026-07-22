@@ -1,0 +1,29 @@
+shfmt.apply:
+  executable: shfmt
+  subcommand: []
+  modes:
+    - apply
+    - check
+  capabilities:
+    - Shell
+    - Formatting
+  normalizer: generic_exit
+  install:
+    manager: binary
+    package: shfmt
+    version: '>=3.0'
+    binary: shfmt
+  cli:
+    paths:
+      style: positional
+    check:
+      flag: -d
+      style: boolean
+  option_order:
+    - check
+    - paths
+  scope:
+    extensions:
+      - .sh
+      - .bash
+    delivery: files
