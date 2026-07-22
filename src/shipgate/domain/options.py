@@ -31,9 +31,3 @@ class NormalizedOptions:
         from shipgate.domain.options_cli import cli_option_value
 
         return cli_option_value(self, name)
-
-
-@dataclass(frozen=True)
-class OptionValue:
-    value: object
-    source: str

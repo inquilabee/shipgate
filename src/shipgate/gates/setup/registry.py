@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 from shipgate.catalog.loader import load_catalog
 from shipgate.gates.config import load_bundled_gate_config
@@ -13,10 +13,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from shipgate.domain.catalog import Catalog
-
-
-class GateSetup(Protocol):
-    def setup(self, project_root: Path) -> None: ...
 
 
 def make_setup(gate_id: str) -> Callable[[Path], None]:

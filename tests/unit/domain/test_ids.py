@@ -1,6 +1,6 @@
 import pytest
 
-from shipgate.domain.ids import CheckId, RunnableId, SuiteId, validate_id
+from shipgate.domain.ids import validate_id
 
 
 def test_accepts_ruff_lint():
@@ -8,7 +8,7 @@ def test_accepts_ruff_lint():
 
 
 def test_accepts_python_quality():
-    assert SuiteId("python-quality").value == "python-quality"
+    assert validate_id("python-quality") == "python-quality"
 
 
 def test_rejects_empty():
@@ -18,9 +18,9 @@ def test_rejects_empty():
 
 def test_rejects_path_separator():
     with pytest.raises(ValueError):
-        RunnableId("../tool")
+        validate_id("../tool")
 
 
 def test_rejects_uppercase():
     with pytest.raises(ValueError):
-        CheckId("Ruff Lint")
+        validate_id("Ruff Lint")

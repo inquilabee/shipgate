@@ -4,12 +4,8 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pathspec
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
 
 DEFAULT_IGNORED = (
     ".shipgate/",
@@ -101,27 +97,6 @@ def matches_tool_criteria(
         if glob_spec.match_file(normalized):
             return True
     return False
-
-
-def iter_scope_files(
-    project_root: Path,
-    target: Path,
-    *,
-    include: tuple[str, ...] = (),
-    exclude: tuple[str, ...] = (),
-    extensions: tuple[str, ...] = (),
-    globs: tuple[str, ...] = (),
-    respect_gitignore: bool = True,
-) -> Iterator[Path]:
-    yield from expand_scope(
-        project_root,
-        target,
-        include=include,
-        exclude=exclude,
-        extensions=extensions,
-        globs=globs,
-        respect_gitignore=respect_gitignore,
-    )
 
 
 def include_allowed(rel: str, include: tuple[str, ...]) -> bool:

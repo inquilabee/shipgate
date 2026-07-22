@@ -28,11 +28,6 @@ class ShipGateError(Exception):
         return "\n".join(parts)
 
 
-class UsageError(ShipGateError):
-    exit_code = 2
-    title = "usage error"
-
-
 class ConfigError(ShipGateError):
     exit_code = 2
     title = "config error"

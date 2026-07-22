@@ -6,14 +6,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable
 
 T = TypeVar("T")
 R = TypeVar("R")
-
-
-def run_sequential(items: Iterable[T], fn: Callable[[T], R]) -> list[R]:
-    return [fn(item) for item in items]
 
 
 def run_parallel(

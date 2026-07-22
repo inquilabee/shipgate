@@ -8,7 +8,6 @@ from shipgate.catalog.loader import load_catalog
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
 from shipgate.planning.incremental import (
-    filter_changed,
     git_changed_files,
     tool_paths_after_incremental,
 )
@@ -39,45 +38,6 @@ def git_init_commit(tmp_path):
 def git_add(tmp_path, *paths: Path) -> None:
     assert GIT is not None
     subprocess.run([GIT, "add", *paths], cwd=tmp_path, check=True, capture_output=True)
-
-
-@pytest.mark.skipif(GIT is None, reason="git not on PATH")
-def test_filter_changed_returns_subset(tmp_path):
-    source = tmp_path / "src"
-    source.mkdir()
-    file_a = source / "a.py"
-    file_b = source / "b.py"
-    file_a.write_text("x = 1\n", encoding="utf-8")
-    file_b.write_text("y = 2\n", encoding="utf-8")
-    git_init_commit(tmp_path)
-    file_b.write_text("y = 3\n", encoding="utf-8")
-    filtered = filter_changed(
-        (source,),
-        "HEAD",
-        project_root=tmp_path,
-        changed_only=True,
-    )
-    assert filtered == (source,)
-
-
-@pytest.mark.skipif(GIT is None, reason="git not on PATH")
-def test_filter_changed_only_returns_empty_when_no_scope_overlap(tmp_path):
-    source = tmp_path / "src"
-    source.mkdir()
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    readme = docs / "readme.md"
-    readme.write_text("# readme\n", encoding="utf-8")
-    (source / "a.py").write_text("x = 1\n", encoding="utf-8")
-    git_init_commit(tmp_path)
-    readme.write_text("# readme\n\nupdated\n", encoding="utf-8")
-    filtered = filter_changed(
-        (source,),
-        "HEAD",
-        project_root=tmp_path,
-        changed_only=True,
-    )
-    assert filtered == ()
 
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")

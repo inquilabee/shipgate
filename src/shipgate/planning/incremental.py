@@ -28,25 +28,6 @@ def is_incremental(*, changed_only: bool, since: str | None) -> bool:
     return changed_only or since is not None
 
 
-def filter_changed(
-    paths: tuple[Path, ...],
-    since: str | None,
-    *,
-    project_root: Path,
-    changed_only: bool = False,
-) -> tuple[Path, ...]:
-    if not is_incremental(changed_only=changed_only, since=since):
-        return paths
-    ref = since or "HEAD"
-    changed = git_changed_files(project_root, ref)
-    if not changed:
-        return () if changed_only else paths
-    filtered = tuple(path for path in paths if path_matches_changed(path, project_root, changed))
-    if changed_only:
-        return filtered
-    return filtered or paths
-
-
 def tool_paths_after_incremental(
     paths: tuple[Path, ...],
     *,
@@ -207,22 +188,3 @@ def file_matches_changed(path: Path, project_root: Path, changed: set[str]) -> b
     except ValueError:
         rel = path.as_posix()
     return rel in changed
-
-
-def path_matches_changed(path: Path, project_root: Path, changed: set[str]) -> bool:
-    try:
-        rel = path.resolve().relative_to(project_root.resolve()).as_posix()
-    except ValueError:
-        rel = path.as_posix()
-    if rel in changed:
-        return True
-    if path.is_dir():
-        prefix = f"{rel}/" if rel != "." else ""
-        if prefix:
-            return any(item.startswith(prefix) for item in changed)
-        return bool(changed)
-    parent = str(Path(rel).parent)
-    if parent == ".":
-        return False
-    prefix = f"{parent}/"
-    return any(item.startswith(prefix) for item in changed)

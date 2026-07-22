@@ -33,9 +33,6 @@ class RunOrchestrator:
         self._done.set()
         self._fail_stale_runs()
 
-    def active_run_id(self) -> str | None:
-        return self._active_run_id
-
     def wait(self, timeout: float | None = None) -> bool:
         return self._done.wait(timeout)
 
