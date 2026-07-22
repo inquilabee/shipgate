@@ -1,0 +1,8 @@
+# ShipGate yamlfmt settings for this repository.
+gitignore_excludes: true
+exclude:
+  - .shipgate/tools/
+  - .venv/
+  - node_modules/
+  - build/
+  - src/shipgate/catalog/bundled/catalog.yaml

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 INIT_TEMPLATE = """\
 suite: standard
+env: managed
 error-format: compact
 configs:
   mode: auto

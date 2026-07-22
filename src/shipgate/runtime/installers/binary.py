@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import platform
 import shutil
@@ -9,6 +10,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import urllib.request
 import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
@@ -20,16 +22,24 @@ from shipgate.runtime.installers.base import download_https_file, link_binary
 if TYPE_CHECKING:
     from shipgate.domain.catalog import InstallDefinition
 
-BINARY_RELEASES: dict[str, dict[str, str]] = {
+BINARY_RELEASES: dict[str, dict[str, str | dict[str, str]]] = {
     "gitleaks": {
         "repo": "gitleaks/gitleaks",
         "asset_template": "gitleaks_{version}_{os}_{arch}.tar.gz",
         "binary_name": "gitleaks",
+        "arch_map": {"x86_64": "x64"},
     },
     "shfmt": {
         "repo": "mvdan/sh",
-        "asset_template": "shfmt_{version}_{os}_{arch}",
+        "asset_template": "shfmt_v{version}_{os}_{arch}",
         "binary_name": "shfmt",
+        "arch_map": {"x86_64": "amd64"},
+    },
+    "yamlfmt": {
+        "repo": "google/yamlfmt",
+        "asset_template": "yamlfmt_{version}_Linux_{arch}.tar.gz",
+        "binary_name": "yamlfmt",
+        "arch_map": {"x86_64": "x86_64", "arm64": "arm64"},
     },
     "shellcheck": {
         "repo": "koalaman/shellcheck",
@@ -53,6 +63,8 @@ class BinaryInstallStrategy(Protocol):
 
 class PathBinaryInstaller:
     def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
+        if binary_name == "yamlfmt":
+            return False
         return shutil.which(binary_name) is not None
 
     def install(
@@ -79,24 +91,18 @@ class GitHubReleaseInstaller:
         install_def: InstallDefinition,
         destination: Path,
     ) -> None:
-        release = BINARY_RELEASES[binary_name]
         version = normalize_version(install_def.version or "latest")
-        asset_name = release["asset_template"].format(
-            version=version.lstrip("v"),
-            os=github_os(),
-            arch=github_arch(),
-        )
-        if version == "latest":
-            url = f"https://github.com/{release['repo']}/releases/latest/download/{asset_name}"
-        else:
-            url = f"https://github.com/{release['repo']}/releases/download/{version}/{asset_name}"
+        url, asset_name = build_github_release_url(binary_name, version)
         with tempfile.TemporaryDirectory() as tmp:
             archive_path = Path(tmp) / asset_name
             try:
                 download_https_file(url, archive_path)
             except OSError as exc:
                 raise InstallError(f"failed to download {binary_name}: {exc}") from exc
-            extracted = extract_binary(archive_path, release["binary_name"])
+            extracted = extract_binary(
+                archive_path,
+                str(BINARY_RELEASES[binary_name]["binary_name"]),
+            )
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(extracted, destination)
             destination.chmod(destination.stat().st_mode | 0o100)
@@ -104,7 +110,11 @@ class GitHubReleaseInstaller:
 
 class NpmInstaller:
     def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
-        return binary_name == "markdownlint"
+        return (
+            install_def.manager == "binary"
+            and binary_name not in BINARY_RELEASES
+            and binary_name != "yamlfmt"
+        )
 
     def install(
         self,
@@ -115,26 +125,28 @@ class NpmInstaller:
     ) -> None:
         npm = shutil.which("npm")
         if npm is None:
-            raise InstallError("npm is required to install markdownlint-cli")
+            raise InstallError(f"npm is required to install {install_def.package}")
         result = subprocess.run(  # noqa: S603
-            [npm, "install", "--prefix", str(bin_dir), "markdownlint-cli"],
+            [npm, "install", "--prefix", str(bin_dir), install_def.package],
             capture_output=True,
             text=True,
             check=False,
         )
         if result.returncode != 0:
-            raise InstallError(f"failed to install markdownlint-cli: {result.stderr.strip()}")
-        installed = bin_dir / "node_modules" / ".bin" / "markdownlint"
+            raise InstallError(
+                f"failed to install {install_def.package}: {result.stderr.strip()}",
+            )
+        installed = bin_dir / "node_modules" / ".bin" / binary_name
         if sys.platform == "win32":
             installed = installed.with_suffix(".cmd")
         if not installed.is_file():
-            raise InstallError("markdownlint-cli install did not produce an executable")
+            raise InstallError(f"{install_def.package} install did not produce an executable")
         link_binary(installed, destination)
 
 
 class GoInstaller:
     def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
-        return binary_name == "yamlfmt"
+        return binary_name == "yamlfmt" and binary_name not in BINARY_RELEASES
 
     def install(
         self,
@@ -199,6 +211,55 @@ class BinaryInstaller:
             f"binary {binary_name!r} is not available on PATH and has no managed installer",
             hint="install the tool manually or add it to PATH",
         )
+
+
+def release_arch(binary_name: str, arch: str) -> str:
+    release = BINARY_RELEASES[binary_name]
+    arch_map = release.get("arch_map")
+    if isinstance(arch_map, dict):
+        return arch_map.get(arch, arch)
+    return arch
+
+
+def build_github_release_url(binary_name: str, version: str) -> tuple[str, str]:
+    release = BINARY_RELEASES[binary_name]
+    repo = str(release["repo"])
+    resolved_version = resolve_release_version(repo, version)
+    asset_name = str(release["asset_template"]).format(
+        version=resolved_version.lstrip("v"),
+        os=github_os(),
+        arch=release_arch(binary_name, github_arch()),
+    )
+    if version == "latest":
+        url = f"https://github.com/{repo}/releases/latest/download/{asset_name}"
+    else:
+        url = f"https://github.com/{repo}/releases/download/{resolved_version}/{asset_name}"
+    return url, asset_name
+
+
+def resolve_release_version(repo: str, version: str) -> str:
+    if version != "latest":
+        return version
+    return fetch_latest_release_tag(repo)
+
+
+def fetch_latest_release_tag(repo: str) -> str:
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    request = urllib.request.Request(  # noqa: S310
+        url,
+        method="GET",
+        headers={"Accept": "application/vnd.github+json"},
+    )
+    try:
+        # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: E501
+        with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310  # nosec B310
+            data = json.loads(response.read())
+    except OSError as exc:
+        raise InstallError(f"failed to resolve latest release for {repo}: {exc}") from exc
+    tag_name = data.get("tag_name") if isinstance(data, dict) else None
+    if not isinstance(tag_name, str) or not tag_name:
+        raise InstallError(f"could not resolve latest release for {repo}")
+    return tag_name
 
 
 def normalize_version(version: str) -> str:

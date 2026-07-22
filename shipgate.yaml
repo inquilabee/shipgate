@@ -1,5 +1,5 @@
 suite: full
-env: system
+env: managed
 target: .
 error-format: compact
 configs:

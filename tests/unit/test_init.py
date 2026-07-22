@@ -26,6 +26,7 @@ def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     assert config_path.is_file()
     content = config_path.read_text(encoding="utf-8")
     assert "suite: standard" in content
+    assert "env: managed" in content
     assert "error-format: compact" in content
     assert "mode: auto" in content
     assert_init_layout(tmp_path)

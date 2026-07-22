@@ -34,7 +34,7 @@ def test_scope_paths_prunes_ignored_roots(tmp_path: Path):
 def test_scope_paths_apply_mode_uses_target(tmp_path: Path):
     (tmp_path / "src").mkdir()
     scope = Scope(target=tmp_path, respect_gitignore=True)
-    assert scope_paths(scope, tmp_path, mode=RunMode.APPLY) == (tmp_path,)
+    assert scope_paths(scope, tmp_path, mode=RunMode.APPLY) == (Path(),)
 
 
 def test_scope_paths_keeps_nested_target(tmp_path: Path):

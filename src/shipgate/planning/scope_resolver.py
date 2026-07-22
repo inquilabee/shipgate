@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
 from shipgate.planning.gitignore import should_ignore
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "build/", "reports/", "__pycache__/")
 
@@ -40,7 +37,7 @@ class ScopeResolver:
 
     def paths(self, scope: Scope, *, mode: RunMode) -> tuple[Path, ...]:
         if mode == RunMode.APPLY:
-            return (scope.target,)
+            return (self._relative_if_under_root(scope.target),)
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
             return (scope.target,)
         paths = self._scope_entry_paths(scope)
@@ -101,3 +98,11 @@ class ScopeResolver:
         return any(
             rel.startswith(inc.rstrip("/")) or inc.rstrip("/").startswith(rel) for inc in include
         )
+
+    def _relative_if_under_root(self, path: Path) -> Path:
+        resolved = path.resolve()
+        try:
+            rel = resolved.relative_to(self.project_root)
+        except ValueError:
+            return path
+        return rel if rel.parts else Path()

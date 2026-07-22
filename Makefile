@@ -19,4 +19,14 @@ check-commit:
 install-hooks:
 	uv run pre-commit install
 
-.PHONY: check-commit format install-hooks ruff test unit
+# Fresh-machine smoke test: empty project init/install/format/check, then optional repo dogfood.
+# Requires Docker. Set SHIPGATE_DOCKER_DOGFOOD=0 to skip phase B.
+DOCKER_IMAGE := shipgate-docker-test
+docker-test: docker-test-staging
+	docker build -f docker/Dockerfile -t $(DOCKER_IMAGE) .
+	docker run --rm $(DOCKER_IMAGE)
+
+docker-test-staging:
+	scripts/docker-test/prepare-dogfood.sh
+
+.PHONY: check-commit docker-test docker-test-staging format install-hooks ruff test unit

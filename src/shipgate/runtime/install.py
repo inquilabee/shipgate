@@ -6,6 +6,7 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
+from shipgate.errors import InstallError
 from shipgate.paths import tools_dir
 from shipgate.planning.suites import expand_suite
 from shipgate.runtime.environment import tools_manifest_path
@@ -23,7 +24,20 @@ def collect_install_requirements(
     suite_id: str,
     catalog: Catalog,
 ) -> tuple[dict[str, InstallDefinition], dict[str, InstallDefinition]]:
-    tool_ids = expand_suite(suite_id, catalog)
+    tool_ids = list(expand_suite(suite_id, catalog))
+    if suite_id != "format":
+        seen = set(tool_ids)
+        for tool_id in expand_suite("format", catalog):
+            if tool_id not in seen:
+                tool_ids.append(tool_id)
+                seen.add(tool_id)
+    return collect_install_requirements_for_tools(tool_ids, catalog)
+
+
+def collect_install_requirements_for_tools(
+    tool_ids: list[str],
+    catalog: Catalog,
+) -> tuple[dict[str, InstallDefinition], dict[str, InstallDefinition]]:
     python_packages: dict[str, InstallDefinition] = {}
     binary_packages: dict[str, InstallDefinition] = {}
     for tool_id in tool_ids:
@@ -38,13 +52,12 @@ def collect_install_requirements(
     return python_packages, binary_packages
 
 
-def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
-    python_packages, binary_packages = collect_install_requirements(suite_id, catalog)
-    tools_dir(project_root).mkdir(parents=True, exist_ok=True)
-    if python_packages:
-        get_installer("python").install_packages(project_root, python_packages)
-    if binary_packages:
-        get_installer("binary").install_packages(project_root, binary_packages)
+def write_manifest(
+    project_root: Path,
+    *,
+    python_packages: dict[str, InstallDefinition],
+    binary_packages: dict[str, InstallDefinition],
+) -> Path:
     manifest = read_manifest(project_root)
     manifest.update(
         {
@@ -68,6 +81,45 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
     )
     manifest_path = tools_manifest_path(project_root)
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return manifest_path
+
+
+def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
+    python_packages, binary_packages = collect_install_requirements(suite_id, catalog)
+    tools_dir(project_root).mkdir(parents=True, exist_ok=True)
+    if python_packages:
+        get_installer("python").install_packages(project_root, python_packages)
+    manifest_path = write_manifest(
+        project_root,
+        python_packages=python_packages,
+        binary_packages={},
+    )
+    if not binary_packages:
+        return manifest_path
+
+    binary_installer = get_installer("binary")
+    installed_binaries: dict[str, InstallDefinition] = {}
+    errors: list[str] = []
+    for name, install_def in sorted(binary_packages.items()):
+        try:
+            binary_installer.install_packages(project_root, {name: install_def})
+            installed_binaries[name] = install_def
+        except InstallError as exc:
+            errors.append(f"{name}: {exc.message}")
+
+    if installed_binaries:
+        write_manifest(
+            project_root,
+            python_packages={},
+            binary_packages=installed_binaries,
+        )
+
+    if errors:
+        summary = "; ".join(errors)
+        raise InstallError(
+            f"binary install failed for {len(errors)} tool(s): {summary}",
+            hint="python packages were installed; fix binary prerequisites and retry",
+        )
     return manifest_path
 
 

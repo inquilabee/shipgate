@@ -379,7 +379,15 @@ tools:
     cli:
       paths:
         style: positional
-    option_order: [paths]
+      config:
+        flag: -conf
+        style: scalar
+    configuration:
+      bundled: configs/yamlfmt.yaml
+      discover: [".shipgate/configs/yamlfmt.yaml", ".yamlfmt", "yamlfmt.yaml"]
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, paths]
 
   shellcheck.check:
     executable: shellcheck
@@ -556,7 +564,7 @@ suites:
     fail_fast: false
 
   format:
-    members: [ruff.format, mdformat.apply, shfmt.apply]
+    members: [ruff.format, mdformat.apply, shfmt.apply, yamlfmt.apply]
     parallel: false
     fail_fast: true
 
@@ -650,7 +658,7 @@ workflows:
 
 capabilities:
   Linting: [ruff.lint]
-  Formatting: [ruff.format, mdformat.apply, shfmt.apply]
+  Formatting: [ruff.format, mdformat.apply, shfmt.apply, yamlfmt.apply]
   TypeChecking: [ty.check]
   Security: [bandit.scan, gitleaks.scan, semgrep.scan]
   Policy:

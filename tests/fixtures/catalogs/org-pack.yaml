@@ -8,7 +8,6 @@ tools:
     cli: {}
     configuration: {}
     option_order: []
-
 suites:
   org-standard:
     members: [org.lint]

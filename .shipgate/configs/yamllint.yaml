@@ -1,9 +1,7 @@
 extends: default
-
 ignore: |
   .venv/
   .shipgate/
-
 rules:
   line-length:
     max: 100

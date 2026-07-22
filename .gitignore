@@ -3,6 +3,7 @@
 !.shipgate/allowlists/**
 !.shipgate/configs/
 !.shipgate/configs/**
+docker/dogfood-staging/
 .venv/
 build/
 __pycache__/
