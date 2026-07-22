@@ -77,7 +77,7 @@ def prepare_check(
         exclude=exclude,
         verbose=command.verbose,
         quiet=command.quiet,
-        check=True if planned.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None,
+        check=(True if planned.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None),
     )
     if planned.mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
         tool_options = NormalizedOptions(

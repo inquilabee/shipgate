@@ -9,7 +9,7 @@ jscpd.check.python:
   install:
     manager: binary
     package: jscpd
-    version: '>=3.0'
+    version: ">=3.0"
     binary: jscpd
   cli:
     paths:
@@ -20,7 +20,7 @@ jscpd.check.python:
     threshold:
       flag: --threshold
       style: scalar
-      default: '2'
+      default: "2"
   configuration:
     bundled: configs/jscpd.python.json
     discover:

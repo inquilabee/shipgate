@@ -9,7 +9,7 @@ jscpd.check.other:
   install:
     manager: binary
     package: jscpd
-    version: '>=3.0'
+    version: ">=3.0"
     binary: jscpd
   cli:
     paths:
@@ -20,7 +20,7 @@ jscpd.check.other:
     threshold:
       flag: --threshold
       style: scalar
-      default: '5'
+      default: "5"
   configuration:
     bundled: configs/jscpd.other.json
     discover:

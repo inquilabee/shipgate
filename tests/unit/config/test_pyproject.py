@@ -137,7 +137,10 @@ def assert_yaml_merge_policy(config) -> None:
 def assert_yaml_merge_scopes(config) -> None:
     assert config.scopes is not None, "expected scopes"
     assert config.scopes["custom"].include == ("src/bar",), "yaml custom scope"
-    assert config.scopes["python-source"].include == ("src", "tests/unit"), "pyproject scope kept"
+    assert config.scopes["python-source"].include == (
+        "src",
+        "tests/unit",
+    ), "pyproject scope kept"
 
 
 def test_pyproject_only_loads_full_config(tmp_path: Path):

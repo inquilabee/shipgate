@@ -41,7 +41,10 @@ def test_shfmt_release_url_uses_amd64_arch(_mock_arch, _mock_os):
     assert url.endswith("/releases/download/v3.8.0/shfmt_v3.8.0_linux_amd64")
 
 
-@patch("shipgate.runtime.installers.binary.fetch_latest_release_tag", return_value="v8.30.1")
+@patch(
+    "shipgate.runtime.installers.binary.fetch_latest_release_tag",
+    return_value="v8.30.1",
+)
 @patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
 @patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
 def test_gitleaks_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_latest):
@@ -50,7 +53,10 @@ def test_gitleaks_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_la
     assert "/releases/latest/download/" in url
 
 
-@patch("shipgate.runtime.installers.binary.fetch_latest_release_tag", return_value="v3.13.1")
+@patch(
+    "shipgate.runtime.installers.binary.fetch_latest_release_tag",
+    return_value="v3.13.1",
+)
 @patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
 @patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
 def test_shfmt_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_latest):

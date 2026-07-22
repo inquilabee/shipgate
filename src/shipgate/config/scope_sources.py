@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from shipgate.config.pyproject import discover_pyproject_path, load_pyproject_toml, section_at_path
+from shipgate.config.pyproject import (
+    discover_pyproject_path,
+    load_pyproject_toml,
+    section_at_path,
+)
 from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.errors import ConfigError
 

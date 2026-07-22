@@ -6,7 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.gates.paths import bundled_root_path
-from shipgate.paths import POLICY_CACHE_KEY, PROJECT_ROOT_CACHE_KEY, project_root_cache_env_path
+from shipgate.paths import (
+    POLICY_CACHE_KEY,
+    PROJECT_ROOT_CACHE_KEY,
+    project_root_cache_env_path,
+)
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition

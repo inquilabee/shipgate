@@ -144,7 +144,9 @@ class CheckRunner:
                 executable = resolve_executable(
                     resolved.tool.executable,
                     resolved.environment,
-                    install_binary=resolved.tool.install.binary if resolved.tool.install else None,
+                    install_binary=(
+                        resolved.tool.install.binary if resolved.tool.install else None
+                    ),
                     project_root=resolved.project_root,
                 )
             else:

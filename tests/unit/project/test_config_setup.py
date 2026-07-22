@@ -6,7 +6,10 @@ from shipgate.adapter.config_resolve import resolve_config_paths
 from shipgate.catalog.loader import load_catalog
 from shipgate.config.loader import load_config
 from shipgate.paths import shipgate_yaml_path
-from shipgate.project.config_setup import project_config_relpath, scaffold_bundled_configs
+from shipgate.project.config_setup import (
+    project_config_relpath,
+    scaffold_bundled_configs,
+)
 from shipgate.project.init import init_project, scaffold_project_layout
 
 

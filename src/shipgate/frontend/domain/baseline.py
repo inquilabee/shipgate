@@ -20,7 +20,9 @@ def finding_fingerprint(
     return (check_id, rule_id, path or "", line, message)
 
 
-def fingerprints_from_report(report: RunReport) -> set[tuple[str, str, str, int | None, str]]:
+def fingerprints_from_report(
+    report: RunReport,
+) -> set[tuple[str, str, str, int | None, str]]:
     result: set[tuple[str, str, str, int | None, str]] = set()
     for check in report.reports:
         for finding in check.findings:
@@ -37,7 +39,9 @@ def fingerprints_from_report(report: RunReport) -> set[tuple[str, str, str, int 
     return result
 
 
-def fingerprint_from_record(record: FindingRecord) -> tuple[str, str, str, int | None, str]:
+def fingerprint_from_record(
+    record: FindingRecord,
+) -> tuple[str, str, str, int | None, str]:
     return finding_fingerprint(
         check_id=record.check_id,
         rule_id=record.rule_id,
