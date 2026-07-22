@@ -29,6 +29,8 @@ make check-commit    # format + full suite (dogfood)
 
 ## Dogfooding (this repo)
 
+Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/quality.mdc` (Dogfooding).
+
 - Use Python **3.13** locally (see `.python-version`). `semgrep` does not run on 3.14 yet; library `requires-python` stays `>=3.11,<3.15`.
 - `make check-commit` and pre-commit run apply formatters, then `shipgate check --suite full`.
 - Binary tools must be on `PATH` for the full suite: `gitleaks`, `markdownlint`, `shfmt`, `yamlfmt` (google/yamlfmt), `shellcheck`.

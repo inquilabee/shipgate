@@ -7,6 +7,16 @@ alwaysApply: true
 
 Lint and test failures are defects. Fix on the branch; do not bypass hooks.
 
+## Dogfooding
+
+ShipGate is a quality-control repo; it must pass its own gates. No carve-outs for "mature" or legacy code.
+
+| Principle | Requirement |
+|-----------|-------------|
+| Full codebase | Built-in gates and every suite check (ruff, ty, radon, semgrep, bandit, policy gates, etc.) apply to the **entire** codebase |
+| No grandfathering | Do not relax thresholds, narrow scopes, or skip checks for existing code — fix violations |
+| Allowlists | `.shipgate/allowlists/` entries require an exceptional, documented reason; prefer code fixes over exemptions |
+
 ## Commands
 
 | Command | Purpose |
