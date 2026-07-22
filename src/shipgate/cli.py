@@ -74,7 +74,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-_TOP_LEVEL_COMMANDS = frozenset(
+TOP_LEVEL_COMMANDS = frozenset(
     {
         "install",
         "init",
@@ -96,7 +96,7 @@ def _normalize_argv(argv: list[str] | None, parser: argparse.ArgumentParser) -> 
         argv is not None
         and argv
         and not argv[0].startswith("-")
-        and argv[0] not in _TOP_LEVEL_COMMANDS
+        and argv[0] not in TOP_LEVEL_COMMANDS
     ):
         argv = ["check", *argv]
     args = parser.parse_args(argv)

@@ -1,5 +1,0 @@
-# Dogfood overrides: internal Jinja templates use server-generated href values.
-rules: []
-paths:
-  exclude:
-    - src/shipgate/frontend/templates/

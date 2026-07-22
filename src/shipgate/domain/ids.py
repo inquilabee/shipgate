@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
 
 
 def validate_id(value: str, *, kind: str = "id") -> str:
@@ -15,7 +15,7 @@ def validate_id(value: str, *, kind: str = "id") -> str:
         raise ValueError(f"invalid {kind}: {value!r}")
     if value != value.lower():
         raise ValueError(f"{kind} must be lowercase: {value!r}")
-    if not _ID_PATTERN.match(value):
+    if not ID_PATTERN.match(value):
         raise ValueError(f"invalid {kind}: {value!r}")
     return value
 
