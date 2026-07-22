@@ -1,9 +1,6 @@
 """Argv builder from resolved requests."""
 
-from pathlib import Path
-
 from shipgate.adapter.serialize import serialize_option
-from shipgate.domain.catalog import CliOptionDefinition
 from shipgate.domain.execution import ResolvedRequest
 
 
@@ -21,7 +18,7 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
         value = _option_value(request, name)
         if value is None:
             continue
-        value = _aggregate_paths(definition, value, request.project_root)
+        value = definition.aggregate_value(value, request.project_root)
         if value is None:
             continue
         if definition.style == "positional":
@@ -50,19 +47,3 @@ def _option_value(request: ResolvedRequest, name: str) -> object | None:
         "threshold": opts.threshold,
     }
     return mapping.get(name)
-
-
-def _aggregate_paths(
-    definition: CliOptionDefinition,
-    value: object,
-    project_root: Path,
-) -> object | None:
-    if definition.aggregate != "root":
-        return value
-    if not isinstance(value, (list, tuple)):
-        return value
-    if not value:
-        return None
-    if len(value) == 1:
-        return value[0]
-    return project_root

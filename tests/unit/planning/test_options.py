@@ -1,6 +1,10 @@
+from pathlib import Path
+
 from shipgate.catalog.loader import load_catalog
+from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.project import ProjectConfig
+from shipgate.planning.option_resolver import OptionResolver
 from shipgate.planning.options import resolve_option_sources
 
 
@@ -14,3 +18,20 @@ def test_ty_check_default_format_from_catalog():
     )
     assert merged.format == "gitlab"
     assert sources["format"] == "tool_default"
+
+
+def test_option_resolver_merges_precedence(tmp_path: Path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("ruff.lint")
+    merged, sources = OptionResolver().resolve(
+        cli_options=NormalizedOptions(verbose=True),
+        project=ProjectConfig(),
+        tool=tool,
+        mode=RunMode.CHECK,
+        check_id=tool.id,
+        project_root=tmp_path,
+        target=tmp_path,
+    )
+    assert merged.verbose is True
+    assert sources["verbose"] == "cli"
+    assert sources["check"] == "shipgate_default"

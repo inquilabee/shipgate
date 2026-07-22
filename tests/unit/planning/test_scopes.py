@@ -1,8 +1,18 @@
 from pathlib import Path
 
 from shipgate.domain.modes import RunMode
-from shipgate.domain.project import Scope
+from shipgate.domain.project import ProjectConfig, Scope
+from shipgate.planning.scope_resolver import ScopeResolver
 from shipgate.planning.scopes import scope_paths
+
+
+def test_scope_resolver_resolve_target(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    scope = ScopeResolver(tmp_path).resolve(
+        ProjectConfig(),
+        target_override=tmp_path,
+    )
+    assert scope.target == tmp_path.resolve()
 
 
 def test_scope_paths_prunes_ignored_roots(tmp_path: Path):

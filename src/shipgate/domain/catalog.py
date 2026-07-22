@@ -9,6 +9,7 @@ from shipgate.domain.modes import RunMode
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from pathlib import Path
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,17 @@ class CliOptionDefinition:
     required: bool = False
     default: str | None = None
     aggregate: str | None = None
+
+    def aggregate_value(self, value: object, project_root: Path) -> object | None:
+        if self.aggregate != "root":
+            return value
+        if not isinstance(value, (list, tuple)):
+            return value
+        if not value:
+            return None
+        if len(value) == 1:
+            return value[0]
+        return project_root
 
 
 @dataclass(frozen=True)
