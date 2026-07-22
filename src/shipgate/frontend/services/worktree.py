@@ -14,7 +14,7 @@ class WorktreeError(Exception):
     """Raised when git or worktree operations fail."""
 
 
-def _git_error(exc: subprocess.CalledProcessError, fallback: str) -> WorktreeError:
+def git_error(exc: subprocess.CalledProcessError, fallback: str) -> WorktreeError:
     detail = (exc.stderr or exc.stdout or str(exc)).strip()
     return WorktreeError(detail or fallback)
 
@@ -83,7 +83,7 @@ class WorktreeManager:
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            raise _git_error(exc, f"failed to read branch at {worktree_path}") from exc
+            raise git_error(exc, f"failed to read branch at {worktree_path}") from exc
         except FileNotFoundError as exc:
             raise WorktreeError("git executable not found") from exc
         return result.stdout.strip()
@@ -114,7 +114,7 @@ class WorktreeManager:
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            raise _git_error(exc, f"git {' '.join(args)} failed") from exc
+            raise git_error(exc, f"git {' '.join(args)} failed") from exc
         except FileNotFoundError as exc:
             raise WorktreeError("git executable not found") from exc
 

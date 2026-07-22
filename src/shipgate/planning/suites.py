@@ -13,10 +13,10 @@ def expand_suite(runnable_id: str, catalog: Catalog) -> list[str]:
             f"unknown runnable {runnable_id!r}",
             hint='run "shipgate list suites" to see bundled suites',
         )
-    return _expand_suite(runnable_id, catalog, stack=[])
+    return expand_suite_impl(runnable_id, catalog, stack=[])
 
 
-def _expand_suite(suite_id: str, catalog: Catalog, stack: list[str]) -> list[str]:
+def expand_suite_impl(suite_id: str, catalog: Catalog, stack: list[str]) -> list[str]:
     if suite_id in stack:
         cycle = " -> ".join([*stack, suite_id])
         raise CatalogError(f"suite cycle detected: {cycle}")
@@ -29,7 +29,7 @@ def _expand_suite(suite_id: str, catalog: Catalog, stack: list[str]) -> list[str
                 result.append(member)
                 seen.add(member)
         elif catalog.is_suite(member):
-            for tool_id in _expand_suite(member, catalog, [*stack, suite_id]):
+            for tool_id in expand_suite_impl(member, catalog, [*stack, suite_id]):
                 if tool_id not in seen:
                     result.append(tool_id)
                     seen.add(tool_id)

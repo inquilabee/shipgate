@@ -4,7 +4,7 @@ from shipgate.frontend.domain.models import FindingCategory, FindingRecord, RunS
 from shipgate.frontend.storage.sqlite import SqliteStorage
 
 
-def _code_finding(run_id: str, *, file: str, severity: str = "error") -> FindingRecord:
+def code_finding(run_id: str, *, file: str, severity: str = "error") -> FindingRecord:
     return FindingRecord(
         id=f"{file}-{severity}",
         run_id=run_id,
@@ -25,8 +25,8 @@ def test_storage_filters_and_pagination(tmp_path: Path):
     storage.replace_findings(
         "run-1",
         [
-            _code_finding("run-1", file="src/a.py", severity="error"),
-            _code_finding("run-1", file="src/b.py", severity="warning"),
+            code_finding("run-1", file="src/a.py", severity="error"),
+            code_finding("run-1", file="src/b.py", severity="warning"),
             FindingRecord(
                 id="tool-1",
                 run_id="run-1",

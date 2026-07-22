@@ -2,7 +2,6 @@ import shutil
 import subprocess
 
 import pytest
-
 from shipgate.planning.incremental import filter_changed
 
 GIT = shutil.which("git")

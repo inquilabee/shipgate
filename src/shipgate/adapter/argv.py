@@ -15,7 +15,7 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
         if name not in tool.cli:
             continue
         definition = tool.cli[name]
-        value = _option_value(request, name)
+        value = option_value(request, name)
         if value is None:
             continue
         value = definition.aggregate_value(value, request.project_root)
@@ -31,7 +31,7 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
     return tuple(argv)
 
 
-def _option_value(request: ResolvedRequest, name: str) -> object | None:
+def option_value(request: ResolvedRequest, name: str) -> object | None:
     opts = request.options
     mapping = {
         "paths": tuple(str(p) for p in opts.paths) if opts.paths else None,

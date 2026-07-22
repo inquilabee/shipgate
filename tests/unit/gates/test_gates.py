@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
@@ -32,7 +31,7 @@ def test_catalog_includes_bundled_policy_gates():
     assert "policy" in catalog.suites["ci"].members
 
 
-def _process_result(
+def process_result(
     tmp_path: Path,
     *,
     exit_code: int,
@@ -60,9 +59,9 @@ def test_gate_json_normalizer_parses_findings(tmp_path: Path):
             }
         ]
     }
-    request = _request("gate.module-size", tmp_path / "report.json")
-    result = _process_result(tmp_path, exit_code=1, stdout=json.dumps(payload))
-    report = GateJsonNormalizer().normalize(request, result)
+    gate_request = make_gate_request("gate.module-size", tmp_path / "report.json")
+    result = process_result(tmp_path, exit_code=1, stdout=json.dumps(payload))
+    report = GateJsonNormalizer().normalize(gate_request, result)
     assert report.status == "failed"
     assert len(report.findings) == 1
     assert report.findings[0].rule_id == "line-limit"
@@ -88,9 +87,9 @@ def test_gate_json_normalizer_reads_output_file(tmp_path: Path):
         ),
         encoding="utf-8",
     )
-    request = _request("gate.folder-breadth", report_path)
-    result = _process_result(tmp_path, exit_code=1, stdout="", stderr="gate failed")
-    report = GateJsonNormalizer().normalize(request, result)
+    gate_request = make_gate_request("gate.folder-breadth", report_path)
+    result = process_result(tmp_path, exit_code=1, stdout="", stderr="gate failed")
+    report = GateJsonNormalizer().normalize(gate_request, result)
     assert report.status == "failed"
     assert report.findings[0].message == "too many files"
 
@@ -128,6 +127,67 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
     assert env["SHIPGATE_REPORT"].endswith("gate.module-size.json")
     assert Path(env["SHIPGATE_GATE_CONFIG"]).is_file()
     assert env["SHIPGATE_GATES_LIB"].endswith("lib.sh")
+    assert "tests/" in env["GATE_SCAN_ROOTS"]
+
+
+@pytest.mark.integration
+def test_module_private_vars_flags_existing_module_function(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "legacy.py").write_text(
+        "def _helper():\n    return 1\n",
+        encoding="utf-8",
+    )
+    catalog = load_catalog()
+    tool = catalog.get_tool("gate.module-private-vars")
+    request = ResolvedRequest(
+        runnable=tool.id,
+        tool=tool,
+        mode=RunMode.CHECK,
+        options=NormalizedOptions(paths=(tmp_path / "tests",)),
+        option_sources={},
+        extra_args=(),
+        project_root=tmp_path,
+        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
+        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+    )
+    argv, env = prepare_gate_execution(request)
+    from shipgate.runtime.executor import Executor
+
+    result = Executor().run(argv, cwd=tmp_path, env=env)
+    report = GateJsonNormalizer().normalize(request, result)
+    assert result.exit_code == 1, result.stderr
+    assert report.status == "failed"
+    assert any(f.rule_id == "private-function" for f in report.findings)
+
+
+@pytest.mark.integration
+def test_module_size_flags_existing_oversized_module(tmp_path: Path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "src").mkdir()
+    body = "\n".join("x = 1" for _ in range(501))
+    (tmp_path / "src" / "legacy.py").write_text(body + "\n", encoding="utf-8")
+    catalog = load_catalog()
+    tool = catalog.get_tool("gate.module-size")
+    request = ResolvedRequest(
+        runnable=tool.id,
+        tool=tool,
+        mode=RunMode.CHECK,
+        options=NormalizedOptions(paths=(tmp_path / "src",)),
+        option_sources={},
+        extra_args=(),
+        project_root=tmp_path,
+        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
+        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+    )
+    argv, env = prepare_gate_execution(request)
+    from shipgate.runtime.executor import Executor
+
+    result = Executor().run(argv, cwd=tmp_path, env=env)
+    report = GateJsonNormalizer().normalize(request, result)
+    assert result.exit_code == 1, result.stderr
+    assert report.status == "failed"
+    assert any(f.rule_id == "module-size" for f in report.findings)
 
 
 @pytest.mark.integration
@@ -157,7 +217,7 @@ def test_bundled_module_size_gate_passes_clean_repo(tmp_path: Path, monkeypatch)
     assert report.status == "passed"
 
 
-def _request(tool_id: str, output_path: Path) -> ResolvedRequest:
+def make_gate_request(tool_id: str, output_path: Path) -> ResolvedRequest:
     tool = ToolDefinition(id=tool_id, executable="bash", modes=(RunMode.CHECK,))
     return ResolvedRequest(
         runnable=tool_id,

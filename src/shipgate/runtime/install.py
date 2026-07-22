@@ -45,7 +45,7 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
         get_installer("python").install_packages(project_root, python_packages)
     if binary_packages:
         get_installer("binary").install_packages(project_root, binary_packages)
-    manifest = _read_manifest(project_root)
+    manifest = read_manifest(project_root)
     manifest.update(
         {
             "schema_version": MANIFEST_SCHEMA,
@@ -71,7 +71,7 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
     return manifest_path
 
 
-def _read_manifest(project_root: Path) -> dict:
+def read_manifest(project_root: Path) -> dict:
     manifest_path = tools_manifest_path(project_root)
     if not manifest_path.is_file():
         return {}

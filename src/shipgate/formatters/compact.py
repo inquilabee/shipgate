@@ -8,13 +8,13 @@ class CompactFormatter:
         lines: list[str] = []
         for check in report.reports:
             for finding in check.findings:
-                lines.append(_format_finding(finding))
+                lines.append(format_finding(finding))
             if not check.findings and check.status != "passed":
                 lines.append(f"{check.check_id}: error: TOOL_EXIT Tool failed")
         return "\n".join(lines) + ("\n" if lines else "")
 
 
-def _format_finding(finding: Finding) -> str:
+def format_finding(finding: Finding) -> str:
     loc = finding.location
     if loc and loc.line is not None:
         return f"{loc.path}:{loc.line}: {finding.severity}: {finding.rule_id} {finding.message}"

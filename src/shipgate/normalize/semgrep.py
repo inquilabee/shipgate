@@ -34,7 +34,7 @@ class SemgrepNormalizer:
         if not isinstance(items, list):
             raise NormalizationError("semgrep results must be a JSON array")
         findings = tuple(
-            _item_to_finding(item, check_id) for item in items if isinstance(item, dict)
+            item_to_finding(item, check_id) for item in items if isinstance(item, dict)
         )
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(
@@ -46,7 +46,7 @@ class SemgrepNormalizer:
         )
 
 
-def _item_to_finding(item: dict, check_id: str) -> Finding:
+def item_to_finding(item: dict, check_id: str) -> Finding:
     start = item.get("start") or {}
     extra = item.get("extra") or {}
     location = FindingLocation(

@@ -8,15 +8,15 @@ class GitHubFormatter:
         lines: list[str] = []
         for check in report.reports:
             for finding in check.findings:
-                lines.append(_format_annotation(check.check_id, finding))
+                lines.append(format_annotation(check.check_id, finding))
             if not check.findings and check.status != "passed":
-                title = _escape(f"{check.check_id}/TOOL_EXIT")
-                message = _escape("Tool failed")
+                title = escape(f"{check.check_id}/TOOL_EXIT")
+                message = escape("Tool failed")
                 lines.append(f"::error title={title}::{message}")
         return "\n".join(lines) + ("\n" if lines else "")
 
 
-def _escape(value: str) -> str:
+def escape(value: str) -> str:
     return (
         value.replace("%", "%25")
         .replace("\r", "%0D")
@@ -26,9 +26,9 @@ def _escape(value: str) -> str:
     )
 
 
-def _format_annotation(check_id: str, finding: Finding) -> str:
-    title = _escape(f"{check_id}/{finding.rule_id}")
-    message = _escape(finding.message)
+def format_annotation(check_id: str, finding: Finding) -> str:
+    title = escape(f"{check_id}/{finding.rule_id}")
+    message = escape(finding.message)
     if finding.location and finding.location.path:
         file_part = f"file={finding.location.path}"
         if finding.location.line is not None:

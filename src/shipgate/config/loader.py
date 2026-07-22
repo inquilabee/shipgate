@@ -37,10 +37,10 @@ def load_config(
         return ProjectConfig()
     if not isinstance(raw, dict):
         raise ConfigError("config must be a mapping", path=str(path))
-    return _parse_config(raw, path)
+    return parse_config(raw, path)
 
 
-def _validate_top_level_keys(raw: dict, path: Path) -> None:
+def validate_top_level_keys(raw: dict, path: Path) -> None:
     unknown = set(raw) - ALLOWED_TOP_LEVEL_KEYS
     if unknown:
         raise ConfigError(
@@ -49,7 +49,7 @@ def _validate_top_level_keys(raw: dict, path: Path) -> None:
         )
 
 
-def _require_allowed(
+def require_allowed(
     value: object,
     allowed: set[str] | frozenset[str],
     label: str,
@@ -60,7 +60,7 @@ def _require_allowed(
     return str(value)
 
 
-def _parse_checks(raw: dict, path: Path) -> tuple[tuple[str, ...], tuple[CheckBinding, ...]]:
+def parse_checks(raw: dict, path: Path) -> tuple[tuple[str, ...], tuple[CheckBinding, ...]]:
     checks_raw = raw.get("checks", []) or []
     if isinstance(checks_raw, list):
         return tuple(str(c) for c in checks_raw), ()
@@ -80,15 +80,15 @@ def _parse_checks(raw: dict, path: Path) -> tuple[tuple[str, ...], tuple[CheckBi
     raise ConfigError("checks must be a list or mapping", path=str(path))
 
 
-def _parse_config_mode(raw: dict, path: Path) -> str:
+def parse_config_mode(raw: dict, path: Path) -> str:
     configs = raw.get("configs", {}) or {}
     if not isinstance(configs, dict):
         raise ConfigError("configs must be a mapping", path=str(path))
     config_mode = configs.get("mode", "auto")
-    return _require_allowed(config_mode, ALLOWED_CONFIG_MODES, "configs.mode", path)
+    return require_allowed(config_mode, ALLOWED_CONFIG_MODES, "configs.mode", path)
 
 
-def _parse_single_scope(name: str, value: object, path: Path) -> Scope:
+def parse_single_scope(name: str, value: object, path: Path) -> Scope:
     if not isinstance(value, dict):
         raise ConfigError(f"scope {name!r} must be a mapping", path=str(path))
     include_raw = value.get("include", []) or []
@@ -110,29 +110,29 @@ def _parse_single_scope(name: str, value: object, path: Path) -> Scope:
     )
 
 
-def _parse_scopes(raw: object, path: Path) -> dict[str, Scope] | None:
+def parse_scopes(raw: object, path: Path) -> dict[str, Scope] | None:
     if raw is None:
         return None
     if not isinstance(raw, dict):
         raise ConfigError("scopes must be a mapping", path=str(path))
-    return {str(name): _parse_single_scope(str(name), value, path) for name, value in raw.items()}
+    return {str(name): parse_single_scope(str(name), value, path) for name, value in raw.items()}
 
 
-def _parse_config(raw: dict, path: Path) -> ProjectConfig:
-    _validate_top_level_keys(raw, path)
-    env = _require_allowed(raw.get("env", "managed"), ALLOWED_ENV_VALUES, "env", path)
+def parse_config(raw: dict, path: Path) -> ProjectConfig:
+    validate_top_level_keys(raw, path)
+    env = require_allowed(raw.get("env", "managed"), ALLOWED_ENV_VALUES, "env", path)
     error_format_raw = raw.get("error-format")
     error_format = None
     if error_format_raw is not None:
-        error_format = _require_allowed(
+        error_format = require_allowed(
             error_format_raw,
             ALLOWED_ERROR_FORMATS,
             "error-format",
             path,
         )
-    config_mode = _parse_config_mode(raw, path)
-    checks, check_bindings = _parse_checks(raw, path)
-    scopes = _parse_scopes(raw.get("scopes"), path)
+    config_mode = parse_config_mode(raw, path)
+    checks, check_bindings = parse_checks(raw, path)
+    scopes = parse_scopes(raw.get("scopes"), path)
     suite = raw.get("suite", "standard")
     if suite is not None:
         suite = str(suite)

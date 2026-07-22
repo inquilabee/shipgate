@@ -40,6 +40,6 @@ def load_catalog_pack(path: Path) -> Catalog:
         raise CatalogError(f"invalid catalog pack YAML: {exc}") from exc
     if not isinstance(raw, dict):
         raise CatalogError("catalog pack must be a mapping")
-    from shipgate.catalog.loader import _parse_catalog
+    from shipgate.catalog.loader import parse_catalog
 
-    return _parse_catalog(raw)
+    return parse_catalog(raw)

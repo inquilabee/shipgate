@@ -28,7 +28,7 @@ class RadonNormalizer:
                     status="passed",
                     exit_code=0,
                 )
-            return _tool_exit_report(check_id, result)
+            return tool_exit_report(check_id, result)
 
         try:
             payload = json.loads(payload_text)
@@ -40,9 +40,9 @@ class RadonNormalizer:
         max_rank = DEFAULT_MAX_COMPLEXITY_RANK
         max_value = RANK_ORDER.get(max_rank, 1)
         if "mi" in request.tool.subcommand:
-            findings = _mi_findings(check_id, payload, max_value)
+            findings = mi_findings(check_id, payload, max_value)
         else:
-            findings = _cc_findings(check_id, payload, max_value)
+            findings = cc_findings(check_id, payload, max_value)
 
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(
@@ -54,7 +54,7 @@ class RadonNormalizer:
         )
 
 
-def _cc_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list[Finding]:
+def cc_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list[Finding]:
     findings: list[Finding] = []
     for file_path, blocks in payload.items():
         if not isinstance(blocks, list):
@@ -82,7 +82,7 @@ def _cc_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list
     return findings
 
 
-def _mi_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list[Finding]:
+def mi_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list[Finding]:
     findings: list[Finding] = []
     for file_path, item in payload.items():
         if not isinstance(item, dict):
@@ -102,7 +102,7 @@ def _mi_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list
     return findings
 
 
-def _tool_exit_report(check_id: str, result: ProcessResult) -> CheckReport:
+def tool_exit_report(check_id: str, result: ProcessResult) -> CheckReport:
     message = result.stderr.strip() or result.stdout.strip() or "Tool failed"
     return CheckReport(
         check_id=check_id,

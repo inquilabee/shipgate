@@ -2,7 +2,6 @@ import subprocess
 import sys
 
 import pytest
-
 from shipgate.gates.ignore import EffectiveIgnores, ignores_from_env, main, patterns_from_env
 
 

@@ -17,26 +17,26 @@ def filter_changed(
     if not changed_only and since is None:
         return paths
     ref = since or "HEAD"
-    changed = _git_changed_files(project_root, ref)
+    changed = git_changed_files(project_root, ref)
     if not changed:
         return ()
-    filtered = tuple(path for path in paths if _path_matches_changed(path, project_root, changed))
+    filtered = tuple(path for path in paths if path_matches_changed(path, project_root, changed))
     if changed_only:
         return filtered
     return filtered or paths
 
 
-def _git_executable() -> str:
+def git_executable() -> str:
     git = shutil.which("git")
     if git is None:
         return "git"
     return git
 
 
-def _git_changed_files(project_root: Path, since: str) -> set[str]:
+def git_changed_files(project_root: Path, since: str) -> set[str]:
     if not (project_root / ".git").exists():
         return set()
-    git = _git_executable()
+    git = git_executable()
     result = subprocess.run(  # noqa: S603
         [git, "diff", "--name-only", "--relative", since],
         cwd=project_root,
@@ -57,7 +57,7 @@ def _git_changed_files(project_root: Path, since: str) -> set[str]:
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
 
-def _path_matches_changed(path: Path, project_root: Path, changed: set[str]) -> bool:
+def path_matches_changed(path: Path, project_root: Path, changed: set[str]) -> bool:
     try:
         rel = path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError:

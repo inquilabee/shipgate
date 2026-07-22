@@ -36,7 +36,7 @@ def source_contexts(
     for finding in findings:
         if not finding.file or finding.line is None:
             continue
-        snippet = _read_snippet(root, finding.file, finding.line, radius=context_lines)
+        snippet = read_snippet(root, finding.file, finding.line, radius=context_lines)
         if snippet is not None:
             contexts[finding.id] = snippet
     return contexts
@@ -71,7 +71,7 @@ def message_context(
     )
 
 
-def _safe_read_lines(root: Path, rel_file: str) -> list[str] | None:
+def safe_read_lines(root: Path, rel_file: str) -> list[str] | None:
     path = (root / rel_file).resolve()
     try:
         path.relative_to(root)
@@ -86,14 +86,14 @@ def _safe_read_lines(root: Path, rel_file: str) -> list[str] | None:
     return file_lines or None
 
 
-def _read_snippet(
+def read_snippet(
     root: Path,
     rel_file: str,
     line: int,
     *,
     radius: int,
 ) -> FindingSourceContext | None:
-    file_lines = _safe_read_lines(root, rel_file)
+    file_lines = safe_read_lines(root, rel_file)
     if file_lines is None:
         return None
     index = max(0, min(line - 1, len(file_lines) - 1))

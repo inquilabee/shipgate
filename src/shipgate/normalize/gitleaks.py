@@ -31,7 +31,7 @@ class GitleaksNormalizer:
         if not isinstance(payload, list):
             raise NormalizationError("gitleaks output must be a JSON array")
         findings = tuple(
-            _item_to_finding(item, check_id) for item in payload if isinstance(item, dict)
+            item_to_finding(item, check_id) for item in payload if isinstance(item, dict)
         )
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(
@@ -43,7 +43,7 @@ class GitleaksNormalizer:
         )
 
 
-def _item_to_finding(item: dict, check_id: str) -> Finding:
+def item_to_finding(item: dict, check_id: str) -> Finding:
     location = None
     file_path = item.get("File") or item.get("file")
     if file_path:

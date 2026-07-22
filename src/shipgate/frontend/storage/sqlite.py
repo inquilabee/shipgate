@@ -132,7 +132,7 @@ class SqliteStorage:
                     run.branch,
                     run.suite_id,
                     run.status.value,
-                    _dt_to_iso(run.started_at),
+                    dt_to_iso(run.started_at),
                     None,
                     None,
                     run.worktree_path,
@@ -153,7 +153,7 @@ class SqliteStorage:
             row = conn.execute("SELECT * FROM runs WHERE id = ?", (run_id,)).fetchone()
         if row is None:
             return None
-        return _row_to_run(row)
+        return row_to_run(row)
 
     def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]:
         query = "SELECT * FROM runs"
@@ -165,7 +165,7 @@ class SqliteStorage:
         params.append(limit)
         with self._connect() as conn:
             rows = conn.execute(query, params).fetchall()
-        return [_row_to_run(row) for row in rows]
+        return [row_to_run(row) for row in rows]
 
     def update_run(
         self,
@@ -183,7 +183,7 @@ class SqliteStorage:
         run = self.get_run(run_id)
         if run is None:
             raise KeyError(f"run not found: {run_id}")
-        _apply_run_fields(
+        apply_run_fields(
             run,
             {
                 "status": status,
@@ -196,7 +196,7 @@ class SqliteStorage:
             },
         )
         if finished:
-            _mark_run_finished(run)
+            mark_run_finished(run)
         self._persist_run(run, run_id)
         return run
 
@@ -219,7 +219,7 @@ class SqliteStorage:
                 """,
                 (
                     run.status.value,
-                    _dt_to_iso(run.finished_at) if run.finished_at else None,
+                    dt_to_iso(run.finished_at) if run.finished_at else None,
                     run.duration_ms,
                     run.worktree_path,
                     run.error_message,
@@ -272,7 +272,7 @@ class SqliteStorage:
         limit: int | None = None,
         offset: int = 0,
     ) -> list[FindingRecord]:
-        query, params = _findings_filter_query(
+        query, params = findings_filter_query(
             run_id,
             severity=severity,
             check_id=check_id,
@@ -285,7 +285,7 @@ class SqliteStorage:
             params.extend([limit, offset])
         with self._connect() as conn:
             rows = conn.execute(query, params).fetchall()
-        return [_row_to_finding(row) for row in rows]
+        return [row_to_finding(row) for row in rows]
 
     def count_findings(
         self,
@@ -296,7 +296,7 @@ class SqliteStorage:
         file: str | None = None,
         category: FindingCategory | None = None,
     ) -> int:
-        where, params = _findings_filter_clause(
+        where, params = findings_filter_clause(
             run_id,
             severity=severity,
             check_id=check_id,
@@ -315,7 +315,7 @@ class SqliteStorage:
         with self._connect() as conn:
             conn.execute(
                 "UPDATE runs SET started_at = ? WHERE id = ?",
-                (_dt_to_iso(started_at), run_id),
+                (dt_to_iso(started_at), run_id),
             )
 
     def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None:
@@ -330,11 +330,11 @@ class SqliteStorage:
         with self._connect() as conn:
             row = conn.execute(
                 query,
-                (branch, *COMPLETED_STATUSES, _dt_to_iso(before.started_at)),
+                (branch, *COMPLETED_STATUSES, dt_to_iso(before.started_at)),
             ).fetchone()
         if row is None:
             return None
-        return _row_to_run(row)
+        return row_to_run(row)
 
     def prune_old_runs(self, keep: int = MAX_RUNS) -> int:
         with self._connect() as conn:
@@ -359,11 +359,11 @@ class SqliteStorage:
             return len(ids)
 
 
-def _like_escape(value: str) -> str:
+def like_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def _findings_filter_clause(
+def findings_filter_clause(
     run_id: str,
     *,
     severity: str | None,
@@ -373,17 +373,17 @@ def _findings_filter_clause(
 ) -> tuple[str, list[object]]:
     clauses = ["run_id = ?"]
     params: list[object] = [run_id]
-    _append_clause(clauses, params, "severity = ?", severity)
-    _append_clause(clauses, params, "check_id = ?", check_id)
+    append_clause(clauses, params, "severity = ?", severity)
+    append_clause(clauses, params, "check_id = ?", check_id)
     if file is not None:
         normalized = normalize_finding_path(file) or file
         clauses.append("file LIKE ? ESCAPE '\\'")
-        params.append(f"%{_like_escape(normalized)}%")
-    _append_clause(clauses, params, "category = ?", category.value if category else None)
+        params.append(f"%{like_escape(normalized)}%")
+    append_clause(clauses, params, "category = ?", category.value if category else None)
     return " AND ".join(clauses), params
 
 
-def _append_clause(
+def append_clause(
     clauses: list[str], params: list[object], clause: str, value: object | None
 ) -> None:
     if value is None:
@@ -392,7 +392,7 @@ def _append_clause(
     params.append(value)
 
 
-def _findings_filter_query(
+def findings_filter_query(
     run_id: str,
     *,
     severity: str | None,
@@ -400,7 +400,7 @@ def _findings_filter_query(
     file: str | None,
     category: FindingCategory | None,
 ) -> tuple[str, list[object]]:
-    where, params = _findings_filter_clause(
+    where, params = findings_filter_clause(
         run_id,
         severity=severity,
         check_id=check_id,
@@ -410,27 +410,27 @@ def _findings_filter_query(
     return f"SELECT * FROM findings WHERE {where}", params  # noqa: S608  # nosec B608
 
 
-def _apply_run_fields(run: RunRecord, updates: dict[str, object | None]) -> None:
+def apply_run_fields(run: RunRecord, updates: dict[str, object | None]) -> None:
     for attr, value in updates.items():
         if value is not None:
             setattr(run, attr, value)
 
 
-def _mark_run_finished(run: RunRecord) -> None:
+def mark_run_finished(run: RunRecord) -> None:
     finished_at = utc_now()
     run.finished_at = finished_at
     run.duration_ms = int((finished_at - run.started_at).total_seconds() * 1000)
 
 
-def _dt_to_iso(value: datetime) -> str:
+def dt_to_iso(value: datetime) -> str:
     return value.isoformat()
 
 
-def _dt_from_iso(value: str) -> datetime:
+def dt_from_iso(value: str) -> datetime:
     return datetime.fromisoformat(value)
 
 
-def _row_to_run(row: sqlite3.Row) -> RunRecord:
+def row_to_run(row: sqlite3.Row) -> RunRecord:
     summary = None
     if row["summary_json"]:
         summary = RunSummaryRecord.from_dict(json.loads(row["summary_json"]))
@@ -439,8 +439,8 @@ def _row_to_run(row: sqlite3.Row) -> RunRecord:
         branch=row["branch"],
         suite_id=row["suite_id"],
         status=RunStatus(row["status"]),
-        started_at=_dt_from_iso(row["started_at"]),
-        finished_at=_dt_from_iso(row["finished_at"]) if row["finished_at"] else None,
+        started_at=dt_from_iso(row["started_at"]),
+        finished_at=dt_from_iso(row["finished_at"]) if row["finished_at"] else None,
         duration_ms=row["duration_ms"],
         worktree_path=row["worktree_path"],
         error_message=row["error_message"],
@@ -451,7 +451,7 @@ def _row_to_run(row: sqlite3.Row) -> RunRecord:
     )
 
 
-def _row_to_finding(row: sqlite3.Row) -> FindingRecord:
+def row_to_finding(row: sqlite3.Row) -> FindingRecord:
     keys = set(row.keys())
     category_raw = row["category"] if "category" in keys and row["category"] else "code"
     return FindingRecord(

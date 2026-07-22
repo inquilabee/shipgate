@@ -1,5 +1,4 @@
 import pytest
-
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig

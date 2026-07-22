@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _shared_parser() -> argparse.ArgumentParser:
+def shared_parser() -> argparse.ArgumentParser:
     shared = argparse.ArgumentParser(add_help=False)
     shared.add_argument("--config", type=Path, help="Path to shipgate.yaml")
     shared.add_argument("--suite", help="Suite to run")
@@ -35,7 +35,7 @@ def _shared_parser() -> argparse.ArgumentParser:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    shared = _shared_parser()
+    shared = shared_parser()
     parser = argparse.ArgumentParser(prog="shipgate", description="Quality gate orchestrator")
     sub = parser.add_subparsers(dest="command")
 
@@ -91,7 +91,7 @@ TOP_LEVEL_COMMANDS = frozenset(
 )
 
 
-def _normalize_argv(argv: list[str] | None, parser: argparse.ArgumentParser) -> argparse.Namespace:
+def normalize_argv(argv: list[str] | None, parser: argparse.ArgumentParser) -> argparse.Namespace:
     if (
         argv is not None
         and argv
@@ -107,13 +107,13 @@ def _normalize_argv(argv: list[str] | None, parser: argparse.ArgumentParser) -> 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
-    args = _normalize_argv(argv, parser)
+    args = normalize_argv(argv, parser)
     project_root = find_project_root()
     app = ShipGateApp()
     verbose = getattr(args, "verbose", False)
 
     try:
-        return _dispatch_command(app, args, parser, project_root)
+        return dispatch_command(app, args, parser, project_root)
     except ShipGateError as exc:
         sys.stderr.write(exc.format() + "\n")
         if verbose:
@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
         return 4
 
 
-def _dispatch_command(
+def dispatch_command(
     app: ShipGateApp,
     args: argparse.Namespace,
     parser: argparse.ArgumentParser,
@@ -141,11 +141,11 @@ def _dispatch_command(
                 suite=args.suite,
             )
         ),
-        "init": lambda: _dispatch_init(app, project_root),
-        "check": lambda: app.check(_run_command(args, project_root)),
-        "format": lambda: app.format(_run_command(args, project_root)),
-        "list": lambda: _dispatch_list(app, args, project_root),
-        "schema": lambda: _write_schema(app),
+        "init": lambda: dispatch_init(app, project_root),
+        "check": lambda: app.check(run_command(args, project_root)),
+        "format": lambda: app.format(run_command(args, project_root)),
+        "list": lambda: dispatch_list(app, args, project_root),
+        "schema": lambda: write_schema(app),
         "serve": lambda: app.serve(
             project_root,
             host=args.host,
@@ -153,9 +153,9 @@ def _dispatch_command(
             open_browser=getattr(args, "open", False),
         ),
         "lock": lambda: app.lock(project_root),
-        "baseline": lambda: _dispatch_baseline(app, args, project_root),
+        "baseline": lambda: dispatch_baseline(app, args, project_root),
         "batch": lambda: app.run_batch(project_root, args.batch_file),
-        "gates": lambda: _dispatch_gates(app, args, project_root),
+        "gates": lambda: dispatch_gates(app, args, project_root),
     }
     handler = handlers.get(command)
     if handler is not None:
@@ -164,17 +164,17 @@ def _dispatch_command(
     return 0
 
 
-def _dispatch_init(app: ShipGateApp, project_root: Path) -> int:
+def dispatch_init(app: ShipGateApp, project_root: Path) -> int:
     sys.stdout.write(app.init(project_root))
     return 0
 
 
-def _write_schema(app: ShipGateApp) -> int:
+def write_schema(app: ShipGateApp) -> int:
     sys.stdout.write(app.schema())
     return 0
 
 
-def _dispatch_gates(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
+def dispatch_gates(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
     if args.gates_cmd == "init":
         sys.stdout.write(app.gates_init(project_root, args.name))
         return 0
@@ -184,7 +184,7 @@ def _dispatch_gates(app: ShipGateApp, args: argparse.Namespace, project_root: Pa
     return 0
 
 
-def _dispatch_list(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
+def dispatch_list(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
     if args.list_target == "suites":
         if not getattr(args, "quiet", False) or getattr(args, "verbose", False):
             sys.stdout.write(app.list_suites())
@@ -199,16 +199,16 @@ def _dispatch_list(app: ShipGateApp, args: argparse.Namespace, project_root: Pat
     return 0
 
 
-def _dispatch_baseline(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
+def dispatch_baseline(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
     if args.baseline_cmd == "update":
-        return app.baseline_update(_run_command(args, project_root))
+        return app.baseline_update(run_command(args, project_root))
     if args.baseline_cmd == "show":
         sys.stdout.write(app.baseline_show(project_root))
         return 0
     return 0
 
 
-def _run_command(args: argparse.Namespace, project_root: Path) -> RunCommand:
+def run_command(args: argparse.Namespace, project_root: Path) -> RunCommand:
     return RunCommand(
         project_root=project_root,
         config_path=getattr(args, "config", None),

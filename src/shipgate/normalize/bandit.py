@@ -42,7 +42,7 @@ class BanditNormalizer:
         if not isinstance(items, list):
             raise NormalizationError("bandit results must be a JSON array")
         findings = tuple(
-            _item_to_finding(item, check_id) for item in items if isinstance(item, dict)
+            item_to_finding(item, check_id) for item in items if isinstance(item, dict)
         )
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(
@@ -54,7 +54,7 @@ class BanditNormalizer:
         )
 
 
-def _item_to_finding(item: dict, check_id: str) -> Finding:
+def item_to_finding(item: dict, check_id: str) -> Finding:
     location = None
     filename = item.get("filename")
     if filename:

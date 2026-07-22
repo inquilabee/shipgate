@@ -118,7 +118,7 @@ def scan_folder_breadth(
     worst_count = 0
 
     for scan_root in scan_roots:
-        scanned, worst_path, worst_count, root_violations = _scan_root_breadth(
+        scanned, worst_path, worst_count, root_violations = scan_root_breadth(
             root,
             scan_root,
             max_allowed=max_allowed,
@@ -144,7 +144,7 @@ def scan_folder_breadth(
     )
 
 
-def _scan_root_breadth(
+def scan_root_breadth(
     root: Path,
     scan_root: str,
     *,
@@ -159,7 +159,7 @@ def _scan_root_breadth(
     dirs_scanned = 0
     base = root / scan_root
     for directory in iter_scan_directories(base):
-        outcome = _directory_breadth_outcome(
+        outcome = directory_breadth_outcome(
             directory,
             root,
             max_allowed=max_allowed,
@@ -179,7 +179,7 @@ def _scan_root_breadth(
     return dirs_scanned, worst_path, worst_count, violations
 
 
-def _directory_breadth_outcome(
+def directory_breadth_outcome(
     directory: Path,
     root: Path,
     *,
@@ -189,22 +189,22 @@ def _directory_breadth_outcome(
     ignores: EffectiveIgnores | None,
 ) -> tuple[DirBreadthViolation | None, int, str] | None:
     rel = directory.relative_to(root).as_posix()
-    if _should_skip_directory(rel, allowlist, ignores):
+    if should_skip_directory(rel, allowlist, ignores):
         return None
     file_count = count_direct_files(directory, extensions)
     if file_count == 0:
         return None
-    violation = _breadth_violation(rel, file_count, max_allowed)
+    violation = breadth_violation(rel, file_count, max_allowed)
     return violation, file_count, rel
 
 
-def _should_skip_directory(rel: str, allowlist: set[str], ignores: EffectiveIgnores | None) -> bool:
+def should_skip_directory(rel: str, allowlist: set[str], ignores: EffectiveIgnores | None) -> bool:
     if is_allowlisted(rel, allowlist):
         return True
     return bool(ignores and ignores.is_ignored(rel))
 
 
-def _breadth_violation(rel: str, file_count: int, max_allowed: int) -> DirBreadthViolation | None:
+def breadth_violation(rel: str, file_count: int, max_allowed: int) -> DirBreadthViolation | None:
     if file_count <= max_allowed:
         return None
     return DirBreadthViolation(path=rel, count=file_count, max_allowed=max_allowed)
@@ -245,11 +245,11 @@ def run_gate(
         allowlist=load_allowlist(allowlist_path or Path()),
         ignores=ignores_from_env(root),
     )
-    _write_folder_breadth_report(report, report_path)
-    return _folder_breadth_exit(report, enforcing)
+    write_folder_breadth_report(report, report_path)
+    return folder_breadth_exit(report, enforcing)
 
 
-def _write_folder_breadth_report(report: FolderBreadthReport, report_path: Path | None) -> None:
+def write_folder_breadth_report(report: FolderBreadthReport, report_path: Path | None) -> None:
     if not report_path:
         return
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -257,7 +257,7 @@ def _write_folder_breadth_report(report: FolderBreadthReport, report_path: Path 
     report_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def _folder_breadth_exit(report: FolderBreadthReport, enforcing: bool) -> int:
+def folder_breadth_exit(report: FolderBreadthReport, enforcing: bool) -> int:
     if not enforcing or report.leaf_dirs_over_max == 0:
         return 0
     for violation in report.violations:
@@ -272,19 +272,19 @@ def _folder_breadth_exit(report: FolderBreadthReport, enforcing: bool) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parse_folder_breadth_args(argv)
+    args = parse_folder_breadth_args(argv)
     root = args.root.resolve()
-    config = _load_gate_mapping(args.config)
+    config = load_gate_mapping(args.config)
     return run_gate(
         root=root,
         config=config,
-        allowlist_path=_resolve_config_allowlist(root, config),
+        allowlist_path=resolve_config_allowlist(root, config),
         report_path=args.report,
         strict=False if args.advisory else args.strict,
     )
 
 
-def _parse_folder_breadth_args(argv: list[str] | None):
+def parse_folder_breadth_args(argv: list[str] | None):
     parser = argparse.ArgumentParser(description="Folder breadth gate.")
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--config", type=Path, required=True)
@@ -294,7 +294,7 @@ def _parse_folder_breadth_args(argv: list[str] | None):
     return parser.parse_args(argv)
 
 
-def _load_gate_mapping(config_path: Path) -> dict[str, Any]:
+def load_gate_mapping(config_path: Path) -> dict[str, Any]:
     import yaml
 
     config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
@@ -304,7 +304,7 @@ def _load_gate_mapping(config_path: Path) -> dict[str, Any]:
     return config
 
 
-def _resolve_config_allowlist(root: Path, config: dict[str, Any]) -> Path | None:
+def resolve_config_allowlist(root: Path, config: dict[str, Any]) -> Path | None:
     allowlist_file = config.get("allowlist_file")
     if not allowlist_file:
         return None

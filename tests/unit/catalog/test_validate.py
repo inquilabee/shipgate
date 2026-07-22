@@ -1,5 +1,4 @@
 import pytest
-
 from shipgate.catalog.validate import validate_catalog
 from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
 from shipgate.domain.modes import RunMode

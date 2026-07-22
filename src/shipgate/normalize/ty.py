@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
 from shipgate.normalize.output import read_tool_output
-from shipgate.normalize.ruff import _ruff_item_to_finding
+from shipgate.normalize.ruff import ruff_item_to_finding
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
@@ -26,8 +26,8 @@ class TyNormalizer:
                 status="passed",
                 exit_code=0,
             )
-        items = _parse_ty_items(stdout)
-        findings = tuple(_ty_item_to_finding(item, check_id) for item in items)
+        items = parse_ty_items(stdout)
+        findings = tuple(ty_item_to_finding(item, check_id) for item in items)
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(
             check_id=check_id,
@@ -38,7 +38,7 @@ class TyNormalizer:
         )
 
 
-def _parse_ty_items(stdout: str) -> list[dict]:
+def parse_ty_items(stdout: str) -> list[dict]:
     try:
         payload = json.loads(stdout) if stdout.strip() else []
     except json.JSONDecodeError as exc:
@@ -52,9 +52,9 @@ def _parse_ty_items(stdout: str) -> list[dict]:
     raise NormalizationError("ty output must be a JSON array of diagnostics")
 
 
-def _ty_item_to_finding(item: dict, check_id: str) -> Finding:
+def ty_item_to_finding(item: dict, check_id: str) -> Finding:
     if "code" in item or "filename" in item:
-        return _ruff_item_to_finding(item, check_id)
+        return ruff_item_to_finding(item, check_id)
     location = None
     loc = item.get("location") or {}
     file_path = loc.get("path") or item.get("path") or item.get("file")

@@ -48,12 +48,12 @@ def resolve_runnables(
         ]
 
     if project.checks and not suite_override and not workflow_override:
-        planned = _planned_from_check_names(project, catalog, mode)
+        planned = planned_from_check_names(project, catalog, mode)
         return project.suite or "custom", planned
 
     workflow_id = workflow_override or project.workflow
     if workflow_id and workflow_id in catalog.workflows:
-        return _resolve_workflow(workflow_id, catalog, project)
+        return resolve_workflow(workflow_id, catalog, project)
 
     if suite_override:
         suite_id = suite_override
@@ -63,7 +63,7 @@ def resolve_runnables(
         suite_id = project.suite or "standard"
 
     if catalog.is_workflow(suite_id):
-        return _resolve_workflow(suite_id, catalog, project)
+        return resolve_workflow(suite_id, catalog, project)
 
     tool_ids = expand_suite(suite_id, catalog)
     planned = [
@@ -77,7 +77,7 @@ def resolve_runnables(
     return suite_id, planned
 
 
-def _planned_from_check_names(
+def planned_from_check_names(
     project: ProjectConfig,
     catalog: Catalog,
     mode: RunMode,
@@ -101,7 +101,7 @@ def _planned_from_check_names(
     return planned
 
 
-def _resolve_workflow(
+def resolve_workflow(
     workflow_id: str,
     catalog: Catalog,
     project: ProjectConfig,
@@ -111,7 +111,7 @@ def _resolve_workflow(
     seen: set[tuple[str, RunMode]] = set()
     for step in workflow.steps:
         for member in step.members:
-            tool_ids = _expand_workflow_member(member, catalog)
+            tool_ids = expand_workflow_member(member, catalog)
             for tool_id in tool_ids:
                 key = (tool_id, step.mode)
                 if key in seen:
@@ -127,7 +127,7 @@ def _resolve_workflow(
     return workflow_id, planned
 
 
-def _expand_workflow_member(member: str, catalog: Catalog) -> list[str]:
+def expand_workflow_member(member: str, catalog: Catalog) -> list[str]:
     if member in catalog.capabilities:
         return expand_capability(catalog, member)
     return expand_suite(member, catalog)

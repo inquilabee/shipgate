@@ -30,11 +30,11 @@ def run_parallel(
     results: dict[int, R] = {}
     with ThreadPoolExecutor(max_workers=min(len(items), 8)) as pool:
         futures = {pool.submit(fn, item): index for index, item in enumerate(items)}
-        _collect_parallel_results(futures, results, fail_fast=fail_fast)
+        collect_parallel_results(futures, results, fail_fast=fail_fast)
     return [results[i] for i in range(len(items))]
 
 
-def _collect_parallel_results(
+def collect_parallel_results(
     futures: dict,
     results: dict[int, R],
     *,

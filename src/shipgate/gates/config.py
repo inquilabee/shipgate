@@ -35,7 +35,7 @@ def load_gate_config(
     *,
     config_paths: tuple[Path, ...],
 ) -> dict[str, Any]:
-    config_path = _resolve_gate_config_path(tool, project_root, project, config_paths)
+    config_path = resolve_gate_config_path(tool, project_root, project, config_paths)
     if config_path is None or not config_path.is_file():
         return {}
     data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
@@ -43,7 +43,7 @@ def load_gate_config(
         msg = f"Gate config must be a mapping: {config_path}"
         raise ValueError(msg)
     config = dict(data)
-    _resolve_allowlist_path(project_root, config)
+    resolve_allowlist_path(project_root, config)
     return config
 
 
@@ -64,7 +64,7 @@ def gate_env_from_config(config: dict[str, Any], project_root: Path) -> dict[str
     for key, value in config.items():
         if value is None:
             continue
-        env[f"GATE_{key.upper()}"] = _gate_env_value(value)
+        env[f"GATE_{key.upper()}"] = gate_env_value(value)
     allowlist = config.get("allowlist_file")
     if allowlist:
         path = Path(str(allowlist))
@@ -74,7 +74,7 @@ def gate_env_from_config(config: dict[str, Any], project_root: Path) -> dict[str
     return env
 
 
-def _resolve_gate_config_path(
+def resolve_gate_config_path(
     tool: ToolDefinition,
     project_root: Path,
     project: ProjectConfig | None,
@@ -96,7 +96,7 @@ def _resolve_gate_config_path(
     return None
 
 
-def _resolve_allowlist_path(project_root: Path, config: dict[str, Any]) -> None:
+def resolve_allowlist_path(project_root: Path, config: dict[str, Any]) -> None:
     raw = config.get("allowlist_file")
     if not raw:
         return
@@ -107,7 +107,7 @@ def _resolve_allowlist_path(project_root: Path, config: dict[str, Any]) -> None:
         config["allowlist_file"] = str(path.resolve())
 
 
-def _gate_env_value(value: Any) -> str:
+def gate_env_value(value: Any) -> str:
     if isinstance(value, list):
         return " ".join(str(item) for item in value)
     if isinstance(value, bool):

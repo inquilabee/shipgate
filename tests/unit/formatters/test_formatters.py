@@ -12,7 +12,7 @@ from shipgate.formatters.json import JsonFormatter
 from shipgate.formatters.text import TextFormatter
 
 
-def _sample_report() -> RunReport:
+def sample_report() -> RunReport:
     finding = Finding(
         check_id="ruff.lint",
         rule_id="F401",
@@ -33,18 +33,18 @@ def _sample_report() -> RunReport:
 
 
 def test_json_formatter():
-    output = JsonFormatter().render(_sample_report())
+    output = JsonFormatter().render(sample_report())
     data = json.loads(output)
     assert data["status"] == "failed"
 
 
 def test_compact_formatter():
-    output = CompactFormatter().render(_sample_report())
+    output = CompactFormatter().render(sample_report())
     assert "src/app.py:42: error: F401 Unused import" in output
 
 
 def test_text_formatter():
-    output = TextFormatter().render(_sample_report())
+    output = TextFormatter().render(sample_report())
     assert "F401" in output
 
 
@@ -75,7 +75,7 @@ def test_github_escapes():
     assert "%3A" in output
 
 
-def _tool_exit_report() -> RunReport:
+def tool_exit_report() -> RunReport:
     check = CheckReport(
         check_id="shellcheck",
         tool_id="shellcheck",
@@ -93,25 +93,24 @@ def _tool_exit_report() -> RunReport:
 
 
 def test_compact_formatter_tool_exit():
-    output = CompactFormatter().render(_tool_exit_report())
+    output = CompactFormatter().render(tool_exit_report())
     assert "shellcheck: error: TOOL_EXIT Tool failed" in output
 
 
 def test_text_formatter_tool_exit():
-    output = TextFormatter().render(_tool_exit_report())
+    output = TextFormatter().render(tool_exit_report())
     assert "TOOL_EXIT" in output
     assert "Tool failed" in output
 
 
 def test_github_formatter_tool_exit():
-    output = GitHubFormatter().render(_tool_exit_report())
+    output = GitHubFormatter().render(tool_exit_report())
     assert "TOOL_EXIT" in output
     assert "Tool failed" in output
 
 
 def test_get_formatter_unknown_raises():
     import pytest
-
     from shipgate.formatters.plugins import get_formatter
 
     with pytest.raises(ValueError, match="unknown error format"):

@@ -8,7 +8,7 @@ from shipgate.normalize.radon import RadonNormalizer
 from shipgate.runtime.executor import ProcessResult
 
 
-def _resolved(tmp_path: Path, tool_id: str, subcommand: tuple[str, ...]) -> ResolvedRequest:
+def resolved(tmp_path: Path, tool_id: str, subcommand: tuple[str, ...]) -> ResolvedRequest:
     tool = ToolDefinition(
         id=tool_id,
         executable="radon",
@@ -31,7 +31,7 @@ def _resolved(tmp_path: Path, tool_id: str, subcommand: tuple[str, ...]) -> Reso
 def test_radon_cc_allows_rank_a(tmp_path: Path):
     payload = '{"src/app.py": [{"type": "function", "name": "ok", "rank": "A", "lineno": 1}]}'
     report = RadonNormalizer().normalize(
-        _resolved(tmp_path, "radon.cc", ("cc", "-j")),
+        resolved(tmp_path, "radon.cc", ("cc", "-j")),
         ProcessResult(
             argv=(),
             cwd=tmp_path,
@@ -48,7 +48,7 @@ def test_radon_cc_allows_rank_a(tmp_path: Path):
 def test_radon_cc_allows_rank_b(tmp_path: Path):
     payload = '{"src/app.py": [{"type": "function", "name": "ok", "rank": "B", "lineno": 10}]}'
     report = RadonNormalizer().normalize(
-        _resolved(tmp_path, "radon.cc", ("cc", "-j")),
+        resolved(tmp_path, "radon.cc", ("cc", "-j")),
         ProcessResult(
             argv=(),
             cwd=tmp_path,
@@ -65,7 +65,7 @@ def test_radon_cc_allows_rank_b(tmp_path: Path):
 def test_radon_cc_allows_rank_c(tmp_path: Path):
     payload = '{"src/app.py": [{"type": "function", "name": "ok", "rank": "C", "lineno": 10}]}'
     report = RadonNormalizer().normalize(
-        _resolved(tmp_path, "radon.cc", ("cc", "-j")),
+        resolved(tmp_path, "radon.cc", ("cc", "-j")),
         ProcessResult(
             argv=(),
             cwd=tmp_path,
@@ -82,7 +82,7 @@ def test_radon_cc_allows_rank_c(tmp_path: Path):
 def test_radon_cc_fails_rank_d(tmp_path: Path):
     payload = '{"src/app.py": [{"type": "function", "name": "bad", "rank": "D", "lineno": 10}]}'
     report = RadonNormalizer().normalize(
-        _resolved(tmp_path, "radon.cc", ("cc", "-j")),
+        resolved(tmp_path, "radon.cc", ("cc", "-j")),
         ProcessResult(
             argv=(),
             cwd=tmp_path,
@@ -101,7 +101,7 @@ def test_radon_cc_fails_rank_d(tmp_path: Path):
 def test_radon_mi_fails_rank_below_c(tmp_path: Path):
     payload = '{"src/app.py": {"rank": "D", "mi": 12.5}}'
     report = RadonNormalizer().normalize(
-        _resolved(tmp_path, "radon.mi", ("mi", "-j")),
+        resolved(tmp_path, "radon.mi", ("mi", "-j")),
         ProcessResult(
             argv=(),
             cwd=tmp_path,

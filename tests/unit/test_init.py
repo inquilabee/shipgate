@@ -2,7 +2,6 @@ import shutil
 import subprocess
 
 import pytest
-
 from shipgate.cli import main
 from shipgate.paths import find_project_root, shipgate_dir
 

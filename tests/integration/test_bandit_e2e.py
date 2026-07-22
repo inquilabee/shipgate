@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import pytest
-
 from shipgate.app import RunCommand, ShipGateApp
 from shipgate.catalog.loader import load_catalog
 

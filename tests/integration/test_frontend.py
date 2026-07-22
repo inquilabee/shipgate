@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation, RunReport
 from shipgate.frontend.domain.models import RunStatus
 from shipgate.frontend.services.ingest import ingest_run_report
@@ -13,7 +12,7 @@ from shipgate.runtime.report_store import ReportStore
 pytest.importorskip("fastapi")
 
 
-def _sample_failed_report() -> RunReport:
+def sample_failed_report() -> RunReport:
     return RunReport(
         run_id="test-run-001",
         suite="standard",
@@ -39,10 +38,10 @@ def _sample_failed_report() -> RunReport:
     )
 
 
-def _seed_frontend_client(tmp_path: Path) -> TestClient:
+def seed_frontend_client(tmp_path: Path) -> TestClient:
     storage = SqliteStorage(tmp_path / ".shipgate" / "server" / "report.db")
     run = storage.create_run(branch="main", suite_id="standard", run_id="test-run-001")
-    report = _sample_failed_report()
+    report = sample_failed_report()
     summary = ingest_run_report(storage, run.id, report, tmp_path)
     storage.update_run(run.id, status=RunStatus.FAILED, finished=True, summary=summary)
     ReportStore(tmp_path).save(report)
@@ -50,14 +49,14 @@ def _seed_frontend_client(tmp_path: Path) -> TestClient:
 
 
 def test_frontend_health(tmp_path: Path):
-    client = _seed_frontend_client(tmp_path)
+    client = seed_frontend_client(tmp_path)
     health = client.get("/health")
     assert health.status_code == 200
     assert health.json() == {"ok": True}
 
 
 def test_frontend_overview_pages(tmp_path: Path):
-    client = _seed_frontend_client(tmp_path)
+    client = seed_frontend_client(tmp_path)
     overview = client.get("/")
     assert overview.status_code == 200
     assert "Overview" in overview.text
@@ -75,7 +74,7 @@ def test_frontend_overview_pages(tmp_path: Path):
 
 
 def test_frontend_api_routes(tmp_path: Path):
-    client = _seed_frontend_client(tmp_path)
+    client = seed_frontend_client(tmp_path)
 
     runs = client.get("/api/runs")
     assert runs.status_code == 200

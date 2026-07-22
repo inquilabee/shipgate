@@ -37,19 +37,19 @@ def load_catalog(path: Path | None = None) -> Catalog:
         raise CatalogError(f"invalid catalog YAML: {exc}") from exc
     if not isinstance(raw, dict):
         raise CatalogError("catalog must be a mapping")
-    catalog = _parse_catalog(raw)
+    catalog = parse_catalog(raw)
     validate_catalog(catalog, bundled_root)
     return catalog
 
 
-def _parse_catalog(raw: dict) -> Catalog:
+def parse_catalog(raw: dict) -> Catalog:
     tools_raw = raw.get("tools", {}) or {}
     suites_raw = raw.get("suites", {}) or {}
     workflows_raw = raw.get("workflows", {}) or {}
     capabilities_raw = raw.get("capabilities", {}) or {}
-    tools = {tid: _parse_tool(tid, tdata) for tid, tdata in tools_raw.items()}
-    suites = {sid: _parse_suite(sid, sdata) for sid, sdata in suites_raw.items()}
-    workflows = {wid: _parse_workflow(wid, wdata) for wid, wdata in workflows_raw.items()}
+    tools = {tid: parse_tool(tid, tdata) for tid, tdata in tools_raw.items()}
+    suites = {sid: parse_suite(sid, sdata) for sid, sdata in suites_raw.items()}
+    workflows = {wid: parse_workflow(wid, wdata) for wid, wdata in workflows_raw.items()}
     capabilities = {
         str(name): tuple(str(tool_id) for tool_id in (members or []))
         for name, members in capabilities_raw.items()
@@ -57,7 +57,7 @@ def _parse_catalog(raw: dict) -> Catalog:
     return Catalog(tools=tools, suites=suites, workflows=workflows, capabilities=capabilities)
 
 
-def _parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
+def parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
     cli = {
         name: CliOptionDefinition(
             flag=opt.get("flag"),
@@ -104,7 +104,7 @@ def _parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
     )
 
 
-def _parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:
+def parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:
     return SuiteDefinition(
         id=suite_id,
         members=tuple(raw.get("members", []) or []),
@@ -113,7 +113,7 @@ def _parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:
     )
 
 
-def _parse_workflow(workflow_id: str, raw: list) -> WorkflowDefinition:
+def parse_workflow(workflow_id: str, raw: list) -> WorkflowDefinition:
     if not isinstance(raw, list):
         raise CatalogError(f"workflow {workflow_id!r} must be a list of steps")
     steps: list[WorkflowStep] = []

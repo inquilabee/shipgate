@@ -42,17 +42,17 @@ def tool_docs_rows(catalog: Catalog, primary_root: Path) -> list[ToolDocsRow]:
             name=tool_id,
             description=", ".join(tool.capabilities) if tool.capabilities else tool_id,
             documentation_url=None,
-            version=_resolve_version(tool, primary_root),
+            version=resolve_version(tool, primary_root),
         )
         for tool_id, tool in sorted(catalog.tools.items())
     ]
 
 
-def _resolve_version(tool: ToolDefinition, primary_root: Path) -> str:
-    installed = _installed_version(tool, primary_root)
+def resolve_version(tool: ToolDefinition, primary_root: Path) -> str:
+    installed = installed_version(tool, primary_root)
     if installed:
         return installed
-    pip_version = _pip_show_version(tool, primary_root)
+    pip_version = pip_show_version(tool, primary_root)
     if pip_version:
         return pip_version
     if tool.install and tool.install.version:
@@ -60,7 +60,7 @@ def _resolve_version(tool: ToolDefinition, primary_root: Path) -> str:
     return "—"
 
 
-def _installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
+def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
     try:
         binary = resolve_executable(
             tool.executable,
@@ -79,13 +79,13 @@ def _installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
         except Exception:
             return None
     for flag in VERSION_ATTEMPTS:
-        parsed = _run_version_command(binary, flag, tool.executable)
+        parsed = run_version_command(binary, flag, tool.executable)
         if parsed:
             return parsed
     return None
 
 
-def _run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
+def run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
     command = [binary, flag]
     try:
         completed = subprocess.run(  # noqa: S603
@@ -100,49 +100,49 @@ def _run_version_command(binary: str, flag: str, binary_name: str) -> str | None
     text = "\n".join(part.strip() for part in (completed.stdout, completed.stderr) if part.strip())
     if not text:
         return None
-    return _parse_version_from_output(text, binary_name)
+    return parse_version_from_output(text, binary_name)
 
 
-def _parse_version_from_output(text: str, binary_name: str) -> str | None:
+def parse_version_from_output(text: str, binary_name: str) -> str | None:
     for line in text.splitlines():
-        version = _version_from_line(line.strip(), binary_name)
+        version = version_from_line(line.strip(), binary_name)
         if version:
             return version
-    return _semver_fallback(text, binary_name)
+    return semver_fallback(text, binary_name)
 
 
-def _version_from_line(stripped: str, binary_name: str) -> str | None:
+def version_from_line(stripped: str, binary_name: str) -> str | None:
     if not stripped:
         return None
     match = VERSION_LINE.search(stripped)
     if match:
-        return _clean_version(match.group("version"))
-    normalized = _normalize_version_line(stripped, binary_name)
-    if not _is_plausible_version(normalized, binary_name):
+        return clean_version(match.group("version"))
+    normalized = normalize_version_line(stripped, binary_name)
+    if not is_plausible_version(normalized, binary_name):
         return None
     found = SEMVER.search(normalized)
-    return _clean_version(found.group(0)) if found else None
+    return clean_version(found.group(0)) if found else None
 
 
-def _semver_fallback(text: str, binary_name: str) -> str | None:
+def semver_fallback(text: str, binary_name: str) -> str | None:
     found = SEMVER.search(text)
-    if found and _is_plausible_version(found.group(0), binary_name):
-        return _clean_version(found.group(0))
+    if found and is_plausible_version(found.group(0), binary_name):
+        return clean_version(found.group(0))
     return None
 
 
-def _pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
+def pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
     if tool.install is None or tool.install.manager != "python":
         return None
-    package_name = _package_name(tool.install.package)
-    if package_name is None:
+    resolved_package = package_name(tool.install.package)
+    if resolved_package is None:
         return None
     python = managed_python_env(primary_root) / "bin" / "python"
     if not python.is_file():
         return None
     try:
         completed = subprocess.run(  # noqa: S603
-            [str(python), "-m", "pip", "show", package_name],
+            [str(python), "-m", "pip", "show", resolved_package],
             capture_output=True,
             text=True,
             timeout=TIMEOUT_S,
@@ -158,14 +158,14 @@ def _pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
     return None
 
 
-def _package_name(package: str | None) -> str | None:
+def package_name(package: str | None) -> str | None:
     if not package:
         return None
     match = PACKAGE_NAME.match(package.strip())
     return match.group(1) if match else None
 
 
-def _normalize_version_line(line: str, binary_name: str) -> str:
+def normalize_version_line(line: str, binary_name: str) -> str:
     lowered = line.lower()
     prefix = binary_name.lower()
     if lowered.startswith(prefix + " "):
@@ -175,11 +175,11 @@ def _normalize_version_line(line: str, binary_name: str) -> str:
     return LEADING_NAME.sub("", line, count=1).strip() or line
 
 
-def _clean_version(value: str) -> str:
+def clean_version(value: str) -> str:
     return value.lstrip("vV")
 
 
-def _is_plausible_version(value: str, binary_name: str) -> bool:
+def is_plausible_version(value: str, binary_name: str) -> bool:
     if not value or value.lower() == binary_name.lower():
         return False
     return bool(SEMVER.search(value))

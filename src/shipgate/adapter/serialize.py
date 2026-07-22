@@ -11,33 +11,33 @@ def serialize_option(
     if value is None:
         return []
     if style == "boolean":
-        return _serialize_boolean(definition, value)
+        return serialize_boolean(definition, value)
     if style == "positional":
-        return _serialize_positional(value)
+        return serialize_positional(value)
     if not definition.flag:
         return []
     if style == "scalar":
-        return _serialize_scalar(definition, value)
+        return serialize_scalar(definition, value)
     if style == "repeated":
-        return _serialize_repeated(definition, value)
+        return serialize_repeated(definition, value)
     if style == "joined":
-        return _serialize_joined(definition, value)
+        return serialize_joined(definition, value)
     return []
 
 
-def _serialize_boolean(definition: CliOptionDefinition, value: object) -> list[str]:
+def serialize_boolean(definition: CliOptionDefinition, value: object) -> list[str]:
     if value:
         return [definition.flag] if definition.flag else []
     return []
 
 
-def _serialize_positional(value: object) -> list[str]:
+def serialize_positional(value: object) -> list[str]:
     if isinstance(value, (list, tuple)):
         return [str(v) for v in value]
     return [str(value)]
 
 
-def _serialize_scalar(definition: CliOptionDefinition, value: object) -> list[str]:
+def serialize_scalar(definition: CliOptionDefinition, value: object) -> list[str]:
     if not definition.flag:
         return []
     flag = definition.flag
@@ -53,7 +53,7 @@ def _serialize_scalar(definition: CliOptionDefinition, value: object) -> list[st
     return [flag, str(value)]
 
 
-def _serialize_repeated(definition: CliOptionDefinition, value: object) -> list[str]:
+def serialize_repeated(definition: CliOptionDefinition, value: object) -> list[str]:
     if not definition.flag:
         return []
     flag = definition.flag
@@ -64,7 +64,7 @@ def _serialize_repeated(definition: CliOptionDefinition, value: object) -> list[
     return result
 
 
-def _serialize_joined(definition: CliOptionDefinition, value: object) -> list[str]:
+def serialize_joined(definition: CliOptionDefinition, value: object) -> list[str]:
     if not definition.flag:
         return []
     flag = definition.flag

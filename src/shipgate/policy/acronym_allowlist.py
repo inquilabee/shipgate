@@ -184,18 +184,18 @@ def run_gate(
     report_path: Path | None,
 ) -> int:
     scan_roots, allowlist_path = settings_from_config(config)
-    allowlist_path = _require_allowlist_path(root, allowlist_path)
+    allowlist_path = require_allowlist_path(root, allowlist_path)
     violations = scan_paths(
         repo_root=root,
         allowlist_path=allowlist_path,
         scan_roots=scan_roots,
         ignores=ignores_from_env(root),
     )
-    _write_acronym_report(violations, report_path)
-    return _acronym_exit(violations)
+    write_acronym_report(violations, report_path)
+    return acronym_exit(violations)
 
 
-def _require_allowlist_path(root: Path, allowlist_path: Path | None) -> Path:
+def require_allowlist_path(root: Path, allowlist_path: Path | None) -> Path:
     if allowlist_path is None:
         msg = "acronym allowlist_file is required in gate config"
         raise ValueError(msg)
@@ -204,7 +204,7 @@ def _require_allowlist_path(root: Path, allowlist_path: Path | None) -> Path:
     return allowlist_path
 
 
-def _write_acronym_report(violations: list[AcronymViolation], report_path: Path | None) -> None:
+def write_acronym_report(violations: list[AcronymViolation], report_path: Path | None) -> None:
     if not report_path:
         return
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,7 +212,7 @@ def _write_acronym_report(violations: list[AcronymViolation], report_path: Path 
     report_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
-def _acronym_exit(violations: list[AcronymViolation]) -> int:
+def acronym_exit(violations: list[AcronymViolation]) -> int:
     if not violations:
         return 0
     for item in violations:

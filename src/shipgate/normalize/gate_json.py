@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from shipgate.runtime.executor import ProcessResult
 
 
-def _finding_location(raw: dict[str, Any]) -> FindingLocation | None:
+def finding_location(raw: dict[str, Any]) -> FindingLocation | None:
     location = raw.get("location")
     if not isinstance(location, dict):
         return None
@@ -29,18 +29,18 @@ def _finding_location(raw: dict[str, Any]) -> FindingLocation | None:
     )
 
 
-def _finding_from_dict(item: dict[str, Any], check_id: str) -> Finding:
+def finding_from_dict(item: dict[str, Any], check_id: str) -> Finding:
     return Finding(
         check_id=check_id,
         rule_id=str(item.get("rule_id") or "gate"),
         severity=str(item.get("severity") or "error").lower(),
         message=str(item.get("message") or "gate finding"),
-        location=_finding_location(item),
+        location=finding_location(item),
         extra={"raw": dict(item)},
     )
 
 
-def _parse_findings(stdout: str, check_id: str) -> tuple[Finding, ...]:
+def parse_findings(stdout: str, check_id: str) -> tuple[Finding, ...]:
     if not stdout.strip():
         return ()
     try:
@@ -55,14 +55,14 @@ def _parse_findings(stdout: str, check_id: str) -> tuple[Finding, ...]:
         items = payload
     else:
         return ()
-    return tuple(_finding_from_dict(item, check_id) for item in items if isinstance(item, dict))
+    return tuple(finding_from_dict(item, check_id) for item in items if isinstance(item, dict))
 
 
 class GateJsonNormalizer:
     def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport:
         check_id = request.tool.id
         stdout = read_tool_output(request, result)
-        findings = _parse_findings(stdout, check_id)
+        findings = parse_findings(stdout, check_id)
         if findings:
             return CheckReport(
                 check_id=check_id,
