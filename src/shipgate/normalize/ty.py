@@ -7,7 +7,8 @@ from typing import Any, cast
 from shipgate.domain.reports import Finding, FindingLocation
 from shipgate.errors import NormalizationError
 from shipgate.normalize.core.json import JsonItemsNormalizer
-from shipgate.normalize.ruff import RuffNormalizer
+from shipgate.normalize.core.location import finding_location
+from shipgate.normalize.core.ruff_like import is_ruff_like_item, ruff_like_finding
 
 
 class TyNormalizer(JsonItemsNormalizer):
@@ -27,8 +28,8 @@ class TyNormalizer(JsonItemsNormalizer):
         raise NormalizationError(self.invalid_message)
 
     def item_to_finding(self, item: dict[str, Any], check_id: str) -> Finding:
-        if "code" in item or "filename" in item:
-            return RuffNormalizer().item_to_finding(item, check_id)
+        if is_ruff_like_item(item):
+            return ruff_like_finding(item, check_id)
         return Finding(
             check_id=check_id,
             rule_id=str(item.get("check_name") or item.get("code") or item.get("rule") or "TY"),
@@ -42,10 +43,8 @@ class TyNormalizer(JsonItemsNormalizer):
     def _item_location(item: dict[str, Any]) -> FindingLocation | None:
         loc = item.get("location") or {}
         file_path = loc.get("path") or item.get("path") or item.get("file")
-        if not file_path:
-            return None
-        return FindingLocation(
-            path=str(file_path),
+        return finding_location(
+            str(file_path) if file_path else None,
             line=TyNormalizer._line(item, loc),
             column=TyNormalizer._column(item, loc),
         )

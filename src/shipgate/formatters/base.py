@@ -2,6 +2,7 @@
 
 from typing import Protocol
 
+from shipgate.core.registry import Registry
 from shipgate.domain.reports import RunReport
 from shipgate.formatters.compact import CompactFormatter
 from shipgate.formatters.github import GitHubFormatter
@@ -13,16 +14,17 @@ class Formatter(Protocol):
     def render(self, report: RunReport) -> str: ...
 
 
-FORMATTERS: dict[str, Formatter] = {
-    "json": JsonFormatter(),
-    "compact": CompactFormatter(),
-    "text": TextFormatter(),
-    "github": GitHubFormatter(),
-}
+FORMATTER_REGISTRY = Registry(
+    {
+        "json": JsonFormatter(),
+        "compact": CompactFormatter(),
+        "text": TextFormatter(),
+        "github": GitHubFormatter(),
+    },
+    unknown_message="unknown error format: {name!r}",
+)
+FORMATTERS = FORMATTER_REGISTRY.items()
 
 
 def get_formatter(name: str) -> Formatter:
-    try:
-        return FORMATTERS[name]
-    except KeyError as exc:
-        raise ValueError(f"unknown error format: {name!r}") from exc
+    return FORMATTER_REGISTRY.get(name)

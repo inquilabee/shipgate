@@ -1,14 +1,15 @@
 """Human-friendly text formatter."""
 
 from shipgate.domain.reports import RunReport
-from shipgate.formatters.core.iterate import TOOL_EXIT_RULE, check_has_output, iter_check_findings
+from shipgate.formatters.core.base import BaseFormatter
+from shipgate.formatters.core.iterate import TOOL_EXIT_RULE, check_has_output
 
 
-class TextFormatter:
-    def render(self, report: RunReport) -> str:
+class TextFormatter(BaseFormatter):
+    def render_lines(self, report: RunReport) -> list[str]:
         lines: list[str] = []
         seen_headers: set[str] = set()
-        for check, finding in iter_check_findings(report):
+        for check, finding in self.iter_findings(report):
             if check.check_id not in seen_headers and check_has_output(check):
                 lines.append(f"[{check.check_id}]")
                 seen_headers.add(check.check_id)
@@ -22,4 +23,4 @@ class TextFormatter:
                 lines.append(f"- [error] {finding.rule_id}: {finding.message}")
             else:
                 lines.append(f"- [{finding.severity}] {finding.rule_id}: {finding.message}{loc}")
-        return "\n".join(lines) + ("\n" if lines else "")
+        return lines
