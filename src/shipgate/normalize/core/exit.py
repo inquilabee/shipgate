@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from shipgate.normalize.generic import GenericExitNormalizer
+from shipgate.normalize.core.generic import GenericExitNormalizer
 
 
 class CodespellNormalizer(GenericExitNormalizer):

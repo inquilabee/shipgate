@@ -6,8 +6,8 @@ import json
 from typing import TYPE_CHECKING, Any
 
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
-from shipgate.normalize.base import BaseNormalizer
-from shipgate.normalize.output import read_tool_output, tool_exit_report
+from shipgate.normalize.core.base import BaseNormalizer
+from shipgate.normalize.core.utils import read_tool_output, tool_exit_report
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest

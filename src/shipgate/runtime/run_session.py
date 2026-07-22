@@ -14,7 +14,7 @@ from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.formatters.plugins import get_formatter
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
-from shipgate.normalize.base import get_normalizer
+from shipgate.normalize import get_normalizer
 from shipgate.planning.incremental import filter_changed
 from shipgate.planning.requests import build_execution_request, resolve_request
 from shipgate.planning.scopes import resolve_scope, scope_paths_for_tool

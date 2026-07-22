@@ -10,7 +10,7 @@ from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.gates.paths import gates_lib_path, resolve_gate_script
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
-from shipgate.normalize.gate_json import GateJsonNormalizer
+from shipgate.normalize.core.gate_json import GateJsonNormalizer
 from shipgate.runtime.executor import ProcessResult
 
 

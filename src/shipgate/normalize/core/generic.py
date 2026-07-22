@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from shipgate.domain.reports import CheckReport, Finding
-from shipgate.normalize.base import BaseNormalizer
+from shipgate.normalize.core.base import BaseNormalizer
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest

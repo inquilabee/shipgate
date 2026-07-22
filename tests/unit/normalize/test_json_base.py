@@ -3,8 +3,8 @@ from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import Finding
-from shipgate.normalize.base import BaseNormalizer
-from shipgate.normalize.json_base import JsonItemsNormalizer
+from shipgate.normalize.core.base import BaseNormalizer
+from shipgate.normalize.core.json import JsonItemsNormalizer
 from shipgate.runtime.executor import ProcessResult
 
 

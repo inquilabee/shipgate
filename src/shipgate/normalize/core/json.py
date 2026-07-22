@@ -6,8 +6,8 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
 
 from shipgate.domain.reports import CheckReport, Finding
-from shipgate.normalize.base import BaseNormalizer
-from shipgate.normalize.output import (
+from shipgate.normalize.core.base import BaseNormalizer
+from shipgate.normalize.core.utils import (
     decode_json_payload,
     empty_pass_report,
     extract_items,

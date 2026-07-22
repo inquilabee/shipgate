@@ -1,6 +1,6 @@
 """Plugin loader stub."""
 
-from shipgate.normalize.base import NORMALIZERS
+from shipgate.normalize import NORMALIZERS
 
 
 def load_normalizers() -> dict:

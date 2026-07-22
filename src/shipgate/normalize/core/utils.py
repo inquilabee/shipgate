@@ -1,4 +1,4 @@
-"""Shared helpers for reading tool stdout and output files."""
+"""Shared helpers for reading tool stdout and building reports."""
 
 from __future__ import annotations
 

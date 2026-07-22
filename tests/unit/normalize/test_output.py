@@ -4,7 +4,7 @@ from shipgate.catalog.loader import load_catalog
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.normalize.output import read_tool_output
+from shipgate.normalize.core.utils import read_tool_output
 from shipgate.runtime.executor import ProcessResult
 
 
