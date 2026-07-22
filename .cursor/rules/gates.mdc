@@ -1,0 +1,26 @@
+---
+description: Script gates contract and bundled vs project gates
+alwaysApply: true
+---
+
+# Gates
+
+Gates are a first-class deliverable — not ad-hoc shell scripts.
+
+## Bundled gates
+
+- Shell: `src/shipgate/catalog/bundled/gates/` + configs in `configs/gates/`
+- Python helpers: `src/shipgate/gates/` and `src/shipgate/policy/` — never inline heredocs in shell gates
+- Emit JSON to `SHIPGATE_REPORT`; shell helpers in `lib.sh` (`gate_init`, `gate_fail`, `gate_finish`)
+
+## Project gates
+
+- Scaffold: `shipgate gates init <name>` → `.shipgate/gates/<name>.sh`
+- Discovered at runtime into the `local-gates` suite
+- `policy` suite = bundled gates; `local-gates` = project-discovered gates
+
+## Rules
+
+- Gates must be deterministic and scoped to the project target
+- Reuse `lib.sh` and Python modules — do not duplicate finding JSON shape
+- New bundled gates need catalog tool YAML + config + normalizer (`gate_json` or dedicated)

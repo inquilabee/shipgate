@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## description: Agent workflow, verification, git safety alwaysApply: true
+---
+description: Agent workflow, verification, git safety
+alwaysApply: true
+---
 
 # Agent Workflow
 
@@ -13,6 +14,12 @@ Rules for Cursor agents. Entry index: `AGENTS.md`.
 | Ask | Read, search, explain | Edit files, implement |
 | Plan | Refine plans, commit lists | Implement code |
 | Agent | Execute agreed plan | Edit without plan agreement |
+
+## Plan execution
+
+- Never edit the plan file itself — execute against it.
+- Use existing todos; mark `in_progress` when starting, `completed` when done.
+- One plan chunk per session unless user expands scope.
 
 ## Verify before claiming
 
@@ -33,4 +40,3 @@ Agents **must not** `git commit`, `git push`, or open a PR unless the user expli
 
 - Keep changes tied to the requested scope.
 - After ~20 file edits: short status update.
-- One plan chunk per session unless user expands scope.

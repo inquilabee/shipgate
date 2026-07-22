@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## description: Codebase hygiene don'ts alwaysApply: true
+---
+description: Codebase hygiene don'ts
+alwaysApply: true
+---
 
 # Don't
 
@@ -10,4 +11,5 @@ ______________________________________________________________________
 - Do not edit bundled catalog for repo-specific paths or thresholds.
 - Do not add allowlist entries without an exceptional, documented reason (see `quality.mdc` Dogfooding).
 - Do not delete dead code by commenting out — delete it.
+- Do not inline Python in shell gates — use `src/shipgate/gates/` helpers (see `gates.mdc`).
 - Hook output: pass/fail only; actionable stderr on failure.

@@ -1,6 +1,7 @@
-______________________________________________________________________
-
-## description: Quality gates and testing policy alwaysApply: true
+---
+description: Quality gates and testing policy
+alwaysApply: true
+---
 
 # Quality Gates
 
@@ -12,18 +13,20 @@ ShipGate is a quality-control repo; it must pass its own gates. No carve-outs fo
 
 | Principle | Requirement |
 | --- | --- |
-| Full codebase | Built-in gates and every suite check (ruff, ty, radon, semgrep, bandit, policy gates, etc.) apply to the **entire** codebase |
-| No grandfathering | Do not relax thresholds, narrow scopes, or skip checks for existing code — fix violations |
-| Allowlists | `.shipgate/allowlists/` entries require an exceptional, documented reason; prefer code fixes over exemptions |
+| Full codebase | Built-in gates and every suite check apply to the **entire** codebase |
+| Suite | Dogfood uses `full` from `shipgate.yaml` — not `pre-commit` or `standard` as a workaround |
+| No grandfathering | Do not relax thresholds, narrow scopes, or skip checks — fix violations |
+| Allowlists | `.shipgate/allowlists/` entries require an exceptional, documented reason |
+
+Canonical verification: `make check-commit` (see `AGENTS.md`).
 
 ## Commands
 
 | Command | Purpose |
 | --- | --- |
-| `pytest tests/unit -q` | Default deterministic suite |
-| `pytest -m integration` | External tools, network, pip install |
-| `ruff check src tests` | Lint |
-| `ruff format --check src tests` | Format check |
+| `uv run pytest tests/unit -q` | Default deterministic suite |
+| `uv run pytest -m integration` | External tools, network, pip install |
+| `make check-commit` | Format + full ShipGate suite |
 
 ## Rules
 

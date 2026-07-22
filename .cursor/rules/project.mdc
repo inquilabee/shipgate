@@ -1,12 +1,19 @@
-______________________________________________________________________
-
-## description: ShipGate vision, module map, ADR invariants alwaysApply: true
+---
+description: ShipGate vision, module map, ADR invariants
+alwaysApply: true
+---
 
 # ShipGate Project
 
 ## Mission
 
-Repo-policy-first quality orchestration. Ready by default. Projects declare intent; ShipGate executes tools via catalog metadata and canonical reports.
+Repo-policy-first quality orchestration. **Ready by default** = opinionated and strict, not loose. Projects declare intent; ShipGate executes tools via catalog metadata and canonical reports.
+
+**Project root:** directory containing `shipgate.yaml` (discovered upward from the current working directory).
+
+## Strict bundled defaults
+
+Bundled semgrep rulesets, ruff McCabe, radon grades, etc. are intentional. Fix violations; do not weaken thresholds or scopes without explicit approval.
 
 ## Authoritative documentation
 
@@ -17,6 +24,7 @@ Repo-policy-first quality orchestration. Ready by default. Projects declare inte
 | ADR index | `docs/adr-support.md` |
 | Option mappings | `docs/res/config.md` |
 | Agent index | `AGENTS.md` |
+| Gates | `.cursor/rules/gates.mdc` |
 
 Conflict resolution: `docs/sdd.md` > `docs/implementation.md`.
 
@@ -33,20 +41,9 @@ Conflict resolution: `docs/sdd.md` > `docs/implementation.md`.
 | `normalize/` | Tool output → canonical `CheckReport` |
 | `formatters/` | Canonical report → human/CI text |
 | `gates/` | Project-local script gates |
-| `frontend/` | Report HTTP API and UI |
-| `plugins/` | Plugin catalog and normalizer loading |
 | `app.py` | Orchestration with dependency injection |
 | `cli.py` | argparse entrypoint only |
-| `api.py` | Public Python API |
 
 ## ADR invariants
 
-- ADR-001: Policy separate from execution
-- ADR-002: Execution Request is the internal API
-- ADR-003: Tools and suites are runnables
-- ADR-004: Normalize before format
-- ADR-005: Plugin API via entry points
-- ADR-006: Opinionated defaults
-- ADR-007: Familiar UX, metadata-driven internals
-- ADR-008: Seed catalog from prior tool set
-- ADR-009: SonarQube-inspired frontend on canonical reports
+ADR-001 through ADR-009 — see `docs/adr-support.md`. Policy separate from execution; Execution Request is the internal API.

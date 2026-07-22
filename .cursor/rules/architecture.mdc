@@ -1,26 +1,36 @@
-______________________________________________________________________
-
-## description: Layer boundaries and red flags for ShipGate alwaysApply: true
+---
+description: Layer boundaries and red flags for ShipGate
+alwaysApply: true
+---
 
 # Architecture
 
 Before implementing, name the layer:
 
 1. **Policy** — project config, scopes, checks (no subprocess details)
-1. **Planning** — workflows, suites, request resolution
-1. **Adapter** — argv serialization only
+1. **Planning** — workflows, suites, request resolution, gitignore scoping
+1. **Adapter** — argv serialization only (`CliSerializer`)
 1. **Runtime** — executor, install, environment (no finding parsing)
 1. **Normalize** — tool output → canonical JSON only
 1. **Format** — canonical JSON → human/CI text only
 
+## Scoping
+
+Check mode respects `.gitignore` via `planning/gitignore.py`. Prefer gitignore over per-tool ignore YAML in bundled configs.
+
+## Catalog layout
+
+`catalog/bundled/catalog/`: `tools/*.yaml`, `suites.yaml`, `workflows.yaml`, `capabilities.yaml`. Extend via ToolDefinition + bundled config + normalizer Protocol.
+
+## CliSerializer
+
+- `scalar` options: first path only when value is a list
+- `repeated` options: all paths emitted
+- Red flag: scalar paths dropping dirs — security tools must scan all scoped dirs
+
 ## Red flags (stop and redesign)
 
 - Tool-specific `if tool_id == "ruff"` in planner, adapter, executor, or formatters
-- CLI building argv directly
-- Normalizer reading project config
-- God file >250 lines without split plan
-- Loose `dict[str, Any]` crossing layer boundaries
-
-## Extension path
-
-Tool Definition + bundled config + normalizer — not runtime branches.
+- CLI building argv directly; normalizer reading project config
+- God file >250 lines without split plan; loose `dict[str, Any]` crossing layers
+- Shipping pytest/mutmut in bundled catalog (need project test venv)
