@@ -12,12 +12,12 @@ class CompactFormatter(BaseFormatter):
             if finding.rule_id == TOOL_EXIT_RULE:
                 lines.append(f"{check.check_id}: error: {finding.rule_id} {finding.message}")
             else:
-                lines.append(format_finding(finding))
+                lines.append(self.format_finding(finding))
         return lines
 
-
-def format_finding(finding: Finding) -> str:
-    loc = finding.location
-    if loc and loc.line is not None:
-        return f"{loc.path}:{loc.line}: {finding.severity}: {finding.rule_id} {finding.message}"
-    return f"{finding.check_id}: {finding.severity}: {finding.rule_id} {finding.message}"
+    @staticmethod
+    def format_finding(finding: Finding) -> str:
+        loc = finding.location
+        if loc and loc.line is not None:
+            return f"{loc.path}:{loc.line}: {finding.severity}: {finding.rule_id} {finding.message}"
+        return f"{finding.check_id}: {finding.severity}: {finding.rule_id} {finding.message}"

@@ -14,26 +14,8 @@ class WorktreeError(Exception):
     """Raised when git or worktree operations fail."""
 
 
-def git_error(exc: subprocess.CalledProcessError, fallback: str) -> WorktreeError:
-    detail = (exc.stderr or exc.stdout or str(exc)).strip()
-    return WorktreeError(detail or fallback)
-
-
 UNSAFE_CHARS = re.compile(r"[^A-Za-z0-9_]+")
 HASH_LEN = 12
-
-
-def safe_branch_name(branch: str) -> str:
-    digest = hashlib.sha256(branch.encode("utf-8")).hexdigest()[:HASH_LEN]
-    replaced = branch.replace("/", "__")
-    sanitized = UNSAFE_CHARS.sub("_", replaced).strip("_")
-    while "__" in sanitized:
-        sanitized = sanitized.replace("__", "_")
-    if sanitized and sanitized[0].isdigit():
-        sanitized = f"b_{sanitized}"
-    if sanitized:
-        return f"{sanitized}_{digest}"
-    return f"wt_{digest}"
 
 
 class WorktreeManager:
@@ -47,7 +29,9 @@ class WorktreeManager:
 
     def ensure_worktree(self, branch: str) -> Path:
         self._require_git_repo()
-        target = (self._primary_root / PROJECT_WORKTREES_DIR / safe_branch_name(branch)).resolve()
+        target = (
+            self._primary_root / PROJECT_WORKTREES_DIR / self.safe_branch_name(branch)
+        ).resolve()
         if target in self._worktree_paths():
             checked_out = self._checked_out_branch(target)
             if checked_out != branch:
@@ -83,7 +67,7 @@ class WorktreeManager:
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            raise git_error(exc, f"failed to read branch at {worktree_path}") from exc
+            raise self.git_error(exc, f"failed to read branch at {worktree_path}") from exc
         except FileNotFoundError as exc:
             raise WorktreeError("git executable not found") from exc
         return result.stdout.strip()
@@ -114,9 +98,27 @@ class WorktreeManager:
                 text=True,
             )
         except subprocess.CalledProcessError as exc:
-            raise git_error(exc, f"git {' '.join(args)} failed") from exc
+            raise self.git_error(exc, f"git {' '.join(args)} failed") from exc
         except FileNotFoundError as exc:
             raise WorktreeError("git executable not found") from exc
+
+    @staticmethod
+    def git_error(exc: subprocess.CalledProcessError, fallback: str) -> WorktreeError:
+        detail = (exc.stderr or exc.stdout or str(exc)).strip()
+        return WorktreeError(detail or fallback)
+
+    @staticmethod
+    def safe_branch_name(branch: str) -> str:
+        digest = hashlib.sha256(branch.encode("utf-8")).hexdigest()[:HASH_LEN]
+        replaced = branch.replace("/", "__")
+        sanitized = UNSAFE_CHARS.sub("_", replaced).strip("_")
+        while "__" in sanitized:
+            sanitized = sanitized.replace("__", "_")
+        if sanitized and sanitized[0].isdigit():
+            sanitized = f"b_{sanitized}"
+        if sanitized:
+            return f"{sanitized}_{digest}"
+        return f"wt_{digest}"
 
 
 def current_branch(project_root: Path) -> str:

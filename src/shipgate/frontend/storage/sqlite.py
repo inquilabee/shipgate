@@ -30,10 +30,6 @@ COMPLETED_STATUSES = (
 )
 
 
-def utc_now() -> datetime:
-    return datetime.now(UTC)
-
-
 class SqliteStorage:
     def __init__(self, db_path: Path) -> None:
         self._db_path = db_path
@@ -115,7 +111,7 @@ class SqliteStorage:
             branch=branch,
             suite_id=suite_id,
             status=RunStatus.QUEUED,
-            started_at=utc_now(),
+            started_at=self.utc_now(),
             worktree_path=worktree_path,
         )
         with self._connect() as conn:
@@ -132,7 +128,7 @@ class SqliteStorage:
                     run.branch,
                     run.suite_id,
                     run.status.value,
-                    dt_to_iso(run.started_at),
+                    self.dt_to_iso(run.started_at),
                     None,
                     None,
                     run.worktree_path,
@@ -153,7 +149,7 @@ class SqliteStorage:
             row = conn.execute("SELECT * FROM runs WHERE id = ?", (run_id,)).fetchone()
         if row is None:
             return None
-        return row_to_run(row)
+        return self.row_to_run(row)
 
     def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]:
         query = "SELECT * FROM runs"
@@ -165,7 +161,7 @@ class SqliteStorage:
         params.append(limit)
         with self._connect() as conn:
             rows = conn.execute(query, params).fetchall()
-        return [row_to_run(row) for row in rows]
+        return [self.row_to_run(row) for row in rows]
 
     def update_run(
         self,
@@ -183,7 +179,7 @@ class SqliteStorage:
         run = self.get_run(run_id)
         if run is None:
             raise KeyError(f"run not found: {run_id}")
-        apply_run_fields(
+        self.apply_run_fields(
             run,
             {
                 "status": status,
@@ -196,7 +192,7 @@ class SqliteStorage:
             },
         )
         if finished:
-            mark_run_finished(run)
+            self.mark_run_finished(run)
         self._persist_run(run, run_id)
         return run
 
@@ -219,7 +215,7 @@ class SqliteStorage:
                 """,
                 (
                     run.status.value,
-                    dt_to_iso(run.finished_at) if run.finished_at else None,
+                    self.dt_to_iso(run.finished_at) if run.finished_at else None,
                     run.duration_ms,
                     run.worktree_path,
                     run.error_message,
@@ -272,7 +268,7 @@ class SqliteStorage:
         limit: int | None = None,
         offset: int = 0,
     ) -> list[FindingRecord]:
-        query, params = findings_filter_query(
+        query, params = self.findings_filter_query(
             run_id,
             severity=severity,
             check_id=check_id,
@@ -285,7 +281,7 @@ class SqliteStorage:
             params.extend([limit, offset])
         with self._connect() as conn:
             rows = conn.execute(query, params).fetchall()
-        return [row_to_finding(row) for row in rows]
+        return [self.row_to_finding(row) for row in rows]
 
     def count_findings(
         self,
@@ -296,7 +292,7 @@ class SqliteStorage:
         file: str | None = None,
         category: FindingCategory | None = None,
     ) -> int:
-        where, params = findings_filter_clause(
+        where, params = self.findings_filter_clause(
             run_id,
             severity=severity,
             check_id=check_id,
@@ -315,7 +311,7 @@ class SqliteStorage:
         with self._connect() as conn:
             conn.execute(
                 "UPDATE runs SET started_at = ? WHERE id = ?",
-                (dt_to_iso(started_at), run_id),
+                (self.dt_to_iso(started_at), run_id),
             )
 
     def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None:
@@ -330,11 +326,11 @@ class SqliteStorage:
         with self._connect() as conn:
             row = conn.execute(
                 query,
-                (branch, *COMPLETED_STATUSES, dt_to_iso(before.started_at)),
+                (branch, *COMPLETED_STATUSES, self.dt_to_iso(before.started_at)),
             ).fetchone()
         if row is None:
             return None
-        return row_to_run(row)
+        return self.row_to_run(row)
 
     def prune_old_runs(self, keep: int = MAX_RUNS) -> int:
         with self._connect() as conn:
@@ -358,114 +354,120 @@ class SqliteStorage:
             conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # noqa: S608  # nosec B608
             return len(ids)
 
+    @staticmethod
+    def utc_now() -> datetime:
+        return datetime.now(UTC)
 
-def like_escape(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    @staticmethod
+    def like_escape(value: str) -> str:
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
+    @staticmethod
+    def append_clause(
+        clauses: list[str], params: list[object], clause: str, value: object | None
+    ) -> None:
+        if value is None:
+            return
+        clauses.append(clause)
+        params.append(value)
 
-def findings_filter_clause(
-    run_id: str,
-    *,
-    severity: str | None,
-    check_id: str | None,
-    file: str | None,
-    category: FindingCategory | None,
-) -> tuple[str, list[object]]:
-    clauses = ["run_id = ?"]
-    params: list[object] = [run_id]
-    append_clause(clauses, params, "severity = ?", severity)
-    append_clause(clauses, params, "check_id = ?", check_id)
-    if file is not None:
-        normalized = normalize_finding_path(file) or file
-        clauses.append("file LIKE ? ESCAPE '\\'")
-        params.append(f"%{like_escape(normalized)}%")
-    append_clause(clauses, params, "category = ?", category.value if category else None)
-    return " AND ".join(clauses), params
+    @classmethod
+    def findings_filter_clause(
+        cls,
+        run_id: str,
+        *,
+        severity: str | None,
+        check_id: str | None,
+        file: str | None,
+        category: FindingCategory | None,
+    ) -> tuple[str, list[object]]:
+        clauses = ["run_id = ?"]
+        params: list[object] = [run_id]
+        cls.append_clause(clauses, params, "severity = ?", severity)
+        cls.append_clause(clauses, params, "check_id = ?", check_id)
+        if file is not None:
+            normalized = normalize_finding_path(file) or file
+            clauses.append("file LIKE ? ESCAPE '\\'")
+            params.append(f"%{cls.like_escape(normalized)}%")
+        cls.append_clause(clauses, params, "category = ?", category.value if category else None)
+        return " AND ".join(clauses), params
 
+    @classmethod
+    def findings_filter_query(
+        cls,
+        run_id: str,
+        *,
+        severity: str | None,
+        check_id: str | None,
+        file: str | None,
+        category: FindingCategory | None,
+    ) -> tuple[str, list[object]]:
+        where, params = cls.findings_filter_clause(
+            run_id,
+            severity=severity,
+            check_id=check_id,
+            file=file,
+            category=category,
+        )
+        return f"SELECT * FROM findings WHERE {where}", params  # noqa: S608  # nosec B608
 
-def append_clause(
-    clauses: list[str], params: list[object], clause: str, value: object | None
-) -> None:
-    if value is None:
-        return
-    clauses.append(clause)
-    params.append(value)
+    @staticmethod
+    def apply_run_fields(run: RunRecord, updates: dict[str, object | None]) -> None:
+        for attr, value in updates.items():
+            if value is not None:
+                setattr(run, attr, value)
 
+    @classmethod
+    def mark_run_finished(cls, run: RunRecord) -> None:
+        finished_at = cls.utc_now()
+        run.finished_at = finished_at
+        run.duration_ms = int((finished_at - run.started_at).total_seconds() * 1000)
 
-def findings_filter_query(
-    run_id: str,
-    *,
-    severity: str | None,
-    check_id: str | None,
-    file: str | None,
-    category: FindingCategory | None,
-) -> tuple[str, list[object]]:
-    where, params = findings_filter_clause(
-        run_id,
-        severity=severity,
-        check_id=check_id,
-        file=file,
-        category=category,
-    )
-    return f"SELECT * FROM findings WHERE {where}", params  # noqa: S608  # nosec B608
+    @staticmethod
+    def dt_to_iso(value: datetime) -> str:
+        return value.isoformat()
 
+    @staticmethod
+    def dt_from_iso(value: str) -> datetime:
+        return datetime.fromisoformat(value)
 
-def apply_run_fields(run: RunRecord, updates: dict[str, object | None]) -> None:
-    for attr, value in updates.items():
-        if value is not None:
-            setattr(run, attr, value)
+    @classmethod
+    def row_to_run(cls, row: sqlite3.Row) -> RunRecord:
+        summary = None
+        if row["summary_json"]:
+            summary = RunSummaryRecord.from_dict(json.loads(row["summary_json"]))
+        return RunRecord(
+            id=row["id"],
+            branch=row["branch"],
+            suite_id=row["suite_id"],
+            status=RunStatus(row["status"]),
+            started_at=cls.dt_from_iso(row["started_at"]),
+            finished_at=cls.dt_from_iso(row["finished_at"]) if row["finished_at"] else None,
+            duration_ms=row["duration_ms"],
+            worktree_path=row["worktree_path"],
+            error_message=row["error_message"],
+            current_check_id=row["current_check_id"],
+            checks_completed=row["checks_completed"],
+            checks_total=row["checks_total"],
+            summary=summary,
+        )
 
-
-def mark_run_finished(run: RunRecord) -> None:
-    finished_at = utc_now()
-    run.finished_at = finished_at
-    run.duration_ms = int((finished_at - run.started_at).total_seconds() * 1000)
-
-
-def dt_to_iso(value: datetime) -> str:
-    return value.isoformat()
-
-
-def dt_from_iso(value: str) -> datetime:
-    return datetime.fromisoformat(value)
-
-
-def row_to_run(row: sqlite3.Row) -> RunRecord:
-    summary = None
-    if row["summary_json"]:
-        summary = RunSummaryRecord.from_dict(json.loads(row["summary_json"]))
-    return RunRecord(
-        id=row["id"],
-        branch=row["branch"],
-        suite_id=row["suite_id"],
-        status=RunStatus(row["status"]),
-        started_at=dt_from_iso(row["started_at"]),
-        finished_at=dt_from_iso(row["finished_at"]) if row["finished_at"] else None,
-        duration_ms=row["duration_ms"],
-        worktree_path=row["worktree_path"],
-        error_message=row["error_message"],
-        current_check_id=row["current_check_id"],
-        checks_completed=row["checks_completed"],
-        checks_total=row["checks_total"],
-        summary=summary,
-    )
-
-
-def row_to_finding(row: sqlite3.Row) -> FindingRecord:
-    keys = set(row.keys())
-    category_raw = row["category"] if "category" in keys and row["category"] else "code"
-    return FindingRecord(
-        id=row["id"],
-        run_id=row["run_id"],
-        check_id=row["check_id"],
-        tool_id=row["tool_id"],
-        rule_id=row["rule_id"],
-        severity=row["severity"],
-        message=row["message"],
-        file=row["file"],
-        line=row["line"],
-        column=row["column_num"],
-        docs_url=row["docs_url"],
-        suggested_commands=json.loads(row["suggested_commands_json"]),
-        category=FindingCategory(category_raw),
-    )
+    @staticmethod
+    def row_to_finding(row: sqlite3.Row) -> FindingRecord:
+        keys = set(row.keys())
+        category_raw = row["category"] if "category" in keys and row["category"] else "code"
+        return FindingRecord(
+            id=row["id"],
+            run_id=row["run_id"],
+            check_id=row["check_id"],
+            tool_id=row["tool_id"],
+            rule_id=row["rule_id"],
+            severity=row["severity"],
+            message=row["message"],
+            file=row["file"],
+            line=row["line"],
+            column=row["column_num"],
+            docs_url=row["docs_url"],
+            suggested_commands=json.loads(row["suggested_commands_json"]),
+            category=FindingCategory(category_raw),
+        )

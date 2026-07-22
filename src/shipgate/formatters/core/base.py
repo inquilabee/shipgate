@@ -27,5 +27,6 @@ class BaseFormatter(ABC):
     def render_lines(self, report: RunReport) -> list[str]:
         raise NotImplementedError
 
-    def iter_findings(self, report: RunReport):
+    @staticmethod
+    def iter_findings(report: RunReport):
         return iter_check_findings(report)

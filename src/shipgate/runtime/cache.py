@@ -15,7 +15,8 @@ class ResultCache:
         self.root = root
         self.root.mkdir(parents=True, exist_ok=True)
 
-    def key(self, argv: tuple[str, ...], cwd: Path) -> str:
+    @staticmethod
+    def key(argv: tuple[str, ...], cwd: Path) -> str:
         payload = json.dumps({"argv": argv, "cwd": str(cwd)}, sort_keys=True)
         return hashlib.sha256(payload.encode()).hexdigest()
 

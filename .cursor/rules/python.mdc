@@ -18,6 +18,12 @@ Target **Python 3.11–3.14** (`pyproject.toml`). Stdlib-first; add third-party 
 
 Use classes for lifecycle owners: normalizers, formatters, `CliSerializer`, installer strategies, run orchestration. Keep pure loaders/parsers functional.
 
+### Class-local helpers
+
+- If a function is only used by one class in the same module, place it as a `@staticmethod` on that class — not at module scope.
+- If an instance method does not use `self`, make it a `@staticmethod` instead.
+- Keep module-level functions when they are shared across classes or modules, re-exported public API, or the module's primary functional surface (loaders, parsers, `main()`).
+
 ## JSON-array normalizers
 
 Subclass `JsonItemsNormalizer` in `normalize/json_base.py`. Subclasses only implement `item_to_finding()` — shared parsing and report assembly stay in the base.
