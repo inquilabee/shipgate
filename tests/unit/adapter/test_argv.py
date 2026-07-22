@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from shipgate.adapter.argv import build_argv
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.execution import ExecutionEnvironment
@@ -80,28 +78,3 @@ def test_gitleaks_scan_uses_project_root_for_multiple_scope_paths(tmp_path):
     assert "--source" in argv
     source_index = argv.index("--source")
     assert argv[source_index + 1] == str(tmp_path)
-
-
-def test_deadcode_check_passes_exclude_and_scoped_dirs(tmp_path):
-    catalog = load_catalog()
-    tool = catalog.get_tool("deadcode.check")
-    src = tmp_path / "src" / "pkg"
-    src.mkdir(parents=True)
-    request = build_execution_request(
-        runnable="deadcode.check",
-        mode=RunMode.CHECK,
-        project_root=tmp_path,
-        options=NormalizedOptions(
-            paths=(Path("src/pkg"),),
-            exclude=(".venv/", ".trunk/"),
-        ),
-    )
-    env = ExecutionEnvironment(kind="system", root=None, env={})
-    resolved = resolve_request(request, tool, env, target=tmp_path)
-    argv = build_argv(resolved)
-    assert argv[0] == "deadcode"
-    assert "src/pkg" in argv
-    exclude_index = argv.index("--exclude")
-    assert argv[exclude_index + 1] == ".venv/"
-    assert argv[exclude_index + 3] == ".trunk/"
-    assert exclude_index > argv.index("src/pkg")

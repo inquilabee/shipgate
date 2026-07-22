@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shlex
+import sys
 from typing import TYPE_CHECKING, Protocol
 
 from shipgate.adapter.argv import build_argv
@@ -134,6 +136,8 @@ class CheckRunner:
             changed_only=changed_only,
         )
         if not paths:
+            if command.display_cli:
+                sys.stderr.write(f"{planned.tool_id}: (skipped: no matching files in scope)\n")
             return CheckReport(
                 check_id=planned.tool_id,
                 tool_id=planned.tool_id,
@@ -175,13 +179,20 @@ class CheckRunner:
             target=scope.target,
             project=context.project,
         )
-        return self.execute_check(resolved, run_id, project=context.project)
+        return self.execute_check(
+            resolved,
+            run_id,
+            project=context.project,
+            display_cli=command.display_cli,
+        )
 
     def execute_check(
         self,
         resolved: ResolvedRequest,
         run_id: str,
         project: ProjectConfig | None = None,
+        *,
+        display_cli: bool = False,
     ) -> CheckReport:
         if is_gate_tool(resolved.tool):
             argv, env = prepare_gate_execution(resolved, project=project)
@@ -199,6 +210,8 @@ class CheckRunner:
             argv_list[0] = executable
             argv = tuple(argv_list)
             env = dict(resolved.environment.env)
+        if display_cli:
+            sys.stderr.write(f"{resolved.tool.id}: {shlex.join(argv)}\n")
         result = self._executor.run(argv, cwd=resolved.project_root, env=env)
         stdout_path, stderr_path, _ = write_raw_output(
             resolved.project_root,

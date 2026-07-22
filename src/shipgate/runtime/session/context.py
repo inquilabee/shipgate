@@ -33,6 +33,7 @@ class RunCommand:
     extra_args: tuple[str, ...] = ()
     verbose: bool = False
     quiet: bool = False
+    display_cli: bool = False
     ci: bool = False
     no_cache: bool = False
     changed_only: bool = False

@@ -27,6 +27,11 @@ def shared_parser() -> argparse.ArgumentParser:
     shared.add_argument("--extra-arg", action="append", default=[], dest="extra_args")
     shared.add_argument("--verbose", action="store_true")
     shared.add_argument("--quiet", action="store_true")
+    shared.add_argument(
+        "--display-cli",
+        action="store_true",
+        help="Print each tool subprocess command to stderr before execution",
+    )
     shared.add_argument("--ci", action="store_true")
     shared.add_argument("--no-cache", action="store_true")
     shared.add_argument("--changed-only", action="store_true")
@@ -248,6 +253,7 @@ def run_command(args: argparse.Namespace, project_root: Path) -> RunCommand:
         extra_args=tuple(getattr(args, "extra_args", []) or []),
         verbose=getattr(args, "verbose", False),
         quiet=getattr(args, "quiet", False),
+        display_cli=getattr(args, "display_cli", False),
         ci=getattr(args, "ci", False),
         no_cache=getattr(args, "no_cache", False),
         changed_only=getattr(args, "changed_only", False),

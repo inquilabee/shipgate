@@ -17,6 +17,29 @@ class FakeExecutor(Executor):
         return super().run(argv, cwd=cwd, env=env)
 
 
+class FailExecutor(Executor):
+    def run(self, argv, *, cwd, env=None):
+        import json
+
+        return ProcessResult(
+            argv=argv,
+            cwd=cwd,
+            exit_code=1,
+            stdout=json.dumps(
+                [
+                    {
+                        "code": "F401",
+                        "message": "unused",
+                        "filename": "app.py",
+                        "location": {"row": 1, "column": 1},
+                    }
+                ]
+            ),
+            stderr="",
+            duration_ms=1,
+        )
+
+
 def test_list_suites():
     app = ShipGateApp(catalog=load_catalog(), executor=FakeExecutor())
     output = app.list_suites()
@@ -40,29 +63,24 @@ def test_quiet_success_no_output(tmp_path, capsys):
     assert captured.err == ""
 
 
+def test_display_cli_prints_subprocess_argv(tmp_path, capsys):
+    app = ShipGateApp(catalog=load_catalog(), executor=FakeExecutor())
+    code = app.check(
+        RunCommand(
+            project_root=tmp_path,
+            check="ruff.lint",
+            target=tmp_path,
+            display_cli=True,
+        )
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "ruff.lint:" in captured.err
+    assert "ruff" in captured.err
+    assert "check" in captured.err
+
+
 def test_failing_report_exits_one(tmp_path, capsys):
-    class FailExecutor(Executor):
-        def run(self, argv, *, cwd, env=None):
-            import json
-
-            return ProcessResult(
-                argv=argv,
-                cwd=cwd,
-                exit_code=1,
-                stdout=json.dumps(
-                    [
-                        {
-                            "code": "F401",
-                            "message": "unused",
-                            "filename": "app.py",
-                            "location": {"row": 1, "column": 1},
-                        }
-                    ]
-                ),
-                stderr="",
-                duration_ms=1,
-            )
-
     app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
     code = app.check(
         RunCommand(
@@ -78,28 +96,6 @@ def test_failing_report_exits_one(tmp_path, capsys):
 
 
 def test_ci_defaults_to_github_format(tmp_path, capsys, monkeypatch):
-    class FailExecutor(Executor):
-        def run(self, argv, *, cwd, env=None):
-            import json
-
-            return ProcessResult(
-                argv=argv,
-                cwd=cwd,
-                exit_code=1,
-                stdout=json.dumps(
-                    [
-                        {
-                            "code": "F401",
-                            "message": "unused",
-                            "filename": "app.py",
-                            "location": {"row": 1, "column": 1},
-                        }
-                    ]
-                ),
-                stderr="",
-                duration_ms=1,
-            )
-
     monkeypatch.setenv("CI", "true")
     app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
     code = app.check(
@@ -115,28 +111,6 @@ def test_ci_defaults_to_github_format(tmp_path, capsys, monkeypatch):
 
 
 def test_quiet_failure_suppresses_stderr(tmp_path, capsys):
-    class FailExecutor(Executor):
-        def run(self, argv, *, cwd, env=None):
-            import json
-
-            return ProcessResult(
-                argv=argv,
-                cwd=cwd,
-                exit_code=1,
-                stdout=json.dumps(
-                    [
-                        {
-                            "code": "F401",
-                            "message": "unused",
-                            "filename": "app.py",
-                            "location": {"row": 1, "column": 1},
-                        }
-                    ]
-                ),
-                stderr="",
-                duration_ms=1,
-            )
-
     app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
     code = app.check(
         RunCommand(
