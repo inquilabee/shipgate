@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.reports import RunReport
 from shipgate.paths import reports_root
+from shipgate.runtime.core.json_io import dumps_indented
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -25,7 +26,7 @@ class ReportStore:
         run_dir.mkdir(parents=True, exist_ok=True)
         report_path = run_dir / "report.json"
         report_path.write_text(
-            json.dumps(report.to_dict(), indent=2),
+            dumps_indented(report.to_dict(), trailing_newline=False),
             encoding="utf-8",
         )
         meta = {
@@ -38,7 +39,10 @@ class ReportStore:
         }
         if metadata:
             meta.update(metadata)
-        (run_dir / "metadata.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        (run_dir / "metadata.json").write_text(
+            dumps_indented(meta, trailing_newline=False),
+            encoding="utf-8",
+        )
         self._update_index(meta)
         return report_path
 
@@ -49,7 +53,7 @@ class ReportStore:
         index = index[:100]
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.index_path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(index, indent=2), encoding="utf-8")
+        tmp.write_text(dumps_indented(index, trailing_newline=False), encoding="utf-8")
         tmp.replace(self.index_path)
 
     def _load_index(self) -> list[dict]:

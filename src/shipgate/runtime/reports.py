@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import secrets
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from shipgate.paths import failure_report_dir, raw_reports_dir
+from shipgate.runtime.core.json_io import dumps_indented
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -25,7 +25,7 @@ def write_run_report(project_root: Path, report: RunReport) -> Path:
     out_dir = failure_report_dir(project_root, report.run_id)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "report.json"
-    path.write_text(json.dumps(report.to_dict(), indent=2) + "\n", encoding="utf-8")
+    path.write_text(dumps_indented(report.to_dict()), encoding="utf-8")
     return path
 
 

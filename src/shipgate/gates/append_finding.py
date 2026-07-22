@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import contextlib
 import json
 import sys
 from pathlib import Path
+
+from shipgate.gates.core.report import gate_finding_payload
+from shipgate.runtime.core.json_io import dumps_indented
 
 
 def append_finding(
@@ -17,19 +19,16 @@ def append_finding(
     line: str = "",
 ) -> None:
     payload = json.loads(report_path.read_text(encoding="utf-8"))
-    finding: dict[str, object] = {
-        "rule_id": rule_id,
-        "severity": severity,
-        "message": message,
-    }
-    if file:
-        location: dict[str, object] = {"file": file}
-        if line:
-            with contextlib.suppress(ValueError):
-                location["line"] = int(line)
-        finding["location"] = location
-    payload.setdefault("findings", []).append(finding)
-    report_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    payload.setdefault("findings", []).append(
+        gate_finding_payload(
+            rule_id=rule_id,
+            severity=severity,
+            message=message,
+            file=file,
+            line=line or None,
+        )
+    )
+    report_path.write_text(dumps_indented(payload), encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:

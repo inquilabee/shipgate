@@ -5,9 +5,8 @@ from __future__ import annotations
 from importlib import resources
 from pathlib import Path
 
-import yaml
-
 from shipgate.catalog.validate import validate_catalog
+from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.domain.catalog import (
     Catalog,
     CliOptionDefinition,
@@ -29,10 +28,9 @@ def load_catalog(path: Path | None = None) -> Catalog:
         bundled_root = Path(str(bundled))
         raw = load_bundled_catalog_raw(bundled)
     else:
-        try:
-            raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-        except yaml.YAMLError as exc:
-            raise CatalogError(f"invalid catalog YAML: {exc}") from exc
+        raw = load_yaml_mapping(
+            path, error_cls=CatalogError, invalid_message="invalid catalog YAML"
+        )
         bundled_root = path.parent
     if not isinstance(raw, dict):
         raise CatalogError("catalog must be a mapping")
@@ -62,10 +60,11 @@ def load_bundled_tools(tools_dir: Path) -> dict:
 
 
 def parse_tool_file(tool_path: Path) -> tuple[str, dict]:
-    try:
-        tool_raw = yaml.safe_load(tool_path.read_text(encoding="utf-8"))
-    except yaml.YAMLError as exc:
-        raise CatalogError(f"invalid catalog YAML: {tool_path.name}: {exc}") from exc
+    tool_raw = load_yaml_mapping(
+        tool_path,
+        error_cls=CatalogError,
+        invalid_message=f"invalid catalog YAML: {tool_path.name}",
+    )
     if not isinstance(tool_raw, dict):
         raise CatalogError(f"tool file must be a mapping: {tool_path.name}")
     expected_id = tool_path.stem
@@ -78,10 +77,11 @@ def parse_tool_file(tool_path: Path) -> tuple[str, dict]:
 
 def load_catalog_section(catalog_dir: Path, section: str) -> dict:
     section_path = catalog_dir / f"{section}.yaml"
-    try:
-        section_raw = yaml.safe_load(section_path.read_text(encoding="utf-8"))
-    except yaml.YAMLError as exc:
-        raise CatalogError(f"invalid catalog YAML: {section_path.name}: {exc}") from exc
+    section_raw = load_yaml_mapping(
+        section_path,
+        error_cls=CatalogError,
+        invalid_message=f"invalid catalog YAML: {section_path.name}",
+    )
     if not isinstance(section_raw, dict) or section not in section_raw:
         raise CatalogError(f"expected top-level {section!r} key in {section_path.name}")
     return section_raw[section]

@@ -32,18 +32,4 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
 
 
 def option_value(request: ResolvedRequest, name: str) -> object | None:
-    opts = request.options
-    mapping = {
-        "paths": tuple(str(p) for p in opts.paths) if opts.paths else None,
-        "config": tuple(str(p) for p in opts.config) if opts.config else None,
-        "exclude": opts.exclude or None,
-        "output": str(opts.output) if opts.output else None,
-        "format": opts.format,
-        "verbose": opts.verbose,
-        "quiet": opts.quiet,
-        "fix": opts.fix,
-        "check": opts.check,
-        "rules": opts.rules or None,
-        "threshold": opts.threshold,
-    }
-    return mapping.get(name)
+    return request.options.cli_value(name)

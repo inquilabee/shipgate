@@ -27,6 +27,11 @@ class NormalizedOptions:
     exit_behavior: str | None = None
     extra: dict[str, object] = field(default_factory=dict)
 
+    def cli_value(self, name: str) -> object | None:
+        from shipgate.domain.options_cli import cli_option_value
+
+        return cli_option_value(self, name)
+
 
 @dataclass(frozen=True)
 class OptionValue:

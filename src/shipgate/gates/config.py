@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import yaml
 
+from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.gates.paths import bundled_root_path
 
 if TYPE_CHECKING:
@@ -21,11 +22,12 @@ def load_bundled_gate_config(tool: ToolDefinition) -> dict[str, Any]:
     bundled = bundled_root_path() / tool.configuration.bundled
     if not bundled.is_file():
         return {}
-    data = yaml.safe_load(bundled.read_text(encoding="utf-8")) or {}
-    if not isinstance(data, dict):
-        msg = f"Gate config must be a mapping: {bundled}"
-        raise ValueError(msg)
-    return dict(data)
+    data = load_yaml_mapping(
+        bundled,
+        error_cls=ValueError,
+        invalid_message=f"Gate config must be a mapping: {bundled}",
+    )
+    return data
 
 
 def load_gate_config(
@@ -38,11 +40,12 @@ def load_gate_config(
     config_path = resolve_gate_config_path(tool, project_root, project, config_paths)
     if config_path is None or not config_path.is_file():
         return {}
-    data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    if not isinstance(data, dict):
-        msg = f"Gate config must be a mapping: {config_path}"
-        raise ValueError(msg)
-    config = dict(data)
+    data = load_yaml_mapping(
+        config_path,
+        error_cls=ValueError,
+        invalid_message=f"Gate config must be a mapping: {config_path}",
+    )
+    config = data
     resolve_allowlist_path(project_root, config)
     return config
 

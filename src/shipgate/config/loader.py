@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
-
 from shipgate.config.discovery import discover_config_path
 from shipgate.config.schema import (
     ALLOWED_CONFIG_MODES,
@@ -13,6 +11,7 @@ from shipgate.config.schema import (
     ALLOWED_ERROR_FORMATS,
     ALLOWED_TOP_LEVEL_KEYS,
 )
+from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.domain.project import CheckBinding, ProjectConfig, Scope
 from shipgate.errors import ConfigError
 from shipgate.paths import find_project_root
@@ -29,14 +28,9 @@ def load_config(
         return ProjectConfig()
     if not path.is_file():
         raise ConfigError(f"config file not found: {path}", path=str(path))
-    try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except yaml.YAMLError as exc:
-        raise ConfigError(f"invalid YAML: {exc}", path=str(path)) from exc
-    if raw is None:
+    raw = load_yaml_mapping(path, error_cls=ConfigError)
+    if not raw:
         return ProjectConfig()
-    if not isinstance(raw, dict):
-        raise ConfigError("config must be a mapping", path=str(path))
     return parse_config(raw, path)
 
 
