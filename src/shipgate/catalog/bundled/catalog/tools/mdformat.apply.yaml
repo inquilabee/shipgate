@@ -12,12 +12,22 @@ mdformat.apply:
     manager: python
     package: mdformat
     version: '>=0.7'
+    requires:
+      - mdformat-frontmatter>=2.0
   cli:
     paths:
       style: positional
     check:
       flag: --check
       style: boolean
+  configuration:
+    bundled: configs/mdformat.toml
+    discover:
+      - .mdformat.toml
+    precedence:
+      - repo
+      - bundled
+    merge: false
   option_order:
     - check
     - paths

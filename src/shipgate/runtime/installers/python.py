@@ -36,16 +36,18 @@ class PythonInstaller:
         else:
             pip = venv / "bin" / "pip"
         for package, install_def in sorted(packages.items()):
-            spec = package
+            specs = [package]
             if install_def.version:
-                spec = f"{package}{install_def.version}"
-            result = subprocess.run(  # noqa: S603
-                [str(pip), "install", spec],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode != 0:
-                raise InstallError(
-                    f"failed to install {package}: {result.stderr.strip()}",
+                specs[0] = f"{package}{install_def.version}"
+            specs.extend(install_def.requires)
+            for spec in specs:
+                result = subprocess.run(  # noqa: S603
+                    [str(pip), "install", spec],
+                    capture_output=True,
+                    text=True,
+                    check=False,
                 )
+                if result.returncode != 0:
+                    raise InstallError(
+                        f"failed to install {spec}: {result.stderr.strip()}",
+                    )

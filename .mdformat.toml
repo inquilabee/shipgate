@@ -1,0 +1,2 @@
+# ShipGate mdformat settings for this repository.
+extensions = ["frontmatter"]

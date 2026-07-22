@@ -49,6 +49,7 @@ class InstallDefinition:
     package: str
     version: str = ""
     binary: str | None = None
+    requires: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -175,6 +175,7 @@ def parse_install(raw: dict | None) -> InstallDefinition | None:
         package=raw["package"],
         version=raw.get("version", ""),
         binary=raw.get("binary"),
+        requires=tuple(raw.get("requires", []) or []),
     )
 
 

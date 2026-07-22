@@ -24,6 +24,8 @@ def project_config_relpath(tool: ToolDefinition) -> Path | None:
     )
     if is_gate:
         return Path(".shipgate/configs/gates") / f"{tool.id}.yaml"
+    if bundled_path.name == "mdformat.toml":
+        return Path(".mdformat.toml")
     return Path(".shipgate/configs") / bundled_path.name
 
 
