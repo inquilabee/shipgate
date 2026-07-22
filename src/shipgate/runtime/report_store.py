@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from shipgate.domain.reports import RunReport
-from shipgate.paths import reports_root
+from shipgate.paths import failure_report_dir, reports_root
 from shipgate.runtime.core.json_io import dumps_indented
 
 if TYPE_CHECKING:
@@ -45,6 +45,29 @@ class ReportStore:
         )
         self._update_index(meta)
         return report_path
+
+    def save_final(self, report: RunReport, *, metadata: dict | None = None) -> RunReport:
+        """Persist a completed run; failed runs also write failures/ and report_path."""
+        finalized = report
+        if report.status == "failed":
+            failure_path = self._write_failure_report(report)
+            finalized = RunReport(
+                run_id=report.run_id,
+                suite=report.suite,
+                mode=report.mode,
+                status=report.status,
+                reports=report.reports,
+                report_path=str(failure_path.relative_to(self.project_root)),
+            )
+        self.save(finalized, metadata=metadata)
+        return finalized
+
+    def _write_failure_report(self, report: RunReport) -> Path:
+        out_dir = failure_report_dir(self.project_root, report.run_id)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / "report.json"
+        path.write_text(dumps_indented(report.to_dict()), encoding="utf-8")
+        return path
 
     def _update_index(self, entry: dict) -> None:
         index = self._load_index()

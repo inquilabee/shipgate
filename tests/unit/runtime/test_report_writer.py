@@ -5,7 +5,8 @@ from shipgate.domain.reports import (
     FindingLocation,
     RunReport,
 )
-from shipgate.runtime.reports import generate_run_id, write_run_report
+from shipgate.runtime.report_store import ReportStore
+from shipgate.runtime.reports import generate_run_id
 
 
 def test_schema_version_in_output():
@@ -14,7 +15,7 @@ def test_schema_version_in_output():
     assert data["schema_version"] == SCHEMA_VERSION
 
 
-def test_write_report(tmp_path):
+def test_write_failure_report_via_store(tmp_path):
     report = RunReport(
         run_id=generate_run_id(),
         suite="standard",
@@ -38,5 +39,8 @@ def test_write_report(tmp_path):
             ),
         ),
     )
-    path = write_run_report(tmp_path, report)
+    finalized = ReportStore(tmp_path).save_final(report)
+    assert finalized.report_path is not None
+    path = tmp_path / finalized.report_path
     assert path.is_file()
+    assert "failures" in path.parts

@@ -7,18 +7,13 @@ import sys
 from typing import TYPE_CHECKING, Protocol
 
 from shipgate.adapter.argv import build_argv
-from shipgate.adapter.config_resolve import resolve_config_paths
-from shipgate.domain.modes import RunMode
-from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
-from shipgate.planning.incremental import effective_incremental, tool_paths_after_incremental
-from shipgate.planning.requests import build_execution_request, resolve_request
-from shipgate.planning.scopes import resolve_scope, scope_paths_for_tool
 from shipgate.runtime.environment import resolve_executable
 from shipgate.runtime.parallel import run_parallel
 from shipgate.runtime.reports import write_raw_output
+from shipgate.runtime.session.check_planner import prepare_check
 from shipgate.runtime.session.finalizer import emit_progress
 
 if TYPE_CHECKING:
@@ -27,6 +22,7 @@ if TYPE_CHECKING:
 
     from shipgate.domain.catalog import Catalog
     from shipgate.domain.execution import ResolvedRequest
+    from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig
     from shipgate.planning.workflow import PlannedCheck
     from shipgate.runtime.executor import ProcessResult
@@ -112,75 +108,22 @@ class CheckRunner:
         context: RunContext,
         run_id: str,
     ) -> CheckReport:
-        scope = resolve_scope(
-            context.project_root,
-            context.project,
-            target_override=command.target,
-            scope_name=planned.scope_name,
+        prepared = prepare_check(
+            planned=planned,
+            command=command,
+            context=context,
+            catalog=self._catalog,
         )
-        tool = self._catalog.get_tool(planned.tool_id)
-        paths = scope_paths_for_tool(
-            scope,
-            tool,
-            context.project_root,
-            mode=planned.mode,
-        )
-        changed_only, since = effective_incremental(command, context.project)
-        paths = tool_paths_after_incremental(
-            paths,
-            tool=tool,
-            scope=scope,
-            project_root=context.project_root,
-            mode=planned.mode,
-            since=since,
-            changed_only=changed_only,
-        )
-        if not paths:
+        if prepared.report is not None:
             if command.display_cli:
                 sys.stderr.write(f"{planned.tool_id}: (skipped: no matching files in scope)\n")
-            return CheckReport(
-                check_id=planned.tool_id,
-                tool_id=planned.tool_id,
-                status="passed",
-                exit_code=0,
-                extra={"skipped": "no matching files in scope"},
+            return prepared.report
+        if prepared.request is None:
+            raise RuntimeError(
+                f"prepare_check returned neither report nor request for {planned.tool_id}"
             )
-        config_paths = resolve_config_paths(tool, context.project, context.project_root)
-        exclude = (
-            tuple(entry.rstrip("/") for entry in scope.exclude) if "exclude" in tool.cli else ()
-        )
-        tool_options = NormalizedOptions(
-            paths=paths,
-            config=config_paths,
-            exclude=exclude,
-            verbose=command.verbose,
-            quiet=command.quiet,
-            check=True if planned.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None,
-        )
-        if planned.mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
-            tool_options = NormalizedOptions(
-                paths=paths,
-                config=config_paths,
-                verbose=command.verbose,
-                quiet=command.quiet,
-                check=False,
-            )
-        request = build_execution_request(
-            runnable=planned.tool_id,
-            mode=planned.mode if planned.mode in tool.modes else RunMode.CHECK,
-            project_root=context.project_root,
-            options=tool_options,
-            extra_args=command.extra_args,
-        )
-        resolved = resolve_request(
-            request,
-            tool,
-            context.environment,
-            target=scope.target,
-            project=context.project,
-        )
         return self.execute_check(
-            resolved,
+            prepared.request,
             run_id,
             project=context.project,
             display_cli=command.display_cli,

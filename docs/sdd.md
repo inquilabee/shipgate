@@ -4,7 +4,8 @@
 **Status:** Draft\
 **Audience:** framework maintainers, catalog authors, plugin developers
 
-**Implementation guide:** `docs/implementation.md`
+**Implementation guide:** `docs/implementation.md`\
+**Architecture diagrams:** `docs/architecture-diagrams.md`
 
 ## 1. Vision
 
