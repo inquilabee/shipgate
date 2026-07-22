@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from shipgate.domain.reports import Finding, FindingLocation
+from shipgate.domain.reports import Finding
 from shipgate.normalize.core.json import JsonItemsNormalizer
+from shipgate.normalize.core.location import location_from_item
 
 
 class RuffNormalizer(JsonItemsNormalizer):
@@ -13,15 +14,13 @@ class RuffNormalizer(JsonItemsNormalizer):
     invalid_message = "ruff output must be a JSON array"
     decode_error = "invalid ruff JSON output"
 
-    def _item_location(self, item: dict[str, Any]) -> FindingLocation | None:
-        loc = item.get("location") or {}
-        filename = item.get("filename") or item.get("file_name")
-        if not filename:
-            return None
-        return FindingLocation(
-            path=str(filename),
-            line=loc.get("row") or item.get("line"),
-            column=loc.get("column") or item.get("column"),
+    def _item_location(self, item: dict[str, Any]):
+        return location_from_item(
+            item,
+            path_keys=("filename", "file_name"),
+            line_keys=("row", "line"),
+            column_keys=("column",),
+            nested_location_key="location",
         )
 
     def item_to_finding(self, item: dict[str, Any], check_id: str) -> Finding:

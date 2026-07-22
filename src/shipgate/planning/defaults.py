@@ -16,7 +16,7 @@ def apply_defaults(
     target: Path,
     sources: dict[str, str],
 ) -> tuple[NormalizedOptions, dict[str, str]]:
-    return OptionResolver()._apply_defaults(
+    return OptionResolver().apply_defaults(
         options,
         mode=mode,
         check_id=check_id,

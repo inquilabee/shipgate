@@ -1,23 +1,25 @@
 """Human-friendly text formatter."""
 
 from shipgate.domain.reports import RunReport
+from shipgate.formatters.core.iterate import TOOL_EXIT_RULE, check_has_output, iter_check_findings
 
 
 class TextFormatter:
     def render(self, report: RunReport) -> str:
         lines: list[str] = []
-        for check in report.reports:
-            if check.findings:
+        seen_headers: set[str] = set()
+        for check, finding in iter_check_findings(report):
+            if check.check_id not in seen_headers and check_has_output(check):
                 lines.append(f"[{check.check_id}]")
-            for finding in check.findings:
-                loc = ""
-                if finding.location:
-                    loc_part = finding.location.path
-                    if finding.location.line is not None:
-                        loc_part += f":{finding.location.line}"
-                    loc = f" ({loc_part})"
+                seen_headers.add(check.check_id)
+            loc = ""
+            if finding.location:
+                loc_part = finding.location.path
+                if finding.location.line is not None:
+                    loc_part += f":{finding.location.line}"
+                loc = f" ({loc_part})"
+            if finding.rule_id == TOOL_EXIT_RULE:
+                lines.append(f"- [error] {finding.rule_id}: {finding.message}")
+            else:
                 lines.append(f"- [{finding.severity}] {finding.rule_id}: {finding.message}{loc}")
-            if not check.findings and check.status != "passed":
-                lines.append(f"[{check.check_id}]")
-                lines.append("- [error] TOOL_EXIT: Tool failed")
         return "\n".join(lines) + ("\n" if lines else "")

@@ -112,7 +112,7 @@ def test_github_formatter_tool_exit():
 def test_get_formatter_unknown_raises():
     import pytest
 
-    from shipgate.formatters.plugins import get_formatter
+    from shipgate.formatters import get_formatter
 
     with pytest.raises(ValueError, match="unknown error format"):
         get_formatter("xml")

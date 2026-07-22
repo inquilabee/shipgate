@@ -12,7 +12,7 @@ from shipgate.config.loader import load_config
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport, RunReport
-from shipgate.formatters.plugins import get_formatter
+from shipgate.formatters import get_formatter
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
 from shipgate.planning.incremental import filter_changed

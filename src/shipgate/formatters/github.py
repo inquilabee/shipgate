@@ -1,18 +1,19 @@
 """GitHub workflow annotation formatter."""
 
 from shipgate.domain.reports import Finding, RunReport
+from shipgate.formatters.core.iterate import TOOL_EXIT_RULE, iter_check_findings
 
 
 class GitHubFormatter:
     def render(self, report: RunReport) -> str:
         lines: list[str] = []
-        for check in report.reports:
-            for finding in check.findings:
-                lines.append(format_annotation(check.check_id, finding))
-            if not check.findings and check.status != "passed":
-                title = escape(f"{check.check_id}/TOOL_EXIT")
-                message = escape("Tool failed")
+        for check, finding in iter_check_findings(report):
+            if finding.rule_id == TOOL_EXIT_RULE:
+                title = escape(f"{check.check_id}/{finding.rule_id}")
+                message = escape(finding.message)
                 lines.append(f"::error title={title}::{message}")
+            else:
+                lines.append(format_annotation(check.check_id, finding))
         return "\n".join(lines) + ("\n" if lines else "")
 
 

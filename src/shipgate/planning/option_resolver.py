@@ -27,12 +27,12 @@ class OptionResolver:
         project_root: Path,
         target: Path,
     ) -> tuple[NormalizedOptions, dict[str, str]]:
-        merged, sources = self._resolve_sources(
+        merged, sources = self.resolve_sources(
             cli_options=cli_options,
             project=project,
             tool=tool,
         )
-        return self._apply_defaults(
+        return self.apply_defaults(
             merged,
             mode=mode,
             check_id=check_id,
@@ -41,7 +41,7 @@ class OptionResolver:
             sources=sources,
         )
 
-    def _resolve_sources(
+    def resolve_sources(
         self,
         *,
         cli_options: NormalizedOptions,
@@ -146,7 +146,7 @@ class OptionResolver:
                 sources["threshold"] = "tool_default"
         return threshold
 
-    def _apply_defaults(
+    def apply_defaults(
         self,
         options: NormalizedOptions,
         *,

@@ -1,51 +1,17 @@
 import json
 
-from shipgate.domain.catalog import ToolDefinition
-from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
-from shipgate.domain.modes import RunMode
-from shipgate.domain.options import NormalizedOptions
 from shipgate.normalize.ruff import RuffNormalizer
-from shipgate.runtime.executor import ProcessResult
 
 
-def test_empty_list_passed(tmp_path):
-    tool = ToolDefinition(id="ruff.lint", executable="ruff", modes=(RunMode.CHECK,))
-    request = ResolvedRequest(
-        runnable="ruff.lint",
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / "out.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
-    )
-    result = ProcessResult(
-        argv=(),
-        cwd=tmp_path,
-        exit_code=0,
-        stdout="[]",
-        stderr="",
-        duration_ms=1,
-    )
+def test_empty_list_passed(make_resolved_request, make_process_result):
+    request = make_resolved_request(tool_id="ruff.lint", executable="ruff")
+    result = make_process_result(stdout="[]")
     report = RuffNormalizer().normalize(request, result)
     assert report.status == "passed"
 
 
-def test_one_finding_maps(tmp_path):
-    tool = ToolDefinition(id="ruff.lint", executable="ruff", modes=(RunMode.CHECK,))
-    request = ResolvedRequest(
-        runnable="ruff.lint",
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / "out.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
-    )
+def test_one_finding_maps(make_resolved_request, make_process_result):
+    request = make_resolved_request(tool_id="ruff.lint", executable="ruff")
     payload = [
         {
             "code": "F401",
@@ -54,13 +20,9 @@ def test_one_finding_maps(tmp_path):
             "location": {"row": 12, "column": 5},
         }
     ]
-    result = ProcessResult(
-        argv=(),
-        cwd=tmp_path,
+    result = make_process_result(
         exit_code=1,
         stdout=json.dumps(payload),
-        stderr="",
-        duration_ms=1,
     )
     report = RuffNormalizer().normalize(request, result)
     assert len(report.findings) == 1

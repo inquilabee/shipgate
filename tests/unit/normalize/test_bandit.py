@@ -2,25 +2,16 @@ import json
 from pathlib import Path
 
 from shipgate.catalog.loader import load_catalog
-from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
-from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.normalize.bandit import BanditNormalizer
-from shipgate.runtime.executor import ProcessResult
 
 
-def test_bandit_normalizer_parses_results(tmp_path: Path):
+def test_bandit_normalizer_parses_results(make_resolved_request, make_process_result):
     tool = load_catalog().get_tool("bandit.scan")
-    resolved = ResolvedRequest(
-        runnable="bandit.scan",
+    base = make_resolved_request(tool=tool)
+    resolved = make_resolved_request(
         tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / ".shipgate/reports/raw/bandit.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+        stdout_path=base.project_root / ".shipgate/reports/raw/bandit.json",
     )
     payload = {
         "results": [
@@ -33,13 +24,9 @@ def test_bandit_normalizer_parses_results(tmp_path: Path):
             }
         ]
     }
-    result = ProcessResult(
-        argv=("bandit",),
-        cwd=tmp_path,
+    result = make_process_result(
         exit_code=1,
         stdout=json.dumps(payload),
-        stderr="",
-        duration_ms=1,
     )
     report = BanditNormalizer().normalize(resolved, result)
     assert report.status == "failed"
@@ -49,7 +36,11 @@ def test_bandit_normalizer_parses_results(tmp_path: Path):
     assert location.path == "app.py"
 
 
-def test_bandit_normalizer_reads_json_from_output_file_with_progress_stdout(tmp_path: Path):
+def test_bandit_normalizer_reads_json_from_output_file_with_progress_stdout(
+    tmp_path: Path,
+    make_resolved_request,
+    make_process_result,
+):
     tool = load_catalog().get_tool("bandit.scan")
     output_path = tmp_path / ".shipgate/reports/raw/bandit.scan.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -65,50 +56,34 @@ def test_bandit_normalizer_reads_json_from_output_file_with_progress_stdout(tmp_
         ]
     }
     output_path.write_text(json.dumps(payload), encoding="utf-8")
-    resolved = ResolvedRequest(
-        runnable="bandit.scan",
+    resolved = make_resolved_request(
         tool=tool,
-        mode=RunMode.CHECK,
+        stdout_path=output_path,
         options=NormalizedOptions(output=output_path, format="json"),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=output_path,
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
     )
-    result = ProcessResult(
-        argv=("bandit",),
-        cwd=tmp_path,
+    result = make_process_result(
         exit_code=1,
         stdout="Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00\n",
         stderr="[json]\tINFO\tJSON output written to file",
-        duration_ms=1,
     )
     report = BanditNormalizer().normalize(resolved, result)
     assert report.status == "failed"
     assert report.findings[0].rule_id == "B101"
 
 
-def test_bandit_normalizer_falls_back_on_unparseable_output(tmp_path: Path):
+def test_bandit_normalizer_falls_back_on_unparseable_output(
+    make_resolved_request, make_process_result
+):
     tool = load_catalog().get_tool("bandit.scan")
-    resolved = ResolvedRequest(
-        runnable="bandit.scan",
+    base = make_resolved_request(tool=tool)
+    resolved = make_resolved_request(
         tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / ".shipgate/reports/raw/bandit.scan.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+        stdout_path=base.project_root / ".shipgate/reports/raw/bandit.scan.json",
     )
-    result = ProcessResult(
-        argv=("bandit",),
-        cwd=tmp_path,
+    result = make_process_result(
         exit_code=2,
         stdout="not json",
         stderr="bandit: command failed",
-        duration_ms=1,
     )
     report = BanditNormalizer().normalize(resolved, result)
     assert report.status == "failed"

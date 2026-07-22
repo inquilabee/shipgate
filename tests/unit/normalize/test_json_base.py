@@ -1,11 +1,6 @@
-from shipgate.domain.catalog import ToolDefinition
-from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
-from shipgate.domain.modes import RunMode
-from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import Finding
 from shipgate.normalize.core.base import BaseNormalizer
 from shipgate.normalize.core.json import JsonItemsNormalizer
-from shipgate.runtime.executor import ProcessResult
 
 
 class StubJsonNormalizer(JsonItemsNormalizer):
@@ -26,26 +21,11 @@ def test_json_items_normalizer_is_base_normalizer():
     assert isinstance(StubJsonNormalizer(), BaseNormalizer)
 
 
-def test_json_items_normalizer_maps_keyed_results(tmp_path):
-    tool = ToolDefinition(id="stub.check", executable="stub", modes=(RunMode.CHECK,))
-    request = ResolvedRequest(
-        runnable="stub.check",
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / "out.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
-    )
-    result = ProcessResult(
-        argv=(),
-        cwd=tmp_path,
+def test_json_items_normalizer_maps_keyed_results(make_resolved_request, make_process_result):
+    request = make_resolved_request(tool_id="stub.check", executable="stub")
+    result = make_process_result(
         exit_code=1,
         stdout='{"results": [{"rule": "X", "message": "bad"}]}',
-        stderr="",
-        duration_ms=1,
     )
     report = StubJsonNormalizer().normalize(request, result)
     assert report.status == "failed"

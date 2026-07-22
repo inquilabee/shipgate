@@ -18,7 +18,7 @@ def resolve_option_sources(
     project: ProjectConfig,
     tool: ToolDefinition,
 ) -> tuple[NormalizedOptions, dict[str, str]]:
-    return OptionResolver()._resolve_sources(
+    return OptionResolver().resolve_sources(
         cli_options=cli_options,
         project=project,
         tool=tool,

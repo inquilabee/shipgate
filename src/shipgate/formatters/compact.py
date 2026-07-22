@@ -1,16 +1,17 @@
 """Compact one-line-per-finding formatter."""
 
 from shipgate.domain.reports import Finding, RunReport
+from shipgate.formatters.core.iterate import TOOL_EXIT_RULE, iter_check_findings
 
 
 class CompactFormatter:
     def render(self, report: RunReport) -> str:
         lines: list[str] = []
-        for check in report.reports:
-            for finding in check.findings:
+        for check, finding in iter_check_findings(report):
+            if finding.rule_id == TOOL_EXIT_RULE:
+                lines.append(f"{check.check_id}: error: {finding.rule_id} {finding.message}")
+            else:
                 lines.append(format_finding(finding))
-            if not check.findings and check.status != "passed":
-                lines.append(f"{check.check_id}: error: TOOL_EXIT Tool failed")
         return "\n".join(lines) + ("\n" if lines else "")
 
 

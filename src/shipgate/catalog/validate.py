@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from shipgate.domain.ids import validate_id
 from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
+from shipgate.registries.normalizers import VALID_NORMALIZERS
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition
@@ -16,22 +17,6 @@ if TYPE_CHECKING:
 VALID_CLI_STYLES = frozenset({"positional", "scalar", "repeated", "joined", "boolean"})
 VALID_CLI_AGGREGATES = frozenset({"repeat", "root"})
 VALID_SCOPE_DELIVERY = frozenset({"root", "dirs", "files"})
-VALID_NORMALIZERS = frozenset(
-    {
-        "ruff",
-        "generic_exit",
-        "bandit",
-        "semgrep",
-        "codespell",
-        "gitleaks",
-        "markdownlint",
-        "ty",
-        "radon",
-        "vulture",
-        "deadcode",
-        "gate_json",
-    }
-)
 
 
 def validate_catalog(catalog: Catalog, bundled_root: Path | None = None) -> None:
