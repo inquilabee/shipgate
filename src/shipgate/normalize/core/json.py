@@ -1,9 +1,9 @@
-"""JSON normalizer protocol and base implementation."""
+"""JSON normalizer base implementation."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from shipgate.domain.reports import CheckReport, Finding
 from shipgate.normalize.core.base import BaseNormalizer
@@ -18,20 +18,6 @@ from shipgate.normalize.core.utils import (
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.runtime.executor import ProcessResult
-
-
-@runtime_checkable
-class JsonNormalizer(Protocol):
-    """Contract for normalizers that map JSON tool output to findings."""
-
-    items_key: ClassVar[str | None]
-    invalid_message: ClassVar[str]
-    decode_error: ClassVar[str | None]
-    allow_empty_on_success: ClassVar[bool]
-
-    def item_to_finding(self, item: dict[str, Any], check_id: str) -> Finding: ...
-
-    def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport: ...
 
 
 class JsonItemsNormalizer(BaseNormalizer, ABC):

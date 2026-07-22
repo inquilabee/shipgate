@@ -9,7 +9,7 @@ from shipgate.normalize.core.exit import (
 )
 from shipgate.normalize.core.gate_json import GateJsonNormalizer
 from shipgate.normalize.core.generic import GenericExitNormalizer
-from shipgate.normalize.core.json import JsonItemsNormalizer, JsonNormalizer
+from shipgate.normalize.core.json import JsonItemsNormalizer
 from shipgate.normalize.core.utils import (
     decode_json_payload,
     empty_pass_report,
@@ -26,7 +26,6 @@ __all__ = [
     "GateJsonNormalizer",
     "GenericExitNormalizer",
     "JsonItemsNormalizer",
-    "JsonNormalizer",
     "MarkdownlintNormalizer",
     "Normalizer",
     "VultureNormalizer",
