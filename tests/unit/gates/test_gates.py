@@ -128,7 +128,7 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
     assert env["SHIPGATE_REPORT"].endswith("gate.module-size.json")
     assert Path(env["SHIPGATE_GATE_CONFIG"]).is_file()
     assert env["SHIPGATE_GATES_LIB"].endswith("lib.sh")
-    assert "tests/" in env["GATE_SCAN_ROOTS"]
+    assert "." in env["GATE_SCAN_ROOTS"]
 
 
 @pytest.mark.integration

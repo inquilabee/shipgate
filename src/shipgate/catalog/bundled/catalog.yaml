@@ -31,6 +31,9 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, exclude, format, output, paths]
+    scope:
+      extensions: [.py, .pyi, .ipynb]
+      delivery: root
 
   ruff.format:
     executable: ruff
@@ -58,6 +61,9 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, check, paths]
+    scope:
+      extensions: [.py, .pyi, .ipynb]
+      delivery: root
 
   ty.check:
     executable: ty
@@ -83,6 +89,9 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [format, paths]
+    scope:
+      extensions: [.py, .pyi]
+      delivery: root
 
   bandit.scan:
     executable: bandit
@@ -113,6 +122,9 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, format, output, paths]
+    scope:
+      extensions: [.py]
+      delivery: root
 
   codespell.check:
     executable: codespell
@@ -128,6 +140,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.md, .rst, .txt]
+      delivery: files
 
   gitleaks.scan:
     executable: gitleaks
@@ -154,6 +169,8 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
+    scope:
+      delivery: root
 
   semgrep.scan:
     executable: semgrep
@@ -195,6 +212,8 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, exclude, paths]
+    scope:
+      delivery: root
 
   deadcode.check:
     executable: deadcode
@@ -210,6 +229,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.py]
+      delivery: root
 
   vulture.check:
     executable: vulture
@@ -225,6 +247,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.py]
+      delivery: dirs
 
   radon.cc:
     executable: radon
@@ -240,6 +265,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.py]
+      delivery: root
 
   radon.mi:
     executable: radon
@@ -255,6 +283,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.py]
+      delivery: root
 
   pytest.run:
     executable: pytest
@@ -270,6 +301,8 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      delivery: root
 
   pydeps.graph:
     executable: pydeps
@@ -285,6 +318,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.py]
+      delivery: root
 
   markdownlint.check:
     executable: markdownlint
@@ -315,6 +351,10 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
+    scope:
+      extensions: [.md]
+      globs: ['**/*.mdc']
+      delivery: files
 
   mdformat.apply:
     executable: mdformat
@@ -333,6 +373,10 @@ tools:
         flag: --check
         style: boolean
     option_order: [check, paths]
+    scope:
+      extensions: [.md]
+      globs: ['**/*.mdc']
+      delivery: files
 
   yamllint.check:
     executable: yamllint
@@ -364,6 +408,9 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
+    scope:
+      extensions: [.yaml, .yml]
+      delivery: files
 
   yamlfmt.apply:
     executable: yamlfmt
@@ -388,6 +435,9 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
+    scope:
+      extensions: [.yaml, .yml]
+      delivery: files
 
   shellcheck.check:
     executable: shellcheck
@@ -404,6 +454,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.sh, .bash]
+      delivery: files
 
   shfmt.apply:
     executable: shfmt
@@ -423,6 +476,9 @@ tools:
         flag: -d
         style: boolean
     option_order: [check, paths]
+    scope:
+      extensions: [.sh, .bash]
+      delivery: files
 
   hadolint.check:
     executable: hadolint
@@ -439,6 +495,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      globs: ['**/Dockerfile*', '**/*.dockerfile']
+      delivery: files
 
   jscpd.check:
     executable: jscpd
@@ -467,6 +526,8 @@ tools:
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, threshold, paths]
+    scope:
+      delivery: root
 
   mutmut.run:
     executable: mutmut
@@ -482,6 +543,8 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      delivery: root
 
   sourcery.review:
     executable: sourcery
@@ -497,6 +560,9 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      extensions: [.py]
+      delivery: root
 
   gate.script:
     executable: python
@@ -508,6 +574,8 @@ tools:
       paths:
         style: positional
     option_order: [paths]
+    scope:
+      delivery: root
 
   gate.module-size:
     executable: bash
@@ -520,6 +588,9 @@ tools:
       discover: [".shipgate/configs/gates/gate.module-size.yaml"]
       precedence: [repo, bundled]
     option_order: []
+    scope:
+      extensions: [.py]
+      delivery: files
 
   gate.module-private-vars:
     executable: bash
@@ -532,6 +603,9 @@ tools:
       discover: [".shipgate/configs/gates/gate.module-private-vars.yaml"]
       precedence: [repo, bundled]
     option_order: []
+    scope:
+      extensions: [.py]
+      delivery: files
 
   gate.folder-breadth:
     executable: bash
@@ -544,6 +618,9 @@ tools:
       discover: [".shipgate/configs/gates/gate.folder-breadth.yaml"]
       precedence: [repo, bundled]
     option_order: []
+    scope:
+      extensions: [.py, .md, .yaml, .sh]
+      delivery: dirs
 
   gate.acronym-allowlist:
     executable: bash
@@ -556,6 +633,10 @@ tools:
       discover: [".shipgate/configs/gates/gate.acronym-allowlist.yaml"]
       precedence: [repo, bundled]
     option_order: []
+    scope:
+      extensions: [.md]
+      globs: ['**/*.mdc']
+      delivery: files
 
 suites:
   python-quality:

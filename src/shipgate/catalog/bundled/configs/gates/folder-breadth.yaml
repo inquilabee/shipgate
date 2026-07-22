@@ -1,8 +1,6 @@
 max_allowed: 12
 scan_roots:
-  - src/
-  - docs/
-  - tests/
+  - .
 extensions:
   - .py
   - .md

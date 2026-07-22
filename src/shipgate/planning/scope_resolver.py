@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
-from shipgate.domain.project import ProjectConfig, Scope
-from shipgate.planning.gitignore import should_ignore
+from shipgate.domain.project import Scope
+from shipgate.planning.gitignore import expand_scope, minimize_covering_dirs, should_ignore
+
+if TYPE_CHECKING:
+    from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
+    from shipgate.domain.project import ProjectConfig
 
 DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "build/", "reports/", "__pycache__/")
 
@@ -106,3 +111,80 @@ class ScopeResolver:
         except ValueError:
             return path
         return rel if rel.parts else Path()
+
+    def paths_for_tool(
+        self,
+        scope: Scope,
+        tool: ToolDefinition,
+        mode: RunMode,
+    ) -> tuple[Path, ...]:
+        criteria = tool.scope
+        if mode == RunMode.APPLY and criteria.delivery == "root":
+            return (Path(),)
+
+        target = self.resolve_scope_target(scope)
+        if criteria.delivery == "root":
+            return (self.relative_under_root(target),)
+
+        if not scope.respect_gitignore and not scope.include and not scope.exclude:
+            return self.delivery_paths_without_filter(scope, criteria)
+
+        matched_files = expand_scope(
+            self.project_root,
+            target,
+            include=scope.include,
+            exclude=scope.exclude,
+            extensions=criteria.extensions,
+            globs=criteria.globs,
+            respect_gitignore=scope.respect_gitignore,
+        )
+        return self.paths_for_delivery(
+            criteria,
+            matched_files,
+            target=target,
+        )
+
+    def resolve_scope_target(self, scope: Scope) -> Path:
+        target = scope.target.resolve()
+        if not target.is_absolute():
+            target = (self.project_root / target).resolve()
+        return target
+
+    def relative_under_root(self, path: Path) -> Path:
+        resolved = path.resolve()
+        try:
+            rel = resolved.relative_to(self.project_root)
+        except ValueError:
+            return path
+        return rel if rel.parts else Path()
+
+    def delivery_paths_without_filter(
+        self,
+        scope: Scope,
+        criteria: ScopeCriteria,
+    ) -> tuple[Path, ...]:
+        target = self.relative_under_root(scope.target)
+        if criteria.delivery == "root":
+            return (target,)
+        if criteria.delivery == "dirs":
+            if scope.target.is_dir():
+                return (target,)
+            return (target.parent if target.parent.parts else Path(),)
+        if scope.target.is_file():
+            return (target,)
+        return (target,)
+
+    def paths_for_delivery(
+        self,
+        criteria: ScopeCriteria,
+        matched_files: tuple[Path, ...],
+        *,
+        target: Path,
+    ) -> tuple[Path, ...]:
+        if criteria.delivery == "root":
+            return (self.relative_under_root(target),)
+        if not matched_files:
+            return ()
+        if criteria.delivery == "files":
+            return tuple(self.relative_under_root(path) for path in matched_files)
+        return minimize_covering_dirs(matched_files, self.project_root)

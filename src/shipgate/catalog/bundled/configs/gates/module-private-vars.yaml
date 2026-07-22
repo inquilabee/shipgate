@@ -1,4 +1,3 @@
 scan_roots:
-  - src/
-  - tests/
+  - .
 allowlist_file: .shipgate/allowlists/module-private-vars.txt

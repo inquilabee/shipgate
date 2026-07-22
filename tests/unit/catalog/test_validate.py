@@ -1,9 +1,17 @@
 import pytest
 
+from shipgate.catalog.loader import load_catalog
 from shipgate.catalog.validate import validate_catalog
 from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
 from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
+
+
+def test_bundled_tools_declare_scope():
+    catalog = load_catalog()
+    for tool_id, tool in catalog.tools.items():
+        assert tool.scope.delivery in {"root", "dirs", "files"}, tool_id
+    validate_catalog(catalog)
 
 
 def test_cycle_fails():

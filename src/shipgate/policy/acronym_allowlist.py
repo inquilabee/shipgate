@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -34,6 +35,7 @@ BUILTIN_EXEMPT: frozenset[str] = frozenset(
         "CSS",
         "CSV",
         "DTO",
+        "DRY",
         "FAIL",
         "GET",
         "GPL",
@@ -135,7 +137,13 @@ def iter_markdown_files(scan_roots: tuple[str, ...], repo_root: Path) -> list[Pa
             continue
         if candidate.is_dir():
             files.extend(sorted(candidate.rglob("*.md")))
+            files.extend(sorted(candidate.rglob("*.mdc")))
     return files
+
+
+def scope_paths_from_env() -> tuple[str, ...]:
+    raw = os.environ.get("SHIPGATE_SCOPE_PATHS", "")
+    return tuple(line.strip() for line in raw.splitlines() if line.strip())
 
 
 def scan_paths(
@@ -147,7 +155,14 @@ def scan_paths(
 ) -> list[AcronymViolation]:
     allowlisted = load_allowlist(allowlist_path)
     violations: list[AcronymViolation] = []
-    for file_path in iter_markdown_files(scan_roots, repo_root):
+    scoped_files = scope_paths_from_env()
+    if scoped_files:
+        file_paths = [repo_root / rel for rel in scoped_files]
+    else:
+        file_paths = iter_markdown_files(scan_roots, repo_root)
+    for file_path in file_paths:
+        if not file_path.is_file():
+            continue
         rel = file_path.relative_to(repo_root).as_posix()
         if ignores and ignores.is_ignored(rel):
             continue
@@ -171,7 +186,7 @@ def findings_from_violations(violations: list[AcronymViolation]) -> list[dict[st
 
 
 def settings_from_config(config: dict[str, Any]) -> tuple[tuple[str, ...], Path | None]:
-    scan_roots = tuple(str(item) for item in config.get("scan_roots", ["docs/", "AGENTS.md"]))
+    scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
     allowlist_file = config.get("allowlist_file")
     allowlist_path = Path(str(allowlist_file)) if allowlist_file else None
     return scan_roots, allowlist_path

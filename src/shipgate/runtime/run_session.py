@@ -17,7 +17,7 @@ from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize.base import get_normalizer
 from shipgate.planning.incremental import filter_changed
 from shipgate.planning.requests import build_execution_request, resolve_request
-from shipgate.planning.scopes import resolve_scope, scope_paths
+from shipgate.planning.scopes import resolve_scope, scope_paths_for_tool
 from shipgate.planning.workflow import PlannedCheck, resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment, resolve_executable
 from shipgate.runtime.parallel import run_parallel
@@ -232,14 +232,27 @@ class RunSession:
             target_override=command.target,
             scope_name=planned.scope_name,
         )
-        paths = scope_paths(scope, context.project_root, mode=planned.mode)
+        tool = self._catalog.get_tool(planned.tool_id)
+        paths = scope_paths_for_tool(
+            scope,
+            tool,
+            context.project_root,
+            mode=planned.mode,
+        )
         paths = filter_changed(
             paths,
             command.since,
             project_root=context.project_root,
             changed_only=command.changed_only,
         )
-        tool = self._catalog.get_tool(planned.tool_id)
+        if not paths and tool.scope.delivery != "root":
+            return CheckReport(
+                check_id=planned.tool_id,
+                tool_id=planned.tool_id,
+                status="passed",
+                exit_code=0,
+                extra={"skipped": "no matching files in scope"},
+            )
         config_paths = resolve_config_paths(tool, context.project, context.project_root)
         exclude = (
             tuple(entry.rstrip("/") for entry in scope.exclude) if "exclude" in tool.cli else ()

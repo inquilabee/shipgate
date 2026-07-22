@@ -13,6 +13,7 @@ from shipgate.domain.catalog import (
     CliOptionDefinition,
     ConfigurationDefinition,
     InstallDefinition,
+    ScopeCriteria,
     SuiteDefinition,
     ToolDefinition,
     WorkflowDefinition,
@@ -80,6 +81,7 @@ def parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
     install = parse_install(raw.get("install"))
     modes = tuple(RunMode(m) for m in raw.get("modes", ["check"]))
     option_order = tuple(raw.get("option_order", list(cli.keys())))
+    scope = parse_scope(raw.get("scope") or {})
     return ToolDefinition(
         id=tool_id,
         executable=raw.get("executable", tool_id),
@@ -92,6 +94,7 @@ def parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
         normalizer=raw.get("normalizer", "generic_exit"),
         modes=modes,
         option_order=option_order,
+        scope=scope,
     )
 
 
@@ -129,6 +132,20 @@ def parse_install(raw: dict | None) -> InstallDefinition | None:
         version=raw.get("version", ""),
         binary=raw.get("binary"),
     )
+
+
+def parse_scope(raw: dict) -> ScopeCriteria:
+    extensions = tuple(normalize_extension(ext) for ext in raw.get("extensions", []) or [])
+    globs = tuple(str(item) for item in raw.get("globs", []) or [])
+    delivery = str(raw.get("delivery", "root"))
+    return ScopeCriteria(extensions=extensions, globs=globs, delivery=delivery)
+
+
+def normalize_extension(value: object) -> str:
+    text = str(value).strip()
+    if not text:
+        return text
+    return text if text.startswith(".") else f".{text}"
 
 
 def parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:

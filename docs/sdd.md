@@ -158,25 +158,29 @@ A scope defines where checks apply.
 
 A scope contains:
 
-- include rules
-- exclude rules
-- optional filters
+- target root
+- optional include rules (path-prefix allowlist for special cases)
+- optional exclude rules
+- gitignore respect (default on)
 
-A scope does not describe recursion, command-line arguments, delivery strategy, or tool behavior.
+Default behavior with `target: .` and no named scope: ShipGate walks the repository, respects `.gitignore`, and applies each tool's catalog `scope` metadata (extensions, globs, delivery) to decide which paths reach the tool.
 
-Example:
+Named scopes remain for exceptions such as monorepo subpaths or tool-specific excludes.
+
+A scope does not describe recursion, command-line arguments, delivery strategy, or tool behavior. Delivery and extension criteria live on catalog `ToolDefinition.scope`.
+
+Example (special case only):
 
 ```yaml
-scopes:
-  source:
-    include:
-      - src/
-      - tests/
+checks:
+  semgrep.scan:
+    scope: semgrep
 
-  documentation:
-    include:
-      - docs/
-      - README.md
+scopes:
+  semgrep:
+    target: .
+    exclude:
+      - src/shipgate/frontend/templates/
 ```
 
 ### Check

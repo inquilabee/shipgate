@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from shipgate.planning.gitignore import expand_scope, should_ignore
+from shipgate.planning.gitignore import expand_scope, matches_tool_criteria, should_ignore
 
 
 def test_should_ignore_shipgate_dir(tmp_path: Path):
@@ -20,3 +20,9 @@ def test_expand_scope_respects_gitignore(tmp_path: Path):
     names = {p.name for p in paths}
     assert "ok.py" in names
     assert "bad.py" not in names
+
+
+def test_matches_tool_criteria_glob(tmp_path: Path):
+    rel = ".cursor/rules/foo.mdc"
+    assert matches_tool_criteria(rel, globs=("**/*.mdc",))
+    assert not matches_tool_criteria("docs/readme.md", globs=("**/*.mdc",))

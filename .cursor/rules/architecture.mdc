@@ -1,18 +1,17 @@
----
-description: Layer boundaries and red flags for ShipGate
-alwaysApply: true
----
+______________________________________________________________________
+
+## description: Layer boundaries and red flags for ShipGate alwaysApply: true
 
 # Architecture
 
 Before implementing, name the layer:
 
 1. **Policy** — project config, scopes, checks (no subprocess details)
-2. **Planning** — workflows, suites, request resolution
-3. **Adapter** — argv serialization only
-4. **Runtime** — executor, install, environment (no finding parsing)
-5. **Normalize** — tool output → canonical JSON only
-6. **Format** — canonical JSON → human/CI text only
+1. **Planning** — workflows, suites, request resolution
+1. **Adapter** — argv serialization only
+1. **Runtime** — executor, install, environment (no finding parsing)
+1. **Normalize** — tool output → canonical JSON only
+1. **Format** — canonical JSON → human/CI text only
 
 ## Red flags (stop and redesign)
 

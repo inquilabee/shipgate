@@ -1,9 +1,15 @@
 from pathlib import Path
 
+from shipgate.catalog.loader import load_catalog
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
+from shipgate.planning.gitignore import (
+    expand_scope,
+    matches_tool_criteria,
+    minimize_covering_dirs,
+)
 from shipgate.planning.scope_resolver import ScopeResolver
-from shipgate.planning.scopes import scope_paths
+from shipgate.planning.scopes import scope_paths, scope_paths_for_tool
 
 
 def test_scope_resolver_resolve_target(tmp_path: Path):
@@ -75,3 +81,90 @@ def test_scope_paths_returns_target_when_disabled(tmp_path: Path):
     target.mkdir()
     scope = Scope(target=target, respect_gitignore=False)
     assert scope_paths(scope, tmp_path, mode=RunMode.CHECK) == (target,)
+
+
+def test_scope_paths_for_tool_delivery_root(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "readme.md").write_text("# hi\n", encoding="utf-8")
+    catalog = load_catalog()
+    tool = catalog.get_tool("ruff.lint")
+    scope = Scope(target=tmp_path, respect_gitignore=True)
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    assert paths == (Path(),)
+
+
+def test_scope_paths_for_tool_delivery_files(tmp_path: Path):
+    (tmp_path / "README.md").write_text("# hi\n", encoding="utf-8")
+    (tmp_path / "notes.txt").write_text("plain\n", encoding="utf-8")
+    catalog = load_catalog()
+    tool = catalog.get_tool("markdownlint.check")
+    scope = Scope(target=tmp_path, respect_gitignore=True)
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    assert paths == (Path("README.md"),)
+
+
+def test_scope_paths_for_tool_empty_scope_short_circuit(tmp_path: Path):
+    (tmp_path / "notes.txt").write_text("plain\n", encoding="utf-8")
+    catalog = load_catalog()
+    tool = catalog.get_tool("markdownlint.check")
+    scope = Scope(target=tmp_path, respect_gitignore=True)
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    assert paths == ()
+
+
+def test_scope_paths_for_tool_delivery_dirs(tmp_path: Path):
+    package = tmp_path / "src" / "pkg"
+    package.mkdir(parents=True)
+    (package / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (package / "b.py").write_text("y = 2\n", encoding="utf-8")
+    catalog = load_catalog()
+    tool = catalog.get_tool("gate.folder-breadth")
+    scope = Scope(target=tmp_path, respect_gitignore=True)
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    assert paths == (Path("src/pkg"),)
+
+
+def test_minimize_covering_dirs_prunes_nested(tmp_path: Path):
+    files = (
+        tmp_path / "src" / "pkg" / "a.py",
+        tmp_path / "src" / "pkg" / "b.py",
+        tmp_path / "docs" / "readme.md",
+    )
+    for file_path in files:
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("x\n", encoding="utf-8")
+    dirs = minimize_covering_dirs(files, tmp_path)
+    assert dirs == (Path("docs"), Path("src/pkg"))
+
+
+def test_matches_tool_criteria_extensions_and_globs():
+    assert matches_tool_criteria("src/a.py", extensions=(".py",))
+    assert not matches_tool_criteria("src/a.md", extensions=(".py",))
+    assert matches_tool_criteria(".cursor/rules/foo.mdc", globs=("**/*.mdc",))
+
+
+def test_expand_scope_filters_extensions(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "src" / "readme.md").write_text("# hi\n", encoding="utf-8")
+    paths = expand_scope(tmp_path, tmp_path, extensions=(".py",))
+    names = {path.name for path in paths}
+    assert names == {"ok.py"}
+
+
+def test_expand_scope_include_prefix(tmp_path: Path):
+    included = tmp_path / "src" / "reslab"
+    included.mkdir(parents=True)
+    (included / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    excluded = tmp_path / "src" / "tests"
+    excluded.mkdir(parents=True)
+    (excluded / "bad.py").write_text("y = 2\n", encoding="utf-8")
+    paths = expand_scope(
+        tmp_path,
+        tmp_path,
+        include=("src/reslab",),
+        extensions=(".py",),
+    )
+    assert paths == (included / "ok.py",)

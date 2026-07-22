@@ -58,4 +58,20 @@ def prepare_gate_execution(
     env["SHIPGATE_GATE_CONFIG"] = str(resolved_config)
     env.update(gate_env_from_config(config, resolved.project_root))
     env.update(ignore_env(resolved.project_root, extra_patterns=resolved.options.exclude))
+    scope_paths = gate_scope_file_paths(resolved)
+    if scope_paths and resolved.tool.scope.delivery == "files":
+        env["SHIPGATE_SCOPE_PATHS"] = "\n".join(scope_paths)
     return argv, env
+
+
+def gate_scope_file_paths(resolved: ResolvedRequest) -> tuple[str, ...]:
+    files: list[str] = []
+    for path in resolved.options.paths:
+        if not path.parts:
+            continue
+        candidate = path if path.is_absolute() else resolved.project_root / path
+        if not candidate.is_file():
+            continue
+        rel = path if not path.is_absolute() else path.relative_to(resolved.project_root)
+        files.append(str(rel).replace("\\", "/"))
+    return tuple(files)

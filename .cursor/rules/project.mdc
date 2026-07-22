@@ -1,7 +1,6 @@
----
-description: ShipGate vision, module map, ADR invariants
-alwaysApply: true
----
+______________________________________________________________________
+
+## description: ShipGate vision, module map, ADR invariants alwaysApply: true
 
 # ShipGate Project
 
@@ -12,7 +11,7 @@ Repo-policy-first quality orchestration. Ready by default. Projects declare inte
 ## Authoritative documentation
 
 | Layer | Path |
-|-------|------|
+| --- | --- |
 | Design | `docs/sdd.md` |
 | Implementation | `docs/implementation.md` |
 | ADR index | `docs/adr-support.md` |
@@ -24,7 +23,7 @@ Conflict resolution: `docs/sdd.md` > `docs/implementation.md`.
 ## Module map
 
 | Package | Responsibility |
-|---------|----------------|
+| --- | --- |
 | `domain/` | Frozen types: IDs, modes, options, project, catalog, execution, reports |
 | `config/` | Project config discovery, schema, loader |
 | `catalog/` | Bundled catalog YAML, validation, loader |

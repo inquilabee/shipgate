@@ -1,9 +1,16 @@
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
-from shipgate.gates.ignore import EffectiveIgnores, ignores_from_env, main, patterns_from_env
+from shipgate.gates.ignore import (
+    EffectiveIgnores,
+    ignore_env,
+    ignores_from_env,
+    main,
+    patterns_from_env,
+)
 
 
 def test_effective_ignores_matches_gitignore_patterns():
@@ -60,3 +67,11 @@ def test_ignore_module_invocation(monkeypatch):
         text=True,
     )
     assert result.returncode == 0
+
+
+def test_ignore_env_includes_gitignore(tmp_path: Path):
+    (tmp_path / ".gitignore").write_text("vendor/\n", encoding="utf-8")
+    env = ignore_env(tmp_path)
+    patterns = env["SHIPGATE_IGNORE_PATHS"].splitlines()
+    assert "vendor/" in patterns
+    assert ".shipgate/" in patterns

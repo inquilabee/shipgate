@@ -56,7 +56,7 @@ def settings_from_config(
     config: dict[str, Any],
 ) -> tuple[int, tuple[str, ...], tuple[str, ...], bool]:
     max_allowed = int(config.get("max_allowed", 12))
-    scan_roots = tuple(str(item) for item in config.get("scan_roots", ["src/"]))
+    scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
     extensions_raw = config.get("extensions", [".py", ".md", ".yaml", ".sh"])
     extensions: list[str] = []
     for part in extensions_raw:

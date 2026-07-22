@@ -52,6 +52,13 @@ class InstallDefinition:
 
 
 @dataclass(frozen=True)
+class ScopeCriteria:
+    extensions: tuple[str, ...] = ()
+    globs: tuple[str, ...] = ()
+    delivery: str = "root"
+
+
+@dataclass(frozen=True)
 class ToolDefinition:
     id: str
     executable: str
@@ -64,6 +71,7 @@ class ToolDefinition:
     normalizer: str = "generic_exit"
     modes: tuple[RunMode, ...] = (RunMode.CHECK,)
     option_order: tuple[str, ...] = ()
+    scope: ScopeCriteria = field(default_factory=ScopeCriteria)
 
 
 @dataclass(frozen=True)

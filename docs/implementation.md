@@ -759,10 +759,22 @@ Input:
 - project config target
 - optional named scope
 - ignore rules
+- catalog tool `scope` metadata (`extensions`, `globs`, `delivery`)
 
 Output:
 
-- logical scope object, not necessarily a concrete file list
+- logical scope object (`Scope`) for policy
+- concrete argv paths via `scope_paths_for_tool(scope, tool, ...)`
+
+Delivery strategies:
+
+| `delivery` | argv behavior |
+| --- | --- |
+| `root` | Pass scope target (usually `.`); tool discovers files |
+| `dirs` | Minimal covering directories of matched files |
+| `files` | Explicit file paths after extension/glob + gitignore filtering |
+
+Default scope (`target: .`, no `include`): walk non-gitignored files under target, filter by tool criteria, deliver per catalog metadata. Named scopes with `include`/`exclude` remain for special cases.
 
 First implementation:
 
@@ -770,6 +782,7 @@ First implementation:
 - always ignore `.shipgate/`, `.venv/`, and `.shipgate/reports/`
 - support target path
 - support explicit include/exclude strings
+- extension/glob filtering from catalog `ToolDefinition.scope`
 
 Do not implement a full gitignore engine by hand. Use one of these approaches:
 

@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 VALID_CLI_STYLES = frozenset({"positional", "scalar", "repeated", "joined", "boolean"})
 VALID_CLI_AGGREGATES = frozenset({"repeat", "root"})
+VALID_SCOPE_DELIVERY = frozenset({"root", "dirs", "files"})
 VALID_NORMALIZERS = frozenset(
     {
         "ruff",
@@ -95,6 +96,7 @@ def validate_tool(tool: ToolDefinition, bundled_root: Path | None) -> None:
     validate_tool_cli(tool)
     validate_tool_normalizer(tool)
     validate_tool_modes(tool)
+    validate_tool_scope(tool)
     validate_tool_bundled_config(tool, bundled_root)
     validate_tool_script(tool, bundled_root)
     validate_tool_install(tool)
@@ -121,6 +123,23 @@ def validate_tool_modes(tool: ToolDefinition) -> None:
     for mode in tool.modes:
         if not isinstance(mode, RunMode):
             raise CatalogError(f"tool {tool.id!r} has invalid mode {mode!r}")
+
+
+def validate_tool_scope(tool: ToolDefinition) -> None:
+    delivery = tool.scope.delivery
+    if delivery not in VALID_SCOPE_DELIVERY:
+        raise CatalogError(
+            f"tool {tool.id!r} has unsupported scope delivery {delivery!r}",
+        )
+    has_criteria = bool(tool.scope.extensions or tool.scope.globs)
+    if delivery == "files" and not has_criteria:
+        raise CatalogError(
+            f"tool {tool.id!r} with delivery 'files' requires extensions or globs",
+        )
+    if "Policy" in tool.capabilities and delivery not in {"files", "dirs"}:
+        raise CatalogError(
+            f"gate tool {tool.id!r} must use delivery 'files' or 'dirs'",
+        )
 
 
 def validate_tool_bundled_config(tool: ToolDefinition, bundled_root: Path | None) -> None:

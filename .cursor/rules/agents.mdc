@@ -1,7 +1,6 @@
----
-description: Agent workflow, verification, git safety
-alwaysApply: true
----
+______________________________________________________________________
+
+## description: Agent workflow, verification, git safety alwaysApply: true
 
 # Agent Workflow
 
@@ -10,7 +9,7 @@ Rules for Cursor agents. Entry index: `AGENTS.md`.
 ## Modes
 
 | Mode | Agent may | Agent must not |
-|------|-----------|----------------|
+| --- | --- | --- |
 | Ask | Read, search, explain | Edit files, implement |
 | Plan | Refine plans, commit lists | Implement code |
 | Agent | Execute agreed plan | Edit without plan agreement |
@@ -22,9 +21,9 @@ Read or search the repo before stating how code, APIs, or paths work. Run comman
 ### Pre-edit checklist
 
 1. Search for existing helpers — extend before inventing.
-2. Read `pyproject.toml` for established dependencies.
-3. Confirm paths with glob/read — never assume layout from memory.
-4. Name the architecture layer before implementing (see `architecture.mdc`).
+1. Read `pyproject.toml` for established dependencies.
+1. Confirm paths with glob/read — never assume layout from memory.
+1. Name the architecture layer before implementing (see `architecture.mdc`).
 
 ## Merge authorization
 

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pathspec
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from collections.abc import Iterator
 
 DEFAULT_IGNORED = (
     ".shipgate/",
@@ -23,14 +24,20 @@ def default_ignores() -> tuple[str, ...]:
     return DEFAULT_IGNORED
 
 
-def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
-    patterns: list[str] = []
+def load_gitignore_lines(project_root: Path) -> tuple[str, ...]:
     gitignore = project_root / ".gitignore"
-    if gitignore.is_file():
-        for line in gitignore.read_text(encoding="utf-8").splitlines():
-            stripped = line.strip()
-            if stripped and not stripped.startswith("#"):
-                patterns.append(stripped)
+    if not gitignore.is_file():
+        return ()
+    patterns: list[str] = []
+    for line in gitignore.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#"):
+            patterns.append(stripped)
+    return tuple(patterns)
+
+
+def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
+    patterns = list(load_gitignore_lines(project_root))
     if not patterns:
         return None
     return pathspec.PathSpec.from_lines("gitignore", patterns)
@@ -75,37 +82,117 @@ def should_ignore(
     return False
 
 
+def matches_tool_criteria(
+    rel_path: str,
+    *,
+    extensions: tuple[str, ...] = (),
+    globs: tuple[str, ...] = (),
+) -> bool:
+    normalized = rel_path.replace("\\", "/")
+    if not extensions and not globs:
+        return True
+    if extensions:
+        suffix = Path(normalized).suffix
+        if suffix in extensions:
+            return True
+    if globs:
+        glob_spec = pathspec.PathSpec.from_lines("gitignore", globs)
+        if glob_spec.match_file(normalized):
+            return True
+    return False
+
+
+def iter_scope_files(
+    project_root: Path,
+    target: Path,
+    *,
+    include: tuple[str, ...] = (),
+    exclude: tuple[str, ...] = (),
+    extensions: tuple[str, ...] = (),
+    globs: tuple[str, ...] = (),
+    respect_gitignore: bool = True,
+) -> Iterator[Path]:
+    yield from expand_scope(
+        project_root,
+        target,
+        include=include,
+        exclude=exclude,
+        extensions=extensions,
+        globs=globs,
+        respect_gitignore=respect_gitignore,
+    )
+
+
 def expand_scope(
     project_root: Path,
     target: Path,
     *,
     include: tuple[str, ...] = (),
     exclude: tuple[str, ...] = (),
+    extensions: tuple[str, ...] = (),
+    globs: tuple[str, ...] = (),
+    respect_gitignore: bool = True,
 ) -> tuple[Path, ...]:
     """Expand a scope target into concrete file paths."""
     project_root = project_root.resolve()
     target = target.resolve() if target.is_absolute() else (project_root / target).resolve()
-    spec = load_gitignore_spec(project_root)
+    spec = load_gitignore_spec(project_root) if respect_gitignore else None
     paths: list[Path] = []
+
+    def include_allowed(rel: str) -> bool:
+        if not include:
+            return True
+        return any(rel.startswith(inc.rstrip("/")) for inc in include)
+
+    def consider_file(path: Path) -> None:
+        rel = str(path.relative_to(project_root)).replace("\\", "/")
+        if not include_allowed(rel):
+            return
+        if not matches_tool_criteria(rel, extensions=extensions, globs=globs):
+            return
+        paths.append(path)
 
     def walk(directory: Path) -> None:
         if not directory.is_dir():
             return
         for child in sorted(directory.iterdir()):
-            if should_ignore(project_root, child, extra_excludes=exclude, spec=spec):
+            if respect_gitignore and should_ignore(
+                project_root, child, extra_excludes=exclude, spec=spec
+            ):
                 continue
             if child.is_file():
-                if include:
-                    rel = str(child.relative_to(project_root)).replace("\\", "/")
-                    if not any(rel.startswith(inc.rstrip("/")) for inc in include):
-                        continue
-                paths.append(child)
+                consider_file(child)
             elif child.is_dir():
                 walk(child)
 
     if target.is_file():
-        if not should_ignore(project_root, target, extra_excludes=exclude, spec=spec):
-            paths.append(target)
+        if respect_gitignore and should_ignore(
+            project_root, target, extra_excludes=exclude, spec=spec
+        ):
+            return ()
+        consider_file(target)
     else:
         walk(target)
     return tuple(paths)
+
+
+def minimize_covering_dirs(files: tuple[Path, ...], project_root: Path) -> tuple[Path, ...]:
+    if not files:
+        return ()
+    project_root = project_root.resolve()
+    rel_dirs: set[str] = set()
+    for file_path in files:
+        resolved = file_path.resolve()
+        rel = resolved.relative_to(project_root).as_posix()
+        parent = str(Path(rel).parent)
+        rel_dirs.add("." if parent == "." else parent)
+    kept: list[str] = []
+    for candidate in sorted(rel_dirs, key=lambda item: item.count("/")):
+        if any(
+            candidate != kept_dir
+            and (candidate == kept_dir or candidate.startswith(f"{kept_dir}/"))
+            for kept_dir in kept
+        ):
+            continue
+        kept.append(candidate)
+    return tuple(Path(item) for item in sorted(kept))
