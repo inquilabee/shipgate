@@ -44,6 +44,11 @@ def _serialize_scalar(definition: CliOptionDefinition, value: object) -> list[st
     if isinstance(value, (list, tuple)):
         if not value:
             return []
+        if definition.aggregate == "repeat":
+            result: list[str] = []
+            for item in value:
+                result.extend([flag, str(item)])
+            return result
         value = value[0]
     return [flag, str(value)]
 

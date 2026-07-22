@@ -4,7 +4,18 @@ from pathlib import Path
 
 GATE_TEMPLATE = """#!/usr/bin/env bash
 set -euo pipefail
-echo "gate passed"
+
+# shellcheck source=/dev/null
+source "$(shipgate gates lib-path)"
+
+gate_init "gate"
+
+# Example: fail when scan target is missing
+if [[ ! -d "${SHIPGATE_TARGET:-.}" ]]; then
+\tgate_fail "missing-target" "Scan target not found: ${SHIPGATE_TARGET:-.}"
+fi
+
+gate_finish
 """
 
 

@@ -67,6 +67,8 @@ def _parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
             separator=opt.get("separator", ","),
             position=opt.get("position"),
             required=bool(opt.get("required", False)),
+            default=opt.get("default"),
+            aggregate=opt.get("aggregate"),
         )
         for name, opt in (raw.get("cli") or {}).items()
     }
@@ -92,6 +94,7 @@ def _parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
     return ToolDefinition(
         id=tool_id,
         executable=raw.get("executable", tool_id),
+        script=raw.get("script"),
         subcommand=tuple(raw.get("subcommand", []) or []),
         cli=cli,
         configuration=configuration,

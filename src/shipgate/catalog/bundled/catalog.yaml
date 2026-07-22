@@ -75,6 +75,7 @@ tools:
       format:
         flag: --output-format
         style: scalar
+        default: gitlab
     configuration:
       bundled: configs/ty.toml
       discover: ["ty.toml", "pyproject.toml"]
@@ -143,6 +144,7 @@ tools:
       paths:
         flag: --source
         style: scalar
+        aggregate: root
       config:
         flag: --config
         style: scalar
@@ -466,6 +468,54 @@ tools:
         style: positional
     option_order: [paths]
 
+  gate.module-size:
+    executable: bash
+    script: gates/module-size.sh
+    modes: ["check"]
+    capabilities: ["Gates", "Policy"]
+    normalizer: gate_json
+    configuration:
+      bundled: configs/gates/module-size.yaml
+      discover: [".shipgate/configs/gates/gate.module-size.yaml"]
+      precedence: [repo, bundled]
+    option_order: []
+
+  gate.module-private-vars:
+    executable: bash
+    script: gates/module-private-vars.sh
+    modes: ["check"]
+    capabilities: ["Gates", "Policy"]
+    normalizer: gate_json
+    configuration:
+      bundled: configs/gates/module-private-vars.yaml
+      discover: [".shipgate/configs/gates/gate.module-private-vars.yaml"]
+      precedence: [repo, bundled]
+    option_order: []
+
+  gate.folder-breadth:
+    executable: bash
+    script: gates/folder-breadth.sh
+    modes: ["check"]
+    capabilities: ["Gates", "Policy"]
+    normalizer: gate_json
+    configuration:
+      bundled: configs/gates/folder-breadth.yaml
+      discover: [".shipgate/configs/gates/gate.folder-breadth.yaml"]
+      precedence: [repo, bundled]
+    option_order: []
+
+  gate.acronym-allowlist:
+    executable: bash
+    script: gates/acronym-allowlist.sh
+    modes: ["check"]
+    capabilities: ["Gates", "Policy"]
+    normalizer: gate_json
+    configuration:
+      bundled: configs/gates/acronym-allowlist.yaml
+      discover: [".shipgate/configs/gates/gate.acronym-allowlist.yaml"]
+      precedence: [repo, bundled]
+    option_order: []
+
 suites:
   python-quality:
     members: [ruff.lint, ty.check]
@@ -514,6 +564,15 @@ suites:
     parallel: false
     fail_fast: false
 
+  policy:
+    members:
+      - gate.module-size
+      - gate.module-private-vars
+      - gate.folder-breadth
+      - gate.acronym-allowlist
+    parallel: false
+    fail_fast: true
+
   docker:
     members: [hadolint.check]
     parallel: false
@@ -559,3 +618,13 @@ capabilities:
   Formatting: [ruff.format, mdformat.apply, shfmt.apply]
   TypeChecking: [ty.check]
   Security: [bandit.scan, gitleaks.scan, semgrep.scan]
+  Policy:
+    - gate.module-size
+    - gate.module-private-vars
+    - gate.folder-breadth
+    - gate.acronym-allowlist
+  Gates:
+    - gate.module-size
+    - gate.module-private-vars
+    - gate.folder-breadth
+    - gate.acronym-allowlist

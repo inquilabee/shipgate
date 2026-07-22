@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition
 
 VALID_CLI_STYLES = frozenset({"positional", "scalar", "repeated", "joined", "boolean"})
+VALID_CLI_AGGREGATES = frozenset({"repeat", "root"})
 VALID_NORMALIZERS = frozenset(
     {
         "ruff",
@@ -28,6 +29,7 @@ VALID_NORMALIZERS = frozenset(
         "radon",
         "vulture",
         "deadcode",
+        "gate_json",
     }
 )
 
@@ -83,6 +85,7 @@ def _validate_tool(tool: ToolDefinition, bundled_root: Path | None) -> None:
     _validate_tool_normalizer(tool)
     _validate_tool_modes(tool)
     _validate_tool_bundled_config(tool, bundled_root)
+    _validate_tool_script(tool, bundled_root)
     _validate_tool_install(tool)
 
 
@@ -91,6 +94,10 @@ def _validate_tool_cli(tool: ToolDefinition) -> None:
         if opt.style not in VALID_CLI_STYLES:
             raise CatalogError(
                 f"tool {tool.id!r} option {name!r} has unsupported style {opt.style!r}"
+            )
+        if opt.aggregate is not None and opt.aggregate not in VALID_CLI_AGGREGATES:
+            raise CatalogError(
+                f"tool {tool.id!r} option {name!r} has unsupported aggregate {opt.aggregate!r}"
             )
 
 
@@ -110,6 +117,14 @@ def _validate_tool_bundled_config(tool: ToolDefinition, bundled_root: Path | Non
         bundled_path = bundled_root / tool.configuration.bundled
         if not bundled_path.is_file():
             raise CatalogError(f"tool {tool.id!r} missing bundled config: {bundled_path}")
+
+
+def _validate_tool_script(tool: ToolDefinition, bundled_root: Path | None) -> None:
+    if not tool.script or bundled_root is None:
+        return
+    script_path = bundled_root / tool.script
+    if not script_path.is_file():
+        raise CatalogError(f"tool {tool.id!r} missing bundled script: {script_path}")
 
 
 def _validate_tool_install(tool: ToolDefinition) -> None:

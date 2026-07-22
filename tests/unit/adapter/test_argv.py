@@ -41,3 +41,24 @@ def test_ruff_format_check_mode(tmp_path):
     resolved = resolve_request(request, tool, env, target=tmp_path)
     argv = build_argv(resolved)
     assert "--check" in argv
+
+
+def test_gitleaks_scan_uses_project_root_for_multiple_scope_paths(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("gitleaks.scan")
+    docs = tmp_path / "docs"
+    src = tmp_path / "src"
+    docs.mkdir()
+    src.mkdir()
+    request = build_execution_request(
+        runnable="gitleaks.scan",
+        mode=RunMode.CHECK,
+        project_root=tmp_path,
+        options=NormalizedOptions(paths=(docs, src)),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert "--source" in argv
+    source_index = argv.index("--source")
+    assert argv[source_index + 1] == str(tmp_path)

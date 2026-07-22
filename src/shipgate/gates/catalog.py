@@ -30,11 +30,12 @@ def merge_gate_catalog(base: Catalog, project_root: Path) -> Catalog:
         gate_members.append(gate_id)
         tools[gate_id] = ToolDefinition(
             id=gate_id,
-            executable=str(gate_path),
+            executable="bash",
+            script=str(gate_path.resolve()),
             subcommand=(),
             cli={},
             capabilities=("Gates",),
-            normalizer="generic_exit",
+            normalizer="gate_json",
             modes=(RunMode.CHECK, RunMode.APPLY),
             option_order=(),
         )

@@ -18,12 +18,15 @@ from shipgate.domain.reports import CheckReport, RunReport, report_json_schema
 from shipgate.formatters.plugins import get_formatter
 from shipgate.gates.catalog import merge_gate_catalog
 from shipgate.gates.init import init_gate
+from shipgate.gates.paths import gates_lib_path
+from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize.base import get_normalizer
 from shipgate.planning.checks import list_project_checks
 from shipgate.planning.incremental import filter_changed
 from shipgate.planning.requests import build_execution_request, resolve_request
 from shipgate.planning.scopes import resolve_scope, scope_paths
 from shipgate.planning.workflow import PlannedCheck, resolve_runnables, suite_execution_flags
+from shipgate.project.init import init_project
 from shipgate.runtime.environment import resolve_environment, resolve_executable
 from shipgate.runtime.executor import Executor, ProcessResult
 from shipgate.runtime.install import install_suite
@@ -339,7 +342,7 @@ class ShipGateApp:
             target=scope.target,
             project=context.project,
         )
-        return self._execute_check(resolved, run_id)
+        return self._execute_check(resolved, run_id, project=context.project)
 
     def _build_run_report(
         self,
@@ -429,20 +432,28 @@ class ShipGateApp:
             )
         return 1, report
 
-    def _execute_check(self, resolved: ResolvedRequest, run_id: str) -> CheckReport:
-        if self._executor_is_default:
-            executable = resolve_executable(
-                resolved.tool.executable,
-                resolved.environment,
-                install_binary=resolved.tool.install.binary if resolved.tool.install else None,
-                project_root=resolved.project_root,
-            )
+    def _execute_check(
+        self,
+        resolved: ResolvedRequest,
+        run_id: str,
+        project: ProjectConfig | None = None,
+    ) -> CheckReport:
+        if is_gate_tool(resolved.tool):
+            argv, env = prepare_gate_execution(resolved, project=project)
         else:
-            executable = resolved.tool.executable
-        argv_list = list(build_argv(resolved))
-        argv_list[0] = executable
-        argv = tuple(argv_list)
-        env = dict(resolved.environment.env)
+            if self._executor_is_default:
+                executable = resolve_executable(
+                    resolved.tool.executable,
+                    resolved.environment,
+                    install_binary=resolved.tool.install.binary if resolved.tool.install else None,
+                    project_root=resolved.project_root,
+                )
+            else:
+                executable = resolved.tool.executable
+            argv_list = list(build_argv(resolved))
+            argv_list[0] = executable
+            argv = tuple(argv_list)
+            env = dict(resolved.environment.env)
         result = self.executor.run(argv, cwd=resolved.project_root, env=env)
         stdout_path, stderr_path, _ = write_raw_output(
             resolved.project_root,
@@ -552,3 +563,10 @@ class ShipGateApp:
     def gates_init(self, project_root: Path, name: str) -> str:
         path = init_gate(project_root, name)
         return f"created gate: {path}\n"
+
+    def gates_lib_path(self) -> str:
+        return f"{gates_lib_path()}\n"
+
+    def init(self, project_root: Path) -> str:
+        path = init_project(project_root)
+        return f"created {path}\n"

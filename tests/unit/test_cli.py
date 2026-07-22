@@ -1,5 +1,4 @@
 import pytest
-
 from shipgate.cli import main
 
 

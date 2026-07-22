@@ -19,5 +19,7 @@ def test_merge_gate_catalog(tmp_path: Path):
     base = load_catalog()
     merged = merge_gate_catalog(base, tmp_path)
     assert "gate.sample" in merged.tools
+    assert merged.tools["gate.sample"].normalizer == "gate_json"
+    assert merged.tools["gate.sample"].executable == "bash"
     assert "local-gates" in merged.suites
     assert discover_gates(tmp_path)

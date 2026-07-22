@@ -1,5 +1,4 @@
 import pytest
-
 from shipgate.domain.ids import CheckId, RunnableId, SuiteId, validate_id
 
 

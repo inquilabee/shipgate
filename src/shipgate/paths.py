@@ -10,7 +10,7 @@ SERVER_DB_FILENAME = "report.db"
 
 
 def find_project_root(start: Path | None = None) -> Path:
-    """Walk upward from start to find a project root (contains shipgate.yaml or .git)."""
+    """Walk upward from start to find a project root (shipgate.yaml, .git, or pyproject.toml)."""
     current = (start or Path.cwd()).resolve()
     for candidate in [current, *current.parents]:
         if (candidate / "shipgate.yaml").is_file():
@@ -18,6 +18,8 @@ def find_project_root(start: Path | None = None) -> Path:
         if (candidate / ".shipgate.yaml").is_file():
             return candidate
         if (candidate / ".git").exists():
+            return candidate
+        if (candidate / "pyproject.toml").is_file():
             return candidate
     return current
 

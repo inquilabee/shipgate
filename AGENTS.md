@@ -18,6 +18,7 @@ ShipGate is a portable, metadata-driven quality-gate orchestrator. Projects decl
 pip install -e .
 pytest tests/unit -q
 pytest -m integration
+shipgate init
 shipgate install
 shipgate check
 shipgate format

@@ -40,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("install", parents=[shared], help="Install tools for selected suite")
+    sub.add_parser("init", help="Create shipgate.yaml at the project root")
     sub.add_parser("format", parents=[shared], help="Run apply-capable checks")
     sub.add_parser("check", parents=[shared], help="Run report-only checks")
 
@@ -68,6 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     gates_sub = gates_parser.add_subparsers(dest="gates_cmd", required=True)
     gates_init = gates_sub.add_parser("init")
     gates_init.add_argument("name", nargs="?", default="gate")
+    gates_sub.add_parser("lib-path", help="Print path to bundled gate lib.sh")
 
     return parser
 
@@ -75,6 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
 _TOP_LEVEL_COMMANDS = frozenset(
     {
         "install",
+        "init",
         "format",
         "check",
         "list",
@@ -138,6 +141,7 @@ def _dispatch_command(
                 suite=args.suite,
             )
         ),
+        "init": lambda: _dispatch_init(app, project_root),
         "check": lambda: app.check(_run_command(args, project_root)),
         "format": lambda: app.format(_run_command(args, project_root)),
         "list": lambda: _dispatch_list(app, args, project_root),
@@ -160,6 +164,11 @@ def _dispatch_command(
     return 0
 
 
+def _dispatch_init(app: ShipGateApp, project_root: Path) -> int:
+    sys.stdout.write(app.init(project_root))
+    return 0
+
+
 def _write_schema(app: ShipGateApp) -> int:
     sys.stdout.write(app.schema())
     return 0
@@ -168,6 +177,9 @@ def _write_schema(app: ShipGateApp) -> int:
 def _dispatch_gates(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
     if args.gates_cmd == "init":
         sys.stdout.write(app.gates_init(project_root, args.name))
+        return 0
+    if args.gates_cmd == "lib-path":
+        sys.stdout.write(app.gates_lib_path())
         return 0
     return 0
 

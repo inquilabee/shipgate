@@ -12,6 +12,16 @@ def test_scalar_tuple_uses_first_path():
     assert serialize_option(opt, ("/path/cfg.toml",)) == ["--config", "/path/cfg.toml"]
 
 
+def test_scalar_aggregate_repeat_emits_all_paths():
+    opt = CliOptionDefinition(flag="--source", style="scalar", aggregate="repeat")
+    assert serialize_option(opt, ("docs", "src")) == [
+        "--source",
+        "docs",
+        "--source",
+        "src",
+    ]
+
+
 def test_repeated():
     opt = CliOptionDefinition(flag="--exclude", style="repeated")
     assert serialize_option(opt, ("a", "b")) == ["--exclude", "a", "--exclude", "b"]

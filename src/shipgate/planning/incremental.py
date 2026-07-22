@@ -21,6 +21,8 @@ def filter_changed(
     if not changed:
         return ()
     filtered = tuple(path for path in paths if _path_matches_changed(path, project_root, changed))
+    if changed_only:
+        return filtered
     return filtered or paths
 
 

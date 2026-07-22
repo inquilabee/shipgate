@@ -18,6 +18,8 @@ class CliOptionDefinition:
     separator: str = ","
     position: str | None = None
     required: bool = False
+    default: str | None = None
+    aggregate: str | None = None
 
 
 @dataclass(frozen=True)
@@ -41,6 +43,7 @@ class InstallDefinition:
 class ToolDefinition:
     id: str
     executable: str
+    script: str | None = None
     subcommand: tuple[str, ...] = ()
     cli: Mapping[str, CliOptionDefinition] = field(default_factory=dict)
     configuration: ConfigurationDefinition = field(default_factory=ConfigurationDefinition)

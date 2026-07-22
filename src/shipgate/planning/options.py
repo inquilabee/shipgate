@@ -48,7 +48,7 @@ def resolve_option_sources(
         fmt = os.environ["SHIPGATE_FORMAT"]
         sources["format"] = "environment"
     elif "format" in tool.cli:
-        fmt = _default_tool_format(tool.id)
+        fmt = tool.cli["format"].default or "json"
         sources["format"] = "tool_default"
 
     output = cli_options.output
@@ -82,9 +82,3 @@ def resolve_option_sources(
 def _env_bool(name: str) -> bool:
     value = os.environ.get(name, "")
     return value.lower() in {"1", "true", "yes", "on"}
-
-
-def _default_tool_format(tool_id: str) -> str:
-    if tool_id == "ty.check":
-        return "gitlab"
-    return "json"
