@@ -17,8 +17,11 @@ threshold = "B"
 [tool.shipgate.checks."radon.mi"]
 threshold = "B"
 
-[tool.shipgate.checks."jscpd.check"]
-threshold = "4.5"
+[tool.shipgate.checks."jscpd.check.python"]
+threshold = "2"
+
+[tool.shipgate.checks."jscpd.check.other"]
+threshold = "5"
 
 [tool.shipgate.scopes.semgrep]
 target = "."

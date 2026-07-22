@@ -14,6 +14,13 @@ from shipgate.planning.scope_resolver import ScopeResolver
 from shipgate.planning.scopes import scope_paths, scope_paths_for_tool
 
 
+def scaffold_src_and_docs(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "readme.md").write_text("# hi\n", encoding="utf-8")
+
+
 def test_scope_resolver_default_excludes(tmp_path: Path):
     scope = ScopeResolver(tmp_path).resolve(ProjectConfig())
     assert ".shipgate/" in scope.exclude
@@ -21,14 +28,18 @@ def test_scope_resolver_default_excludes(tmp_path: Path):
     assert "venv/" in scope.exclude
 
 
-def test_jscpd_bundled_config_writes_under_shipgate_reports():
+def test_jscpd_bundled_configs_write_under_shipgate_reports():
     catalog = load_catalog()
-    tool = catalog.get_tool("jscpd.check")
-    bundled = tool.configuration.bundled
-    assert bundled is not None
-    jscpd_config = json.loads((bundled_configs_root() / bundled).read_text(encoding="utf-8"))
-    assert jscpd_config["output"] == ".shipgate/reports/jscpd"
-    assert ".shipgate/**" in jscpd_config["ignore"]
+    for tool_id, output_dir in (
+        ("jscpd.check.python", "jscpd-python"),
+        ("jscpd.check.other", "jscpd-other"),
+    ):
+        tool = catalog.get_tool(tool_id)
+        bundled = tool.configuration.bundled
+        assert bundled is not None
+        jscpd_config = json.loads((bundled_configs_root() / bundled).read_text(encoding="utf-8"))
+        assert jscpd_config["output"] == f".shipgate/reports/{output_dir}"
+        assert ".shipgate/**" in jscpd_config["ignore"]
 
 
 def test_scope_resolver_resolve_target(tmp_path: Path):
@@ -71,10 +82,7 @@ def test_scope_paths_keeps_nested_target(tmp_path: Path):
 
 
 def test_scope_paths_honors_include(tmp_path: Path):
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "ok.py").write_text("x = 1\n", encoding="utf-8")
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs" / "readme.md").write_text("# hi\n", encoding="utf-8")
+    scaffold_src_and_docs(tmp_path)
 
     scope = Scope(target=tmp_path, include=("src/",), respect_gitignore=True)
     paths = scope_paths(scope, tmp_path, mode=RunMode.CHECK)
@@ -103,10 +111,7 @@ def test_scope_paths_returns_target_when_disabled(tmp_path: Path):
 
 
 def test_scope_paths_for_tool_delivery_root(tmp_path: Path):
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "ok.py").write_text("x = 1\n", encoding="utf-8")
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs" / "readme.md").write_text("# hi\n", encoding="utf-8")
+    scaffold_src_and_docs(tmp_path)
     catalog = load_catalog()
     tool = catalog.get_tool("ruff.lint")
     scope = Scope(target=tmp_path, respect_gitignore=True)

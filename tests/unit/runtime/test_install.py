@@ -87,7 +87,7 @@ def test_install_suite_records_successful_binaries_on_partial_failure(
     python_installer = MagicMock()
     binary_installer = MagicMock()
 
-    def install_binary(project_root, packages):
+    def install_binary(_project_root, packages):
         if "gitleaks" in packages:
             raise InstallError("gitleaks download failed")
         return None

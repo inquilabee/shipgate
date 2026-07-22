@@ -2,7 +2,8 @@
   "minLines": 5,
   "minTokens": 50,
   "threshold": 2,
-  "output": ".shipgate/reports/jscpd",
+  "format": ["python"],
+  "output": ".shipgate/reports/jscpd-python",
   "ignore": [
     ".shipgate/**",
     "**/.venv/**",

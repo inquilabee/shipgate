@@ -1,4 +1,4 @@
-jscpd.check:
+jscpd.check.python:
   executable: jscpd
   subcommand: []
   modes:
@@ -22,11 +22,11 @@ jscpd.check:
       style: scalar
       default: '2'
   configuration:
-    bundled: configs/jscpd.json
+    bundled: configs/jscpd.python.json
     discover:
-      - .shipgate/configs/jscpd.json
-      - .jscpd.json
-      - jscpd.json
+      - .shipgate/configs/jscpd.python.json
+      - .jscpd.python.json
+      - jscpd.python.json
     precedence:
       - cli
       - repo
@@ -37,4 +37,6 @@ jscpd.check:
     - threshold
     - paths
   scope:
+    extensions:
+      - .py
     delivery: root

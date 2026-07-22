@@ -13,3 +13,6 @@ __pycache__/
 
 .shipgate/
 .cursor/rules/you.mdc
+
+.shipgate/
+.trunk/

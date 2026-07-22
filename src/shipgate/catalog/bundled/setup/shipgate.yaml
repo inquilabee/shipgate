@@ -12,8 +12,10 @@ checks:
     threshold: B
   radon.mi:
     threshold: B
-  jscpd.check:
-    threshold: "4.5"
+  jscpd.check.python:
+    threshold: "2"
+  jscpd.check.other:
+    threshold: "5"
 scopes:
   semgrep:
     target: .

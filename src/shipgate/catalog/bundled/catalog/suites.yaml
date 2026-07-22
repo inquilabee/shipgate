@@ -28,7 +28,8 @@ suites:
       - vulture.check
       - radon.cc
       - radon.mi
-      - jscpd.check
+      - jscpd.check.python
+      - jscpd.check.other
       - markdownlint.check
       - yamllint.check
     parallel: false

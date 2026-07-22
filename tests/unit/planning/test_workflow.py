@@ -69,7 +69,8 @@ def test_extended_suite_includes_radon_mi_and_jscpd(catalog):
     tools = expand_suite("extended", catalog)
     assert "radon.cc" in tools
     assert "radon.mi" in tools
-    assert "jscpd.check" in tools
+    assert "jscpd.check.python" in tools
+    assert "jscpd.check.other" in tools
 
 
 def test_workflow_resolves_ci(catalog):
