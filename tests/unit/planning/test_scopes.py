@@ -145,6 +145,17 @@ def test_scope_paths_for_tool_delivery_dirs(tmp_path: Path):
     assert paths == (Path("src/pkg"),)
 
 
+def test_deadcode_dirs_respects_include(tmp_path: Path):
+    included = tmp_path / "src" / "reslab"
+    included.mkdir(parents=True)
+    (included / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "src" / "tests").mkdir(parents=True)
+    (tmp_path / "src" / "tests" / "bad.py").write_text("y = 2\n", encoding="utf-8")
+    tool = load_catalog().get_tool("deadcode.check")
+    scope = Scope(target=tmp_path, include=("src/reslab",), respect_gitignore=True)
+    assert scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK) == (Path("src/reslab"),)
+
+
 def test_minimize_covering_dirs_prunes_nested(tmp_path: Path):
     files = (
         tmp_path / "src" / "pkg" / "a.py",
