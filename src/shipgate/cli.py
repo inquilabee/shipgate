@@ -40,7 +40,20 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("install", parents=[shared], help="Install tools for selected suite")
-    sub.add_parser("init", help="Create shipgate.yaml at the project root")
+    init_parser = sub.add_parser("init", help="Create shipgate.yaml at the project root")
+    init_parser.add_argument(
+        "--configs-only",
+        action="store_true",
+        help="Scaffold .shipgate/configs without creating shipgate.yaml",
+    )
+
+    configs_parser = sub.add_parser("configs", help="Project tool config management")
+    configs_sub = configs_parser.add_subparsers(dest="configs_cmd", required=True)
+    configs_sub.add_parser("sync", help="Copy missing configs from bundled templates")
+    configs_diff = configs_sub.add_parser("diff", help="Diff project configs vs bundled templates")
+    configs_diff.add_argument("tool", nargs="?", help="Optional tool id to diff")
+    configs_list = configs_sub.add_parser("list", help="Show resolved config path per tool")
+    configs_list.add_argument("--suite", help="Suite to list (default: project suite)")
     sub.add_parser("format", parents=[shared], help="Run apply-capable checks")
     sub.add_parser("check", parents=[shared], help="Run report-only checks")
 
@@ -78,6 +91,7 @@ TOP_LEVEL_COMMANDS = frozenset(
     {
         "install",
         "init",
+        "configs",
         "format",
         "check",
         "list",
@@ -141,7 +155,8 @@ def dispatch_command(
                 suite=args.suite,
             )
         ),
-        "init": lambda: dispatch_init(app, project_root),
+        "init": lambda: dispatch_init(app, args, project_root),
+        "configs": lambda: dispatch_configs(app, args, project_root),
         "check": lambda: app.check(run_command(args, project_root)),
         "format": lambda: app.format(run_command(args, project_root)),
         "list": lambda: dispatch_list(app, args, project_root),
@@ -164,8 +179,21 @@ def dispatch_command(
     return 0
 
 
-def dispatch_init(app: ShipGateApp, project_root: Path) -> int:
-    sys.stdout.write(app.init(project_root))
+def dispatch_init(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
+    sys.stdout.write(app.init(project_root, configs_only=getattr(args, "configs_only", False)))
+    return 0
+
+
+def dispatch_configs(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
+    if args.configs_cmd == "sync":
+        sys.stdout.write(app.configs_sync(project_root))
+        return 0
+    if args.configs_cmd == "diff":
+        sys.stdout.write(app.configs_diff(project_root, getattr(args, "tool", None)))
+        return 0
+    if args.configs_cmd == "list":
+        sys.stdout.write(app.configs_list(project_root, suite=getattr(args, "suite", None)))
+        return 0
     return 0
 
 

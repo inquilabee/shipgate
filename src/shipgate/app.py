@@ -15,6 +15,7 @@ from shipgate.gates.catalog import merge_gate_catalog
 from shipgate.gates.init import init_gate
 from shipgate.gates.paths import gates_lib_path
 from shipgate.planning.checks import list_project_checks
+from shipgate.project.configs import diff_configs, list_resolved_configs, sync_configs
 from shipgate.project.init import init_project
 from shipgate.runtime.executor import Executor
 from shipgate.runtime.install import install_suite
@@ -186,6 +187,35 @@ class ShipGateApp:
     def gates_lib_path(self) -> str:
         return f"{gates_lib_path()}\n"
 
-    def init(self, project_root: Path) -> str:
-        path = init_project(project_root)
+    def init(self, project_root: Path, *, configs_only: bool = False) -> str:
+        path = init_project(project_root, configs_only=configs_only)
+        if configs_only:
+            return "scaffolded .shipgate configs\n"
         return f"created {path}\n"
+
+    def configs_sync(self, project_root: Path) -> str:
+        created = sync_configs(project_root, self._catalog_for(project_root))
+        if not created:
+            return "no missing configs\n"
+        lines = [f"created {path.relative_to(project_root)}" for path in created]
+        return "\n".join(lines) + "\n"
+
+    def configs_list(
+        self,
+        project_root: Path,
+        *,
+        suite: str | None = None,
+    ) -> str:
+        project = load_config(project_root=project_root)
+        catalog = self._catalog_for(project_root)
+        lines = list_resolved_configs(
+            project_root,
+            catalog,
+            project,
+            suite=suite,
+        )
+        return "\n".join(lines) + ("\n" if lines else "")
+
+    def configs_diff(self, project_root: Path, tool_id: str | None = None) -> str:
+        catalog = self._catalog_for(project_root)
+        return diff_configs(project_root, catalog, tool_id=tool_id)

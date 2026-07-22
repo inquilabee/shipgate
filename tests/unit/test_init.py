@@ -9,6 +9,15 @@ from shipgate.paths import find_project_root, shipgate_dir
 GIT = shutil.which("git")
 
 
+def assert_init_layout(root):
+    sg = shipgate_dir(root)
+    assert (sg / "reports").is_dir()
+    assert (sg / "gates").is_dir()
+    assert (sg / "allowlists" / "acronyms.yaml").is_file()
+    assert (sg / "allowlists" / "module-private-vars.txt").is_file()
+    assert (sg / "configs" / "ruff.toml").is_file()
+
+
 def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     code = main(["init"])
@@ -19,10 +28,7 @@ def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     assert "suite: standard" in content
     assert "error-format: compact" in content
     assert "mode: auto" in content
-    assert (shipgate_dir(tmp_path) / "reports").is_dir()
-    assert (shipgate_dir(tmp_path) / "gates").is_dir()
-    assert (shipgate_dir(tmp_path) / "allowlists" / "acronyms.yaml").is_file()
-    assert (shipgate_dir(tmp_path) / "allowlists" / "module-private-vars.txt").is_file()
+    assert_init_layout(tmp_path)
 
 
 def test_init_refuses_existing_config(tmp_path, monkeypatch):

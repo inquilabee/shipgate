@@ -36,7 +36,7 @@ Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/q
 - Binary tools must be on `PATH` for the full suite: `gitleaks`, `markdownlint`, `shfmt`, `yamlfmt` (google/yamlfmt), `shellcheck`.
 - Reports root: `.shipgate/reports/` (not repo-root `reports/`).
 - Bundled catalog under `src/shipgate/catalog/bundled/` is product defaults — do not hardcode repo paths there.
-- Project overrides: `shipgate.yaml`, `.shipgate/gates/`, `.shipgate/configs/`.
+- Project overrides: `shipgate.yaml`, `.shipgate/gates/`, `.shipgate/configs/` (tool config home; scaffold with `shipgate init` or `shipgate configs sync`).
 
 ## Architecture layers (one responsibility each)
 

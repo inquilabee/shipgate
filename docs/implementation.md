@@ -503,6 +503,7 @@ Fields:
 - `target`: repository target path
 - `error-format`: `json`, `compact`, `text`, or `github`
 - `configs.mode`: `auto`, `repo`, or `bundled`
+- Tool configs live under `.shipgate/configs/` (scaffolded by `shipgate init` or `shipgate configs sync`; copy-if-missing only)
 - `checks`: optional explicit check IDs
 - `scopes`: optional named scopes
 - `error-formatters`: optional custom formatters after built-ins work

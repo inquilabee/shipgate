@@ -26,7 +26,7 @@ tools:
         style: scalar
     configuration:
       bundled: configs/ruff.toml
-      discover: [".ruff.toml", "ruff.toml", "pyproject.toml"]
+      discover: [".shipgate/configs/ruff.toml", ".ruff.toml", "ruff.toml", "pyproject.toml"]
       pyproject_section: tool.ruff
       precedence: [cli, repo, bundled]
       merge: false
@@ -53,7 +53,7 @@ tools:
         style: boolean
     configuration:
       bundled: configs/ruff.toml
-      discover: [".ruff.toml", "ruff.toml", "pyproject.toml"]
+      discover: [".shipgate/configs/ruff.toml", ".ruff.toml", "ruff.toml", "pyproject.toml"]
       pyproject_section: tool.ruff
       precedence: [cli, repo, bundled]
       merge: false
@@ -78,7 +78,7 @@ tools:
         default: gitlab
     configuration:
       bundled: configs/ty.toml
-      discover: ["ty.toml", "pyproject.toml"]
+      discover: [".shipgate/configs/ty.toml", "ty.toml", "pyproject.toml"]
       pyproject_section: tool.ty
       precedence: [cli, repo, bundled]
       merge: false
@@ -108,7 +108,7 @@ tools:
         style: scalar
     configuration:
       bundled: configs/bandit.yaml
-      discover: [".bandit", "bandit.yaml", "pyproject.toml"]
+      discover: [".shipgate/configs/bandit.yaml", ".bandit", "bandit.yaml", "pyproject.toml"]
       pyproject_section: tool.bandit
       precedence: [cli, repo, bundled]
       merge: false
@@ -150,7 +150,7 @@ tools:
         style: scalar
     configuration:
       bundled: configs/gitleaks.toml
-      discover: [".gitleaks.toml", "gitleaks.toml"]
+      discover: [".shipgate/configs/gitleaks.toml", ".gitleaks.toml", "gitleaks.toml"]
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
@@ -184,7 +184,14 @@ tools:
         style: repeated
     configuration:
       bundled: configs/semgrep.yaml
-      discover: [".semgrep.yml", ".semgrep.yaml", "semgrep.yaml", "semgrep.yml"]
+      discover:
+        [
+          ".shipgate/configs/semgrep.yaml",
+          ".semgrep.yml",
+          ".semgrep.yaml",
+          "semgrep.yaml",
+          "semgrep.yml",
+        ]
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, exclude, paths]
@@ -298,7 +305,13 @@ tools:
         style: scalar
     configuration:
       bundled: configs/markdownlint.json
-      discover: [".markdownlint.json", ".markdownlint.yaml", ".markdownlint.yml"]
+      discover:
+        [
+          ".shipgate/configs/markdownlint.json",
+          ".markdownlint.json",
+          ".markdownlint.yaml",
+          ".markdownlint.yml",
+        ]
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
@@ -339,7 +352,15 @@ tools:
         style: scalar
     configuration:
       bundled: configs/yamllint.yaml
-      discover: [".yamllint", ".yamllint.yaml", ".yamllint.yml", "yamllint.yaml", "yamllint.yml"]
+      discover:
+        [
+          ".shipgate/configs/yamllint.yaml",
+          ".yamllint",
+          ".yamllint.yaml",
+          ".yamllint.yml",
+          "yamllint.yaml",
+          "yamllint.yml",
+        ]
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, paths]
@@ -434,7 +455,7 @@ tools:
         default: "2"
     configuration:
       bundled: configs/jscpd.json
-      discover: [".jscpd.json", "jscpd.json", ".shipgate/configs/jscpd.json"]
+      discover: [".shipgate/configs/jscpd.json", ".jscpd.json", "jscpd.json"]
       precedence: [cli, repo, bundled]
       merge: false
     option_order: [config, threshold, paths]

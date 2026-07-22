@@ -1,0 +1,2 @@
+# Registry rulesets are passed via catalog subcommand (--config p/...).
+rules: []
