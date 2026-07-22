@@ -7,7 +7,6 @@ configs:
 checks:
   semgrep.scan:
     scope: semgrep
-  gate.module-size: {}
 scopes:
   semgrep:
     target: .

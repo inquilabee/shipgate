@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from shipgate.catalog.loader import load_catalog
 from shipgate.errors import ShipGateError
+from shipgate.gates.setup import setup_bundled_gates
 from shipgate.paths import shipgate_dir
 
 if TYPE_CHECKING:
@@ -27,4 +29,5 @@ def init_project(project_root: Path) -> Path:
     config_path.write_text(INIT_TEMPLATE, encoding="utf-8")
     (shipgate_dir(root) / "reports").mkdir(parents=True, exist_ok=True)
     (shipgate_dir(root) / "gates").mkdir(parents=True, exist_ok=True)
+    setup_bundled_gates(root, load_catalog())
     return config_path

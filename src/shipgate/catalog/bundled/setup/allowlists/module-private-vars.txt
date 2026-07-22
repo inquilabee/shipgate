@@ -1,0 +1,1 @@
+# One module path per line; skip module-private-var checks for these files.

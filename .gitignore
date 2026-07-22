@@ -1,4 +1,8 @@
-.shipgate/
+.shipgate/*
+!.shipgate/allowlists/
+!.shipgate/allowlists/**
+!.shipgate/configs/
+!.shipgate/configs/**
 .venv/
 build/
 __pycache__/

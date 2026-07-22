@@ -87,14 +87,9 @@ class GitHubReleaseInstaller:
             arch=github_arch(),
         )
         if version == "latest":
-            url = (
-                f"https://github.com/{release['repo']}/releases/latest/download/{asset_name}"
-            )
+            url = f"https://github.com/{release['repo']}/releases/latest/download/{asset_name}"
         else:
-            url = (
-                f"https://github.com/{release['repo']}/releases/download/"
-                f"{version}/{asset_name}"
-            )
+            url = f"https://github.com/{release['repo']}/releases/download/{version}/{asset_name}"
         with tempfile.TemporaryDirectory() as tmp:
             archive_path = Path(tmp) / asset_name
             try:

@@ -84,9 +84,7 @@ def _planned_from_check_names(
 ) -> list[PlannedCheck]:
     planned: list[PlannedCheck] = []
     seen: set[str] = set()
-    check_names = project.checks or tuple(
-        binding.runnable for binding in project.check_bindings
-    )
+    check_names = project.checks or tuple(binding.runnable for binding in project.check_bindings)
     for check_name in check_names:
         for tool_id in expand_suite(check_name, catalog):
             if tool_id in seen:

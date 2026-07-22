@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from shipgate.config.loader import load_config
 from shipgate.errors import ConfigError
 

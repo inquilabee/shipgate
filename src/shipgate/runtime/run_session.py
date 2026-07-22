@@ -132,9 +132,7 @@ class RunSession:
                 emit_failure_output=emit_failure_output,
             )
         if command.ci or is_ci_environment():
-            write_github_step_summary(
-                f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n"
-            )
+            write_github_step_summary(f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n")
         return self._finalize_successful_run(
             command,
             context.project_root,
@@ -361,9 +359,7 @@ class RunSession:
 
             ReportStore(project_root).save(report)
         if command.ci or is_ci_environment():
-            write_github_step_summary(
-                f"## ShipGate {report.mode}\n\nStatus: **{report.status}**\n"
-            )
+            write_github_step_summary(f"## ShipGate {report.mode}\n\nStatus: **{report.status}**\n")
         return 1, report
 
     def _execute_check(

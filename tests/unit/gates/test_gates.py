@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
@@ -27,6 +28,8 @@ def test_catalog_includes_bundled_policy_gates():
         assert tool.script is not None
     assert "policy" in catalog.suites
     assert "gate.module-size" in catalog.suites["policy"].members
+    assert "policy" in catalog.suites["full"].members
+    assert "policy" in catalog.suites["ci"].members
 
 
 def _process_result(

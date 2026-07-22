@@ -2,6 +2,7 @@ import shutil
 import subprocess
 
 import pytest
+
 from shipgate.planning.incremental import filter_changed
 
 GIT = shutil.which("git")
@@ -23,8 +24,13 @@ def test_filter_changed_returns_subset(tmp_path):
         cwd=tmp_path,
         check=True,
         capture_output=True,
-        env={**__import__("os").environ, "GIT_AUTHOR_NAME": "t", "GIT_COMMITTER_NAME": "t",
-             "GIT_AUTHOR_EMAIL": "t@example.com", "GIT_COMMITTER_EMAIL": "t@example.com"},
+        env={
+            **__import__("os").environ,
+            "GIT_AUTHOR_NAME": "t",
+            "GIT_COMMITTER_NAME": "t",
+            "GIT_AUTHOR_EMAIL": "t@example.com",
+            "GIT_COMMITTER_EMAIL": "t@example.com",
+        },
     )
     file_b.write_text("y = 3\n", encoding="utf-8")
     filtered = filter_changed(
@@ -53,8 +59,13 @@ def test_filter_changed_only_returns_empty_when_no_scope_overlap(tmp_path):
         cwd=tmp_path,
         check=True,
         capture_output=True,
-        env={**__import__("os").environ, "GIT_AUTHOR_NAME": "t", "GIT_COMMITTER_NAME": "t",
-             "GIT_AUTHOR_EMAIL": "t@example.com", "GIT_COMMITTER_EMAIL": "t@example.com"},
+        env={
+            **__import__("os").environ,
+            "GIT_AUTHOR_NAME": "t",
+            "GIT_COMMITTER_NAME": "t",
+            "GIT_AUTHOR_EMAIL": "t@example.com",
+            "GIT_COMMITTER_EMAIL": "t@example.com",
+        },
     )
     readme.write_text("# readme\n\nupdated\n", encoding="utf-8")
     filtered = filter_changed(

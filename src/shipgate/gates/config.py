@@ -14,6 +14,20 @@ if TYPE_CHECKING:
     from shipgate.domain.project import ProjectConfig
 
 
+def load_bundled_gate_config(tool: ToolDefinition) -> dict[str, Any]:
+    """Load the bundled default YAML config for a gate tool."""
+    if not tool.configuration.bundled:
+        return {}
+    bundled = bundled_root_path() / tool.configuration.bundled
+    if not bundled.is_file():
+        return {}
+    data = yaml.safe_load(bundled.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        msg = f"Gate config must be a mapping: {bundled}"
+        raise ValueError(msg)
+    return dict(data)
+
+
 def load_gate_config(
     tool: ToolDefinition,
     project_root: Path,

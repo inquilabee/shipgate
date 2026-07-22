@@ -49,9 +49,7 @@ def _parse_catalog(raw: dict) -> Catalog:
     capabilities_raw = raw.get("capabilities", {}) or {}
     tools = {tid: _parse_tool(tid, tdata) for tid, tdata in tools_raw.items()}
     suites = {sid: _parse_suite(sid, sdata) for sid, sdata in suites_raw.items()}
-    workflows = {
-        wid: _parse_workflow(wid, wdata) for wid, wdata in workflows_raw.items()
-    }
+    workflows = {wid: _parse_workflow(wid, wdata) for wid, wdata in workflows_raw.items()}
     capabilities = {
         str(name): tuple(str(tool_id) for tool_id in (members or []))
         for name, members in capabilities_raw.items()
@@ -132,9 +130,7 @@ def _parse_workflow(workflow_id: str, raw: list) -> WorkflowDefinition:
                 f"workflow {workflow_id!r} step {index} has invalid mode {mode_name!r}"
             ) from exc
         if not isinstance(members_raw, list):
-            raise CatalogError(
-                f"workflow {workflow_id!r} step {index} members must be a list"
-            )
+            raise CatalogError(f"workflow {workflow_id!r} step {index} members must be a list")
         steps.append(
             WorkflowStep(
                 mode=mode,

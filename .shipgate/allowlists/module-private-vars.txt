@@ -1,0 +1,3 @@
+# Module-private names allowed at module scope (regex patterns, internal registries).
+src/shipgate/domain/ids.py
+src/shipgate/cli.py

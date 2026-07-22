@@ -55,9 +55,7 @@ def _parse_findings(stdout: str, check_id: str) -> tuple[Finding, ...]:
         items = payload
     else:
         return ()
-    return tuple(
-        _finding_from_dict(item, check_id) for item in items if isinstance(item, dict)
-    )
+    return tuple(_finding_from_dict(item, check_id) for item in items if isinstance(item, dict))
 
 
 class GateJsonNormalizer:

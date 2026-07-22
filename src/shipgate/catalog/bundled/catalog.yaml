@@ -550,7 +550,7 @@ suites:
     fail_fast: false
 
   full:
-    members: [standard, security, extended]
+    members: [standard, security, extended, policy]
     parallel: false
     fail_fast: false
 
@@ -579,7 +579,7 @@ suites:
     fail_fast: false
 
   ci:
-    members: [standard, security]
+    members: [standard, security, policy]
     parallel: false
     fail_fast: true
 

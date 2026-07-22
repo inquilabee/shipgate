@@ -8,7 +8,7 @@ The default tool set should be strong enough for serious Python development. It 
 
 The table below maps ShipGate's normalized options onto the starting tool set. Gaps marked `x` should be intentional tool limitations, not missing ShipGate design. If a default check cannot be configured, normalized, or reported cleanly, it is not ready for the standard suite yet.
 
-| Tool | PATHS | CONFIG | EXCLUDE | INCLUDE | FORMAT | OUTPUT | VERBOSE | QUIET | FIX | RULES | THRESHOLD | STDIN | EXIT_BEHAVIOR |
+| Tool | `PATHS` | `CONFIG` | `EXCLUDE` | `INCLUDE` | `FORMAT` | `OUTPUT` | `VERBOSE` | `QUIET` | `FIX` | `RULES` | `THRESHOLD` | `STDIN` | `EXIT_BEHAVIOR` |
 | --------------- | ----- | --------------- | ----------- | --------------------- | ------------------ | ----------------------- | ----------- | ---------- | ----------------- | ------------------------------- | ----------------------------------------- | --------- | ------------- |
 | bandit | ✓ | `--config` | `--exclude` | x | `--format` | `--output` | `-v` | `-q` | x | `--tests` / `--skip` | `--severity-level` / `--confidence-level` | x | `--exit-zero` |
 | codespell | ✓ | x | `--skip` | x | x | x | `-v` | `-q` | `--write-changes` | `--builtin` / `--ignore-words*` | x | x | x |

@@ -53,6 +53,7 @@ class BanditNormalizer:
             findings=findings,
         )
 
+
 def _item_to_finding(item: dict, check_id: str) -> Finding:
     location = None
     filename = item.get("filename")
