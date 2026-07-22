@@ -1,0 +1,23 @@
+shellcheck.check:
+  executable: shellcheck
+  subcommand: []
+  modes:
+    - check
+  capabilities:
+    - Shell
+  normalizer: generic_exit
+  install:
+    manager: binary
+    package: shellcheck
+    version: '>=0.9'
+    binary: shellcheck
+  cli:
+    paths:
+      style: positional
+  option_order:
+    - paths
+  scope:
+    extensions:
+      - .sh
+      - .bash
+    delivery: files

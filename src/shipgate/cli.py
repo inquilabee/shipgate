@@ -45,11 +45,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("install", parents=[shared], help="Install tools for selected suite")
-    init_parser = sub.add_parser("init", help="Create shipgate.yaml at the project root")
+    init_parser = sub.add_parser("init", help="Scaffold ShipGate project policy and layout")
+    init_sub = init_parser.add_subparsers(dest="init_mode")
+    init_sub.add_parser("yaml", help="Create .shipgate/shipgate.yaml (default)")
+    init_sub.add_parser("pyproject", help="Merge [tool.shipgate] into pyproject.toml")
     init_parser.add_argument(
         "--configs-only",
         action="store_true",
-        help="Scaffold .shipgate/configs without creating shipgate.yaml",
+        help="Scaffold .shipgate/configs without creating policy",
     )
 
     configs_parser = sub.add_parser("configs", help="Project tool config management")
@@ -185,7 +188,14 @@ def dispatch_command(
 
 
 def dispatch_init(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
-    sys.stdout.write(app.init(project_root, configs_only=getattr(args, "configs_only", False)))
+    mode = getattr(args, "init_mode", None) or "yaml"
+    sys.stdout.write(
+        app.init(
+            project_root,
+            configs_only=getattr(args, "configs_only", False),
+            mode=mode,
+        )
+    )
     return 0
 
 

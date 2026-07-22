@@ -1,0 +1,23 @@
+radon.cc:
+  executable: radon
+  subcommand:
+    - cc
+    - -j
+  modes:
+    - check
+  capabilities:
+    - Metrics
+  normalizer: radon
+  install:
+    manager: python
+    package: radon
+    version: '>=6.0'
+  cli:
+    paths:
+      style: positional
+  option_order:
+    - paths
+  scope:
+    extensions:
+      - .py
+    delivery: root

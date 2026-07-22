@@ -1,8 +1,2 @@
-# ShipGate yamlfmt settings for this repository.
-gitignore_excludes: true
-exclude:
-  - .shipgate/tools/
-  - .venv/
-  - node_modules/
-  - build/
-  - src/shipgate/catalog/bundled/catalog.yaml
+# ShipGate default yamlfmt settings (bundled; copied to .shipgate/configs/yamlfmt.yaml on init).
+# File paths are filtered by ShipGate scope (gitignore-aware) before yamlfmt runs.

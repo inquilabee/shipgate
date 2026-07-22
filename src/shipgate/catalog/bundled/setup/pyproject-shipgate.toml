@@ -1,0 +1,31 @@
+[tool.shipgate]
+suite = "full"
+env = "managed"
+target = "."
+changed_only = true
+error_format = "compact"
+
+[tool.shipgate.configs]
+mode = "auto"
+
+[tool.shipgate.checks."semgrep.scan"]
+scope = "semgrep"
+
+[tool.shipgate.checks."radon.cc"]
+threshold = "B"
+
+[tool.shipgate.checks."radon.mi"]
+threshold = "B"
+
+[tool.shipgate.checks."jscpd.check"]
+threshold = "4.5"
+
+[tool.shipgate.scopes.semgrep]
+target = "."
+exclude = ["src/shipgate/frontend/templates/"]
+
+[tool.shipgate.allowlists]
+"gate.acronym-allowlist" = ".shipgate/allowlists/acronyms.yaml"
+"gate.folder-breadth" = ".shipgate/allowlists/folder-breadth.txt"
+"gate.module-size" = ".shipgate/allowlists/module-size.txt"
+"gate.module-private-vars" = ".shipgate/allowlists/module-private-vars.txt"

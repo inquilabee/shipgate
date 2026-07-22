@@ -19,7 +19,8 @@ Run ShipGate and tests via `uv run` (not bare `pytest` or `shipgate`):
 
 ```bash
 uv sync --group dev
-uv run shipgate init
+uv run shipgate init            # or: shipgate init yaml
+uv run shipgate init pyproject  # merge [tool.shipgate] into pyproject.toml
 uv run shipgate install
 uv run shipgate check --target .
 uv run shipgate format --target .
@@ -35,23 +36,25 @@ make docker-test     # fresh-machine smoke test (Docker)
 
 Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/quality.mdc` (Dogfooding).
 
-**Project root:** directory containing `shipgate.yaml`, discovered upward from the current working directory.
+**Project root:** directory where `shipgate init` was run. Discovery precedence: explicit `--target` / API `project_root` > `.shipgate/cache/.env` (`SHIPGATE_ROOT`) > walk-up (`.shipgate/shipgate.yaml`, legacy root YAML, `.git`, `pyproject.toml`).
 
-**Canonical gate (`make check-commit`):** `uv sync --group dev` → `shipgate install` → `shipgate format --target .` → `shipgate check --target .`
+**Policy source:** `.shipgate/cache/.env` records `SHIPGATE_POLICY=yaml` or `SHIPGATE_POLICY=pyproject` from init. When both `.shipgate/shipgate.yaml` and `[tool.shipgate]` exist, YAML overrides on conflicts (pyproject is the merge base). `SHIPGATE_POLICY` hints the primary source when discovery is ambiguous.
 
-**Default suite:** `full` (from `shipgate.yaml`).
+**Default suite:** `full` (from `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`).
 
 **Pre-commit:** mirrors format → check; only non-catalog hooks (e.g. djlint for Jinja) stay separate.
 
-**`shipgate init` scaffolds:** `shipgate.yaml`, `.shipgate/gates/`, `.shipgate/configs/`, `.shipgate/.gitignore`
+**`shipgate init` scaffolds:** `.shipgate/shipgate.yaml` (yaml mode) or `[tool.shipgate]` in `pyproject.toml` (pyproject mode), `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, `.shipgate/.gitignore`, `.shipgate/cache/.env` (`SHIPGATE_ROOT`, `SHIPGATE_POLICY`). Example pyproject policy: `.shipgate/pyproject.toml.example`.
 
-**`env: managed`:** creates `.shipgate/tools/python/` venv; `init` writes `.shipgate/.gitignore`
+**Canonical gate (`make check-commit`):** `uv sync --group dev` → `shipgate install` → `shipgate format --target .` → `shipgate check --target .`
+
+**`env: managed`:** creates `.shipgate/tools/python/` venv; `init` writes `.shipgate/.gitignore` (ignores `cache/`, `reports/`, `tools/`, etc.)
 
 - Use Python **3.13** locally (see `.python-version`). `semgrep` does not run on 3.14 yet; library `requires-python` stays `>=3.11,<3.15`.
 - Binary tools must be on `PATH` for the full suite: `gitleaks`, `markdownlint`, `shfmt`, `yamlfmt` (google/yamlfmt), `shellcheck`.
 - Reports root: `.shipgate/reports/` (not repo-root `reports/`).
 - Bundled catalog under `src/shipgate/catalog/bundled/` is product defaults — do not hardcode repo paths there.
-- Project overrides: `shipgate.yaml`, `.shipgate/gates/`, `.shipgate/configs/` (tool config home; scaffold with `shipgate init` or `shipgate configs sync`).
+- Project overrides: `.shipgate/shipgate.yaml`, `[tool.shipgate]` in `pyproject.toml`, `.shipgate/gates/`, `.shipgate/configs/` (tool config home; scaffold with `shipgate init` or `shipgate configs sync`).
 
 ## Architecture layers (one responsibility each)
 

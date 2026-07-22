@@ -7,25 +7,114 @@ from pathlib import Path
 PROJECT_SERVER_DIR = ".shipgate/server"
 PROJECT_WORKTREES_DIR = ".shipgate/worktrees"
 SERVER_DB_FILENAME = "report.db"
+LEGACY_CONFIG_FILENAMES = ("shipgate.yaml", ".shipgate.yaml")
+PROJECT_ROOT_CACHE_KEY = "SHIPGATE_ROOT"
+POLICY_CACHE_KEY = "SHIPGATE_POLICY"
+ALLOWED_POLICY_VALUES = frozenset({"yaml", "pyproject"})
+
+
+def shipgate_dir(project_root: Path) -> Path:
+    return project_root / ".shipgate"
+
+
+def shipgate_yaml_path(project_root: Path) -> Path:
+    return shipgate_dir(project_root) / "shipgate.yaml"
+
+
+def project_catalog_dir(project_root: Path) -> Path:
+    return shipgate_dir(project_root) / "catalog"
+
+
+def has_shipgate_yaml_config(candidate: Path) -> bool:
+    if shipgate_yaml_path(candidate).is_file():
+        return True
+    return any((candidate / name).is_file() for name in LEGACY_CONFIG_FILENAMES)
+
+
+def project_root_cache_env_path(project_root: Path) -> Path:
+    return shipgate_dir(project_root) / "cache" / ".env"
+
+
+def parse_env_file(path: Path) -> dict[str, str]:
+    """Parse a minimal KEY=VALUE env file."""
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if "=" not in stripped:
+            continue
+        key, _, value = stripped.partition("=")
+        values[key.strip()] = value.strip().strip("'\"")
+    return values
+
+
+def read_cached_policy(env_path: Path) -> str | None:
+    """Return SHIPGATE_POLICY from cache when valid."""
+    if not env_path.is_file():
+        return None
+    raw = parse_env_file(env_path).get(POLICY_CACHE_KEY)
+    if raw in ALLOWED_POLICY_VALUES:
+        return raw
+    return None
+
+
+def read_cached_project_root(env_path: Path) -> Path | None:
+    """Return SHIPGATE_ROOT from cache when the path exists."""
+    if not env_path.is_file():
+        return None
+    raw = parse_env_file(env_path).get(PROJECT_ROOT_CACHE_KEY)
+    if not raw:
+        return None
+    root = Path(raw)
+    if not root.is_dir():
+        return None
+    return root.resolve()
+
+
+def find_cached_policy(start: Path) -> str | None:
+    """Walk upward for `.shipgate/cache/.env` and return SHIPGATE_POLICY."""
+    current = start.resolve()
+    for candidate in [current, *current.parents]:
+        policy = read_cached_policy(project_root_cache_env_path(candidate))
+        if policy is not None:
+            return policy
+    return None
+
+
+def find_cached_project_root(start: Path) -> Path | None:
+    """Walk upward for `.shipgate/cache/.env` and return a valid cached root."""
+    current = start.resolve()
+    for candidate in [current, *current.parents]:
+        cached = read_cached_project_root(project_root_cache_env_path(candidate))
+        if cached is None:
+            continue
+        try:
+            current.relative_to(cached)
+        except ValueError:
+            continue
+        return cached
+    return None
 
 
 def find_project_root(start: Path | None = None) -> Path:
-    """Walk upward from start to find a project root (shipgate.yaml, .git, or pyproject.toml)."""
+    """Walk upward to find a project root.
+
+    Precedence: cached ``SHIPGATE_ROOT`` (from ``shipgate init``), then
+    ``.shipgate/shipgate.yaml``, legacy root YAML, ``.git``, or ``pyproject.toml``.
+    """
     current = (start or Path.cwd()).resolve()
+    cached = find_cached_project_root(current)
+    if cached is not None:
+        return cached
     for candidate in [current, *current.parents]:
-        if (candidate / "shipgate.yaml").is_file():
-            return candidate
-        if (candidate / ".shipgate.yaml").is_file():
+        if has_shipgate_yaml_config(candidate):
             return candidate
         if (candidate / ".git").exists():
             return candidate
         if (candidate / "pyproject.toml").is_file():
             return candidate
     return current
-
-
-def shipgate_dir(project_root: Path) -> Path:
-    return project_root / ".shipgate"
 
 
 def reports_root(project_root: Path) -> Path:

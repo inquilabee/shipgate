@@ -30,6 +30,21 @@ def load_bundled_gate_config(tool: ToolDefinition) -> dict[str, Any]:
     return data
 
 
+def apply_project_allowlist(
+    project: ProjectConfig,
+    gate_id: str,
+    config: dict[str, Any],
+) -> dict[str, Any]:
+    if project.allowlists is None:
+        return config
+    override = project.allowlists.get(gate_id)
+    if override is None:
+        return config
+    merged = dict(config)
+    merged["allowlist_file"] = override
+    return merged
+
+
 def load_gate_config(
     tool: ToolDefinition,
     project_root: Path,
@@ -46,6 +61,8 @@ def load_gate_config(
         invalid_message=f"Gate config must be a mapping: {config_path}",
     )
     config = data
+    if project is not None:
+        config = apply_project_allowlist(project, tool.id, config)
     resolve_allowlist_path(project_root, config)
     return config
 

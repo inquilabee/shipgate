@@ -4,11 +4,13 @@ cache/
 reports/
 server/
 worktrees/
-lock.json
+*.lock
 
 # Project policy — safe to commit
 !configs/
 !configs/**
+!catalog/
+!catalog/**
 !allowlists/
 !allowlists/**
 !gates/

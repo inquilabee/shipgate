@@ -41,6 +41,7 @@ class ProjectConfig:
     fail_fast: bool = False
     changed_only: bool = False
     since: str | None = None
+    allowlists: Mapping[str, str] | None = None
 
     def scope_for_check(self, runnable: str) -> str | None:
         for binding in self.check_bindings:

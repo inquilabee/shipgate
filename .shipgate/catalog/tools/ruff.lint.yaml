@@ -1,0 +1,54 @@
+ruff.lint:
+  executable: ruff
+  subcommand:
+    - check
+  modes:
+    - check
+  capabilities:
+    - Linting
+    - Quality
+  normalizer: ruff
+  install:
+    manager: python
+    package: ruff
+    version: '>=0.6'
+  cli:
+    paths:
+      style: positional
+    config:
+      flag: --config
+      style: repeated
+    exclude:
+      flag: --exclude
+      style: repeated
+    output:
+      flag: --output-file
+      style: scalar
+    format:
+      flag: --output-format
+      style: scalar
+  configuration:
+    bundled: configs/ruff.toml
+    discover:
+      - .shipgate/configs/ruff.toml
+      - .ruff.toml
+      - ruff.toml
+      - pyproject.toml
+    pyproject_section: tool.ruff
+    precedence:
+      - cli
+      - repo
+      - bundled
+    merge: false
+  option_order:
+    - config
+    - exclude
+    - format
+    - output
+    - paths
+  scope:
+    extensions:
+      - .py
+      - .pyi
+      - .ipynb
+    delivery: root

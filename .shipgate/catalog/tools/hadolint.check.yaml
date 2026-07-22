@@ -1,0 +1,23 @@
+hadolint.check:
+  executable: hadolint
+  subcommand: []
+  modes:
+    - check
+  capabilities:
+    - Docker
+  normalizer: generic_exit
+  install:
+    manager: binary
+    package: hadolint
+    version: '>=2.0'
+    binary: hadolint
+  cli:
+    paths:
+      style: positional
+  option_order:
+    - paths
+  scope:
+    globs:
+      - '**/Dockerfile*'
+      - '**/*.dockerfile'
+    delivery: files

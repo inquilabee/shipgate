@@ -1,0 +1,49 @@
+bandit.scan:
+  executable: bandit
+  subcommand:
+    - -r
+    - -ll
+    - -q
+  modes:
+    - check
+  capabilities:
+    - Security
+  normalizer: bandit
+  install:
+    manager: python
+    package: bandit
+    version: '>=1.7'
+  cli:
+    paths:
+      style: positional
+    config:
+      flag: -c
+      style: scalar
+    format:
+      flag: -f
+      style: scalar
+    output:
+      flag: -o
+      style: scalar
+  configuration:
+    bundled: configs/bandit.yaml
+    discover:
+      - .shipgate/configs/bandit.yaml
+      - .bandit
+      - bandit.yaml
+      - pyproject.toml
+    pyproject_section: tool.bandit
+    precedence:
+      - cli
+      - repo
+      - bundled
+    merge: false
+  option_order:
+    - config
+    - format
+    - output
+    - paths
+  scope:
+    extensions:
+      - .py
+    delivery: root

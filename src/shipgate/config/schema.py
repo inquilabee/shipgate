@@ -16,6 +16,7 @@ ALLOWED_TOP_LEVEL_KEYS = frozenset(
         "fail-fast",
         "changed-only",
         "since",
+        "allowlists",
     }
 )
 

@@ -1,60 +1,90 @@
 import shutil
 import subprocess
 
-import pytest
-
 from shipgate.cli import main
-from shipgate.paths import find_project_root, shipgate_dir
+from shipgate.paths import (
+    find_project_root,
+    project_root_cache_env_path,
+    shipgate_dir,
+    shipgate_yaml_path,
+)
 
 GIT = shutil.which("git")
 
 
 def assert_init_layout(root):
     sg = shipgate_dir(root)
-    assert (sg / "reports").is_dir()
-    assert (sg / "gates").is_dir()
-    assert (sg / "allowlists" / "acronyms.yaml").is_file()
-    assert (sg / "allowlists" / "module-private-vars.txt").is_file()
-    assert (sg / "configs" / "ruff.toml").is_file()
+    assert (sg / "reports").is_dir(), "reports directory missing"
+    assert (sg / "gates").is_dir(), "gates directory missing"
+    assert (sg / "allowlists" / "acronyms.yaml").is_file(), "acronyms allowlist missing"
+    assert (sg / "allowlists" / "module-private-vars.txt").is_file(), (
+        "module-private-vars allowlist missing"
+    )
+    assert (sg / "configs" / "ruff.toml").is_file(), "ruff config missing"
     gitignore = (sg / ".gitignore").read_text(encoding="utf-8")
-    assert "tools/" in gitignore
-    assert "!configs/" in gitignore
+    assert "tools/" in gitignore, "tools/ not ignored"
+    assert "!configs/" in gitignore, "configs/ not un-ignored"
 
 
 def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     code = main(["init"])
-    assert code == 0
-    config_path = tmp_path / "shipgate.yaml"
-    assert config_path.is_file()
+    assert code == 0, "init should succeed"
+    config_path = shipgate_yaml_path(tmp_path)
+    assert config_path.is_file(), "canonical shipgate.yaml missing"
     content = config_path.read_text(encoding="utf-8")
-    assert "suite: standard" in content
-    assert "env: managed" in content
-    assert "error-format: compact" in content
-    assert "mode: auto" in content
-    assert "changed-only: true" in content
+    assert "suite: full" in content, "suite not set to full"
+    assert "env: managed" in content, "env not managed"
+    assert "error-format: compact" in content, "error-format not compact"
+    assert "mode: auto" in content, "configs.mode not auto"
+    assert "changed-only: true" in content, "changed-only not enabled"
+    assert "allowlists:" in content, "allowlists section missing"
     assert_init_layout(tmp_path)
+    cache = project_root_cache_env_path(tmp_path).read_text(encoding="utf-8")
+    assert "SHIPGATE_POLICY=yaml" in cache, "yaml policy not cached"
+
+
+def test_init_yaml_subcommand(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    code = main(["init", "yaml"])
+    assert code == 0, "init yaml should succeed"
+    assert shipgate_yaml_path(tmp_path).is_file(), "canonical shipgate.yaml missing"
+
+
+def test_init_pyproject_subcommand(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    code = main(["init", "pyproject"])
+    assert code == 0, "init pyproject should succeed"
+    assert "[tool.shipgate]" in (tmp_path / "pyproject.toml").read_text(encoding="utf-8"), (
+        "tool.shipgate section missing"
+    )
+    assert not shipgate_yaml_path(tmp_path).is_file(), "yaml policy should not be created"
+    cache = project_root_cache_env_path(tmp_path).read_text(encoding="utf-8")
+    assert "SHIPGATE_POLICY=pyproject" in cache, "pyproject policy not cached"
 
 
 def test_init_refuses_existing_config(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    (tmp_path / "shipgate.yaml").write_text("suite: full\n", encoding="utf-8")
+    shipgate_yaml_path(tmp_path).parent.mkdir(parents=True)
+    shipgate_yaml_path(tmp_path).write_text("suite: full\n", encoding="utf-8")
     code = main(["init"])
-    assert code != 0
+    assert code != 0, "init should refuse existing config"
 
 
-@pytest.mark.skipif(GIT is None, reason="git not on PATH")
 def test_find_project_root_prefers_shipgate_yaml(tmp_path):
-    assert GIT is not None
+    if GIT is None:
+        return
     subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
     nested = tmp_path / "nested"
     nested.mkdir()
-    (tmp_path / "shipgate.yaml").write_text("suite: standard\n", encoding="utf-8")
-    assert find_project_root(nested) == tmp_path.resolve()
+    shipgate_yaml_path(tmp_path).parent.mkdir(parents=True)
+    shipgate_yaml_path(tmp_path).write_text("suite: standard\n", encoding="utf-8")
+    assert find_project_root(nested) == tmp_path.resolve(), "canonical yaml should win"
 
 
 def test_find_project_root_uses_pyproject(tmp_path):
     (tmp_path / "pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
     nested = tmp_path / "pkg"
     nested.mkdir()
-    assert find_project_root(nested) == tmp_path.resolve()
+    assert find_project_root(nested) == tmp_path.resolve(), "pyproject should anchor root"

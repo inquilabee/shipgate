@@ -1,3 +1,6 @@
 # ty type checker defaults
 [tool.ty]
 strict = true
+
+[src]
+exclude = [".shipgate", ".venv", "venv", "build", "reports"]

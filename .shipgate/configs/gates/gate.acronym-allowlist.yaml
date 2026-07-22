@@ -1,4 +1,3 @@
 scan_roots:
-  - docs/
-  - AGENTS.md
+  - .
 allowlist_file: .shipgate/allowlists/acronyms.yaml

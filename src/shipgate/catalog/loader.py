@@ -20,13 +20,18 @@ from shipgate.domain.catalog import (
 )
 from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
+from shipgate.paths import project_catalog_dir
 
 
-def load_catalog(path: Path | None = None) -> Catalog:
+def load_catalog(path: Path | None = None, *, project_root: Path | None = None) -> Catalog:
     if path is None:
         bundled = resources.files("shipgate.catalog.bundled")
         bundled_root = Path(str(bundled))
         raw = load_bundled_catalog_raw(bundled)
+        if project_root is not None:
+            project_raw = load_project_catalog_raw(project_root)
+            if project_raw:
+                raw = merge_catalog_raw(raw, project_raw)
     else:
         raw = load_yaml_mapping(
             path, error_cls=CatalogError, invalid_message="invalid catalog YAML"
@@ -37,6 +42,35 @@ def load_catalog(path: Path | None = None) -> Catalog:
     catalog = parse_catalog(raw)
     validate_catalog(catalog, bundled_root)
     return catalog
+
+
+def merge_catalog_raw(base: dict, overlay: dict) -> dict:
+    """Merge project catalog overlay onto bundled raw catalog data."""
+    merged = dict(base)
+    for section in ("tools", "suites", "workflows", "capabilities"):
+        overlay_section = overlay.get(section)
+        if not overlay_section:
+            continue
+        base_section = dict(merged.get(section, {}))
+        base_section.update(overlay_section)
+        merged[section] = base_section
+    return merged
+
+
+def load_project_catalog_raw(project_root: Path) -> dict | None:
+    """Load raw catalog data from `.shipgate/catalog/` when present."""
+    catalog_dir = project_catalog_dir(project_root)
+    if not catalog_dir.is_dir():
+        return None
+    raw: dict = {}
+    tools_dir = catalog_dir / "tools"
+    if tools_dir.is_dir():
+        raw["tools"] = load_bundled_tools(tools_dir)
+    for section in ("suites", "workflows", "capabilities"):
+        section_path = catalog_dir / f"{section}.yaml"
+        if section_path.is_file():
+            raw[section] = load_catalog_section(catalog_dir, section)
+    return raw or None
 
 
 def load_bundled_catalog_raw(bundled: object) -> dict:

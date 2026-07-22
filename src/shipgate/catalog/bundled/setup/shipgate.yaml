@@ -1,6 +1,26 @@
-suite: standard
+suite: full
 env: managed
+target: .
 changed-only: true
 error-format: compact
 configs:
   mode: auto
+checks:
+  semgrep.scan:
+    scope: semgrep
+  radon.cc:
+    threshold: B
+  radon.mi:
+    threshold: B
+  jscpd.check:
+    threshold: "4.5"
+scopes:
+  semgrep:
+    target: .
+    exclude:
+      - src/shipgate/frontend/templates/
+allowlists:
+  gate.acronym-allowlist: .shipgate/allowlists/acronyms.yaml
+  gate.folder-breadth: .shipgate/allowlists/folder-breadth.txt
+  gate.module-size: .shipgate/allowlists/module-size.txt
+  gate.module-private-vars: .shipgate/allowlists/module-private-vars.txt

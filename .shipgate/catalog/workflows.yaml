@@ -1,0 +1,21 @@
+workflows:
+  default:
+    - check:
+        - standard
+  ci:
+    - check:
+        - ci
+  quality:
+    - check:
+        - python-quality
+  release:
+    - check:
+        - release
+  pre-commit:
+    - apply:
+        - format
+    - check:
+        - python-quality
+  nightly:
+    - check:
+        - nightly

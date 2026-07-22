@@ -44,12 +44,18 @@ class ShipGateApp:
         catalog: Catalog | None = None,
         executor: Executor | None = None,
     ) -> None:
+        self._custom_catalog = catalog is not None
         self._base_catalog = catalog or load_catalog()
         self._executor_is_default = executor is None
         self.executor = executor or Executor()
 
     def _catalog_for(self, project_root: Path) -> Catalog:
-        return merge_gate_catalog(self._base_catalog, project_root)
+        base = (
+            load_catalog(project_root=project_root)
+            if not self._custom_catalog
+            else self._base_catalog
+        )
+        return merge_gate_catalog(base, project_root)
 
     def _run_session(self, project_root: Path) -> RunSession:
         return RunSession(
@@ -187,10 +193,12 @@ class ShipGateApp:
     def gates_lib_path(self) -> str:
         return f"{gates_lib_path()}\n"
 
-    def init(self, project_root: Path, *, configs_only: bool = False) -> str:
-        path = init_project(project_root, configs_only=configs_only)
+    def init(self, project_root: Path, *, configs_only: bool = False, mode: str = "yaml") -> str:
+        path = init_project(project_root, configs_only=configs_only, mode=mode)
         if configs_only:
             return "scaffolded .shipgate configs\n"
+        if mode == "pyproject":
+            return f"updated {path}\n"
         return f"created {path}\n"
 
     def configs_sync(self, project_root: Path) -> str:

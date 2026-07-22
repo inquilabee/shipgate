@@ -22,8 +22,8 @@ def load_config(
     return _load_config(config_path=config_path, project_root=project_root)
 
 
-def load_catalog(path: Path | None = None) -> Catalog:
-    return _load_catalog(path)
+def load_catalog(path: Path | None = None, *, project_root: Path | None = None) -> Catalog:
+    return _load_catalog(path, project_root=project_root)
 
 
 def install(

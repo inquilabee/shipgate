@@ -17,7 +17,9 @@ class EffectiveIgnores:
     path_patterns: tuple[str, ...] = ()
 
     def is_ignored(self, rel_path: str) -> bool:
-        normalized = rel_path.replace("\\", "/").lstrip("./")
+        normalized = rel_path.replace("\\", "/")
+        if normalized.startswith("./"):
+            normalized = normalized[2:]
         if not self.path_patterns:
             return False
         matcher = pathspec.PathSpec.from_lines("gitignore", self.path_patterns)

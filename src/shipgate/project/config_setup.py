@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.gates.paths import bundled_root_path
+from shipgate.paths import POLICY_CACHE_KEY, PROJECT_ROOT_CACHE_KEY, project_root_cache_env_path
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition
@@ -62,6 +63,30 @@ def scaffold_shipgate_gitignore(project_root: Path) -> Path | None:
         Path(".shipgate/.gitignore"),
         bundled_template=bundled,
     )
+
+
+def write_project_root_cache(project_root: Path, *, policy: str = "yaml") -> Path:
+    """Record the project root and policy mode from ``shipgate init``."""
+    root = project_root.resolve()
+    env_path = project_root_cache_env_path(root)
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+    env_path.write_text(
+        f"{PROJECT_ROOT_CACHE_KEY}={root}\n{POLICY_CACHE_KEY}={policy}\n",
+        encoding="utf-8",
+    )
+    return env_path
+
+
+def bundled_pyproject_shipgate_template() -> Path:
+    return bundled_root_path() / "setup" / "pyproject-shipgate.toml"
+
+
+def read_pyproject_shipgate_template() -> str:
+    bundled = bundled_pyproject_shipgate_template()
+    if not bundled.is_file():
+        msg = f"bundled pyproject shipgate template not found: {bundled}"
+        raise FileNotFoundError(msg)
+    return bundled.read_text(encoding="utf-8")
 
 
 def bundled_shipgate_yaml_template() -> Path:
