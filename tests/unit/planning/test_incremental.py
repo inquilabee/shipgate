@@ -1,37 +1,55 @@
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
-from shipgate.planning.incremental import filter_changed
+from shipgate.catalog.loader import load_catalog
+from shipgate.domain.modes import RunMode
+from shipgate.domain.project import Scope
+from shipgate.planning.incremental import (
+    filter_changed,
+    git_changed_files,
+    tool_paths_after_incremental,
+)
 
 GIT = shutil.which("git")
+GIT_ENV = {
+    **__import__("os").environ,
+    "GIT_AUTHOR_NAME": "t",
+    "GIT_COMMITTER_NAME": "t",
+    "GIT_AUTHOR_EMAIL": "t@example.com",
+    "GIT_COMMITTER_EMAIL": "t@example.com",
+}
 
 
-@pytest.mark.skipif(GIT is None, reason="git not on PATH")
-def test_filter_changed_returns_subset(tmp_path):
+def git_init_commit(tmp_path):
     assert GIT is not None
     subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
-    source = tmp_path / "src"
-    source.mkdir()
-    file_a = source / "a.py"
-    file_b = source / "b.py"
-    file_a.write_text("x = 1\n", encoding="utf-8")
-    file_b.write_text("y = 2\n", encoding="utf-8")
     subprocess.run([GIT, "add", "."], cwd=tmp_path, check=True, capture_output=True)
     subprocess.run(
         [GIT, "commit", "-m", "init"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
-        env={
-            **__import__("os").environ,
-            "GIT_AUTHOR_NAME": "t",
-            "GIT_COMMITTER_NAME": "t",
-            "GIT_AUTHOR_EMAIL": "t@example.com",
-            "GIT_COMMITTER_EMAIL": "t@example.com",
-        },
+        env=GIT_ENV,
     )
+
+
+def git_add(tmp_path, *paths: Path) -> None:
+    assert GIT is not None
+    subprocess.run([GIT, "add", *paths], cwd=tmp_path, check=True, capture_output=True)
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+def test_filter_changed_returns_subset(tmp_path):
+    source = tmp_path / "src"
+    source.mkdir()
+    file_a = source / "a.py"
+    file_b = source / "b.py"
+    file_a.write_text("x = 1\n", encoding="utf-8")
+    file_b.write_text("y = 2\n", encoding="utf-8")
+    git_init_commit(tmp_path)
     file_b.write_text("y = 3\n", encoding="utf-8")
     filtered = filter_changed(
         (source,),
@@ -44,8 +62,6 @@ def test_filter_changed_returns_subset(tmp_path):
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")
 def test_filter_changed_only_returns_empty_when_no_scope_overlap(tmp_path):
-    assert GIT is not None
-    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
     source = tmp_path / "src"
     source.mkdir()
     docs = tmp_path / "docs"
@@ -53,20 +69,7 @@ def test_filter_changed_only_returns_empty_when_no_scope_overlap(tmp_path):
     readme = docs / "readme.md"
     readme.write_text("# readme\n", encoding="utf-8")
     (source / "a.py").write_text("x = 1\n", encoding="utf-8")
-    subprocess.run([GIT, "add", "."], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
-        [GIT, "commit", "-m", "init"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-        env={
-            **__import__("os").environ,
-            "GIT_AUTHOR_NAME": "t",
-            "GIT_COMMITTER_NAME": "t",
-            "GIT_AUTHOR_EMAIL": "t@example.com",
-            "GIT_COMMITTER_EMAIL": "t@example.com",
-        },
-    )
+    git_init_commit(tmp_path)
     readme.write_text("# readme\n\nupdated\n", encoding="utf-8")
     filtered = filter_changed(
         (source,),
@@ -75,3 +78,41 @@ def test_filter_changed_only_returns_empty_when_no_scope_overlap(tmp_path):
         changed_only=True,
     )
     assert filtered == ()
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+def test_git_changed_files_includes_staged_changes(tmp_path):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "a.py").write_text("x = 1\n", encoding="utf-8")
+    git_init_commit(tmp_path)
+    changed_file = source / "b.py"
+    changed_file.write_text("y = 2\n", encoding="utf-8")
+    git_add(tmp_path, changed_file)
+    changed = git_changed_files(tmp_path, "HEAD")
+    assert "src/b.py" in changed
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+def test_tool_paths_after_incremental_root_delivery_uses_changed_files(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("ruff.lint")
+    source = tmp_path / "src"
+    source.mkdir()
+    file_a = source / "a.py"
+    file_b = source / "b.py"
+    file_a.write_text("x = 1\n", encoding="utf-8")
+    file_b.write_text("y = 2\n", encoding="utf-8")
+    git_init_commit(tmp_path)
+    file_b.write_text("y = 3\n", encoding="utf-8")
+    scope = Scope(target=tmp_path, respect_gitignore=True)
+    paths = tool_paths_after_incremental(
+        (Path(),),
+        tool=tool,
+        scope=scope,
+        project_root=tmp_path,
+        mode=RunMode.CHECK,
+        since=None,
+        changed_only=True,
+    )
+    assert paths == (Path("src/b.py"),)

@@ -60,3 +60,12 @@ def test_check_bindings_parse_scope_and_threshold(tmp_path):
     assert radon.threshold == "B"
     semgrep = next(b for b in config.check_bindings if b.runnable == "semgrep.scan")
     assert semgrep.scope == "semgrep"
+
+
+def test_incremental_config_parses(tmp_path):
+    (tmp_path / "shipgate.yaml").write_text(
+        "suite: full\nchanged-only: true\nsince: main\n",
+    )
+    config = load_config(project_root=tmp_path)
+    assert config.changed_only is True
+    assert config.since == "main"

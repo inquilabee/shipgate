@@ -32,6 +32,7 @@ def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     assert "env: managed" in content
     assert "error-format: compact" in content
     assert "mode: auto" in content
+    assert "changed-only: true" in content
     assert_init_layout(tmp_path)
 
 

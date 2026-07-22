@@ -154,4 +154,6 @@ def parse_config(raw: dict, path: Path) -> ProjectConfig:
         auto_install=bool(raw.get("auto-install", False)),
         parallel=bool(raw.get("parallel", False)),
         fail_fast=bool(raw.get("fail-fast", False)),
+        changed_only=bool(raw.get("changed-only", False)),
+        since=str(raw["since"]) if raw.get("since") is not None else None,
     )

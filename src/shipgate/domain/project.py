@@ -39,6 +39,8 @@ class ProjectConfig:
     auto_install: bool = False
     parallel: bool = False
     fail_fast: bool = False
+    changed_only: bool = False
+    since: str | None = None
 
     def scope_for_check(self, runnable: str) -> str | None:
         for binding in self.check_bindings:

@@ -14,6 +14,8 @@ ALLOWED_TOP_LEVEL_KEYS = frozenset(
         "auto-install",
         "parallel",
         "fail-fast",
+        "changed-only",
+        "since",
     }
 )
 

@@ -8,18 +8,14 @@ from shipgate.catalog.loader import load_catalog
 from shipgate.errors import ShipGateError
 from shipgate.gates.setup import setup_bundled_gates
 from shipgate.paths import shipgate_dir
-from shipgate.project.config_setup import scaffold_bundled_configs, scaffold_shipgate_gitignore
+from shipgate.project.config_setup import (
+    read_shipgate_yaml_template,
+    scaffold_bundled_configs,
+    scaffold_shipgate_gitignore,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-INIT_TEMPLATE = """\
-suite: standard
-env: managed
-error-format: compact
-configs:
-  mode: auto
-"""
 
 
 def scaffold_project_layout(project_root: Path) -> list[Path]:
@@ -46,6 +42,6 @@ def init_project(project_root: Path, *, configs_only: bool = False) -> Path | No
         return None
     if config_path.is_file():
         raise ShipGateError(f"shipgate.yaml already exists: {config_path}")
-    config_path.write_text(INIT_TEMPLATE, encoding="utf-8")
+    config_path.write_text(read_shipgate_yaml_template(), encoding="utf-8")
     scaffold_project_layout(root)
     return config_path

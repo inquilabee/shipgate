@@ -64,6 +64,18 @@ def scaffold_shipgate_gitignore(project_root: Path) -> Path | None:
     )
 
 
+def bundled_shipgate_yaml_template() -> Path:
+    return bundled_root_path() / "setup" / "shipgate.yaml"
+
+
+def read_shipgate_yaml_template() -> str:
+    bundled = bundled_shipgate_yaml_template()
+    if not bundled.is_file():
+        msg = f"bundled shipgate.yaml template not found: {bundled}"
+        raise FileNotFoundError(msg)
+    return bundled.read_text(encoding="utf-8")
+
+
 def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]:
     """Copy missing tool configs from bundled templates; deduplicate shared configs."""
     root = project_root.resolve()

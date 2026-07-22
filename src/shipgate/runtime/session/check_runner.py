@@ -11,7 +11,7 @@ from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
-from shipgate.planning.incremental import filter_changed
+from shipgate.planning.incremental import effective_incremental, tool_paths_after_incremental
 from shipgate.planning.requests import build_execution_request, resolve_request
 from shipgate.planning.scopes import resolve_scope, scope_paths_for_tool
 from shipgate.runtime.environment import resolve_executable
@@ -123,13 +123,17 @@ class CheckRunner:
             context.project_root,
             mode=planned.mode,
         )
-        paths = filter_changed(
+        changed_only, since = effective_incremental(command, context.project)
+        paths = tool_paths_after_incremental(
             paths,
-            command.since,
+            tool=tool,
+            scope=scope,
             project_root=context.project_root,
-            changed_only=command.changed_only,
+            mode=planned.mode,
+            since=since,
+            changed_only=changed_only,
         )
-        if not paths and tool.scope.delivery != "root":
+        if not paths:
             return CheckReport(
                 check_id=planned.tool_id,
                 tool_id=planned.tool_id,

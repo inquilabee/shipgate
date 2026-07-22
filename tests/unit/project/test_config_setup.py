@@ -48,6 +48,12 @@ def test_init_scaffolds_configs(tmp_path: Path):
     assert (tmp_path / ".shipgate/configs/gates/gate.acronym-allowlist.yaml").is_file()
 
 
+def test_init_shipgate_yaml_enables_changed_only(tmp_path: Path):
+    init_project(tmp_path)
+    project = load_config(project_root=tmp_path)
+    assert project.changed_only is True
+
+
 def test_init_configs_only_without_shipgate_yaml(tmp_path: Path):
     init_project(tmp_path, configs_only=True)
     assert not (tmp_path / "shipgate.yaml").is_file()

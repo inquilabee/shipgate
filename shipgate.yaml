@@ -1,6 +1,7 @@
 suite: full
 env: managed
 target: .
+changed-only: true
 error-format: compact
 configs:
   mode: auto
