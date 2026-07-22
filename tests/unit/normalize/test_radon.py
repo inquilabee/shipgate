@@ -8,7 +8,13 @@ from shipgate.normalize.radon import RadonNormalizer
 from shipgate.runtime.executor import ProcessResult
 
 
-def resolved(tmp_path: Path, tool_id: str, subcommand: tuple[str, ...]) -> ResolvedRequest:
+def resolved(
+    tmp_path: Path,
+    tool_id: str,
+    subcommand: tuple[str, ...],
+    *,
+    threshold: str | None = None,
+) -> ResolvedRequest:
     tool = ToolDefinition(
         id=tool_id,
         executable="radon",
@@ -19,7 +25,7 @@ def resolved(tmp_path: Path, tool_id: str, subcommand: tuple[str, ...]) -> Resol
         runnable=tool_id,
         tool=tool,
         mode=RunMode.CHECK,
-        options=NormalizedOptions(paths=(tmp_path,)),
+        options=NormalizedOptions(paths=(tmp_path,), threshold=threshold),
         option_sources={},
         extra_args=(),
         project_root=tmp_path,
@@ -77,6 +83,23 @@ def test_radon_cc_allows_rank_c(tmp_path: Path):
     )
     assert report.status == "passed"
     assert report.findings == ()
+
+
+def test_radon_cc_fails_rank_c_with_threshold_b(tmp_path: Path):
+    payload = '{"src/app.py": [{"type": "function", "name": "ok", "rank": "C", "lineno": 10}]}'
+    report = RadonNormalizer().normalize(
+        resolved(tmp_path, "radon.cc", ("cc", "-j"), threshold="B"),
+        ProcessResult(
+            argv=(),
+            cwd=tmp_path,
+            exit_code=0,
+            stdout=payload,
+            stderr="",
+            duration_ms=1,
+        ),
+    )
+    assert report.status == "failed"
+    assert report.findings[0].rule_id == "complexity"
 
 
 def test_radon_cc_fails_rank_d(tmp_path: Path):

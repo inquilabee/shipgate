@@ -1,7 +1,8 @@
 import pytest
+
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.modes import RunMode
-from shipgate.domain.project import ProjectConfig
+from shipgate.domain.project import CheckBinding, ProjectConfig
 from shipgate.errors import PlanningError
 from shipgate.planning.suites import expand_suite
 from shipgate.planning.workflow import resolve_runnables
@@ -64,6 +65,13 @@ def test_duplicate_leaves_deduped(catalog):
     assert tools.count("ruff.lint") == 1
 
 
+def test_extended_suite_includes_radon_mi_and_jscpd(catalog):
+    tools = expand_suite("extended", catalog)
+    assert "radon.cc" in tools
+    assert "radon.mi" in tools
+    assert "jscpd.check" in tools
+
+
 def test_workflow_resolves_ci(catalog):
     suite_id, planned = resolve_runnables(
         mode=RunMode.CHECK,
@@ -73,3 +81,23 @@ def test_workflow_resolves_ci(catalog):
     )
     assert suite_id == "ci"
     assert [item.tool_id for item in planned][:2] == ["ruff.lint", "ty.check"]
+
+
+def test_check_bindings_do_not_replace_suite(catalog):
+    project = ProjectConfig(
+        suite="full",
+        check_bindings=(
+            CheckBinding(
+                runnable="semgrep.scan",
+                scope="semgrep",
+            ),
+        ),
+    )
+    suite_id, planned = resolve_runnables(
+        mode=RunMode.CHECK,
+        project=project,
+        catalog=catalog,
+    )
+    assert suite_id == "full"
+    assert "semgrep.scan" in [item.tool_id for item in planned]
+    assert "radon.cc" in [item.tool_id for item in planned]

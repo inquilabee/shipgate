@@ -56,30 +56,8 @@ class OptionResolver:
             paths = (project.target,)
             sources["paths"] = "project"
 
-        verbose = cli_options.verbose
-        if verbose is not None:
-            sources["verbose"] = "cli"
-        elif self._env_bool("SHIPGATE_VERBOSE"):
-            verbose = True
-            sources["verbose"] = "environment"
-
-        quiet = cli_options.quiet
-        if quiet is not None:
-            sources["quiet"] = "cli"
-        elif self._env_bool("SHIPGATE_QUIET"):
-            quiet = True
-            sources["quiet"] = "environment"
-
-        fmt = cli_options.format
-        if fmt is not None:
-            sources["format"] = "cli"
-        elif os.environ.get("SHIPGATE_FORMAT"):
-            fmt = os.environ["SHIPGATE_FORMAT"]
-            sources["format"] = "environment"
-        elif "format" in tool.cli:
-            fmt = tool.cli["format"].default or "json"
-            sources["format"] = "tool_default"
-
+        verbose, quiet = self._resolve_verbose_quiet(cli_options, sources)
+        fmt = self._resolve_format(cli_options, tool, sources)
         output = cli_options.output
         if output is not None:
             sources["output"] = "cli"
@@ -87,6 +65,8 @@ class OptionResolver:
         config = cli_options.config
         if config:
             sources["config"] = "cli"
+
+        threshold = self._resolve_threshold(cli_options, project, tool, sources)
 
         merged = NormalizedOptions(
             paths=paths or cli_options.paths,
@@ -100,12 +80,71 @@ class OptionResolver:
             fix=cli_options.fix,
             check=cli_options.check,
             rules=cli_options.rules,
-            threshold=cli_options.threshold,
+            threshold=threshold,
             stdin=cli_options.stdin,
             exit_behavior=cli_options.exit_behavior,
             extra=dict(cli_options.extra),
         )
         return merged, sources
+
+    def _resolve_format(
+        self,
+        cli_options: NormalizedOptions,
+        tool: ToolDefinition,
+        sources: dict[str, str],
+    ) -> str | None:
+        fmt = cli_options.format
+        if fmt is not None:
+            sources["format"] = "cli"
+            return fmt
+        if os.environ.get("SHIPGATE_FORMAT"):
+            sources["format"] = "environment"
+            return os.environ["SHIPGATE_FORMAT"]
+        if "format" in tool.cli:
+            sources["format"] = "tool_default"
+            return tool.cli["format"].default or "json"
+        return fmt
+
+    def _resolve_verbose_quiet(
+        self,
+        cli_options: NormalizedOptions,
+        sources: dict[str, str],
+    ) -> tuple[bool | None, bool | None]:
+        verbose = cli_options.verbose
+        if verbose is not None:
+            sources["verbose"] = "cli"
+        elif self._env_bool("SHIPGATE_VERBOSE"):
+            verbose = True
+            sources["verbose"] = "environment"
+
+        quiet = cli_options.quiet
+        if quiet is not None:
+            sources["quiet"] = "cli"
+        elif self._env_bool("SHIPGATE_QUIET"):
+            quiet = True
+            sources["quiet"] = "environment"
+        return verbose, quiet
+
+    def _resolve_threshold(
+        self,
+        cli_options: NormalizedOptions,
+        project: ProjectConfig,
+        tool: ToolDefinition,
+        sources: dict[str, str],
+    ) -> str | None:
+        threshold = cli_options.threshold
+        if threshold is not None:
+            sources["threshold"] = "cli"
+            return threshold
+        project_threshold = project.threshold_for_check(tool.id)
+        if project_threshold is not None:
+            sources["threshold"] = "project"
+            return project_threshold
+        if "threshold" in tool.cli:
+            threshold = tool.cli["threshold"].default
+            if threshold is not None:
+                sources["threshold"] = "tool_default"
+        return threshold
 
     def _apply_defaults(
         self,

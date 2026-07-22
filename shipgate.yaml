@@ -7,6 +7,12 @@ configs:
 checks:
   semgrep.scan:
     scope: semgrep
+  radon.cc:
+    threshold: B
+  radon.mi:
+    threshold: B
+  jscpd.check:
+    threshold: "4"
 scopes:
   semgrep:
     target: .

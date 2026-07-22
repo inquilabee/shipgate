@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from shipgate.catalog.loader import load_catalog
 from shipgate.runtime.install import collect_install_requirements
 

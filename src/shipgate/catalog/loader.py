@@ -47,46 +47,37 @@ def parse_catalog(raw: dict) -> Catalog:
     suites_raw = raw.get("suites", {}) or {}
     workflows_raw = raw.get("workflows", {}) or {}
     capabilities_raw = raw.get("capabilities", {}) or {}
-    tools = {tid: parse_tool(tid, tdata) for tid, tdata in tools_raw.items()}
-    suites = {sid: parse_suite(sid, sdata) for sid, sdata in suites_raw.items()}
-    workflows = {wid: parse_workflow(wid, wdata) for wid, wdata in workflows_raw.items()}
-    capabilities = {
+    return Catalog(
+        tools=parse_tools(tools_raw),
+        suites=parse_suites(suites_raw),
+        workflows=parse_workflows(workflows_raw),
+        capabilities=parse_capabilities(capabilities_raw),
+    )
+
+
+def parse_tools(raw: dict) -> dict[str, ToolDefinition]:
+    return {tid: parse_tool(tid, tdata) for tid, tdata in raw.items()}
+
+
+def parse_suites(raw: dict) -> dict[str, SuiteDefinition]:
+    return {sid: parse_suite(sid, sdata) for sid, sdata in raw.items()}
+
+
+def parse_workflows(raw: dict) -> dict[str, WorkflowDefinition]:
+    return {wid: parse_workflow(wid, wdata) for wid, wdata in raw.items()}
+
+
+def parse_capabilities(raw: dict) -> dict[str, tuple[str, ...]]:
+    return {
         str(name): tuple(str(tool_id) for tool_id in (members or []))
-        for name, members in capabilities_raw.items()
+        for name, members in raw.items()
     }
-    return Catalog(tools=tools, suites=suites, workflows=workflows, capabilities=capabilities)
 
 
 def parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
-    cli = {
-        name: CliOptionDefinition(
-            flag=opt.get("flag"),
-            style=opt.get("style", "scalar"),
-            separator=opt.get("separator", ","),
-            position=opt.get("position"),
-            required=bool(opt.get("required", False)),
-            default=opt.get("default"),
-            aggregate=opt.get("aggregate"),
-        )
-        for name, opt in (raw.get("cli") or {}).items()
-    }
-    config_raw = raw.get("configuration") or {}
-    configuration = ConfigurationDefinition(
-        bundled=config_raw.get("bundled"),
-        discover=tuple(config_raw.get("discover", []) or []),
-        pyproject_section=config_raw.get("pyproject_section"),
-        precedence=tuple(config_raw.get("precedence", ["cli", "repo", "bundled"])),
-        merge=bool(config_raw.get("merge", False)),
-    )
-    install_raw = raw.get("install")
-    install = None
-    if install_raw:
-        install = InstallDefinition(
-            manager=install_raw["manager"],
-            package=install_raw["package"],
-            version=install_raw.get("version", ""),
-            binary=install_raw.get("binary"),
-        )
+    cli = parse_cli_options(raw.get("cli") or {})
+    configuration = parse_configuration(raw.get("configuration") or {})
+    install = parse_install(raw.get("install"))
     modes = tuple(RunMode(m) for m in raw.get("modes", ["check"]))
     option_order = tuple(raw.get("option_order", list(cli.keys())))
     return ToolDefinition(
@@ -101,6 +92,42 @@ def parse_tool(tool_id: str, raw: dict) -> ToolDefinition:
         normalizer=raw.get("normalizer", "generic_exit"),
         modes=modes,
         option_order=option_order,
+    )
+
+
+def parse_cli_options(raw: dict) -> dict[str, CliOptionDefinition]:
+    return {
+        name: CliOptionDefinition(
+            flag=opt.get("flag"),
+            style=opt.get("style", "scalar"),
+            separator=opt.get("separator", ","),
+            position=opt.get("position"),
+            required=bool(opt.get("required", False)),
+            default=opt.get("default"),
+            aggregate=opt.get("aggregate"),
+        )
+        for name, opt in raw.items()
+    }
+
+
+def parse_configuration(raw: dict) -> ConfigurationDefinition:
+    return ConfigurationDefinition(
+        bundled=raw.get("bundled"),
+        discover=tuple(raw.get("discover", []) or []),
+        pyproject_section=raw.get("pyproject_section"),
+        precedence=tuple(raw.get("precedence", ["cli", "repo", "bundled"])),
+        merge=bool(raw.get("merge", False)),
+    )
+
+
+def parse_install(raw: dict | None) -> InstallDefinition | None:
+    if not raw:
+        return None
+    return InstallDefinition(
+        manager=raw["manager"],
+        package=raw["package"],
+        version=raw.get("version", ""),
+        binary=raw.get("binary"),
     )
 
 

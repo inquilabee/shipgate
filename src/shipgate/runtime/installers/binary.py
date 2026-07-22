@@ -211,26 +211,37 @@ def normalize_version(version: str) -> str:
 def extract_binary(archive_path: Path, binary_name: str) -> Path:
     suffixes = "".join(archive_path.suffixes)
     if suffixes.endswith(".tar.gz") or suffixes.endswith(".tar.xz"):
-        mode = "r:gz" if suffixes.endswith(".tar.gz") else "r"
-        with tarfile.open(archive_path, mode) as archive:
-            members = [member for member in archive.getmembers() if member.isfile()]
-            for member in members:
-                if Path(member.name).name == binary_name:
-                    handle = archive.extractfile(member)
-                    if handle is None:
-                        continue
-                    extracted = archive_path.parent / binary_name
-                    extracted.write_bytes(handle.read())
-                    return extracted
+        return extract_from_tar(archive_path, binary_name, gz=suffixes.endswith(".tar.gz"))
     if archive_path.suffix == ".zip":
-        with zipfile.ZipFile(archive_path) as archive:
-            for name in archive.namelist():
-                if Path(name).name == binary_name:
-                    extracted = archive_path.parent / binary_name
-                    extracted.write_bytes(archive.read(name))
-                    return extracted
+        return extract_from_zip(archive_path, binary_name)
     if archive_path.name == binary_name or archive_path.name.startswith(binary_name):
         return archive_path
+    raise InstallError(f"could not find {binary_name} in downloaded archive")
+
+
+def extract_from_tar(archive_path: Path, binary_name: str, *, gz: bool) -> Path:
+    mode = "r:gz" if gz else "r"
+    with tarfile.open(archive_path, mode) as archive:
+        for member in archive.getmembers():
+            if not member.isfile() or Path(member.name).name != binary_name:
+                continue
+            handle = archive.extractfile(member)
+            if handle is None:
+                continue
+            extracted = archive_path.parent / binary_name
+            extracted.write_bytes(handle.read())
+            return extracted
+    raise InstallError(f"could not find {binary_name} in downloaded archive")
+
+
+def extract_from_zip(archive_path: Path, binary_name: str) -> Path:
+    with zipfile.ZipFile(archive_path) as archive:
+        for name in archive.namelist():
+            if Path(name).name != binary_name:
+                continue
+            extracted = archive_path.parent / binary_name
+            extracted.write_bytes(archive.read(name))
+            return extracted
     raise InstallError(f"could not find {binary_name} in downloaded archive")
 
 

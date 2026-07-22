@@ -425,7 +425,19 @@ tools:
     cli:
       paths:
         style: positional
-    option_order: [paths]
+      config:
+        flag: --config
+        style: scalar
+      threshold:
+        flag: --threshold
+        style: scalar
+        default: "2"
+    configuration:
+      bundled: configs/jscpd.json
+      discover: [".jscpd.json", "jscpd.json", ".shipgate/configs/jscpd.json"]
+      precedence: [cli, repo, bundled]
+      merge: false
+    option_order: [config, threshold, paths]
 
   mutmut.run:
     executable: mutmut
@@ -539,6 +551,8 @@ suites:
       - deadcode.check
       - vulture.check
       - radon.cc
+      - radon.mi
+      - jscpd.check
       - markdownlint.check
       - yamllint.check
     parallel: false

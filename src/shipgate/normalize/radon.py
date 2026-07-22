@@ -1,4 +1,4 @@
-"""Radon JSON normalizer with bundled grade policy: ranks A, B, and C allowed."""
+"""Radon JSON normalizer with configurable maximum allowed grade."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
+from shipgate.normalize.output import tool_exit_report
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
@@ -37,8 +38,8 @@ class RadonNormalizer:
         if not isinstance(payload, dict):
             raise NormalizationError("radon output must be a JSON object")
 
-        max_rank = DEFAULT_MAX_COMPLEXITY_RANK
-        max_value = RANK_ORDER.get(max_rank, 1)
+        max_rank = request.options.threshold or DEFAULT_MAX_COMPLEXITY_RANK
+        max_value = RANK_ORDER.get(str(max_rank).upper(), RANK_ORDER[DEFAULT_MAX_COMPLEXITY_RANK])
         if "mi" in request.tool.subcommand:
             findings = mi_findings(check_id, payload, max_value)
         else:
@@ -100,21 +101,3 @@ def mi_findings(check_id: str, payload: dict[str, Any], max_value: int) -> list[
             )
         )
     return findings
-
-
-def tool_exit_report(check_id: str, result: ProcessResult) -> CheckReport:
-    message = result.stderr.strip() or result.stdout.strip() or "Tool failed"
-    return CheckReport(
-        check_id=check_id,
-        tool_id=check_id,
-        status="failed",
-        exit_code=result.exit_code,
-        findings=(
-            Finding(
-                check_id=check_id,
-                rule_id="TOOL_EXIT",
-                severity="error",
-                message=message,
-            ),
-        ),
-    )

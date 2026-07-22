@@ -54,24 +54,14 @@ def resolve_executable(
 ) -> str:
     name = install_binary or tool_executable
     if project_root is not None:
-        bin_dir = managed_bin_dir(project_root)
-        if sys.platform == "win32":
-            candidate = bin_dir / f"{name}.exe"
-            if candidate.is_file():
-                return str(candidate)
-        candidate = bin_dir / name
-        if candidate.is_file():
-            return str(candidate)
+        found = find_in_bin_dir(managed_bin_dir(project_root), name)
+        if found is not None:
+            return found
     if environment.kind == "managed" and environment.root is not None:
-        if sys.platform == "win32":
-            candidate = environment.root / "Scripts" / f"{name}.exe"
-            if candidate.is_file():
-                return str(candidate)
-            candidate = environment.root / "Scripts" / name
-        else:
-            candidate = environment.root / "bin" / name
-        if candidate.is_file():
-            return str(candidate)
+        scripts = environment.root / ("Scripts" if sys.platform == "win32" else "bin")
+        found = find_in_bin_dir(scripts, name)
+        if found is not None:
+            return found
     from shutil import which
 
     found = which(name)
@@ -81,6 +71,19 @@ def resolve_executable(
         f"executable not found: {name}",
         hint='run "shipgate install" to install required tools',
     )
+
+
+def find_in_bin_dir(bin_dir: Path, name: str) -> str | None:
+    if not bin_dir.is_dir():
+        return None
+    if sys.platform == "win32":
+        candidate = bin_dir / f"{name}.exe"
+        if candidate.is_file():
+            return str(candidate)
+    candidate = bin_dir / name
+    if candidate.is_file():
+        return str(candidate)
+    return None
 
 
 def tools_manifest_path(project_root: Path) -> Path:

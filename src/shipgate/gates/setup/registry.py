@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
-from shipgate.gates.setup.acronym_allowlist import setup as setup_acronym_allowlist
-from shipgate.gates.setup.folder_breadth import setup as setup_folder_breadth
-from shipgate.gates.setup.module_private_vars import setup as setup_module_private_vars
-from shipgate.gates.setup.module_size import setup as setup_module_size
+from shipgate.catalog.loader import load_catalog
+from shipgate.gates.config import load_bundled_gate_config
+from shipgate.gates.setup.scaffold import scaffold_from_gate_config
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -20,11 +19,25 @@ class GateSetup(Protocol):
     def setup(self, project_root: Path) -> None: ...
 
 
+def make_setup(gate_id: str) -> Callable[[Path], None]:
+    def setup(project_root: Path) -> None:
+        tool = load_catalog().get_tool(gate_id)
+        scaffold_from_gate_config(
+            project_root,
+            load_bundled_gate_config(tool),
+        )
+
+    return setup
+
+
 SETUPS: dict[str, Callable[[Path], None]] = {
-    "gate.module-size": setup_module_size,
-    "gate.module-private-vars": setup_module_private_vars,
-    "gate.folder-breadth": setup_folder_breadth,
-    "gate.acronym-allowlist": setup_acronym_allowlist,
+    gate_id: make_setup(gate_id)
+    for gate_id in (
+        "gate.module-size",
+        "gate.module-private-vars",
+        "gate.folder-breadth",
+        "gate.acronym-allowlist",
+    )
 }
 
 

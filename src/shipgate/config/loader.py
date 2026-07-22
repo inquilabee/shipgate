@@ -66,17 +66,25 @@ def parse_checks(raw: dict, path: Path) -> tuple[tuple[str, ...], tuple[CheckBin
         return tuple(str(c) for c in checks_raw), ()
     if isinstance(checks_raw, dict):
         bindings: list[CheckBinding] = []
-        names: list[str] = []
         for runnable, value in checks_raw.items():
             runnable_id = str(runnable)
-            names.append(runnable_id)
             scope_name = None
+            threshold = None
             if isinstance(value, dict):
                 scope_name = value.get("scope")
                 if scope_name is not None:
                     scope_name = str(scope_name)
-            bindings.append(CheckBinding(runnable=runnable_id, scope=scope_name))
-        return tuple(names), tuple(bindings)
+                threshold_raw = value.get("threshold")
+                if threshold_raw is not None:
+                    threshold = str(threshold_raw)
+            bindings.append(
+                CheckBinding(
+                    runnable=runnable_id,
+                    scope=scope_name,
+                    threshold=threshold,
+                )
+            )
+        return (), tuple(bindings)
     raise ConfigError("checks must be a list or mapping", path=str(path))
 
 

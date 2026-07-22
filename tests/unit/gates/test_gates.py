@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest

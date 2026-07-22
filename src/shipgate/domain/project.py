@@ -22,6 +22,7 @@ class Scope:
 class CheckBinding:
     runnable: str
     scope: str | None = None
+    threshold: str | None = None
 
 
 @dataclass(frozen=True)
@@ -43,4 +44,10 @@ class ProjectConfig:
         for binding in self.check_bindings:
             if binding.runnable == runnable:
                 return binding.scope
+        return None
+
+    def threshold_for_check(self, runnable: str) -> str | None:
+        for binding in self.check_bindings:
+            if binding.runnable == runnable:
+                return binding.threshold
         return None

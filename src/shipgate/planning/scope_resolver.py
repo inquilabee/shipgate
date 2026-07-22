@@ -48,20 +48,11 @@ class ScopeResolver:
 
     def _scope_entry_paths(self, scope: Scope) -> list[Path]:
         target = scope.target.resolve()
-        if target.is_file():
-            return self._scope_file_path(target, scope)
-        if target != self.project_root:
-            return self._scope_directory_path(target, scope)
+        if target.is_file() or target != self.project_root:
+            return self._scope_single_path(target, scope)
         return self._scope_project_root_dirs(scope)
 
-    def _scope_file_path(self, target: Path, scope: Scope) -> list[Path]:
-        if should_ignore(self.project_root, target, extra_excludes=scope.exclude):
-            return []
-        if scope.include and not self._path_matches_include(target, scope.include):
-            return []
-        return [target]
-
-    def _scope_directory_path(self, target: Path, scope: Scope) -> list[Path]:
+    def _scope_single_path(self, target: Path, scope: Scope) -> list[Path]:
         if should_ignore(self.project_root, target, extra_excludes=scope.exclude):
             return []
         if scope.include and not self._path_matches_include(target, scope.include):
@@ -70,19 +61,19 @@ class ScopeResolver:
 
     def _scope_project_root_dirs(self, scope: Scope) -> list[Path]:
         if scope.include:
-            entries: list[Path] = []
-            for inc in scope.include:
-                path = (self.project_root / inc).resolve()
-                try:
-                    path.relative_to(self.project_root)
-                except ValueError:
-                    continue
-                if not path.exists():
-                    continue
-                if should_ignore(self.project_root, path, extra_excludes=scope.exclude):
-                    continue
-                entries.append(path)
-            return sorted(entries)
+            return self._scope_included_dirs(scope)
+        return self._scope_default_dirs(scope)
+
+    def _scope_included_dirs(self, scope: Scope) -> list[Path]:
+        entries: list[Path] = []
+        for inc in scope.include:
+            path = (self.project_root / inc).resolve()
+            if not self._include_path_allowed(path, scope):
+                continue
+            entries.append(path)
+        return sorted(entries)
+
+    def _scope_default_dirs(self, scope: Scope) -> list[Path]:
         entries: list[Path] = []
         for child in sorted(self.project_root.iterdir()):
             if not child.is_dir():
@@ -93,6 +84,15 @@ class ScopeResolver:
                 continue
             entries.append(child)
         return entries
+
+    def _include_path_allowed(self, path: Path, scope: Scope) -> bool:
+        try:
+            path.relative_to(self.project_root)
+        except ValueError:
+            return False
+        if not path.exists():
+            return False
+        return not should_ignore(self.project_root, path, extra_excludes=scope.exclude)
 
     def _path_matches_include(self, path: Path, include: tuple[str, ...]) -> bool:
         rel = path.relative_to(self.project_root).as_posix()

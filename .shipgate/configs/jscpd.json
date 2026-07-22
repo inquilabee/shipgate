@@ -1,0 +1,6 @@
+{
+  "minLines": 5,
+  "minTokens": 50,
+  "threshold": 4,
+  "ignore": [".shipgate/**", "**/.ruff_cache/**", "**/__pycache__/**"]
+}

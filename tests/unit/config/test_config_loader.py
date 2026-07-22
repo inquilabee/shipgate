@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from shipgate.config.loader import load_config
 from shipgate.errors import ConfigError
 
@@ -46,3 +47,16 @@ def test_cli_config_wins(tmp_path):
     override.write_text("suite: python-quality\n")
     config = load_config(config_path=override, project_root=project)
     assert config.suite == "python-quality"
+
+
+def test_check_bindings_parse_scope_and_threshold(tmp_path):
+    (tmp_path / "shipgate.yaml").write_text(
+        "suite: full\nchecks:\n  radon.cc:\n    threshold: B\n  semgrep.scan:\n    scope: semgrep\n"
+    )
+    config = load_config(project_root=tmp_path)
+    assert config.checks == ()
+    assert len(config.check_bindings) == 2
+    radon = next(b for b in config.check_bindings if b.runnable == "radon.cc")
+    assert radon.threshold == "B"
+    semgrep = next(b for b in config.check_bindings if b.runnable == "semgrep.scan")
+    assert semgrep.scope == "semgrep"

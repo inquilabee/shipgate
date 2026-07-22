@@ -33,24 +33,48 @@ def resolve_runnables(
 ) -> tuple[str, list[PlannedCheck]]:
     """Return (run_label, planned checks) for the given mode and overrides."""
     if check_override:
-        if not catalog.is_tool(check_override):
-            raise PlanningError(
-                f"unknown check {check_override!r}",
-                hint='run "shipgate list checks" to see bundled checks',
-            )
-        scope_name = project.scope_for_check(check_override)
-        return check_override, [
-            PlannedCheck(
-                tool_id=check_override,
-                mode=mode,
-                scope_name=scope_name,
-            )
-        ]
-
+        return resolve_check_override(check_override, mode, project, catalog)
     if project.checks and not suite_override and not workflow_override:
         planned = planned_from_check_names(project, catalog, mode)
         return project.suite or "custom", planned
+    return resolve_suite_or_workflow(
+        mode=mode,
+        project=project,
+        catalog=catalog,
+        suite_override=suite_override,
+        workflow_override=workflow_override,
+    )
 
+
+def resolve_check_override(
+    check_override: str,
+    mode: RunMode,
+    project: ProjectConfig,
+    catalog: Catalog,
+) -> tuple[str, list[PlannedCheck]]:
+    if not catalog.is_tool(check_override):
+        raise PlanningError(
+            f"unknown check {check_override!r}",
+            hint='run "shipgate list checks" to see bundled checks',
+        )
+    scope_name = project.scope_for_check(check_override)
+    return check_override, [
+        PlannedCheck(
+            tool_id=check_override,
+            mode=mode,
+            scope_name=scope_name,
+        )
+    ]
+
+
+def resolve_suite_or_workflow(
+    *,
+    mode: RunMode,
+    project: ProjectConfig,
+    catalog: Catalog,
+    suite_override: str | None,
+    workflow_override: str | None,
+) -> tuple[str, list[PlannedCheck]]:
     workflow_id = workflow_override or project.workflow
     if workflow_id and workflow_id in catalog.workflows:
         return resolve_workflow(workflow_id, catalog, project)
