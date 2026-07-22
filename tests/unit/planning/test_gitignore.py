@@ -9,6 +9,15 @@ def test_should_ignore_shipgate_dir(tmp_path: Path):
     assert should_ignore(tmp_path, ignored)
 
 
+def test_should_ignore_venv_dirs(tmp_path: Path):
+    dot_venv = tmp_path / ".venv" / "lib"
+    dot_venv.mkdir(parents=True)
+    plain_venv = tmp_path / "venv" / "lib"
+    plain_venv.mkdir(parents=True)
+    assert should_ignore(tmp_path, dot_venv)
+    assert should_ignore(tmp_path, plain_venv)
+
+
 def test_expand_scope_respects_gitignore(tmp_path: Path):
     (tmp_path / ".gitignore").write_text("ignored/\n", encoding="utf-8")
     (tmp_path / "src").mkdir()

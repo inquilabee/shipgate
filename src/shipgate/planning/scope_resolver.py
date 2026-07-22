@@ -13,7 +13,14 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
     from shipgate.domain.project import ProjectConfig
 
-DEFAULT_EXCLUDES = (".shipgate/", ".venv/", "build/", "reports/", "__pycache__/")
+DEFAULT_EXCLUDES = (
+    ".shipgate/",
+    ".venv/",
+    "venv/",
+    "build/",
+    "reports/",
+    "__pycache__/",
+)
 
 
 class ScopeResolver:

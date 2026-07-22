@@ -14,6 +14,9 @@ ty.check:
   cli:
     paths:
       style: positional
+    exclude:
+      flag: --exclude
+      style: repeated
     format:
       flag: --output-format
       style: scalar
@@ -31,6 +34,7 @@ ty.check:
       - bundled
     merge: false
   option_order:
+    - exclude
     - format
     - paths
   scope:

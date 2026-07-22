@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 DEFAULT_IGNORED = (
     ".shipgate/",
     ".venv/",
+    "venv/",
     "reports/",
     "__pycache__/",
     ".git/",

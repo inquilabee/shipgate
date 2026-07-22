@@ -17,6 +17,10 @@ mdformat.apply:
   cli:
     paths:
       style: positional
+    extensions:
+      flag: --extensions
+      style: repeated
+      default: frontmatter
     check:
       flag: --check
       style: boolean
@@ -29,6 +33,7 @@ mdformat.apply:
       - bundled
     merge: false
   option_order:
+    - extensions
     - check
     - paths
   scope:

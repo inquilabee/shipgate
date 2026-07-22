@@ -1,5 +1,7 @@
+import json
 from pathlib import Path
 
+from shipgate.adapter.config_resolve import bundled_configs_root
 from shipgate.catalog.loader import load_catalog
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
@@ -10,6 +12,23 @@ from shipgate.planning.gitignore import (
 )
 from shipgate.planning.scope_resolver import ScopeResolver
 from shipgate.planning.scopes import scope_paths, scope_paths_for_tool
+
+
+def test_scope_resolver_default_excludes(tmp_path: Path):
+    scope = ScopeResolver(tmp_path).resolve(ProjectConfig())
+    assert ".shipgate/" in scope.exclude
+    assert ".venv/" in scope.exclude
+    assert "venv/" in scope.exclude
+
+
+def test_jscpd_bundled_config_writes_under_shipgate_reports():
+    catalog = load_catalog()
+    tool = catalog.get_tool("jscpd.check")
+    bundled = tool.configuration.bundled
+    assert bundled is not None
+    jscpd_config = json.loads((bundled_configs_root() / bundled).read_text(encoding="utf-8"))
+    assert jscpd_config["output"] == ".shipgate/reports/jscpd"
+    assert ".shipgate/**" in jscpd_config["ignore"]
 
 
 def test_scope_resolver_resolve_target(tmp_path: Path):

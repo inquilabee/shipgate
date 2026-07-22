@@ -32,4 +32,9 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
 
 
 def option_value(request: ResolvedRequest, name: str) -> object | None:
-    return request.options.cli_value(name)
+    value = request.options.cli_value(name)
+    if value is not None:
+        return value
+    if name in request.tool.cli:
+        return request.tool.cli[name].default
+    return None

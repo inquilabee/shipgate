@@ -2,5 +2,12 @@
   "minLines": 5,
   "minTokens": 50,
   "threshold": 2,
-  "ignore": [".shipgate/**", "**/.ruff_cache/**", "**/__pycache__/**"]
+  "output": ".shipgate/reports/jscpd",
+  "ignore": [
+    ".shipgate/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/.ruff_cache/**",
+    "**/__pycache__/**"
+  ]
 }

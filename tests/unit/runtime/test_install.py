@@ -35,6 +35,13 @@ def test_install_plan_unions_format_suite_tools():
     assert "yamlfmt" in binaries
 
 
+def test_install_plan_includes_mdformat_frontmatter_requires():
+    catalog = load_catalog()
+    python_packages, _binaries = collect_install_requirements("format", catalog)
+    install_def = python_packages["mdformat"]
+    assert "mdformat-frontmatter>=2.0" in install_def.requires
+
+
 def test_install_plan_format_suite_not_doubled():
     catalog = load_catalog()
     python_packages, binaries = collect_install_requirements("format", catalog)

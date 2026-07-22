@@ -43,6 +43,22 @@ def test_ruff_format_check_mode(tmp_path):
     assert "--check" in argv
 
 
+def test_mdformat_apply_enables_frontmatter_by_default(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("mdformat.apply")
+    request = build_execution_request(
+        runnable="mdformat.apply",
+        mode=RunMode.CHECK,
+        project_root=tmp_path,
+        options=NormalizedOptions(paths=(tmp_path / "README.md",), check=True),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    extensions_index = argv.index("--extensions")
+    assert argv[extensions_index + 1] == "frontmatter"
+
+
 def test_gitleaks_scan_uses_project_root_for_multiple_scope_paths(tmp_path):
     catalog = load_catalog()
     tool = catalog.get_tool("gitleaks.scan")
