@@ -26,7 +26,6 @@ VALID_NORMALIZERS = frozenset(
         "gitleaks",
         "markdownlint",
         "ty",
-        "pytest",
         "radon",
         "vulture",
         "deadcode",

@@ -35,7 +35,6 @@ NORMALIZERS: dict[str, Normalizer] = {
     "gitleaks": gitleaks.GitleaksNormalizer(),
     "markdownlint": exit_normalizers.MarkdownlintNormalizer(),
     "ty": ty.TyNormalizer(),
-    "pytest": exit_normalizers.PytestNormalizer(),
     "radon": radon.RadonNormalizer(),
     "vulture": exit_normalizers.VultureNormalizer(),
     "deadcode": exit_normalizers.DeadcodeNormalizer(),

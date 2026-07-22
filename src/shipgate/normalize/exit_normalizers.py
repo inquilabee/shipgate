@@ -19,7 +19,3 @@ class VultureNormalizer(GenericExitNormalizer):
 
 class DeadcodeNormalizer(GenericExitNormalizer):
     """Deadcode exit-code normalizer."""
-
-
-class PytestNormalizer(GenericExitNormalizer):
-    """Pytest exit-code normalizer."""
