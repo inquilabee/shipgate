@@ -9,8 +9,6 @@ from shipgate.domain.reports import CheckReport, Finding
 from shipgate.errors import NormalizationError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.runtime.executor import ProcessResult
 
@@ -91,35 +89,6 @@ def decode_json_payload(
         if decode_error:
             raise NormalizationError(decode_error) from exc
         return tool_exit_report(check_id, result)
-
-
-def normalize_json_items(
-    request: ResolvedRequest,
-    result: ProcessResult,
-    *,
-    items_key: str | None,
-    item_to_finding: Callable[[dict[str, Any], str], Finding],
-    invalid_message: str,
-    decode_error: str | None = None,
-    allow_empty_on_success: bool = False,
-) -> CheckReport:
-    check_id = request.tool.id
-    stdout = read_tool_output(request, result)
-    if result.exit_code == 0 and not stdout.strip():
-        return empty_pass_report(check_id)
-    payload = decode_json_payload(
-        stdout,
-        check_id=check_id,
-        result=result,
-        items_key=items_key,
-        decode_error=decode_error,
-        allow_empty_on_success=allow_empty_on_success,
-    )
-    if isinstance(payload, CheckReport):
-        return payload
-    items = extract_items(payload, items_key=items_key, invalid_message=invalid_message)
-    findings = tuple(item_to_finding(item, check_id) for item in items)
-    return findings_report(check_id, result, findings)
 
 
 def extract_items(

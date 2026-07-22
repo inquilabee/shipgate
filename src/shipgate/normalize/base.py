@@ -2,19 +2,8 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Protocol
-
-from shipgate.normalize import (
-    bandit,
-    exit_normalizers,
-    gate_json,
-    generic,
-    gitleaks,
-    radon,
-    ruff,
-    semgrep,
-    ty,
-)
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
@@ -25,6 +14,23 @@ if TYPE_CHECKING:
 class Normalizer(Protocol):
     def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport: ...
 
+
+class BaseNormalizer(ABC):
+    @abstractmethod
+    def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport: ...
+
+
+from shipgate.normalize import (  # noqa: E402
+    bandit,
+    exit_normalizers,
+    gate_json,
+    generic,
+    gitleaks,
+    radon,
+    ruff,
+    semgrep,
+    ty,
+)
 
 NORMALIZERS: dict[str, Normalizer] = {
     "ruff": ruff.RuffNormalizer(),
