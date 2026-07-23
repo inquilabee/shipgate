@@ -5,6 +5,7 @@ from __future__ import annotations
 from importlib import resources
 from pathlib import Path
 
+from shipgate.catalog.tool_extends import resolve_tool_extends
 from shipgate.catalog.validate import validate_catalog
 from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.domain.catalog import (
@@ -27,16 +28,25 @@ def load_catalog(path: Path | None = None, *, project_root: Path | None = None) 
     if path is None:
         bundled = resources.files("shipgate.catalog.bundled")
         bundled_root = Path(str(bundled))
-        raw = load_bundled_catalog_raw(bundled)
+        bundled_raw = load_bundled_catalog_raw(bundled)
+        bundled_tools = bundled_raw.get("tools", {}) or {}
+        project_tools: dict = {}
         if project_root is not None:
             project_raw = load_project_catalog_raw(project_root)
             if project_raw:
-                raw = merge_catalog_raw(raw, project_raw)
+                project_tools = project_raw.get("tools", {}) or {}
+                raw = merge_catalog_raw(bundled_raw, project_raw)
+            else:
+                raw = bundled_raw
+        else:
+            raw = bundled_raw
+        raw["tools"] = resolve_tool_extends(bundled_tools, project_tools)
     else:
         raw = load_yaml_mapping(
             path, error_cls=CatalogError, invalid_message="invalid catalog YAML"
         )
         bundled_root = path.parent
+        raw["tools"] = resolve_tool_extends(raw.get("tools", {}) or {}, {})
     if not isinstance(raw, dict):
         raise CatalogError("catalog must be a mapping")
     catalog = parse_catalog(raw)

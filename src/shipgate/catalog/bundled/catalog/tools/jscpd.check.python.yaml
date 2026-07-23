@@ -1,25 +1,7 @@
 jscpd.check.python:
-  executable: jscpd
-  subcommand: []
-  modes:
-    - check
-  capabilities:
-    - Quality
-  normalizer: generic_exit
-  install:
-    manager: binary
-    package: jscpd
-    version: ">=3.0"
-    binary: jscpd
+  extends: jscpd.check.other
   cli:
-    paths:
-      style: positional
-    config:
-      flag: --config
-      style: scalar
     threshold:
-      flag: --threshold
-      style: scalar
       default: "2"
   configuration:
     bundled: configs/jscpd.python.json
@@ -27,16 +9,6 @@ jscpd.check.python:
       - .shipgate/configs/jscpd.python.json
       - .jscpd.python.json
       - jscpd.python.json
-    precedence:
-      - cli
-      - repo
-      - bundled
-    merge: false
-  option_order:
-    - config
-    - threshold
-    - paths
   scope:
     extensions:
       - .py
-    delivery: root

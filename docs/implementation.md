@@ -671,6 +671,40 @@ After the ruff path works, add the initial bundled tool set from the prior ShipG
 - Sourcery for Python review and refactoring suggestions
 - project-local script gates for repository-specific policies
 
+### Tool inheritance (`extends`)
+
+Catalog tools may declare `extends: <parent-tool-id>` in `catalog/tools/*.yaml` (bundled or `.shipgate/catalog/tools/`). The loader resolves inheritance before parsing `ToolDefinition`, so each variant remains a first-class runnable tool for suites, workflows, installation, reports, and `--check`.
+
+Merge rules:
+
+- Nested mappings (`cli`, `configuration`, `install`, `scope`) deep-merge; child keys win.
+- Scalars and lists replace the parent value when present in the child.
+- `extends` is stripped after resolution and is not part of the domain model.
+
+Project overlays:
+
+- A project tool **without** `extends` fully replaces the bundled tool (existing behavior).
+- A project tool **with** `extends` deep-merges onto the bundled parent. Same-id overrides (`extends: ruff.lint` on `ruff.lint`) merge onto the bundled definition.
+
+Example (JSCPD Python variant):
+
+```yaml
+jscpd.check.python:
+  extends: jscpd.check.other
+  cli:
+    threshold:
+      default: "2"
+  configuration:
+    bundled: configs/jscpd.python.json
+    discover:
+      - .shipgate/configs/jscpd.python.json
+  scope:
+    extensions:
+      - .py
+```
+
+Invalid inheritance (missing parent, non-string `extends`, cycles) raises `CatalogError` at catalog load time.
+
 ### Catalog validation
 
 `src/shipgate/catalog/validate.py` should validate:
