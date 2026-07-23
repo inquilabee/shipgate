@@ -26,12 +26,12 @@ def managed_environment(project_root: Path) -> ExecutionEnvironment:
     else:
         scripts = venv / "bin"
     env = dict(os.environ)
+    env.pop("VIRTUAL_ENV", None)
     path_parts: list[str] = []
     if bin_dir.is_dir():
         path_parts.append(str(bin_dir))
     if scripts.is_dir():
         path_parts.append(str(scripts))
-        env["VIRTUAL_ENV"] = str(venv)
     if path_parts:
         env["PATH"] = f"{os.pathsep.join(path_parts)}{os.pathsep}{env.get('PATH', '')}"
     return ExecutionEnvironment(kind="managed", root=venv, env=env)

@@ -23,6 +23,7 @@ class NormalizedOptions:
     check: bool | None = None
     rules: tuple[str, ...] = ()
     threshold: str | None = None
+    python: str | None = None
     stdin: str | None = None
     exit_behavior: str | None = None
     extra: dict[str, object] = field(default_factory=dict)

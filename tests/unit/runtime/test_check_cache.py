@@ -57,6 +57,23 @@ def test_check_result_cache_skips_root_delivery_tools(tmp_path: Path):
     assert cache.lookup(resolved) is None
 
 
+def test_check_result_cache_skips_gate_tools(tmp_path: Path):
+    resolved = make_resolved_request(
+        tmp_path,
+        "gate.module-private-vars",
+        paths=(Path("src"),),
+    )
+    cache = CheckResultCache(tmp_path)
+    report = CheckReport(
+        check_id=resolved.tool.id,
+        tool_id=resolved.tool.id,
+        status="passed",
+        exit_code=0,
+    )
+    cache.store(resolved, report)
+    assert cache.lookup(resolved) is None
+
+
 def test_check_result_cache_respects_disabled_flag(tmp_path: Path):
     resolved = make_resolved_request(tmp_path, "yamllint.check", paths=(Path("cfg.yaml"),))
     cache = CheckResultCache(tmp_path, disabled=True)

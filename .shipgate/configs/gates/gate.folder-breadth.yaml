@@ -10,4 +10,4 @@ extensions:
   - .css
   - .js
 strict: true
-allowlist_file: .shipgate/allowlists/folder-breadth.txt
+allowlist_file: .shipgate/allowlists/folder-breadth.yaml

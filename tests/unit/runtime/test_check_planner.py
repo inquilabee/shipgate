@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 from shipgate.catalog.loader import load_catalog
@@ -86,6 +87,29 @@ def test_prepare_check_skips_when_no_matching_files(tmp_path: Path):
     assert prepared.report.status == "passed"
     assert prepared.report.exit_code == 0
     assert prepared.report.extra["skipped"] == "no matching files in scope"
+
+
+def test_prepare_check_ty_includes_project_python(tmp_path: Path):
+    if sys.platform == "win32":
+        scripts = tmp_path / ".venv" / "Scripts"
+        scripts.mkdir(parents=True)
+        (scripts / "python.exe").write_text("", encoding="utf-8")
+    else:
+        bindir = tmp_path / ".venv" / "bin"
+        bindir.mkdir(parents=True)
+        (bindir / "python").write_text("", encoding="utf-8")
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    catalog = load_catalog()
+    planned = PlannedCheck(tool_id="ty.check", mode=RunMode.CHECK)
+    command = RunCommand(project_root=tmp_path, target=tmp_path, check="ty.check")
+    prepared = prepare_check(
+        planned=planned,
+        command=command,
+        context=make_run_context(tmp_path, planned),
+        catalog=catalog,
+    )
+    assert prepared.request is not None
+    assert prepared.request.options.python == ".venv"
 
 
 def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):

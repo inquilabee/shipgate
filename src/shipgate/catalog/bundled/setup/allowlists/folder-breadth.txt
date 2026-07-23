@@ -1,1 +1,0 @@
-# One directory path per line; skip folder-breadth checks for these paths.

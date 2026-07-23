@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from shipgate.adapter.config_resolve import resolve_config_paths
@@ -15,8 +16,11 @@ from shipgate.planning.incremental import (
 )
 from shipgate.planning.requests import build_execution_request, resolve_request
 from shipgate.planning.scopes import resolve_scope, scope_paths_for_tool
+from shipgate.runtime.project_python import discover_project_python
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from shipgate.domain.catalog import Catalog
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.planning.workflow import PlannedCheck
@@ -100,6 +104,11 @@ def prepare_check(
             quiet=command.quiet,
             check=False,
         )
+    tool_options = apply_project_python_option(
+        tool,
+        tool_options,
+        project_root=context.project_root,
+    )
     request = build_execution_request(
         runnable=planned.tool_id,
         mode=planned.mode if planned.mode in tool.modes else RunMode.CHECK,
@@ -115,3 +124,17 @@ def prepare_check(
         project=context.project,
     )
     return PreparedCheck(request=resolved)
+
+
+def apply_project_python_option(
+    tool,
+    options: NormalizedOptions,
+    *,
+    project_root: Path,
+) -> NormalizedOptions:
+    if "python" not in tool.cli:
+        return options
+    python = discover_project_python(project_root, process_environ=os.environ)
+    if python is None:
+        return options
+    return replace(options, python=str(python))

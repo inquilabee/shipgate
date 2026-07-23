@@ -286,15 +286,31 @@ def parse_allowlists(raw: object, path: Path) -> dict[str, str] | None:
         return None
     if not isinstance(raw, dict):
         raise ConfigError("allowlists must be a mapping", path=str(path))
-    allowlists: dict[str, str] = {}
-    for key, value in raw.items():
-        if not isinstance(value, str):
+    return {str(key): parse_allowlist_binding(str(key), value, path) for key, value in raw.items()}
+
+
+def parse_allowlist_binding(gate_id: str, value: object, path: Path) -> str:
+    if isinstance(value, str):
+        allowlist_path = value.strip()
+        if not allowlist_path:
             raise ConfigError(
-                f"allowlists[{key!r}] must be a string path",
+                f"allowlists[{gate_id!r}] requires a non-empty path",
                 path=str(path),
             )
-        allowlists[str(key)] = value
-    return allowlists
+        return allowlist_path
+    if isinstance(value, dict):
+        raise ConfigError(
+            f"allowlists[{gate_id!r}] must be an allowlist file path",
+            hint=(
+                "use gate-id: <allowlist-file>; document each exception with "
+                "path and reason in that file"
+            ),
+            path=str(path),
+        )
+    raise ConfigError(
+        f"allowlists[{gate_id!r}] must be an allowlist file path",
+        path=str(path),
+    )
 
 
 def parse_config(raw: dict, path: Path) -> ProjectConfig:

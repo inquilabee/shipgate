@@ -1,1 +1,0 @@
-# One module path per line; skip module-size checks for these files.

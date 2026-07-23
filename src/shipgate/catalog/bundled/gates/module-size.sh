@@ -20,7 +20,7 @@ count_non_blank_lines() {
 is_allowlisted() {
 	local rel="$1"
 	[[ -n ${ALLOWLIST} && -f ${ALLOWLIST} ]] || return 1
-	grep -v '^[[:space:]]*#' "${ALLOWLIST}" | grep -v '^[[:space:]]*$' | grep -Fxq "${rel}"
+	"${SHIPGATE_PYTHON:?SHIPGATE_PYTHON is required}" -m shipgate.policy.path_allowlist --file "${ALLOWLIST}" --contains "${rel}"
 }
 
 check_module_file() {

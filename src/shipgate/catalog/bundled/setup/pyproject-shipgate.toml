@@ -29,6 +29,6 @@ exclude = ["src/shipgate/frontend/templates/"]
 
 [tool.shipgate.allowlists]
 "gate.acronym-allowlist" = ".shipgate/allowlists/acronyms.yaml"
-"gate.folder-breadth" = ".shipgate/allowlists/folder-breadth.txt"
-"gate.module-size" = ".shipgate/allowlists/module-size.txt"
-"gate.module-private-vars" = ".shipgate/allowlists/module-private-vars.txt"
+"gate.folder-breadth" = ".shipgate/allowlists/folder-breadth.yaml"
+"gate.module-size" = ".shipgate/allowlists/module-size.yaml"
+"gate.module-private-vars" = ".shipgate/allowlists/module-private-vars.yaml"

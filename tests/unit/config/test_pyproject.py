@@ -351,14 +351,32 @@ suite = "full"
 
 [tool.shipgate.allowlists]
 "gate.acronym-allowlist" = ".shipgate/allowlists/acronyms.yaml"
-"gate.module-size" = ".shipgate/allowlists/module-size.txt"
+"gate.module-size" = ".shipgate/allowlists/module-size.yaml"
 """,
     )
     config = load_config(project_root=tmp_path)
     assert config.allowlists == {
         "gate.acronym-allowlist": ".shipgate/allowlists/acronyms.yaml",
-        "gate.module-size": ".shipgate/allowlists/module-size.txt",
+        "gate.module-size": ".shipgate/allowlists/module-size.yaml",
     }
+
+
+def test_allowlists_mapping_value_fails(tmp_path: Path):
+    write_pyproject(
+        tmp_path,
+        """\
+[project]
+name = "demo"
+
+[tool.shipgate.allowlists."gate.module-size"]
+path = ".shipgate/allowlists/module-size.yaml"
+reason = "Oversized modules pending split"
+""",
+    )
+    assert_config_error(
+        lambda: load_config(project_root=tmp_path),
+        contains="must be an allowlist file path",
+    )
 
 
 def test_allowlists_invalid_value_fails(tmp_path: Path):
@@ -373,7 +391,8 @@ name = "demo"
 """,
     )
     assert_config_error(
-        lambda: load_config(project_root=tmp_path), contains="must be a string path"
+        lambda: load_config(project_root=tmp_path),
+        contains="must be an allowlist file path",
     )
 
 
@@ -385,16 +404,18 @@ def test_yaml_merge_overrides_allowlists(tmp_path: Path):
 name = "demo"
 
 [tool.shipgate.allowlists]
-"gate.module-size" = ".shipgate/allowlists/module-size.txt"
+"gate.module-size" = ".shipgate/allowlists/module-size.yaml"
 """,
     )
     shipgate_yaml_path(tmp_path).parent.mkdir(parents=True)
     shipgate_yaml_path(tmp_path).write_text(
-        "allowlists:\n  gate.module-size: custom/module-size.txt\n",
+        "allowlists:\n  gate.module-size: custom/module-size.yaml\n",
         encoding="utf-8",
     )
     config = load_config(project_root=tmp_path)
-    assert config.allowlists == {"gate.module-size": "custom/module-size.txt"}
+    assert config.allowlists == {
+        "gate.module-size": "custom/module-size.yaml",
+    }
 
 
 def test_pyproject_example_loads():

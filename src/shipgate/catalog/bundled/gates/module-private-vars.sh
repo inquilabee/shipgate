@@ -17,7 +17,7 @@ CLASS_PATTERN='^class[[:space:]]+_[^_][A-Za-z0-9_]*[[:space:]]*[\(:]'
 is_allowlisted() {
 	local rel="$1"
 	[[ -n ${ALLOWLIST} && -f ${ALLOWLIST} ]] || return 1
-	grep -v '^[[:space:]]*#' "${ALLOWLIST}" | grep -v '^[[:space:]]*$' | grep -Fxq "${rel}"
+	"${SHIPGATE_PYTHON:?SHIPGATE_PYTHON is required}" -m shipgate.policy.path_allowlist --file "${ALLOWLIST}" --contains "${rel}"
 }
 
 report_matches() {

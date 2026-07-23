@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
+from shipgate.gates.runtime import is_gate_tool
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
@@ -59,6 +60,8 @@ class CheckResultCache:
     @staticmethod
     def _is_cacheable(resolved: ResolvedRequest) -> bool:
         if resolved.mode == RunMode.APPLY:
+            return False
+        if is_gate_tool(resolved.tool):
             return False
         if resolved.tool.scope.delivery == "root":
             return False

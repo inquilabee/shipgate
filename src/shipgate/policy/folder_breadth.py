@@ -43,14 +43,9 @@ SKIP_DIR_NAMES = frozenset({"__pycache__"})
 
 
 def load_allowlist(path: Path) -> set[str]:
-    if not path.is_file():
-        return set()
-    entries: set[str] = set()
-    for line in path.read_text(encoding="utf-8").splitlines():
-        stripped = line.split("#", 1)[0].strip()
-        if stripped:
-            entries.add(stripped.rstrip("/"))
-    return entries
+    from shipgate.policy.path_allowlist import PathAllowlistLoader
+
+    return PathAllowlistLoader.load_paths(path)
 
 
 def settings_from_config(

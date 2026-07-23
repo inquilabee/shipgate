@@ -1,3 +1,0 @@
-# One directory path per line; skip folder-breadth checks for these paths.
-# Per-tool catalog metadata: one YAML file per bundled tool definition.
-src/shipgate/catalog/bundled/catalog/tools

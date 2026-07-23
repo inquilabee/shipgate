@@ -17,7 +17,7 @@ def assert_init_layout(root):
     assert (sg / "reports").is_dir(), "reports directory missing"
     assert (sg / "gates").is_dir(), "gates directory missing"
     assert (sg / "allowlists" / "acronyms.yaml").is_file(), "acronyms allowlist missing"
-    assert (sg / "allowlists" / "module-private-vars.txt").is_file(), (
+    assert (sg / "allowlists" / "module-private-vars.yaml").is_file(), (
         "module-private-vars allowlist missing"
     )
     assert (sg / "configs" / "ruff.toml").is_file(), "ruff config missing"

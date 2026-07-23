@@ -14,6 +14,12 @@ ty.check:
   cli:
     paths:
       style: positional
+    config:
+      flag: --config-file
+      style: scalar
+    python:
+      flag: --python
+      style: scalar
     exclude:
       flag: --exclude
       style: repeated
@@ -34,6 +40,8 @@ ty.check:
       - bundled
     merge: false
   option_order:
+    - config
+    - python
     - exclude
     - format
     - paths

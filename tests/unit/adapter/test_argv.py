@@ -95,6 +95,29 @@ def test_mdformat_apply_enables_frontmatter_by_default(tmp_path):
     assert argv[extensions_index + 1] == "frontmatter"
 
 
+def test_ty_check_passes_config_file(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("ty.check")
+    config_path = tmp_path / ".shipgate" / "configs" / "ty.toml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text('[environment]\npython = ".venv"\n', encoding="utf-8")
+    request = build_execution_request(
+        runnable="ty.check",
+        mode=RunMode.CHECK,
+        project_root=tmp_path,
+        options=NormalizedOptions(
+            paths=(tmp_path,),
+            config=(config_path,),
+            exclude=("tests",),
+        ),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert "--config-file" in argv
+    assert str(config_path.resolve()) in argv
+
+
 def test_gitleaks_scan_uses_project_root_for_multiple_scope_paths(tmp_path):
     catalog = load_catalog()
     tool = catalog.get_tool("gitleaks.scan")
