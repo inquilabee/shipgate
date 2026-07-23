@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 PROJECT_SERVER_DIR = ".shipgate/server"
 PROJECT_WORKTREES_DIR = ".shipgate/worktrees"
@@ -10,6 +14,7 @@ SERVER_DB_FILENAME = "report.db"
 LEGACY_CONFIG_FILENAMES = ("shipgate.yaml", ".shipgate.yaml")
 PROJECT_ROOT_CACHE_KEY = "SHIPGATE_ROOT"
 POLICY_CACHE_KEY = "SHIPGATE_POLICY"
+PROJECT_ENV_CACHE_KEY = "SHIPGATE_PROJECT_ENV"
 ALLOWED_POLICY_VALUES = frozenset({"yaml", "pyproject"})
 
 
@@ -57,6 +62,17 @@ def read_cached_policy(env_path: Path) -> str | None:
     if raw in ALLOWED_POLICY_VALUES:
         return raw
     return None
+
+
+def update_project_cache_env(project_root: Path, updates: Mapping[str, str]) -> Path:
+    """Merge keys into ``.shipgate/cache/.env``."""
+    env_path = project_root_cache_env_path(project_root)
+    env_path.parent.mkdir(parents=True, exist_ok=True)
+    values = parse_env_file(env_path) if env_path.is_file() else {}
+    values.update({key: value for key, value in updates.items() if value})
+    content = "".join(f"{key}={values[key]}\n" for key in sorted(values))
+    env_path.write_text(content, encoding="utf-8")
+    return env_path
 
 
 def read_cached_project_root(env_path: Path) -> Path | None:

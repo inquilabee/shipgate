@@ -47,7 +47,10 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-shipgate = ["catalog/bundled/**/*"]
+shipgate = [
+  "catalog/bundled/**/*",
+  "catalog/bundled/setup/.gitignore",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

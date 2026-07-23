@@ -24,7 +24,26 @@ def test_ruff_lint_argv(tmp_path):
     argv = build_argv(resolved)
     assert argv[0] == "ruff"
     assert "check" in argv
+    assert "--fix" not in argv
     assert "--output-format" in argv
+    assert str(tmp_path / "src") in argv
+
+
+def test_ruff_lint_apply_argv(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("ruff.lint")
+    request = build_execution_request(
+        runnable="ruff.lint",
+        mode=RunMode.APPLY,
+        project_root=tmp_path,
+        options=NormalizedOptions(paths=(tmp_path / "src",)),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert argv[0] == "ruff"
+    assert "check" in argv
+    assert "--fix" in argv
     assert str(tmp_path / "src") in argv
 
 

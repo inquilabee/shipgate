@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from shipgate.app import InstallCommand, RunCommand, ShipGateApp
 from shipgate.errors import ShipGateError
 from shipgate.paths import find_project_root
+from shipgate.runtime.project_python import persist_project_python
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -36,6 +37,11 @@ def shared_parser() -> argparse.ArgumentParser:
     shared.add_argument("--no-cache", action="store_true")
     shared.add_argument("--changed-only", action="store_true")
     shared.add_argument("--since", help="Git ref for incremental checks")
+    shared.add_argument(
+        "--project-env",
+        type=Path,
+        help="Project Python environment path; saved to .shipgate/cache/.env",
+    )
     return shared
 
 
@@ -53,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--configs-only",
         action="store_true",
         help="Scaffold .shipgate/configs without creating policy",
+    )
+    init_parser.add_argument(
+        "--project-env",
+        type=Path,
+        help="Project Python environment path; saved to .shipgate/cache/.env",
     )
 
     configs_parser = sub.add_parser("configs", help="Project tool config management")
@@ -155,6 +166,9 @@ def dispatch_command(
     project_root: Path,
 ) -> int:
     command = args.command or "check"
+    project_env = getattr(args, "project_env", None)
+    if project_env is not None and command != "init":
+        persist_project_python(project_root, project_env)
     handlers: dict[str, Callable[[], int]] = {
         "install": lambda: app.install(
             InstallCommand(
@@ -189,11 +203,13 @@ def dispatch_command(
 
 def dispatch_init(app: ShipGateApp, args: argparse.Namespace, project_root: Path) -> int:
     mode = getattr(args, "init_mode", None) or "yaml"
+    project_env = getattr(args, "project_env", None)
     sys.stdout.write(
         app.init(
             project_root,
             configs_only=getattr(args, "configs_only", False),
             mode=mode,
+            project_env=project_env,
         )
     )
     return 0

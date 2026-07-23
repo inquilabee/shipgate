@@ -84,6 +84,17 @@ def test_workflow_resolves_ci(catalog):
     assert [item.tool_id for item in planned][:2] == ["ruff.lint", "ty.check"]
 
 
+def test_format_suite_runs_ruff_lint_before_format(catalog):
+    suite_id, planned = resolve_runnables(
+        mode=RunMode.APPLY,
+        project=ProjectConfig(),
+        catalog=catalog,
+    )
+    assert suite_id == "format"
+    assert [item.tool_id for item in planned][:2] == ["ruff.lint", "ruff.format"]
+    assert all(item.mode == RunMode.APPLY for item in planned)
+
+
 def test_check_bindings_do_not_replace_suite(catalog):
     project = ProjectConfig(
         suite="full",

@@ -4,9 +4,11 @@ ruff.lint:
     - check
   modes:
     - check
+    - apply
   capabilities:
     - Linting
     - Quality
+    - Formatting
   normalizer: ruff
   install:
     manager: python
@@ -21,6 +23,9 @@ ruff.lint:
     exclude:
       flag: --exclude
       style: repeated
+    fix:
+      flag: --fix
+      style: boolean
     output:
       flag: --output-file
       style: scalar
@@ -42,6 +47,7 @@ ruff.lint:
     merge: false
   option_order:
     - config
+    - fix
     - exclude
     - format
     - output

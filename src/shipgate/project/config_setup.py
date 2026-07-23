@@ -9,7 +9,7 @@ from shipgate.gates.paths import bundled_root_path
 from shipgate.paths import (
     POLICY_CACHE_KEY,
     PROJECT_ROOT_CACHE_KEY,
-    project_root_cache_env_path,
+    update_project_cache_env,
 )
 
 if TYPE_CHECKING:
@@ -72,13 +72,13 @@ def scaffold_shipgate_gitignore(project_root: Path) -> Path | None:
 def write_project_root_cache(project_root: Path, *, policy: str = "yaml") -> Path:
     """Record the project root and policy mode from ``shipgate init``."""
     root = project_root.resolve()
-    env_path = project_root_cache_env_path(root)
-    env_path.parent.mkdir(parents=True, exist_ok=True)
-    env_path.write_text(
-        f"{PROJECT_ROOT_CACHE_KEY}={root}\n{POLICY_CACHE_KEY}={policy}\n",
-        encoding="utf-8",
+    return update_project_cache_env(
+        root,
+        {
+            PROJECT_ROOT_CACHE_KEY: str(root),
+            POLICY_CACHE_KEY: policy,
+        },
     )
-    return env_path
 
 
 def bundled_pyproject_shipgate_template() -> Path:

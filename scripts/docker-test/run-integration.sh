@@ -42,14 +42,7 @@ run_cmd() {
 	return 0
 }
 
-fix_acronym_allowlist() {
-	# Bundled template is comments-only; policy gate requires a YAML mapping.
-	mkdir -p .shipgate/allowlists
-	cat >.shipgate/allowlists/acronyms.yaml <<'EOF'
-# Documented acronyms (keys are allowlisted tokens).
-{}
-EOF
-}
+POLICY_YAML=".shipgate/shipgate.yaml"
 
 RESULTS=()
 
@@ -94,15 +87,14 @@ git add -A
 git commit -q -m "initial commit"
 
 run_cmd "A1 shipgate init" shipgate init
-fix_acronym_allowlist
 echo "--- shipgate.yaml ---"
-cat shipgate.yaml
+cat "$POLICY_YAML"
 echo "--- .shipgate/configs (first 20) ---"
 find .shipgate/configs -type f 2>/dev/null | head -20 || true
 
-sed -i 's/^suite: standard/suite: full/' shipgate.yaml
+sed -i 's/^suite: standard/suite: full/' "$POLICY_YAML"
 echo "--- updated shipgate.yaml ---"
-cat shipgate.yaml
+cat "$POLICY_YAML"
 
 run_cmd "A2 shipgate install --suite full" shipgate install --suite full
 echo "--- install manifest ---"
@@ -130,6 +122,9 @@ if [[ $RUN_DOGFOOD == "1" ]]; then
 	git commit -q -m "dogfood subset"
 
 	run_cmd "B1 shipgate install" shipgate install
+	echo "--- project python env for ty ---"
+	python3 -m venv .venv
+	.venv/bin/pip install -q -e ".[server]"
 	echo "--- install manifest ---"
 	cat .shipgate/tools/manifest.json 2>/dev/null || echo "(no manifest)"
 	echo "--- managed binaries ---"

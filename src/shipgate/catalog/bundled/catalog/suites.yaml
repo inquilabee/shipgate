@@ -7,6 +7,7 @@ suites:
     fail_fast: false
   format:
     members:
+      - ruff.lint
       - ruff.format
       - mdformat.apply
       - shfmt.apply

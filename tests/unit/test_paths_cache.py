@@ -5,6 +5,7 @@ from pathlib import Path
 from shipgate.paths import (
     find_cached_project_root,
     find_project_root,
+    parse_env_file,
     project_root_cache_env_path,
     read_cached_project_root,
     shipgate_dir,
@@ -12,13 +13,15 @@ from shipgate.paths import (
 from shipgate.project.init import init_project
 
 
-def test_init_writes_project_root_cache(tmp_path: Path) -> None:
+def test_init_writes_project_root_cache(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("VIRTUAL_ENV", raising=False)
     init_project(tmp_path)
     env_path = project_root_cache_env_path(tmp_path)
     assert env_path.is_file()
-    assert env_path.read_text(encoding="utf-8") == (
-        f"SHIPGATE_ROOT={tmp_path.resolve()}\nSHIPGATE_POLICY=yaml\n"
-    )
+    assert parse_env_file(env_path) == {
+        "SHIPGATE_POLICY": "yaml",
+        "SHIPGATE_ROOT": str(tmp_path.resolve()),
+    }
 
 
 def test_init_gitignore_ignores_cache(tmp_path: Path) -> None:

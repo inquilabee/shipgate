@@ -193,8 +193,20 @@ class ShipGateApp:
     def gates_lib_path(self) -> str:
         return f"{gates_lib_path()}\n"
 
-    def init(self, project_root: Path, *, configs_only: bool = False, mode: str = "yaml") -> str:
-        path = init_project(project_root, configs_only=configs_only, mode=mode)
+    def init(
+        self,
+        project_root: Path,
+        *,
+        configs_only: bool = False,
+        mode: str = "yaml",
+        project_env: Path | None = None,
+    ) -> str:
+        path = init_project(
+            project_root,
+            configs_only=configs_only,
+            mode=mode,
+            project_env=project_env,
+        )
         if configs_only:
             return "scaffolded .shipgate configs\n"
         if mode == "pyproject":

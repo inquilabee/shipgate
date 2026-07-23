@@ -2,6 +2,7 @@ capabilities:
   Linting:
     - ruff.lint
   Formatting:
+    - ruff.lint
     - ruff.format
     - mdformat.apply
     - shfmt.apply
