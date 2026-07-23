@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from shipgate.domain.run_command import RunCommand
 from shipgate.runtime.reports import generate_run_id
 from shipgate.runtime.session.check_runner import CheckRunner, build_run_report
 from shipgate.runtime.session.context import (
-    RunCommand,
     RunContext,
     RunProgress,
     prepare_context,

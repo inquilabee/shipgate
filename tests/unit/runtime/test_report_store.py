@@ -4,8 +4,8 @@ from shipgate.domain.reports import (
     FindingLocation,
     RunReport,
 )
+from shipgate.domain.run_command import RunCommand
 from shipgate.runtime.report_store import ReportStore
-from shipgate.runtime.session.context import RunCommand
 from shipgate.runtime.session.finalizer import finalize_failed_run
 
 

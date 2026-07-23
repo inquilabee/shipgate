@@ -22,7 +22,7 @@ from shipgate.project.config_setup import (
     scaffold_shipgate_gitignore,
     write_project_root_cache,
 )
-from shipgate.runtime.project_python import (
+from shipgate.project.python import (
     discover_and_persist_project_python,
     persist_project_python,
 )

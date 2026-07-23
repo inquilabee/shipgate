@@ -11,6 +11,7 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.reports import RunReport, report_json_schema
+from shipgate.domain.run_command import RunCommand
 from shipgate.gates.core import GateCatalogMerger
 from shipgate.gates.init import init_gate
 from shipgate.gates.paths import gates_lib_path
@@ -20,7 +21,7 @@ from shipgate.project.init import init_project
 from shipgate.runtime.executor import Executor
 from shipgate.runtime.install import install_suite
 from shipgate.runtime.lockfile import write_lockfile
-from shipgate.runtime.run_session import RunCommand, RunProgress, RunSession
+from shipgate.runtime.run_session import RunProgress, RunSession
 
 if TYPE_CHECKING:
     from pathlib import Path

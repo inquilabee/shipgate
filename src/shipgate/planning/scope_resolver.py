@@ -61,21 +61,27 @@ class ScopeResolver:
     ) -> Scope:
         if scope_name and project.scopes and scope_name in project.scopes:
             return project.scopes[scope_name]
-        target = (target_override or project.target).resolve()
-        if not target.is_absolute():
-            target = (self.project_root / target).resolve()
+        raw = target_override or project.target
+        target = self._resolve_against_project_root(raw)
         return Scope(target=target, exclude=self.default_excludes, respect_gitignore=True)
+
+    def _resolve_against_project_root(self, path: Path) -> Path:
+        """Resolve relative paths against project_root, not process CWD."""
+        if path.is_absolute():
+            return path.resolve()
+        # Do not call path.resolve() first — that anchors to CWD.
+        return (self.project_root / path).resolve()
 
     def paths(self, scope: Scope, *, mode: RunMode) -> tuple[Path, ...]:
         if mode == RunMode.APPLY:
-            return (self._relative_if_under_root(scope.target),)
+            return (self._relative_if_under_root(self.resolve_scope_target(scope)),)
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
-            return (scope.target,)
+            return (self.resolve_scope_target(scope),)
         paths = self._scope_entry_paths(scope)
-        return tuple(paths) if paths else (scope.target,)
+        return tuple(paths) if paths else (self.resolve_scope_target(scope),)
 
     def _scope_entry_paths(self, scope: Scope) -> list[Path]:
-        target = scope.target.resolve()
+        target = self.resolve_scope_target(scope)
         if target.is_file() or target != self.project_root:
             return self._scope_single_path(target, scope)
         return self._scope_project_root_dirs(scope)
@@ -146,11 +152,13 @@ class ScopeResolver:
     ) -> tuple[Path, ...]:
         criteria = tool.scope
         if mode == RunMode.APPLY and criteria.delivery == "root":
+            if scope.include:
+                return self._paths_for_root_delivery(scope, self.resolve_scope_target(scope))
             return (Path(),)
 
         target = self.resolve_scope_target(scope)
         if criteria.delivery == "root":
-            return (self.relative_under_root(target),)
+            return self._paths_for_root_delivery(scope, target)
 
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
             return self.delivery_paths_without_filter(scope, criteria)
@@ -169,11 +177,14 @@ class ScopeResolver:
             target=target,
         )
 
+    def _paths_for_root_delivery(self, scope: Scope, target: Path) -> tuple[Path, ...]:
+        if scope.include:
+            entries = self._scope_included_dirs(scope)
+            return tuple(self.relative_under_root(path) for path in entries)
+        return (self.relative_under_root(target),)
+
     def resolve_scope_target(self, scope: Scope) -> Path:
-        target = scope.target.resolve()
-        if not target.is_absolute():
-            target = (self.project_root / target).resolve()
-        return target
+        return self._resolve_against_project_root(scope.target)
 
     def relative_under_root(self, path: Path) -> Path:
         resolved = path.resolve()
@@ -188,14 +199,15 @@ class ScopeResolver:
         scope: Scope,
         criteria: ScopeCriteria,
     ) -> tuple[Path, ...]:
-        target = self.relative_under_root(scope.target)
+        target = self.relative_under_root(self.resolve_scope_target(scope))
         if criteria.delivery == "root":
             return (target,)
         if criteria.delivery == "dirs":
-            if scope.target.is_dir():
+            resolved = self.resolve_scope_target(scope)
+            if resolved.is_dir():
                 return (target,)
             return (target.parent if target.parent.parts else Path(),)
-        if scope.target.is_file():
+        if self.resolve_scope_target(scope).is_file():
             return (target,)
         return (target,)
 
@@ -248,6 +260,7 @@ class ScopeResolver:
         target: Path,
     ) -> tuple[Path, ...]:
         if criteria.delivery == "root":
+            # Prefer include-aware root delivery when callers pass matched files.
             return (self.relative_under_root(target),)
         if not matched_files:
             return ()

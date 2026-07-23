@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -134,6 +135,8 @@ def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
         "needs_ack": not is_acknowledged(primary),
         "requirements_text": REQUIREMENTS_TEXT,
         "error": error,
+        "csrf_token": request.app.state.csrf_token,
+        "ui_token": os.environ.get("SHIPGATE_UI_TOKEN") or "",
     }
 
 

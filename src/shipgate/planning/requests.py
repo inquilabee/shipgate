@@ -13,8 +13,7 @@ from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.project import ProjectConfig
 from shipgate.errors import PlanningError
-from shipgate.planning.option_resolver import apply_defaults
-from shipgate.planning.options import resolve_option_sources
+from shipgate.planning.option_resolver import OptionResolver
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -57,20 +56,18 @@ def resolve_request(
         raise PlanningError("cannot set both verbose and quiet")
 
     sources = dict(option_sources or {})
-    merged_options, precedence_sources = resolve_option_sources(
-        cli_options=request.options,
-        project=project or ProjectConfig(),
-        tool=tool,
-    )
-    sources.update(precedence_sources)
-    options, sources = apply_defaults(
-        merged_options,
+    project_config = project or ProjectConfig()
+    options, precedence_sources = OptionResolver(
+        project_config,
+        request.project_root,
+        tool,
+    ).resolve(
+        request.options,
         mode=request.mode,
         check_id=tool.id,
-        project_root=request.project_root,
         target=target,
-        sources=sources,
     )
+    sources.update(precedence_sources)
 
     if request.mode == RunMode.CHECK and options.fix:
         raise PlanningError("fix is not allowed in check mode")

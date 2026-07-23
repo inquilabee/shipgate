@@ -33,6 +33,18 @@ def test_suite_override(catalog):
     assert [item.tool_id for item in planned] == ["ruff.lint", "ty.check"]
 
 
+def test_suite_override_beats_project_workflow(catalog):
+    project = ProjectConfig(workflow="ci", suite="standard")
+    suite_id, planned = resolve_runnables(
+        mode=RunMode.CHECK,
+        project=project,
+        catalog=catalog,
+        suite_override="python-quality",
+    )
+    assert suite_id == "python-quality"
+    assert [item.tool_id for item in planned] == ["ruff.lint", "ty.check"]
+
+
 def test_check_override(catalog):
     suite_id, planned = resolve_runnables(
         mode=RunMode.CHECK,

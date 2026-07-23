@@ -8,7 +8,17 @@ def test_scalar():
     assert CliSerializer().serialize(opt, "cfg.toml") == ["--config", "cfg.toml"]
 
 
-def test_scalar_tuple_uses_first_path():
+def test_scalar_multi_value_without_aggregate_emits_all():
+    opt = CliOptionDefinition(flag="--source", style="scalar")
+    assert serialize_option(opt, ("docs", "src")) == [
+        "--source",
+        "docs",
+        "--source",
+        "src",
+    ]
+
+
+def test_scalar_single_value_unchanged():
     opt = CliOptionDefinition(flag="--config", style="scalar")
     assert serialize_option(opt, ("/path/cfg.toml",)) == ["--config", "/path/cfg.toml"]
 

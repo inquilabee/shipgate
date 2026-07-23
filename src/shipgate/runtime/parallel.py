@@ -36,16 +36,16 @@ def collect_parallel_results(
     *,
     fail_fast: bool,
 ) -> None:
-    failed = False
+    errors: list[BaseException] = []
     for future in as_completed(futures):
         index = futures[future]
         try:
             results[index] = future.result()
-        except Exception:
-            failed = True
+        except BaseException as exc:
+            errors.append(exc)
             if fail_fast:
                 for pending in futures:
                     pending.cancel()
                 raise
-        if fail_fast and failed:
-            break
+    if errors:
+        raise errors[0]

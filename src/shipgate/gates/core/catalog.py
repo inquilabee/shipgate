@@ -63,7 +63,17 @@ class GateCatalogMerger:
 
     @staticmethod
     def _discover_gate_scripts(project_root: Path) -> list[Path]:
-        gates_dir = project_root / PROJECT_GATES_DIR
+        gates_dir = (project_root / PROJECT_GATES_DIR).resolve()
         if not gates_dir.is_dir():
             return []
-        return sorted(p for p in gates_dir.glob("*.sh") if p.is_file())
+        discovered: list[Path] = []
+        for path in sorted(gates_dir.glob("*.sh")):
+            if not path.is_file():
+                continue
+            resolved = path.resolve()
+            try:
+                resolved.relative_to(gates_dir)
+            except ValueError:
+                continue
+            discovered.append(resolved)
+        return discovered

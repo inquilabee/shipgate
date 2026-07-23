@@ -75,12 +75,18 @@ def resolve_suite_or_workflow(
     suite_override: str | None,
     workflow_override: str | None,
 ) -> tuple[str, list[PlannedCheck]]:
-    workflow_id = workflow_override or project.workflow
-    if workflow_id and workflow_id in catalog.workflows:
-        return resolve_workflow(workflow_id, catalog, project)
+    if workflow_override:
+        if workflow_override not in catalog.workflows:
+            raise PlanningError(
+                f"unknown workflow {workflow_override!r}",
+                hint='run "shipgate list suites" / check catalog workflows',
+            )
+        return resolve_workflow(workflow_override, catalog, project)
 
     if suite_override:
         suite_id = suite_override
+    elif project.workflow and project.workflow in catalog.workflows:
+        return resolve_workflow(project.workflow, catalog, project)
     elif mode == RunMode.APPLY:
         suite_id = "format"
     else:

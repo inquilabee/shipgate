@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.ci import apply_ci_defaults, is_ci_environment
 from shipgate.config.loader import ProjectConfigLoader
+from shipgate.domain.run_command import RunCommand
 from shipgate.planning.incremental import RunScopeSession, effective_incremental
 from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment
@@ -20,24 +21,13 @@ if TYPE_CHECKING:
     from shipgate.domain.project import ProjectConfig
     from shipgate.planning.workflow import PlannedCheck
 
-
-@dataclass(frozen=True)
-class RunCommand:
-    project_root: Path
-    config_path: Path | None = None
-    suite: str | None = None
-    check: str | None = None
-    workflow: str | None = None
-    target: Path | None = None
-    error_format: str | None = None
-    extra_args: tuple[str, ...] = ()
-    verbose: bool = False
-    quiet: bool = False
-    display_cli: bool = False
-    ci: bool = False
-    no_cache: bool = False
-    changed_only: bool = False
-    since: str | None = None
+__all__ = [
+    "RunCommand",
+    "RunContext",
+    "RunProgress",
+    "prepare_context",
+    "resolve_error_format",
+]
 
 
 @dataclass(frozen=True)

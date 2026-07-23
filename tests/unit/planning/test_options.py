@@ -23,13 +23,10 @@ def test_ty_check_default_format_from_catalog():
 def test_option_resolver_merges_precedence(tmp_path: Path):
     catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
-    merged, sources = OptionResolver().resolve(
-        cli_options=NormalizedOptions(verbose=True),
-        project=ProjectConfig(),
-        tool=tool,
+    merged, sources = OptionResolver(ProjectConfig(), tmp_path, tool).resolve(
+        NormalizedOptions(verbose=True),
         mode=RunMode.CHECK,
         check_id=tool.id,
-        project_root=tmp_path,
         target=tmp_path,
     )
     assert merged.verbose is True
@@ -41,13 +38,10 @@ def test_option_resolver_merges_precedence(tmp_path: Path):
 def test_option_resolver_defaults_fix_in_apply_mode(tmp_path: Path):
     catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
-    merged, sources = OptionResolver().resolve(
-        cli_options=NormalizedOptions(),
-        project=ProjectConfig(),
-        tool=tool,
+    merged, sources = OptionResolver(ProjectConfig(), tmp_path, tool).resolve(
+        NormalizedOptions(),
         mode=RunMode.APPLY,
         check_id=tool.id,
-        project_root=tmp_path,
         target=tmp_path,
     )
     assert merged.fix is True

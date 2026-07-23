@@ -6,7 +6,7 @@ import shlex
 import sys
 from typing import TYPE_CHECKING, Protocol
 
-from shipgate.adapter.argv import build_argv
+from shipgate.adapter.executable import build_tool_argv
 from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
@@ -25,9 +25,10 @@ if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig
+    from shipgate.domain.run_command import RunCommand
     from shipgate.planning.workflow import PlannedCheck
     from shipgate.runtime.executor import ProcessResult
-    from shipgate.runtime.session.context import RunCommand, RunContext
+    from shipgate.runtime.session.context import RunContext
 
 
 class ExecutorProtocol(Protocol):
@@ -161,9 +162,7 @@ class CheckRunner:
                 )
             else:
                 executable = resolved.tool.executable
-            argv_list = list(build_argv(resolved))
-            argv_list[0] = executable
-            argv = tuple(argv_list)
+            argv = build_tool_argv(resolved, executable=executable)
             env = dict(resolved.environment.env)
         if display_cli:
             sys.stderr.write(f"{resolved.tool.id}: {shlex.join(argv)}\n")

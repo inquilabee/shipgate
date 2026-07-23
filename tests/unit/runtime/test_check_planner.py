@@ -5,9 +5,10 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig
+from shipgate.domain.run_command import RunCommand
 from shipgate.planning.workflow import PlannedCheck
 from shipgate.runtime.session.check_planner import prepare_check
-from shipgate.runtime.session.context import RunCommand, RunContext
+from shipgate.runtime.session.context import RunContext
 
 
 def make_run_context(tmp_path: Path, planned: PlannedCheck) -> RunContext:
@@ -110,6 +111,27 @@ def test_prepare_check_ty_includes_project_python(tmp_path: Path):
     )
     assert prepared.request is not None
     assert prepared.request.options.python == ".venv"
+
+
+def test_check_planner_reuses_scope_resolver(tmp_path: Path):
+    from shipgate.planning.check_planner import CheckPlanner
+
+    catalog = CatalogLoader.load()
+    planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
+    context = make_run_context(tmp_path, planned)
+    planner = CheckPlanner(
+        project_root=context.project_root,
+        project=context.project,
+        catalog=catalog,
+        scope_session=context.scope_session,
+        environment=context.environment,
+    )
+    assert planner._scope_resolver is not None
+    first = planner._scope_resolver
+    command = RunCommand(project_root=tmp_path, target=tmp_path, check="ruff.lint")
+    (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
+    planner.prepare(planned, command)
+    assert planner._scope_resolver is first
 
 
 def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):

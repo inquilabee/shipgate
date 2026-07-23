@@ -13,9 +13,36 @@ from shipgate.paths import PROJECT_MANAGED_BIN_DIR, PROJECT_MANAGED_PYTHON_ENV, 
 if TYPE_CHECKING:
     from pathlib import Path
 
+SECRET_SUFFIXES = ("_TOKEN", "_SECRET", "_PASSWORD", "_PASSWD", "_API_KEY")
+SECRET_EXACT = frozenset(
+    {
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GITHUB_TOKEN",
+        "GH_TOKEN",
+        "OPENAI_API_KEY",
+    }
+)
+
+
+def filter_environ(env: dict[str, str]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for key, value in env.items():
+        upper = key.upper()
+        if upper in SECRET_EXACT:
+            continue
+        if any(upper.endswith(suffix) for suffix in SECRET_SUFFIXES):
+            continue
+        out[key] = value
+    return out
+
 
 def system_environment() -> ExecutionEnvironment:
-    return ExecutionEnvironment(kind="system", root=None, env=dict(os.environ))
+    return ExecutionEnvironment(
+        kind="system",
+        root=None,
+        env=filter_environ(dict(os.environ)),
+    )
 
 
 def managed_environment(project_root: Path) -> ExecutionEnvironment:
@@ -25,7 +52,7 @@ def managed_environment(project_root: Path) -> ExecutionEnvironment:
         scripts = venv / "Scripts"
     else:
         scripts = venv / "bin"
-    env = dict(os.environ)
+    env = filter_environ(dict(os.environ))
     env.pop("VIRTUAL_ENV", None)
     path_parts: list[str] = []
     if bin_dir.is_dir():

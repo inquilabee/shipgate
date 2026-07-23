@@ -51,6 +51,42 @@ def test_scope_resolver_resolve_target(tmp_path: Path):
     assert scope.target == tmp_path.resolve()
 
 
+def test_resolve_relative_target_uses_project_root_not_cwd(tmp_path: Path, monkeypatch):
+    project_root = tmp_path / "repo"
+    project_root.mkdir()
+    (project_root / "src").mkdir()
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    monkeypatch.chdir(other)
+
+    scope = ScopeResolver(project_root).resolve(ProjectConfig(target=Path()))
+    assert scope.target == project_root.resolve()
+
+    scope_src = ScopeResolver(project_root).resolve(
+        ProjectConfig(target=Path()),
+        target_override=Path("src"),
+    )
+    assert scope_src.target == (project_root / "src").resolve()
+
+
+def test_delivery_root_respects_scope_include(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "src" / "a.py").write_text("x=1\n", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    tool = catalog.get_tool("ruff.lint")  # delivery: root, paths positional
+    scope = Scope(
+        target=tmp_path,
+        include=("src", "tests"),
+        respect_gitignore=True,
+    )
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    assert set(paths) == {Path("src"), Path("tests")}
+    assert Path("docs") not in paths
+    assert Path() not in paths
+
+
 def test_scope_paths_prunes_ignored_roots(tmp_path: Path):
     (tmp_path / ".gitignore").write_text(".venv/\n", encoding="utf-8")
     (tmp_path / "src").mkdir()

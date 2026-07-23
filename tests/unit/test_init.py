@@ -21,19 +21,25 @@ def assert_init_layout(root):
     assert "!configs/" in gitignore, "configs/ not un-ignored"
 
 
+def assert_default_yaml_policy(content: str) -> None:
+    assert "suite: full" in content, "suite not set to full"
+    assert "env: managed" in content, "env not managed"
+    assert "error-format: compact" in content, "error-format not compact"
+    assert "mode: auto" in content, "configs.mode not auto"
+    assert "changed-only: true" in content, "changed-only not enabled"
+    assert "src/shipgate/frontend/templates/" not in content, (
+        "bundled init must not embed shipgate-specific semgrep excludes"
+    )
+    assert "allowlists:" in content, "allowlists section missing"
+
+
 def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     code = main(["init"])
     assert code == 0, "init should succeed"
     config_path = tmp_path / SHIPGATE_YAML
     assert config_path.is_file(), "canonical shipgate.yaml missing"
-    content = config_path.read_text(encoding="utf-8")
-    assert "suite: full" in content, "suite not set to full"
-    assert "env: managed" in content, "env not managed"
-    assert "error-format: compact" in content, "error-format not compact"
-    assert "mode: auto" in content, "configs.mode not auto"
-    assert "changed-only: true" in content, "changed-only not enabled"
-    assert "allowlists:" in content, "allowlists section missing"
+    assert_default_yaml_policy(config_path.read_text(encoding="utf-8"))
     assert_init_layout(tmp_path)
     cache = (tmp_path / PROJECT_CACHE_ENV).read_text(encoding="utf-8")
     assert "SHIPGATE_POLICY=yaml" in cache, "yaml policy not cached"

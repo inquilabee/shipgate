@@ -24,7 +24,6 @@ def shared_parser() -> argparse.ArgumentParser:
     shared.add_argument("--check", help="Single check to run")
     shared.add_argument("--target", type=Path, help="Target path")
     shared.add_argument("--error-format", dest="error_format", help="Error output format")
-    shared.add_argument("--output-dir", type=Path, help="Output directory")
     shared.add_argument("--extra-arg", action="append", default=[], dest="extra_args")
     shared.add_argument("--verbose", action="store_true")
     shared.add_argument("--quiet", action="store_true")

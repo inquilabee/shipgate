@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.planning.option_resolver import OptionResolver
@@ -18,8 +19,5 @@ def resolve_option_sources(
     project: ProjectConfig,
     tool: ToolDefinition,
 ) -> tuple[NormalizedOptions, dict[str, str]]:
-    return OptionResolver().resolve_sources(
-        cli_options=cli_options,
-        project=project,
-        tool=tool,
-    )
+    """Compatibility shim — prefer OptionResolver(project, root, tool)._resolve_sources."""
+    return OptionResolver(project, Path(), tool)._resolve_sources(cli_options)

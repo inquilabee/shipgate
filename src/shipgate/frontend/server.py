@@ -21,7 +21,9 @@ def serve(
         ) from exc
 
     from shipgate.frontend.web.app import create_app
+    from shipgate.frontend.web.security import warn_if_non_loopback
 
+    warn_if_non_loopback(host)
     primary = Path(project_root).resolve()
     app = create_app(primary)
     url = f"http://{host}:{port}/"

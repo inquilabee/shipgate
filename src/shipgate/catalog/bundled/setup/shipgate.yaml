@@ -19,8 +19,6 @@ checks:
 scopes:
   semgrep:
     target: .
-    exclude:
-      - src/shipgate/frontend/templates/
 allowlists:
   gate.acronym-allowlist: .shipgate/allowlists/acronyms.yaml
   gate.folder-breadth: .shipgate/allowlists/folder-breadth.yaml

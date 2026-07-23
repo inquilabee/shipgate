@@ -8,6 +8,7 @@ from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
+from shipgate.domain.reports import CheckReport
 from shipgate.gates.paths import gates_lib_path, resolve_gate_script
 from shipgate.gates.runtime import (
     gate_scope_paths,
@@ -38,7 +39,7 @@ def gate_request(
     )
 
 
-def run_gate_check(tmp_path: Path, request: ResolvedRequest) -> tuple[ProcessResult, object]:
+def run_gate_check(tmp_path: Path, request: ResolvedRequest) -> tuple[ProcessResult, CheckReport]:
     argv, env = prepare_gate_execution(request)
     result = Executor().run(argv, cwd=tmp_path, env=env)
     report = GateJsonNormalizer().normalize(request, result)

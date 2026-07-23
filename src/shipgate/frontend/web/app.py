@@ -27,6 +27,11 @@ from shipgate.frontend.web.context import (
     overview_context,
     start_new_run,
 )
+from shipgate.frontend.web.security import (
+    new_csrf_token,
+    ui_token_from_env,
+    validate_run_submit_tokens,
+)
 from shipgate.paths import PROJECT_SERVER_DIR, SERVER_DB_FILENAME, normalize_finding_path
 from shipgate.runtime.report_store import ReportStore
 
@@ -34,6 +39,18 @@ FRONTEND_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = FRONTEND_ROOT / "templates"
 STATIC_DIR = FRONTEND_ROOT / "static"
 GITHUB_REPO_URL = "https://github.com/inquilabee/shipgate"
+
+
+def contained_file(root: Path, rel_path: str) -> Path:
+    root_resolved = root.resolve()
+    path = (root_resolved / rel_path).resolve()
+    try:
+        path.relative_to(root_resolved)
+    except ValueError as exc:
+        raise ValueError("path escapes root") from exc
+    if not path.is_file():
+        raise FileNotFoundError(rel_path)
+    return path
 
 
 def create_app(primary_root: Path) -> FastAPI:
@@ -62,6 +79,7 @@ def create_app(primary_root: Path) -> FastAPI:
     fastapi_app.state.orchestrator = orchestrator
     fastapi_app.state.worktrees = worktrees
     fastapi_app.state.templates = templates
+    fastapi_app.state.csrf_token = new_csrf_token()
     register_routes(fastapi_app)
     return fastapi_app
 
@@ -115,8 +133,19 @@ def register_run_routes(app: FastAPI) -> None:
         request: Request,
         branch: str = Form(...),
         suite_id: str = Form(...),
+        csrf_token: str | None = Form(None),
+        ui_token: str | None = Form(None),
         acknowledge_requirements: str | None = Form(None),
     ) -> RedirectResponse:
+        try:
+            validate_run_submit_tokens(
+                csrf_expected=request.app.state.csrf_token,
+                csrf_submitted=csrf_token,
+                ui_token_expected=ui_token_from_env(),
+                ui_token_submitted=ui_token,
+            )
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
         return start_new_run(
             request.app.state.primary_root,
             request.app.state.orchestrator,
@@ -167,9 +196,10 @@ def register_run_log_routes(app: FastAPI) -> None:
             raise HTTPException(status_code=404, detail="log not found")
         run = request.app.state.storage.get_run(run_id)
         root = Path(run.worktree_path) if run and run.worktree_path else primary
-        path = (root / rel_path).resolve()
-        if not path.is_file():
-            raise HTTPException(status_code=404, detail="log file missing")
+        try:
+            path = contained_file(root, rel_path)
+        except (ValueError, FileNotFoundError) as exc:
+            raise HTTPException(status_code=404, detail="log file missing") from exc
         return PlainTextResponse(path.read_text(encoding="utf-8", errors="replace"))
 
 

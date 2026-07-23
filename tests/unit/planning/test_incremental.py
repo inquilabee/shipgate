@@ -7,6 +7,7 @@ import pytest
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
+from shipgate.errors import PlanningError
 from shipgate.planning.incremental import (
     git_changed_files,
     tool_paths_after_incremental,
@@ -51,6 +52,28 @@ def test_git_changed_files_includes_staged_changes(tmp_path):
     git_add(tmp_path, changed_file)
     changed = git_changed_files(tmp_path, "HEAD")
     assert "src/b.py" in changed
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+def test_invalid_since_raises_planning_error(tmp_path):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "a.py").write_text("x = 1\n", encoding="utf-8")
+    git_init_commit(tmp_path)
+    with pytest.raises(PlanningError, match=r"since|git|ref"):
+        git_changed_files(tmp_path, "this-ref-does-not-exist-zz")
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+def test_git_changed_files_includes_untracked(tmp_path):
+    source = tmp_path / "src"
+    source.mkdir()
+    (source / "a.py").write_text("x = 1\n", encoding="utf-8")
+    git_init_commit(tmp_path)
+    untracked = source / "new.py"
+    untracked.write_text("z = 3\n", encoding="utf-8")
+    changed = git_changed_files(tmp_path, "HEAD")
+    assert "src/new.py" in changed
 
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")

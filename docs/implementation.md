@@ -226,7 +226,6 @@ Add these early:
 --check CHECK_ID
 --target PATH
 --error-format FORMAT
---output-dir PATH
 --extra-arg VALUE
 --verbose
 --quiet
@@ -1147,6 +1146,12 @@ Supported initial modes:
 
 - `system`: use tool on `PATH`
 - `managed`: use `.shipgate/tools`
+
+Tool and gate subprocesses receive a filtered copy of the process environment.
+Keys matching secret-like suffixes (`*_TOKEN`, `*_SECRET`, `*_PASSWORD`,
+`*_PASSWD`, `*_API_KEY`) and a small exact denylist (`AWS_SECRET_ACCESS_KEY`,
+`GITHUB_TOKEN`, etc.) are dropped. Residual risk remains: tools can still read
+secrets from disk or other channels; this only limits env inheritance.
 
 ### `runtime/install.py`
 

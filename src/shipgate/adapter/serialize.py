@@ -24,27 +24,26 @@ class CliSerializer:
             return self._serialize_joined(definition, value)
         return []
 
-    @staticmethod
-    def _serialize_boolean(definition: CliOptionDefinition, value: object) -> list[str]:
+    def _serialize_boolean(self, definition: CliOptionDefinition, value: object) -> list[str]:
         if value:
             return [definition.flag] if definition.flag else []
         return []
 
-    @staticmethod
-    def _serialize_positional(value: object) -> list[str]:
+    def _serialize_positional(self, value: object) -> list[str]:
         if isinstance(value, (list, tuple)):
             return [str(v) for v in value]
         return [str(value)]
 
-    @staticmethod
-    def _serialize_scalar(definition: CliOptionDefinition, value: object) -> list[str]:
+    def _serialize_scalar(self, definition: CliOptionDefinition, value: object) -> list[str]:
         if not definition.flag:
             return []
         flag = definition.flag
         if isinstance(value, (list, tuple)):
             if not value:
                 return []
-            if definition.aggregate == "repeat":
+            # aggregate == "repeat" or bare multi-value: emit every entry.
+            # aggregate == "root" is handled earlier by aggregate_value().
+            if definition.aggregate in (None, "repeat"):
                 result: list[str] = []
                 for item in value:
                     result.extend([flag, str(item)])
@@ -52,8 +51,7 @@ class CliSerializer:
             value = value[0]
         return [flag, str(value)]
 
-    @staticmethod
-    def _serialize_repeated(definition: CliOptionDefinition, value: object) -> list[str]:
+    def _serialize_repeated(self, definition: CliOptionDefinition, value: object) -> list[str]:
         if not definition.flag:
             return []
         flag = definition.flag
@@ -63,8 +61,7 @@ class CliSerializer:
             result.extend([flag, str(item)])
         return result
 
-    @staticmethod
-    def _serialize_joined(definition: CliOptionDefinition, value: object) -> list[str]:
+    def _serialize_joined(self, definition: CliOptionDefinition, value: object) -> list[str]:
         if not definition.flag:
             return []
         flag = definition.flag

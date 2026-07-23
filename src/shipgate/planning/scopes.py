@@ -29,16 +29,25 @@ def resolve_scope(
     *,
     target_override: Path | None = None,
     scope_name: str | None = None,
+    resolver: ScopeResolver | None = None,
 ) -> Scope:
-    return ScopeResolver(project_root).resolve(
+    scope_resolver = resolver or ScopeResolver(project_root)
+    return scope_resolver.resolve(
         project,
         target_override=target_override,
         scope_name=scope_name,
     )
 
 
-def scope_paths(scope: Scope, project_root: Path, *, mode: RunMode) -> tuple[Path, ...]:
-    return ScopeResolver(project_root).paths(scope, mode=mode)
+def scope_paths(
+    scope: Scope,
+    project_root: Path,
+    *,
+    mode: RunMode,
+    resolver: ScopeResolver | None = None,
+) -> tuple[Path, ...]:
+    scope_resolver = resolver or ScopeResolver(project_root)
+    return scope_resolver.paths(scope, mode=mode)
 
 
 def scope_paths_for_tool(
@@ -48,9 +57,12 @@ def scope_paths_for_tool(
     *,
     mode: RunMode,
     scope_session: RunScopeSession | None = None,
+    resolver: ScopeResolver | None = None,
 ) -> tuple[Path, ...]:
+    if resolver is not None:
+        return resolver.paths_for_tool(scope, tool, mode)
     return ScopeResolver(project_root, scope_session=scope_session).paths_for_tool(
         scope,
         tool,
-        mode=mode,
+        mode,
     )

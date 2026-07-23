@@ -13,7 +13,8 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from shipgate.domain.reports import RunReport
-    from shipgate.runtime.session.context import RunCommand, RunProgress
+    from shipgate.domain.run_command import RunCommand
+    from shipgate.runtime.session.context import RunProgress
 
 
 def emit_progress(

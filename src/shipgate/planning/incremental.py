@@ -9,13 +9,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
+from shipgate.errors import PlanningError
 from shipgate.planning.gitignore import expand_scope, minimize_covering_dirs
 from shipgate.planning.scope_resolver import ExpandScopeKey, ScopeResolver
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition
     from shipgate.domain.project import ProjectConfig, Scope
-    from shipgate.runtime.session.context import RunCommand
+    from shipgate.domain.run_command import RunCommand
 
 MAX_INCREMENTAL_EXPLICIT_FILES = 64
 
@@ -188,7 +189,11 @@ def git_executable() -> str:
 
 def git_changed_files(project_root: Path, since: str) -> set[str]:
     if not (project_root / ".git").exists():
-        return set()
+        raise PlanningError(
+            "changed-only/--since requires a git repository",
+            path=str(project_root),
+            hint="run from a git checkout or disable changed-only",
+        )
     if since == "HEAD":
         return git_changed_against_head(project_root)
     git = git_executable()
@@ -208,17 +213,24 @@ def git_changed_files(project_root: Path, since: str) -> set[str]:
             check=False,
         )
     if result.returncode != 0:
-        return set()
+        detail = (result.stderr or result.stdout or "").strip()
+        raise PlanningError(
+            f"invalid or unresolvable --since ref {since!r}",
+            hint=detail or 'check the ref with "git rev-parse"',
+        )
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
 
 def git_changed_against_head(project_root: Path) -> set[str]:
     git = git_executable()
     changed: set[str] = set()
-    for args in (
+    commands = (
         [git, "diff", "--name-only", "--relative", "--cached", "HEAD"],
         [git, "diff", "--name-only", "--relative", "HEAD"],
-    ):
+        [git, "ls-files", "--others", "--exclude-standard"],
+    )
+    failures = 0
+    for args in commands:
         result = subprocess.run(  # noqa: S603
             args,
             cwd=project_root,
@@ -227,8 +239,14 @@ def git_changed_against_head(project_root: Path) -> set[str]:
             check=False,
         )
         if result.returncode != 0:
+            failures += 1
             continue
         changed |= {line.strip() for line in result.stdout.splitlines() if line.strip()}
+    if failures == len(commands):
+        raise PlanningError(
+            "git failed while computing changed files",
+            path=str(project_root),
+        )
     return changed
 
 
