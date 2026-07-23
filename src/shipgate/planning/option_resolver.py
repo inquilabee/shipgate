@@ -269,3 +269,22 @@ class OptionResolver:
     def _env_bool(name: str) -> bool:
         value = os.environ.get(name, "")
         return value.lower() in {"1", "true", "yes", "on"}
+
+
+def apply_defaults(
+    options: NormalizedOptions,
+    *,
+    mode: RunMode,
+    check_id: str,
+    project_root: Path,
+    target: Path,
+    sources: dict[str, str],
+) -> tuple[NormalizedOptions, dict[str, str]]:
+    return OptionResolver().apply_defaults(
+        options,
+        mode=mode,
+        check_id=check_id,
+        project_root=project_root,
+        target=target,
+        sources=sources,
+    )

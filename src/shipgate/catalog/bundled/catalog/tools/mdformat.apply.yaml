@@ -11,7 +11,7 @@ mdformat.apply:
   install:
     manager: python
     package: mdformat
-    version: '>=0.7'
+    version: ">=0.7"
     requires:
       - mdformat-frontmatter>=2.0
   cli:
@@ -40,5 +40,5 @@ mdformat.apply:
     extensions:
       - .md
     globs:
-      - '**/*.mdc'
+      - "**/*.mdc"
     delivery: files

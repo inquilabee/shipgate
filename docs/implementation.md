@@ -769,7 +769,7 @@ Output:
 Delivery strategies:
 
 | `delivery` | argv behavior |
-| --- | --- |
+| ---------- | -------------------------------------------------------------- |
 | `root` | Pass scope target (usually `.`); tool discovers files |
 | `dirs` | Minimal covering directories of matched files |
 | `files` | Explicit file paths after extension/glob + gitignore filtering |

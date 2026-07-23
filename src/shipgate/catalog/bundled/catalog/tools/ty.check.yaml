@@ -10,7 +10,7 @@ ty.check:
   install:
     manager: python
     package: ty
-    version: '>=0.0.1'
+    version: ">=0.0.1"
   cli:
     paths:
       style: positional

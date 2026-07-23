@@ -12,7 +12,7 @@ bandit.scan:
   install:
     manager: python
     package: bandit
-    version: '>=1.7'
+    version: ">=1.7"
   cli:
     paths:
       style: positional

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.ci import apply_ci_defaults, is_ci_environment
 from shipgate.config.loader import load_config
+from shipgate.planning.incremental import RunScopeSession, effective_incremental
 from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment
 
@@ -55,6 +56,7 @@ class RunContext:
     environment: ExecutionEnvironment
     parallel: bool
     fail_fast: bool
+    scope_session: RunScopeSession
 
 
 def resolve_error_format(command: RunCommand, project: ProjectConfig) -> str:
@@ -80,6 +82,12 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
     )
     parallel, fail_fast = suite_execution_flags(catalog, suite_id, project)
     environment = resolve_environment(project_root, project.env)
+    changed_only, since = effective_incremental(command, project)
+    scope_session = RunScopeSession(
+        project_root=project_root,
+        changed_only=changed_only,
+        since=since,
+    )
     return RunContext(
         project=project,
         project_root=project_root,
@@ -88,4 +96,5 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
         environment=environment,
         parallel=parallel,
         fail_fast=fail_fast,
+        scope_session=scope_session,
     )

@@ -18,7 +18,7 @@ suites:
       - bandit.scan
       - gitleaks.scan
       - semgrep.scan
-    parallel: false
+    parallel: true
     fail_fast: false
   extended:
     members:
@@ -32,7 +32,7 @@ suites:
       - jscpd.check.other
       - markdownlint.check
       - yamllint.check
-    parallel: false
+    parallel: true
     fail_fast: false
   standard:
     members:
@@ -45,7 +45,7 @@ suites:
       - security
       - extended
       - policy
-    parallel: false
+    parallel: true
     fail_fast: false
   docs:
     members:
@@ -66,7 +66,7 @@ suites:
       - gate.module-private-vars
       - gate.folder-breadth
       - gate.acronym-allowlist
-    parallel: false
+    parallel: true
     fail_fast: true
   docker:
     members:

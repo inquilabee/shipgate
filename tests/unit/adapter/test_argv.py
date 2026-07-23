@@ -43,6 +43,42 @@ def test_ruff_format_check_mode(tmp_path):
     assert "--check" in argv
 
 
+def test_shfmt_apply_matches_trunk_flags(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("shfmt.apply")
+    script = tmp_path / "script.sh"
+    script.write_text("#!/bin/bash\necho hi\n", encoding="utf-8")
+    request = build_execution_request(
+        runnable="shfmt.apply",
+        mode=RunMode.APPLY,
+        project_root=tmp_path,
+        options=NormalizedOptions(paths=(script,)),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert argv[:4] == ("shfmt", "-w", "-s", str(script))
+
+
+def test_shfmt_check_uses_diff_without_write(tmp_path):
+    catalog = load_catalog()
+    tool = catalog.get_tool("shfmt.apply")
+    script = tmp_path / "script.sh"
+    script.write_text("#!/bin/bash\necho hi\n", encoding="utf-8")
+    request = build_execution_request(
+        runnable="shfmt.apply",
+        mode=RunMode.CHECK,
+        project_root=tmp_path,
+        options=NormalizedOptions(paths=(script,), check=True),
+    )
+    env = ExecutionEnvironment(kind="system", root=None, env={})
+    resolved = resolve_request(request, tool, env, target=tmp_path)
+    argv = build_argv(resolved)
+    assert "-s" in argv
+    assert "-d" in argv
+    assert "-w" not in argv
+
+
 def test_mdformat_apply_enables_frontmatter_by_default(tmp_path):
     catalog = load_catalog()
     tool = catalog.get_tool("mdformat.apply")

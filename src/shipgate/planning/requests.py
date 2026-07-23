@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from shipgate.domain.execution import ExecutionEnvironment, ExecutionRequest, ResolvedRequest
+from shipgate.domain.execution import (
+    ExecutionEnvironment,
+    ExecutionRequest,
+    ResolvedRequest,
+)
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.project import ProjectConfig
 from shipgate.errors import PlanningError
-from shipgate.planning.defaults import apply_defaults
+from shipgate.planning.option_resolver import apply_defaults
 from shipgate.planning.options import resolve_option_sources
 
 if TYPE_CHECKING:

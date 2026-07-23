@@ -10,6 +10,8 @@ from shipgate.runtime.session.context import RunCommand, RunContext
 
 
 def make_run_context(tmp_path: Path, planned: PlannedCheck) -> RunContext:
+    from shipgate.planning.incremental import RunScopeSession
+
     return RunContext(
         project=ProjectConfig(env="system", target=Path()),
         project_root=tmp_path.resolve(),
@@ -18,6 +20,11 @@ def make_run_context(tmp_path: Path, planned: PlannedCheck) -> RunContext:
         environment=ExecutionEnvironment(kind="system", root=None, env={}),
         parallel=False,
         fail_fast=False,
+        scope_session=RunScopeSession(
+            project_root=tmp_path.resolve(),
+            changed_only=False,
+            since=None,
+        ),
     )
 
 
@@ -78,4 +85,41 @@ def test_prepare_check_skips_when_no_matching_files(tmp_path: Path):
     assert prepared.report is not None
     assert prepared.report.status == "passed"
     assert prepared.report.exit_code == 0
+    assert prepared.report.extra["skipped"] == "no matching files in scope"
+
+
+def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):
+    from shipgate.planning.incremental import RunScopeSession
+
+    catalog = load_catalog()
+    planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
+    command = RunCommand(
+        project_root=tmp_path,
+        target=tmp_path,
+        check="ruff.lint",
+        changed_only=True,
+    )
+    context = RunContext(
+        project=ProjectConfig(env="system", target=Path(), changed_only=True),
+        project_root=tmp_path.resolve(),
+        suite_id=planned.tool_id,
+        planned_checks=(planned,),
+        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+        parallel=False,
+        fail_fast=False,
+        scope_session=RunScopeSession(
+            project_root=tmp_path.resolve(),
+            changed_only=True,
+            since=None,
+            _incremental_clean=True,
+        ),
+    )
+    prepared = prepare_check(
+        planned=planned,
+        command=command,
+        context=context,
+        catalog=catalog,
+    )
+    assert prepared.request is None
+    assert prepared.report is not None
     assert prepared.report.extra["skipped"] == "no matching files in scope"

@@ -10,6 +10,7 @@ from shipgate.adapter.argv import build_argv
 from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
+from shipgate.runtime.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
 from shipgate.runtime.parallel import run_parallel
 from shipgate.runtime.reports import write_raw_output
@@ -127,6 +128,7 @@ class CheckRunner:
             run_id,
             project=context.project,
             display_cli=command.display_cli,
+            no_cache=command.no_cache,
         )
 
     def execute_check(
@@ -136,7 +138,15 @@ class CheckRunner:
         project: ProjectConfig | None = None,
         *,
         display_cli: bool = False,
+        no_cache: bool = False,
     ) -> CheckReport:
+        cache = CheckResultCache(resolved.project_root, disabled=no_cache)
+        cached = cache.lookup(resolved)
+        if cached is not None:
+            if display_cli:
+                sys.stderr.write(f"{resolved.tool.id}: (cached)\n")
+            return cached
+
         if is_gate_tool(resolved.tool):
             argv, env = prepare_gate_execution(resolved, project=project)
         else:
@@ -167,7 +177,7 @@ class CheckRunner:
         )
         normalizer = get_normalizer(resolved.tool.normalizer)
         check_report = normalizer.normalize(resolved, result)
-        return CheckReport(
+        report = CheckReport(
             check_id=check_report.check_id,
             tool_id=check_report.tool_id,
             status=check_report.status,
@@ -177,6 +187,8 @@ class CheckRunner:
             stderr_path=str(stderr_path.relative_to(resolved.project_root)),
             extra=check_report.extra,
         )
+        cache.store(resolved, report)
+        return report
 
 
 def build_run_report(

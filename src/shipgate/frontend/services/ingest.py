@@ -5,7 +5,11 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from shipgate.frontend.domain.models import FindingCategory, FindingRecord, RunSummaryRecord
+from shipgate.frontend.domain.models import (
+    FindingCategory,
+    FindingRecord,
+    RunSummaryRecord,
+)
 from shipgate.paths import normalize_finding_path
 
 if TYPE_CHECKING:

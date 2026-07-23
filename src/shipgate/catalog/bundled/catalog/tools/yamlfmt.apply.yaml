@@ -10,7 +10,7 @@ yamlfmt.apply:
   install:
     manager: binary
     package: yamlfmt
-    version: '>=0.0.1'
+    version: ">=0.0.1"
     binary: yamlfmt
   cli:
     paths:

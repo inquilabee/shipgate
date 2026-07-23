@@ -52,8 +52,7 @@ class SqliteStorage:
 
     def _init_schema(self) -> None:
         with self._connect() as conn:
-            conn.executescript(
-                """
+            conn.executescript("""
                 CREATE TABLE IF NOT EXISTS runs (
                     id TEXT PRIMARY KEY,
                     branch TEXT NOT NULL,
@@ -90,8 +89,7 @@ class SqliteStorage:
                 CREATE INDEX IF NOT EXISTS idx_runs_started_at ON runs(started_at);
                 CREATE INDEX IF NOT EXISTS idx_runs_branch ON runs(branch);
                 CREATE INDEX IF NOT EXISTS idx_findings_run_id ON findings(run_id);
-                """
-            )
+                """)
             columns = {row[1] for row in conn.execute("PRAGMA table_info(findings)").fetchall()}
             if "category" not in columns:
                 conn.execute(
@@ -409,7 +407,10 @@ class SqliteStorage:
             file=file,
             category=category,
         )
-        return f"SELECT * FROM findings WHERE {where}", params  # noqa: S608  # nosec B608
+        return (
+            f"SELECT * FROM findings WHERE {where}",  # noqa: S608  # nosec B608
+            params,
+        )
 
     @staticmethod
     def apply_run_fields(run: RunRecord, updates: dict[str, object | None]) -> None:
@@ -442,7 +443,7 @@ class SqliteStorage:
             suite_id=row["suite_id"],
             status=RunStatus(row["status"]),
             started_at=cls.dt_from_iso(row["started_at"]),
-            finished_at=cls.dt_from_iso(row["finished_at"]) if row["finished_at"] else None,
+            finished_at=(cls.dt_from_iso(row["finished_at"]) if row["finished_at"] else None),
             duration_ms=row["duration_ms"],
             worktree_path=row["worktree_path"],
             error_message=row["error_message"],

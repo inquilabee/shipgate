@@ -9,7 +9,7 @@ codespell.check:
   install:
     manager: python
     package: codespell
-    version: '>=2.2'
+    version: ">=2.2"
   cli:
     paths:
       style: positional

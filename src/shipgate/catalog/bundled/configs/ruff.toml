@@ -4,7 +4,23 @@ src = ["src", "tests"]
 exclude = [".shipgate", ".venv", "venv", "build", "reports", "__pycache__"]
 
 [lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "C4", "PTH", "TCH", "ASYNC", "S", "N", "W", "C901"]
+select = [
+  "E",
+  "F",
+  "I",
+  "UP",
+  "B",
+  "SIM",
+  "RUF",
+  "C4",
+  "PTH",
+  "TCH",
+  "ASYNC",
+  "S",
+  "N",
+  "W",
+  "C901",
+]
 
 [lint.mccabe]
 max-complexity = 10

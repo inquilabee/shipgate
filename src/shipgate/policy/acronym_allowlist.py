@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from dataclasses import dataclass
@@ -14,6 +13,7 @@ from typing import Any
 import yaml
 
 from shipgate.gates.ignore import EffectiveIgnores, ignores_from_env
+from shipgate.gates.scope_paths import scope_paths_from_env
 
 ACRONYM_RE = re.compile(r"\b[A-Z]{2,}\b")
 FENCED_CODE_BLOCK_RE = re.compile(r"(`{3,})[\s\S]*?\1", re.DOTALL)
@@ -141,11 +141,6 @@ def iter_markdown_files(scan_roots: tuple[str, ...], repo_root: Path) -> list[Pa
     return files
 
 
-def scope_paths_from_env() -> tuple[str, ...]:
-    raw = os.environ.get("SHIPGATE_SCOPE_PATHS", "")
-    return tuple(line.strip() for line in raw.splitlines() if line.strip())
-
-
 def scan_paths(
     *,
     repo_root: Path,
@@ -171,7 +166,9 @@ def scan_paths(
     return violations
 
 
-def findings_from_violations(violations: list[AcronymViolation]) -> list[dict[str, Any]]:
+def findings_from_violations(
+    violations: list[AcronymViolation],
+) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     for item in violations:
         findings.append(

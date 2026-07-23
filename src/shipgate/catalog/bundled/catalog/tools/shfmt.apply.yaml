@@ -11,15 +11,24 @@ shfmt.apply:
   install:
     manager: binary
     package: shfmt
-    version: '>=3.0'
+    version: ">=3.0"
     binary: shfmt
   cli:
     paths:
       style: positional
+    fix:
+      flag: -w
+      style: boolean
+    simplify:
+      flag: -s
+      style: boolean
+      default: true
     check:
       flag: -d
       style: boolean
   option_order:
+    - fix
+    - simplify
     - check
     - paths
   scope:

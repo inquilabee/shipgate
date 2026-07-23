@@ -19,5 +19,5 @@ gate.acronym-allowlist:
     extensions:
       - .md
     globs:
-      - '**/*.mdc'
+      - "**/*.mdc"
     delivery: files

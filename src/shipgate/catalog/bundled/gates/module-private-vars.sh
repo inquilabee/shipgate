@@ -7,7 +7,7 @@ source "${SHIPGATE_GATES_LIB:-$(shipgate gates lib-path)}"
 
 gate_init "module-private-vars"
 
-ALLOWLIST="${GATE_ALLOWLIST_FILE:-}"
+ALLOWLIST="${GATE_ALLOWLIST_FILE-}"
 IFS=' ' read -r -a SCAN_ROOTS <<<"${GATE_SCAN_ROOTS:-.}"
 
 ASSIGN_PATTERN='^_[^_][A-Za-z0-9_]*[[:space:]]*[:=]'
@@ -51,7 +51,7 @@ check_private_vars_file() {
 	report_matches "${rel}" "class" "${class_matches}"
 }
 
-if [[ -n ${SHIPGATE_SCOPE_PATHS:-} ]]; then
+if [[ -n ${SHIPGATE_SCOPE_PATHS-} ]]; then
 	while IFS= read -r file; do
 		[[ -n ${file} ]] || continue
 		check_private_vars_file "${file}"

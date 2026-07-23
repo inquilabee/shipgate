@@ -2,7 +2,7 @@ vulture.check:
   executable: vulture
   subcommand:
     - --min-confidence
-    - '80'
+    - "80"
   modes:
     - check
   capabilities:
@@ -11,7 +11,7 @@ vulture.check:
   install:
     manager: python
     package: vulture
-    version: '>=2.0'
+    version: ">=2.0"
   cli:
     paths:
       style: positional

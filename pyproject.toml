@@ -3,10 +3,7 @@ name = "shipgate"
 version = "0.1.0"
 description = "Portable quality-gate orchestrator for developer tools"
 requires-python = ">=3.11,<3.15"
-dependencies = [
-  "PyYAML>=6.0",
-  "pathspec>=0.12",
-]
+dependencies = ["PyYAML>=6.0", "pathspec>=0.12"]
 
 [project.optional-dependencies]
 server = [
@@ -54,9 +51,7 @@ shipgate = ["catalog/bundled/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = [
-  "integration: tests that require external tools",
-]
+markers = ["integration: tests that require external tools"]
 
 [tool.djlint]
 profile = "jinja"

@@ -9,12 +9,12 @@ rm -rf "$STAGING"
 mkdir -p "$STAGING"
 
 rsync -a \
-  --exclude='.git/' \
-  --exclude='.shipgate/reports/' \
-  --exclude='.shipgate/tools/' \
-  --exclude='docker/dogfood-staging/' \
-  --exclude='**/__pycache__/' \
-  --exclude='**/*.egg-info/' \
-  --exclude='.venv/' \
-  --exclude='.cursor/' \
-  "$ROOT/" "$STAGING/"
+	--exclude='.git/' \
+	--exclude='.shipgate/reports/' \
+	--exclude='.shipgate/tools/' \
+	--exclude='docker/dogfood-staging/' \
+	--exclude='**/__pycache__/' \
+	--exclude='**/*.egg-info/' \
+	--exclude='.venv/' \
+	--exclude='.cursor/' \
+	"$ROOT/" "$STAGING/"

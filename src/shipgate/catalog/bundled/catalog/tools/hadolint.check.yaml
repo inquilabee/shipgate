@@ -9,7 +9,7 @@ hadolint.check:
   install:
     manager: binary
     package: hadolint
-    version: '>=2.0'
+    version: ">=2.0"
     binary: hadolint
   cli:
     paths:
@@ -18,6 +18,6 @@ hadolint.check:
     - paths
   scope:
     globs:
-      - '**/Dockerfile*'
-      - '**/*.dockerfile'
+      - "**/Dockerfile*"
+      - "**/*.dockerfile"
     delivery: files

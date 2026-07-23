@@ -9,7 +9,7 @@ pydeps.graph:
   install:
     manager: python
     package: pydeps
-    version: '>=1.0'
+    version: ">=1.0"
   cli:
     paths:
       style: positional

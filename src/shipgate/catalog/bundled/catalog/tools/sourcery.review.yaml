@@ -10,7 +10,7 @@ sourcery.review:
   install:
     manager: python
     package: sourcery
-    version: '>=1.0'
+    version: ">=1.0"
   cli:
     paths:
       style: positional

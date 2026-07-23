@@ -13,7 +13,10 @@ from shipgate.runtime.session.context import (
     prepare_context,
     resolve_error_format,
 )
-from shipgate.runtime.session.finalizer import finalize_failed_run, finalize_successful_run
+from shipgate.runtime.session.finalizer import (
+    finalize_failed_run,
+    finalize_successful_run,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

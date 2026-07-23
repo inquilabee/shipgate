@@ -2,16 +2,33 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
-from shipgate.planning.gitignore import expand_scope, minimize_covering_dirs, should_ignore
+from shipgate.planning.gitignore import (
+    expand_scope,
+    minimize_covering_dirs,
+    should_ignore,
+)
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
     from shipgate.domain.project import ProjectConfig
+    from shipgate.planning.incremental import RunScopeSession
+
+
+@dataclass(frozen=True)
+class ExpandScopeKey:
+    target: str
+    include: tuple[str, ...]
+    exclude: tuple[str, ...]
+    extensions: tuple[str, ...]
+    globs: tuple[str, ...]
+    respect_gitignore: bool
+
 
 DEFAULT_EXCLUDES = (
     ".shipgate/",
@@ -29,9 +46,11 @@ class ScopeResolver:
         project_root: Path,
         *,
         default_excludes: tuple[str, ...] = DEFAULT_EXCLUDES,
+        scope_session: RunScopeSession | None = None,
     ) -> None:
         self.project_root = project_root.resolve()
         self.default_excludes = default_excludes
+        self._scope_session = scope_session
 
     def resolve(
         self,
@@ -136,8 +155,7 @@ class ScopeResolver:
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
             return self.delivery_paths_without_filter(scope, criteria)
 
-        matched_files = expand_scope(
-            self.project_root,
+        matched_files = self._expand_scope(
             target,
             include=scope.include,
             exclude=scope.exclude,
@@ -180,6 +198,47 @@ class ScopeResolver:
         if scope.target.is_file():
             return (target,)
         return (target,)
+
+    def _expand_scope(
+        self,
+        target: Path,
+        *,
+        include: tuple[str, ...],
+        exclude: tuple[str, ...],
+        extensions: tuple[str, ...],
+        globs: tuple[str, ...],
+        respect_gitignore: bool,
+    ) -> tuple[Path, ...]:
+        if self._scope_session is None:
+            return expand_scope(
+                self.project_root,
+                target,
+                include=include,
+                exclude=exclude,
+                extensions=extensions,
+                globs=globs,
+                respect_gitignore=respect_gitignore,
+            )
+        key = ExpandScopeKey(
+            target=str(target.resolve()),
+            include=include,
+            exclude=exclude,
+            extensions=extensions,
+            globs=globs,
+            respect_gitignore=respect_gitignore,
+        )
+        cache = self._scope_session.expand_cache
+        if key not in cache:
+            cache[key] = expand_scope(
+                self.project_root,
+                target,
+                include=include,
+                exclude=exclude,
+                extensions=extensions,
+                globs=globs,
+                respect_gitignore=respect_gitignore,
+            )
+        return cache[key]
 
     def paths_for_delivery(
         self,

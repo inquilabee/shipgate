@@ -9,7 +9,7 @@ markdownlint.check:
   install:
     manager: binary
     package: markdownlint-cli
-    version: '>=0.37'
+    version: ">=0.37"
     binary: markdownlint
   cli:
     paths:
@@ -36,5 +36,5 @@ markdownlint.check:
     extensions:
       - .md
     globs:
-      - '**/*.mdc'
+      - "**/*.mdc"
     delivery: files

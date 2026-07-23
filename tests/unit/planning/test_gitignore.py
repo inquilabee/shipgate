@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from shipgate.planning.gitignore import expand_scope, matches_tool_criteria, should_ignore
+from shipgate.planning.gitignore import (
+    expand_scope,
+    matches_tool_criteria,
+    should_ignore,
+)
 
 
 def test_should_ignore_shipgate_dir(tmp_path: Path):

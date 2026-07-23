@@ -9,7 +9,7 @@ shellcheck.check:
   install:
     manager: binary
     package: shellcheck
-    version: '>=0.9'
+    version: ">=0.9"
     binary: shellcheck
   cli:
     paths:

@@ -12,7 +12,7 @@ gitleaks.scan:
   install:
     manager: binary
     package: gitleaks
-    version: '>=8.0'
+    version: ">=8.0"
     binary: gitleaks
   cli:
     paths:

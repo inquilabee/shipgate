@@ -9,7 +9,7 @@ gate_init "module-size"
 
 PORTFOLIO_MAX="${GATE_PORTFOLIO_MAX_LINES:-1000}"
 MODULE_MAX="${GATE_MODULE_MAX_LINES:-${GATE_NEW_FILE_MAX_LINES:-500}}"
-ALLOWLIST="${GATE_ALLOWLIST_FILE:-}"
+ALLOWLIST="${GATE_ALLOWLIST_FILE-}"
 IFS=' ' read -r -a SCAN_ROOTS <<<"${GATE_SCAN_ROOTS:-.}"
 
 count_non_blank_lines() {
@@ -41,7 +41,7 @@ check_module_file() {
 	fi
 }
 
-if [[ -n ${SHIPGATE_SCOPE_PATHS:-} ]]; then
+if [[ -n ${SHIPGATE_SCOPE_PATHS-} ]]; then
 	while IFS= read -r file; do
 		[[ -n ${file} ]] || continue
 		check_module_file "${file}"

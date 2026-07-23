@@ -9,9 +9,40 @@ from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.gates.paths import gates_lib_path, resolve_gate_script
-from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
+from shipgate.gates.runtime import (
+    gate_scope_paths,
+    is_gate_tool,
+    prepare_gate_execution,
+)
 from shipgate.normalize.core.gate_json import GateJsonNormalizer
-from shipgate.runtime.executor import ProcessResult
+from shipgate.runtime.executor import Executor, ProcessResult
+
+
+def gate_request(
+    tmp_path: Path,
+    tool_id: str,
+    *,
+    paths: tuple[Path, ...],
+) -> ResolvedRequest:
+    tool = load_catalog().get_tool(tool_id)
+    return ResolvedRequest(
+        runnable=tool.id,
+        tool=tool,
+        mode=RunMode.CHECK,
+        options=NormalizedOptions(paths=paths),
+        option_sources={},
+        extra_args=(),
+        project_root=tmp_path,
+        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
+        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+    )
+
+
+def run_gate_check(tmp_path: Path, request: ResolvedRequest) -> tuple[ProcessResult, object]:
+    argv, env = prepare_gate_execution(request)
+    result = Executor().run(argv, cwd=tmp_path, env=env)
+    report = GateJsonNormalizer().normalize(request, result)
+    return result, report
 
 
 def test_catalog_includes_bundled_policy_gates():
@@ -110,17 +141,7 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
     assert is_gate_tool(tool)
     script = resolve_gate_script(tool, tmp_path)
     assert script.is_file()
-    request = ResolvedRequest(
-        runnable=tool.id,
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(paths=(tmp_path / "src",)),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
-    )
+    request = gate_request(tmp_path, tool.id, paths=(tmp_path / "src",))
     argv, env = prepare_gate_execution(request)
     assert argv[0].endswith("bash")
     assert str(script) in argv[1]
@@ -131,6 +152,27 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
     assert "." in env["GATE_SCAN_ROOTS"]
 
 
+def test_gate_scope_paths_includes_dirs_for_dir_delivery(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    catalog = load_catalog()
+    tool = catalog.get_tool("gate.folder-breadth")
+    request = gate_request(tmp_path, tool.id, paths=(Path("src"),))
+    assert gate_scope_paths(request) == ("src",)
+
+
+def test_prepare_gate_execution_sets_scope_paths_for_dirs_delivery(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "src").mkdir()
+    catalog = load_catalog()
+    tool = catalog.get_tool("gate.folder-breadth")
+    request = gate_request(tmp_path, tool.id, paths=(Path("src"),))
+    _argv, env = prepare_gate_execution(request)
+    assert env["SHIPGATE_SCOPE_PATHS"] == "src"
+
+
 @pytest.mark.integration
 def test_module_private_vars_flags_existing_module_function(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
@@ -139,24 +181,9 @@ def test_module_private_vars_flags_existing_module_function(tmp_path: Path, monk
         "def _helper():\n    return 1\n",
         encoding="utf-8",
     )
-    catalog = load_catalog()
-    tool = catalog.get_tool("gate.module-private-vars")
-    request = ResolvedRequest(
-        runnable=tool.id,
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(paths=(tmp_path / "tests",)),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
-    )
-    argv, env = prepare_gate_execution(request)
-    from shipgate.runtime.executor import Executor
-
-    result = Executor().run(argv, cwd=tmp_path, env=env)
-    report = GateJsonNormalizer().normalize(request, result)
+    tool = load_catalog().get_tool("gate.module-private-vars")
+    request = gate_request(tmp_path, tool.id, paths=(tmp_path / "tests",))
+    result, report = run_gate_check(tmp_path, request)
     assert result.exit_code == 1, result.stderr
     assert report.status == "failed"
     assert any(f.rule_id == "private-function" for f in report.findings)
@@ -168,24 +195,9 @@ def test_module_size_flags_existing_oversized_module(tmp_path: Path, monkeypatch
     (tmp_path / "src").mkdir()
     body = "\n".join("x = 1" for _ in range(501))
     (tmp_path / "src" / "legacy.py").write_text(body + "\n", encoding="utf-8")
-    catalog = load_catalog()
-    tool = catalog.get_tool("gate.module-size")
-    request = ResolvedRequest(
-        runnable=tool.id,
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(paths=(tmp_path / "src",)),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
-    )
-    argv, env = prepare_gate_execution(request)
-    from shipgate.runtime.executor import Executor
-
-    result = Executor().run(argv, cwd=tmp_path, env=env)
-    report = GateJsonNormalizer().normalize(request, result)
+    tool = load_catalog().get_tool("gate.module-size")
+    request = gate_request(tmp_path, tool.id, paths=(tmp_path / "src",))
+    result, report = run_gate_check(tmp_path, request)
     assert result.exit_code == 1, result.stderr
     assert report.status == "failed"
     assert any(f.rule_id == "module-size" for f in report.findings)
@@ -196,24 +208,12 @@ def test_bundled_module_size_gate_passes_clean_repo(tmp_path: Path, monkeypatch)
     monkeypatch.chdir(tmp_path)
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "small.py").write_text("x = 1\n", encoding="utf-8")
-    catalog = load_catalog()
-    tool = catalog.get_tool("gate.module-size")
-    request = ResolvedRequest(
-        runnable=tool.id,
-        tool=tool,
-        mode=RunMode.CHECK,
-        options=NormalizedOptions(paths=(tmp_path / "src",)),
-        option_sources={},
-        extra_args=(),
-        project_root=tmp_path,
-        output_path=tmp_path / ".shipgate" / "reports" / "raw" / f"{tool.id}.json",
-        environment=ExecutionEnvironment(kind="system", root=None, env={}),
+    request = gate_request(
+        tmp_path,
+        "gate.module-size",
+        paths=(tmp_path / "src",),
     )
-    argv, env = prepare_gate_execution(request)
-    from shipgate.runtime.executor import Executor
-
-    result = Executor().run(argv, cwd=tmp_path, env=env)
-    report = GateJsonNormalizer().normalize(request, result)
+    result, report = run_gate_check(tmp_path, request)
     assert result.exit_code == 0, result.stderr
     assert report.status == "passed"
 

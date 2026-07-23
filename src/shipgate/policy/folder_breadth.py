@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from shipgate.gates.ignore import EffectiveIgnores, ignores_from_env
+from shipgate.gates.scope_paths import scope_paths_from_env
 
 
 @dataclass(frozen=True, slots=True)
@@ -117,7 +118,10 @@ def scan_folder_breadth(
     worst_path = ""
     worst_count = 0
 
-    for scan_root in scan_roots:
+    scoped_roots = scope_paths_from_env()
+    roots_to_scan = scoped_roots if scoped_roots else scan_roots
+
+    for scan_root in roots_to_scan:
         scanned, worst_path, worst_count, root_violations = scan_root_breadth(
             root,
             scan_root,

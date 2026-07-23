@@ -6,7 +6,7 @@ set -euo pipefail
 gate_init() {
 	GATE_NAME="${1:-script-gate}"
 	GATE_FINDING_COUNT=0
-	if [[ -z "${SHIPGATE_REPORT:-}" ]]; then
+	if [[ -z ${SHIPGATE_REPORT:-} ]]; then
 		echo "gate_init: SHIPGATE_REPORT is not set (shipgate runner should set this)" >&2
 		exit 2
 	fi

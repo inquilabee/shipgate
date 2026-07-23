@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig, Scope
+    from shipgate.planning.incremental import RunScopeSession
 
 __all__ = [
     "DEFAULT_EXCLUDES",
@@ -46,5 +47,10 @@ def scope_paths_for_tool(
     project_root: Path,
     *,
     mode: RunMode,
+    scope_session: RunScopeSession | None = None,
 ) -> tuple[Path, ...]:
-    return ScopeResolver(project_root).paths_for_tool(scope, tool, mode=mode)
+    return ScopeResolver(project_root, scope_session=scope_session).paths_for_tool(
+        scope,
+        tool,
+        mode=mode,
+    )

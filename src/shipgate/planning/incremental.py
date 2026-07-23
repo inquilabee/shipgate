@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.planning.gitignore import expand_scope, minimize_covering_dirs
+from shipgate.planning.scope_resolver import ExpandScopeKey, ScopeResolver
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition
@@ -16,6 +18,35 @@ if TYPE_CHECKING:
     from shipgate.runtime.session.context import RunCommand
 
 MAX_INCREMENTAL_EXPLICIT_FILES = 64
+
+
+@dataclass
+class RunScopeSession:
+    """Caches git change sets and incremental clean state for one run session."""
+
+    project_root: Path
+    changed_only: bool
+    since: str | None
+    _git_changed_cache: dict[str, set[str]] = field(default_factory=dict)
+    expand_cache: dict[ExpandScopeKey, tuple[Path, ...]] = field(default_factory=dict)
+    _incremental_clean: bool | None = None
+
+    def is_incremental_clean(self) -> bool:
+        if self._incremental_clean is None:
+            if not self.changed_only or not is_incremental(
+                changed_only=self.changed_only,
+                since=self.since,
+            ):
+                self._incremental_clean = False
+            else:
+                self._incremental_clean = not self.changed_files(self.since)
+        return self._incremental_clean
+
+    def changed_files(self, since: str | None) -> set[str]:
+        ref = since or "HEAD"
+        if ref not in self._git_changed_cache:
+            self._git_changed_cache[ref] = git_changed_files(self.project_root, ref)
+        return self._git_changed_cache[ref]
 
 
 def effective_incremental(command: RunCommand, project: ProjectConfig) -> tuple[bool, str | None]:
@@ -37,7 +68,11 @@ def tool_paths_after_incremental(
     mode: RunMode,
     since: str | None,
     changed_only: bool,
+    scope_session: RunScopeSession | None = None,
 ) -> tuple[Path, ...]:
+    if scope_session is not None and scope_session.is_incremental_clean():
+        return ()
+
     if not is_incremental(changed_only=changed_only, since=since):
         return paths
 
@@ -46,6 +81,7 @@ def tool_paths_after_incremental(
         scope=scope,
         project_root=project_root,
         since=since,
+        scope_session=scope_session,
     )
     if not rel_files:
         return () if changed_only else paths
@@ -91,26 +127,40 @@ def matched_changed_files(
     scope: Scope,
     project_root: Path,
     since: str | None,
+    scope_session: RunScopeSession | None = None,
 ) -> tuple[Path, ...]:
     criteria = tool.scope
     target = scope.target.resolve()
     if not target.is_absolute():
         target = (project_root / target).resolve()
 
-    matched_files = expand_scope(
-        project_root,
-        target,
-        include=scope.include,
-        exclude=scope.exclude,
-        extensions=criteria.extensions,
-        globs=criteria.globs,
-        respect_gitignore=scope.respect_gitignore,
-    )
+    if scope_session is not None:
+        matched_files = ScopeResolver(project_root, scope_session=scope_session)._expand_scope(
+            target,
+            include=scope.include,
+            exclude=scope.exclude,
+            extensions=criteria.extensions,
+            globs=criteria.globs,
+            respect_gitignore=scope.respect_gitignore,
+        )
+    else:
+        matched_files = expand_scope(
+            project_root,
+            target,
+            include=scope.include,
+            exclude=scope.exclude,
+            extensions=criteria.extensions,
+            globs=criteria.globs,
+            respect_gitignore=scope.respect_gitignore,
+        )
     if not matched_files:
         return ()
 
     ref = since or "HEAD"
-    changed = git_changed_files(project_root, ref)
+    if scope_session is not None:
+        changed = scope_session.changed_files(since)
+    else:
+        changed = git_changed_files(project_root, ref)
     if not changed:
         return ()
 

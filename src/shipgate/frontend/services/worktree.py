@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -60,16 +61,11 @@ class WorktreeManager:
 
     def _checked_out_branch(self, worktree_path: Path) -> str:
         try:
-            result = subprocess.run(  # noqa: S603
-                ["git", "-C", str(worktree_path), "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
-                check=True,
-                capture_output=True,
-                text=True,
+            result = self._run_git(
+                ["-C", str(worktree_path), "rev-parse", "--abbrev-ref", "HEAD"],
             )
-        except subprocess.CalledProcessError as exc:
-            raise self.git_error(exc, f"failed to read branch at {worktree_path}") from exc
-        except FileNotFoundError as exc:
-            raise WorktreeError("git executable not found") from exc
+        except WorktreeError as exc:
+            raise WorktreeError(f"failed to read branch at {worktree_path}") from exc
         return result.stdout.strip()
 
     def _require_git_repo(self) -> None:
@@ -122,9 +118,12 @@ class WorktreeManager:
 
 
 def current_branch(project_root: Path) -> str:
+    git = shutil.which("git")
+    if git is None:
+        return "unknown"
     try:
         result = subprocess.run(  # noqa: S603
-            ["git", "-C", str(project_root), "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
+            [git, "-C", str(project_root), "rev-parse", "--abbrev-ref", "HEAD"],
             capture_output=True,
             text=True,
             check=False,

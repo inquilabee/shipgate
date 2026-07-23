@@ -36,6 +36,17 @@ def prepare_check(
     context: RunContext,
     catalog: Catalog,
 ) -> PreparedCheck:
+    if context.scope_session.is_incremental_clean():
+        return PreparedCheck(
+            report=CheckReport(
+                check_id=planned.tool_id,
+                tool_id=planned.tool_id,
+                status="passed",
+                exit_code=0,
+                extra={"skipped": "no matching files in scope"},
+            )
+        )
+
     scope = resolve_scope(
         context.project_root,
         context.project,
@@ -48,6 +59,7 @@ def prepare_check(
         tool,
         context.project_root,
         mode=planned.mode,
+        scope_session=context.scope_session,
     )
     changed_only, since = effective_incremental(command, context.project)
     paths = tool_paths_after_incremental(
@@ -58,6 +70,7 @@ def prepare_check(
         mode=planned.mode,
         since=since,
         changed_only=changed_only,
+        scope_session=context.scope_session,
     )
     if not paths:
         return PreparedCheck(

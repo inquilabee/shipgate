@@ -1,0 +1,65 @@
+"""Per-tool check result cache."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from shipgate.domain.modes import RunMode
+
+if TYPE_CHECKING:
+    from shipgate.domain.execution import ResolvedRequest
+    from shipgate.domain.reports import CheckReport
+
+
+class CheckResultCache:
+    def __init__(self, project_root: Path, *, disabled: bool = False) -> None:
+        self._root = project_root / ".shipgate" / "cache" / "check-results"
+        self._disabled = disabled
+
+    def lookup(self, resolved: ResolvedRequest) -> CheckReport | None:
+        if self._disabled or not self._is_cacheable(resolved):
+            return None
+        path = self._entry_path(resolved)
+        if not path.is_file():
+            return None
+        from shipgate.domain.reports import CheckReport
+
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return CheckReport.from_dict(payload)
+
+    def store(self, resolved: ResolvedRequest, report: CheckReport) -> None:
+        if self._disabled or not self._is_cacheable(resolved):
+            return
+        path = self._entry_path(resolved)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report.to_dict(), indent=2) + "\n", encoding="utf-8")
+
+    def _entry_path(self, resolved: ResolvedRequest) -> Path:
+        return self._root / f"{self._cache_key(resolved)}.json"
+
+    def _cache_key(self, resolved: ResolvedRequest) -> str:
+        parts: list[str] = [
+            resolved.tool.id,
+            resolved.mode.value,
+            *sorted(str(path) for path in resolved.options.paths),
+            *resolved.extra_args,
+        ]
+        for config_path in resolved.options.config:
+            candidate = Path(config_path)
+            if not candidate.is_absolute():
+                candidate = resolved.project_root / candidate
+            if candidate.is_file():
+                parts.append(hashlib.sha256(candidate.read_bytes()).hexdigest())
+        digest = hashlib.sha256("\n".join(parts).encode()).hexdigest()
+        return f"{resolved.tool.id}-{digest[:16]}"
+
+    @staticmethod
+    def _is_cacheable(resolved: ResolvedRequest) -> bool:
+        if resolved.mode == RunMode.APPLY:
+            return False
+        if resolved.tool.scope.delivery == "root":
+            return False
+        return bool(resolved.options.paths)
