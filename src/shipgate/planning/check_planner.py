@@ -140,6 +140,7 @@ class CheckPlanner:
             return NormalizedOptions(
                 paths=paths,
                 config=config_paths,
+                exclude=exclude,
                 verbose=command.verbose,
                 quiet=command.quiet,
                 check=False,
@@ -192,7 +193,7 @@ class CheckPlanner:
             report=CheckReport(
                 check_id=tool_id,
                 tool_id=tool_id,
-                status="passed",
+                status="skipped",
                 exit_code=0,
                 extra={"skipped": "no matching files in scope"},
             )

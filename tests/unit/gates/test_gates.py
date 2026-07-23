@@ -103,6 +103,14 @@ def test_gate_json_normalizer_parses_findings(tmp_path: Path):
     assert report.findings[0].location.line == 1
 
 
+def test_gate_json_normalizer_invalid_json_fails_even_on_exit_zero(tmp_path: Path):
+    gate_request = make_gate_request("gate.module-size", tmp_path / "report.json")
+    result = process_result(tmp_path, exit_code=0, stdout="{not-json")
+    report = GateJsonNormalizer().normalize(gate_request, result)
+    assert report.status == "failed"
+    assert report.findings[0].rule_id == "gate.invalid_json"
+
+
 def test_gate_json_normalizer_reads_output_file(tmp_path: Path):
     report_path = tmp_path / "gate.json"
     report_path.write_text(

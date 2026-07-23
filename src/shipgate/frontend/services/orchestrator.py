@@ -84,7 +84,8 @@ class RunOrchestrator:
     def _perform_run(self, run_id: str, branch: str, suite_id: str) -> None:
         worktree = self._resolve_worktree(branch)
         self._storage.update_run(run_id, status=RunStatus.RUNNING, worktree_path=str(worktree))
-        install_suite(self._primary_root, suite_id, self._app._catalog_for(self._primary_root))
+        # Install into the run root so managed tools match the checked-out tree.
+        install_suite(worktree, suite_id, self._app._catalog_for(worktree))
 
         def on_progress(progress: RunProgress) -> None:
             self._storage.update_run(

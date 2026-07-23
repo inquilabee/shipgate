@@ -197,7 +197,7 @@ def build_run_report(
     mode: RunMode,
     check_reports: list[CheckReport],
 ) -> RunReport:
-    status = "passed" if all(report.status == "passed" for report in check_reports) else "failed"
+    status = "failed" if any(report.status == "failed" for report in check_reports) else "passed"
     return RunReport(
         run_id=run_id,
         suite=suite_id,

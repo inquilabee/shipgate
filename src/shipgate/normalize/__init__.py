@@ -42,6 +42,4 @@ NORMALIZERS = NORMALIZER_REGISTRY.items()
 
 
 def get_normalizer(name: str) -> Normalizer:
-    if name not in NORMALIZER_REGISTRY:
-        return GenericExitNormalizer()
     return NORMALIZER_REGISTRY.get(name)

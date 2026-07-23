@@ -52,7 +52,7 @@ def ingest_check(
     by_severity: dict[str, int],
     by_check_id: dict[str, int],
 ) -> None:
-    if check.status == "passed" and not check.findings:
+    if check.status in {"passed", "skipped"} and not check.findings:
         by_check_id[check.check_id] = 0
         return
     if check.status == "failed" and not check.findings:

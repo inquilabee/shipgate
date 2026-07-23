@@ -47,13 +47,12 @@ class GateCatalogMerger:
                 modes=(RunMode.CHECK, RunMode.APPLY),
                 option_order=(),
             )
-        if "local-gates" not in suites:
-            suites["local-gates"] = SuiteDefinition(
-                id="local-gates",
-                members=tuple(gate_members),
-                parallel=False,
-                fail_fast=True,
-            )
+        suites["local-gates"] = SuiteDefinition(
+            id="local-gates",
+            members=tuple(gate_members),
+            parallel=False,
+            fail_fast=True,
+        )
         return Catalog(
             tools=tools,
             suites=suites,

@@ -56,3 +56,19 @@ def test_finalize_failed_run_sets_report_path_and_indexes(tmp_path):
     loaded = store.load(report.run_id)
     assert loaded.status == "failed"
     assert loaded.report_path == finalized.report_path
+
+
+def test_report_store_rejects_traversal_run_id(tmp_path):
+    import pytest
+
+    from shipgate.errors import ExecutionError
+
+    store = ReportStore(tmp_path)
+    with pytest.raises(ExecutionError, match="invalid run id"):
+        store.load("../secret")
+
+
+def test_validate_run_id_accepts_generated_ids():
+    from shipgate.runtime.reports import generate_run_id, validate_run_id
+
+    assert validate_run_id(generate_run_id())

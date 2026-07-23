@@ -8,7 +8,9 @@ from typing import TYPE_CHECKING
 
 from shipgate.core.json_io import dumps_indented
 from shipgate.domain.reports import RunReport
+from shipgate.errors import ExecutionError
 from shipgate.paths import PROJECT_REPORTS_DIR, PROJECT_REPORTS_FAILURES_DIR
+from shipgate.runtime.reports import validate_run_id
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -17,12 +19,13 @@ if TYPE_CHECKING:
 class ReportStore:
     def __init__(self, project_root: Path) -> None:
         self.project_root = project_root.resolve()
-        self.root = project_root / PROJECT_REPORTS_DIR
+        self.root = (project_root / PROJECT_REPORTS_DIR).resolve()
         self.runs_dir = self.root / "runs"
         self.index_path = self.root / "index.json"
 
     def save(self, report: RunReport, *, metadata: dict | None = None) -> Path:
-        run_dir = self.runs_dir / report.run_id
+        run_id = validate_run_id(report.run_id)
+        run_dir = self._contained_run_dir(self.runs_dir, run_id)
         run_dir.mkdir(parents=True, exist_ok=True)
         report_path = run_dir / "report.json"
         report_path.write_text(
@@ -30,7 +33,7 @@ class ReportStore:
             encoding="utf-8",
         )
         meta = {
-            "run_id": report.run_id,
+            "run_id": run_id,
             "suite": report.suite,
             "mode": report.mode,
             "status": report.status,
@@ -63,7 +66,9 @@ class ReportStore:
         return finalized
 
     def _write_failure_report(self, report: RunReport) -> Path:
-        out_dir = self.project_root / PROJECT_REPORTS_FAILURES_DIR / report.run_id
+        run_id = validate_run_id(report.run_id)
+        failures_root = (self.project_root / PROJECT_REPORTS_FAILURES_DIR).resolve()
+        out_dir = self._contained_run_dir(failures_root, run_id)
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / "report.json"
         path.write_text(dumps_indented(report.to_dict()), encoding="utf-8")
@@ -88,12 +93,27 @@ class ReportStore:
         return self._load_index()
 
     def load(self, run_id: str) -> RunReport:
-        path = self.runs_dir / run_id / "report.json"
+        safe_run_id = validate_run_id(run_id)
+        path = self._contained_run_dir(self.runs_dir, safe_run_id) / "report.json"
         if not path.is_file():
-            failures = self.root / "failures" / run_id / "report.json"
+            failures_root = (self.root / "failures").resolve()
+            failures = self._contained_run_dir(failures_root, safe_run_id) / "report.json"
             if failures.is_file():
                 path = failures
             else:
-                raise FileNotFoundError(f"run not found: {run_id}")
+                raise FileNotFoundError(f"run not found: {safe_run_id}")
         data = json.loads(path.read_text(encoding="utf-8"))
         return RunReport.from_dict(data)
+
+    @staticmethod
+    def _contained_run_dir(root: Path, run_id: str) -> Path:
+        root_resolved = root.resolve()
+        candidate = (root_resolved / run_id).resolve()
+        try:
+            candidate.relative_to(root_resolved)
+        except ValueError as exc:
+            raise ExecutionError(
+                f"run id escapes reports directory: {run_id!r}",
+                path=str(candidate),
+            ) from exc
+        return candidate

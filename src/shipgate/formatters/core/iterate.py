@@ -23,7 +23,7 @@ def tool_exit_finding(check: CheckReport) -> Finding:
 
 
 def check_has_output(check: CheckReport) -> bool:
-    return bool(check.findings) or check.status != "passed"
+    return bool(check.findings) or check.status not in {"passed", "skipped"}
 
 
 def iter_check_findings(report: RunReport) -> Iterator[tuple[CheckReport, Finding]]:
@@ -31,5 +31,5 @@ def iter_check_findings(report: RunReport) -> Iterator[tuple[CheckReport, Findin
         if check.findings:
             for finding in check.findings:
                 yield check, finding
-        elif check.status != "passed":
+        elif check.status not in {"passed", "skipped"}:
             yield check, tool_exit_finding(check)

@@ -43,21 +43,35 @@ class GateJsonNormalizer(BaseNormalizer):
         )
 
     @classmethod
-    def parse_findings(cls, stdout: str, check_id: str) -> tuple[Finding, ...]:
+    def invalid_json_finding(cls, check_id: str, message: str) -> Finding:
+        return Finding(
+            check_id=check_id,
+            rule_id="gate.invalid_json",
+            severity="error",
+            message=message,
+        )
+
+    @classmethod
+    def parse_findings(cls, stdout: str, check_id: str) -> tuple[Finding, ...] | Finding:
+        """Parse gate JSON. Returns findings, or a single invalid-JSON finding on error."""
         if not stdout.strip():
             return ()
         try:
             payload = json.loads(stdout)
-        except json.JSONDecodeError:
-            return ()
+        except json.JSONDecodeError as exc:
+            return cls.invalid_json_finding(check_id, f"gate report is not valid JSON: {exc.msg}")
         items: list[Any]
         if isinstance(payload, dict) and "findings" in payload:
             raw_items = payload["findings"]
-            items = raw_items if isinstance(raw_items, list) else []
+            if not isinstance(raw_items, list):
+                return cls.invalid_json_finding(check_id, "gate report 'findings' must be a list")
+            items = raw_items
         elif isinstance(payload, list):
             items = payload
         else:
-            return ()
+            return cls.invalid_json_finding(
+                check_id, "gate report must be a findings object or a list"
+            )
         return tuple(
             cls.finding_from_dict(item, check_id) for item in items if isinstance(item, dict)
         )
@@ -65,7 +79,16 @@ class GateJsonNormalizer(BaseNormalizer):
     def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport:
         check_id = request.tool.id
         stdout = read_tool_output(request, result)
-        findings = self.parse_findings(stdout, check_id)
+        parsed = self.parse_findings(stdout, check_id)
+        if isinstance(parsed, Finding):
+            return CheckReport(
+                check_id=check_id,
+                tool_id=check_id,
+                status="failed",
+                exit_code=result.exit_code or 1,
+                findings=(parsed,),
+            )
+        findings = parsed
         if findings:
             return CheckReport(
                 check_id=check_id,
