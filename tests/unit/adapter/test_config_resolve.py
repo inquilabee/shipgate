@@ -4,12 +4,12 @@ from pathlib import Path
 
 from shipgate.adapter.config_resolve import resolve_config_paths
 from shipgate.catalog.loader import CatalogLoader
-from shipgate.config.loader import load_config
+from shipgate.config.loader import ProjectConfigLoader
 
 
 def test_resolve_bundled_config_per_tool(tmp_path: Path):
     catalog = CatalogLoader.load()
-    project = load_config(project_root=tmp_path)
+    project = ProjectConfigLoader.load(project_root=tmp_path)
 
     ruff_paths = resolve_config_paths(catalog.get_tool("ruff.lint"), project, tmp_path)
     yamllint_paths = resolve_config_paths(catalog.get_tool("yamllint.check"), project, tmp_path)
@@ -29,6 +29,6 @@ def test_resolve_repo_mode_uses_shipgate_first(tmp_path: Path):
 
     catalog = CatalogLoader.load()
     scaffold_project_layout(tmp_path)
-    project = replace(load_config(project_root=tmp_path), config_mode="repo")
+    project = replace(ProjectConfigLoader.load(project_root=tmp_path), config_mode="repo")
     paths = resolve_config_paths(catalog.get_tool("ruff.lint"), project, tmp_path)
     assert paths == (tmp_path / ".shipgate/configs/ruff.toml",)

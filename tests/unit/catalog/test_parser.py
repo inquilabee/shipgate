@@ -1,4 +1,4 @@
-from shipgate.catalog.core.parser import CatalogParser
+from shipgate.catalog.core import CatalogParser
 from shipgate.domain.modes import RunMode
 
 

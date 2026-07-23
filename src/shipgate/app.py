@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.baseline import load_baseline, save_baseline
 from shipgate.catalog.loader import CatalogLoader
-from shipgate.config.loader import load_config
+from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.reports import RunReport, report_json_schema
 from shipgate.gates.catalog import merge_gate_catalog
@@ -66,7 +66,7 @@ class ShipGateApp:
 
     def install(self, command: InstallCommand) -> int:
         catalog = self._catalog_for(command.project_root)
-        project = load_config(
+        project = ProjectConfigLoader.load(
             config_path=command.config_path,
             project_root=command.project_root,
         )
@@ -116,7 +116,7 @@ class ShipGateApp:
             from shipgate.paths import find_project_root
 
             project_root = find_project_root()
-        project = load_config(project_root=project_root)
+        project = ProjectConfigLoader.load(project_root=project_root)
         catalog = self._catalog_for(project_root)
         checks = list_project_checks(project, catalog)
         return "\n".join(checks) + ("\n" if checks else "")
@@ -150,7 +150,7 @@ class ShipGateApp:
         exit_code, report = self.run_suite(command, RunMode.CHECK)
         if exit_code != 0:
             return exit_code
-        project = load_config(
+        project = ProjectConfigLoader.load(
             config_path=command.config_path,
             project_root=command.project_root,
         )
@@ -226,7 +226,7 @@ class ShipGateApp:
         *,
         suite: str | None = None,
     ) -> str:
-        project = load_config(project_root=project_root)
+        project = ProjectConfigLoader.load(project_root=project_root)
         catalog = self._catalog_for(project_root)
         lines = list_resolved_configs(
             project_root,

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from shipgate.config.loader import load_config
+from shipgate.config.loader import ProjectConfigLoader
 from shipgate.errors import ConfigError
 from shipgate.paths import project_root_cache_env_path, shipgate_yaml_path
 from shipgate.project.init import init_project
@@ -145,7 +145,7 @@ def assert_yaml_merge_scopes(config) -> None:
 
 def test_pyproject_only_loads_full_config(tmp_path: Path):
     write_pyproject(tmp_path)
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert_full_pyproject_top_level(config)
     assert_full_pyproject_bindings(config)
     assert_full_pyproject_scopes(config)
@@ -166,14 +166,14 @@ def test_pyproject_merges_with_yaml_override(tmp_path: Path):
         "      - src/bar\n",
         encoding="utf-8",
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert_yaml_merge_overrides(config)
 
 
 def test_explicit_pyproject_config_path(tmp_path: Path):
     write_pyproject(tmp_path)
     (tmp_path / "shipgate.yaml").write_text("suite: format\n", encoding="utf-8")
-    config = load_config(
+    config = ProjectConfigLoader.load(
         project_root=tmp_path,
         config_path=tmp_path / "pyproject.toml",
     )
@@ -183,7 +183,7 @@ def test_explicit_pyproject_config_path(tmp_path: Path):
 def test_explicit_toml_example_filename(tmp_path: Path):
     example = tmp_path / "pyproject.toml.example"
     example.write_text(FULL_PYPROJECT, encoding="utf-8")
-    config = load_config(project_root=tmp_path, config_path=example)
+    config = ProjectConfigLoader.load(project_root=tmp_path, config_path=example)
     assert config.suite == "full"
 
 
@@ -207,7 +207,7 @@ source = "gate:gate.module-size"
         "scan_roots:\n  - src/\n  - tests/\n",
         encoding="utf-8",
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.scopes is not None
     assert config.scopes["gate-scope"].include == ("src/", "tests/")
 
@@ -228,7 +228,7 @@ include = ["src/override"]
 exclude = ["src/legacy"]
 """,
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.scopes is not None
     scope = config.scopes["python-source"]
     assert scope.include == ("src/override",)
@@ -245,7 +245,7 @@ name = "demo"
 [tool.shipgate]
 """,
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.suite == "standard"
     assert config.env == "managed"
 
@@ -262,7 +262,7 @@ unknown = true
 """,
     )
     try:
-        load_config(project_root=tmp_path)
+        ProjectConfigLoader.load(project_root=tmp_path)
     except ConfigError as exc:
         assert exc.exit_code == 2, "expected exit code 2"
     else:
@@ -272,7 +272,10 @@ unknown = true
 def test_invalid_pyproject_toml_fails(tmp_path: Path):
     path = tmp_path / "pyproject.toml"
     path.write_text("[tool.shipgate\nsuite = 'full'\n", encoding="utf-8")
-    assert_config_error(lambda: load_config(project_root=tmp_path), contains="invalid TOML")
+    assert_config_error(
+        lambda: ProjectConfigLoader.load(project_root=tmp_path),
+        contains="invalid TOML",
+    )
 
 
 def test_checks_list_form(tmp_path: Path):
@@ -286,7 +289,7 @@ name = "demo"
 checks = ["ruff.lint", "ruff.format"]
 """,
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.checks == ("ruff.lint", "ruff.format")
     assert config.check_bindings == ()
 
@@ -302,7 +305,10 @@ name = "demo"
 source = "tool.missing.section"
 """,
     )
-    assert_config_error(lambda: load_config(project_root=tmp_path), contains="not found")
+    assert_config_error(
+        lambda: ProjectConfigLoader.load(project_root=tmp_path),
+        contains="not found",
+    )
 
 
 def test_invalid_gate_source_fails(tmp_path: Path):
@@ -317,7 +323,7 @@ source = "gate:gate.missing"
 """,
     )
     assert_config_error(
-        lambda: load_config(project_root=tmp_path), contains="gate source not found"
+        lambda: ProjectConfigLoader.load(project_root=tmp_path), contains="gate source not found"
     )
 
 
@@ -328,7 +334,7 @@ def test_init_writes_pyproject_when_present(tmp_path: Path):
     assert path == tmp_path / "pyproject.toml"
     assert "[tool.shipgate]" in path.read_text(encoding="utf-8")
     assert not shipgate_yaml_path(tmp_path).is_file()
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.changed_only is True
 
 
@@ -354,7 +360,7 @@ suite = "full"
 "gate.module-size" = ".shipgate/allowlists/module-size.yaml"
 """,
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.allowlists == {
         "gate.acronym-allowlist": ".shipgate/allowlists/acronyms.yaml",
         "gate.module-size": ".shipgate/allowlists/module-size.yaml",
@@ -374,7 +380,7 @@ reason = "Oversized modules pending split"
 """,
     )
     assert_config_error(
-        lambda: load_config(project_root=tmp_path),
+        lambda: ProjectConfigLoader.load(project_root=tmp_path),
         contains="must be an allowlist file path",
     )
 
@@ -391,7 +397,7 @@ name = "demo"
 """,
     )
     assert_config_error(
-        lambda: load_config(project_root=tmp_path),
+        lambda: ProjectConfigLoader.load(project_root=tmp_path),
         contains="must be an allowlist file path",
     )
 
@@ -412,7 +418,7 @@ name = "demo"
         "allowlists:\n  gate.module-size: custom/module-size.yaml\n",
         encoding="utf-8",
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.allowlists == {
         "gate.module-size": "custom/module-size.yaml",
     }
@@ -420,7 +426,7 @@ name = "demo"
 
 def test_pyproject_example_loads():
     example = Path(__file__).resolve().parents[3] / ".shipgate" / "pyproject.toml.example"
-    config = load_config(config_path=example, project_root=example.parent.parent)
+    config = ProjectConfigLoader.load(config_path=example, project_root=example.parent.parent)
     assert config.suite == "full"
     assert config.allowlists is not None
     assert "gate.acronym-allowlist" in config.allowlists
@@ -434,7 +440,7 @@ def test_policy_pyproject_prefers_pyproject_when_only_pyproject(tmp_path: Path):
         f"SHIPGATE_ROOT={tmp_path.resolve()}\nSHIPGATE_POLICY=pyproject\n",
         encoding="utf-8",
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.suite == "full"
 
 
@@ -448,5 +454,5 @@ def test_policy_yaml_prefers_yaml_when_both_exist(tmp_path: Path):
         f"SHIPGATE_ROOT={tmp_path.resolve()}\nSHIPGATE_POLICY=yaml\n",
         encoding="utf-8",
     )
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.suite == "python-quality"

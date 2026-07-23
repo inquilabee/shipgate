@@ -4,7 +4,7 @@ from pathlib import Path
 
 from shipgate.adapter.config_resolve import resolve_config_paths
 from shipgate.catalog.loader import CatalogLoader
-from shipgate.config.loader import load_config
+from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import shipgate_yaml_path
 from shipgate.project.config_setup import (
     project_config_relpath,
@@ -64,7 +64,7 @@ def test_init_scaffolds_configs(tmp_path: Path):
 
 def test_init_shipgate_yaml_enables_changed_only(tmp_path: Path):
     init_project(tmp_path)
-    project = load_config(project_root=tmp_path)
+    project = ProjectConfigLoader.load(project_root=tmp_path)
     assert project.changed_only is True, "changed-only should default true"
 
 
@@ -77,7 +77,7 @@ def test_init_configs_only_without_shipgate_yaml(tmp_path: Path):
 def test_resolve_prefers_shipgate_config(tmp_path: Path):
     catalog = CatalogLoader.load()
     scaffold_project_layout(tmp_path)
-    project = load_config(project_root=tmp_path)
+    project = ProjectConfigLoader.load(project_root=tmp_path)
     tool = catalog.get_tool("ruff.lint")
     paths = resolve_config_paths(tool, project, tmp_path)
     assert paths == (tmp_path / ".shipgate/configs/ruff.toml",), "project config not preferred"

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from shipgate.config.discovery import discover_yaml_config_path
-from shipgate.config.loader import load_config
+from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import find_project_root, shipgate_yaml_path
 
 
@@ -28,7 +28,7 @@ def test_discover_legacy_dot_yaml(tmp_path: Path):
 
 def test_canonical_yaml_loads(tmp_path: Path):
     write_yaml(shipgate_yaml_path(tmp_path), "suite: python-quality\n")
-    config = load_config(project_root=tmp_path)
+    config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.suite == "python-quality"
 
 

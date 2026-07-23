@@ -7,19 +7,9 @@ from typing import TYPE_CHECKING
 
 from shipgate.app import InstallCommand, RunCommand, ShipGateApp
 from shipgate.catalog.loader import CatalogLoader
-from shipgate.config.loader import load_config as _load_config
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog
-    from shipgate.domain.project import ProjectConfig
-
-
-def load_config(
-    *,
-    config_path: Path | None = None,
-    project_root: Path | None = None,
-) -> ProjectConfig:
-    return _load_config(config_path=config_path, project_root=project_root)
 
 
 def load_catalog(path: Path | None = None, *, project_root: Path | None = None) -> Catalog:

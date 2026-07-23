@@ -6,9 +6,7 @@ from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from shipgate.catalog.core.parser import CatalogParser
-from shipgate.catalog.core.tool_extends import ToolExtendsResolver
-from shipgate.catalog.core.validate import CatalogValidator
+from shipgate.catalog.core import CatalogParser, CatalogValidator, ToolExtendsResolver
 from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.errors import CatalogError
 from shipgate.paths import project_catalog_dir

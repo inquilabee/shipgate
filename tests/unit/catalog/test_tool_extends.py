@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from shipgate.catalog.core.tool_extends import ToolExtendsResolver
+from shipgate.catalog.core import ToolExtendsResolver
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.errors import CatalogError
 from shipgate.runtime.install import collect_install_requirements

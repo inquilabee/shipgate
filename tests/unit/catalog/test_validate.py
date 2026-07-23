@@ -1,6 +1,6 @@
 import pytest
 
-from shipgate.catalog.core.validate import CatalogValidator
+from shipgate.catalog.core import CatalogValidator
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.catalog import Catalog, CliOptionDefinition, SuiteDefinition, ToolDefinition
 from shipgate.domain.modes import RunMode

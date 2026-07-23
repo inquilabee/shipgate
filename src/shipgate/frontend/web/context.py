@@ -12,7 +12,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from shipgate.baseline import load_baseline
-from shipgate.config.loader import load_config
+from shipgate.config.loader import ProjectConfigLoader
 from shipgate.frontend.domain.baseline import (
     fingerprint_from_record,
     fingerprints_from_report,
@@ -349,7 +349,7 @@ def safe_branches(worktrees: WorktreeManager) -> list[str]:
 def default_suite(catalog, primary: Path) -> str:
     project = None
     try:
-        project = load_config(project_root=primary)
+        project = ProjectConfigLoader.load(project_root=primary)
     except Exception:
         project = None
     if project is not None and project.suite is not None and project.suite in catalog.suites:
