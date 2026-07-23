@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from shipgate.core.process import run_command
 from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
 from shipgate.runtime.environment import resolve_executable, system_environment
 
@@ -88,13 +89,7 @@ def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
 def run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
     command = [binary, flag]
     try:
-        completed = subprocess.run(  # noqa: S603
-            command,
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT_S,
-            check=False,
-        )
+        completed = run_command(command, timeout=TIMEOUT_S)
     except (OSError, subprocess.TimeoutExpired):
         return None
     text = "\n".join(part.strip() for part in (completed.stdout, completed.stderr) if part.strip())
@@ -141,12 +136,9 @@ def pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
     if not python.is_file():
         return None
     try:
-        completed = subprocess.run(  # noqa: S603
+        completed = run_command(
             [str(python), "-m", "pip", "show", resolved_package],
-            capture_output=True,
-            text=True,
             timeout=TIMEOUT_S,
-            check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None

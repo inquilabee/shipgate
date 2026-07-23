@@ -1,10 +1,10 @@
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from shipgate.catalog.loader import CatalogLoader
+from shipgate.core import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
 from shipgate.errors import PlanningError
@@ -25,20 +25,19 @@ GIT_ENV = {
 
 def git_init_commit(tmp_path):
     assert GIT is not None
-    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run([GIT, "add", "."], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
+    run_command([GIT, "init"], cwd=tmp_path, check=True)
+    run_command([GIT, "add", "."], cwd=tmp_path, check=True)
+    run_command(
         [GIT, "commit", "-m", "init"],
         cwd=tmp_path,
         check=True,
-        capture_output=True,
         env=GIT_ENV,
     )
 
 
 def git_add(tmp_path, *paths: Path) -> None:
     assert GIT is not None
-    subprocess.run([GIT, "add", *paths], cwd=tmp_path, check=True, capture_output=True)
+    run_command([GIT, "add", *[str(path) for path in paths]], cwd=tmp_path, check=True)
 
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")

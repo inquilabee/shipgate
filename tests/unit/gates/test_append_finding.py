@@ -1,7 +1,7 @@
 import json
-import subprocess
 import sys
 
+from shipgate.core import run_command
 from shipgate.gates.append_finding import append_finding, main
 
 
@@ -74,7 +74,7 @@ def test_append_finding_module_invocation(tmp_path):
     report_path = tmp_path / "report.json"
     report_path.write_text('{"findings":[]}\n', encoding="utf-8")
 
-    result = subprocess.run(
+    result = run_command(
         [
             sys.executable,
             "-m",
@@ -84,9 +84,6 @@ def test_append_finding_module_invocation(tmp_path):
             "error",
             "failed",
         ],
-        check=False,
-        capture_output=True,
-        text=True,
     )
 
     assert result.returncode == 0

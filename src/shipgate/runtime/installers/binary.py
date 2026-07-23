@@ -6,7 +6,6 @@ import json
 import os
 import platform
 import shutil
-import subprocess
 import sys
 import tarfile
 import tempfile
@@ -15,6 +14,7 @@ import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
+from shipgate.core.process import run_command
 from shipgate.errors import InstallError
 from shipgate.paths import PROJECT_MANAGED_BIN_DIR
 from shipgate.runtime.installers.base import download_https_file, link_binary
@@ -126,11 +126,8 @@ class NpmInstaller:
         npm = shutil.which("npm")
         if npm is None:
             raise InstallError(f"npm is required to install {install_def.package}")
-        result = subprocess.run(  # noqa: S603
+        result = run_command(
             [npm, "install", "--prefix", str(bin_dir), install_def.package],
-            capture_output=True,
-            text=True,
-            check=False,
         )
         if result.returncode != 0:
             raise InstallError(
@@ -158,12 +155,9 @@ class GoInstaller:
         go = shutil.which("go")
         if go is None:
             raise InstallError("go is required to install yamlfmt")
-        result = subprocess.run(  # noqa: S603
+        result = run_command(
             [go, "install", "github.com/google/yamlfmt/cmd/yamlfmt@latest"],
-            capture_output=True,
-            text=True,
             env={**os.environ, "GOBIN": str(bin_dir)},
-            check=False,
         )
         if result.returncode != 0:
             raise InstallError(f"failed to install yamlfmt: {result.stderr.strip()}")

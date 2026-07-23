@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from typing import TYPE_CHECKING
 
+from shipgate.core.process import run_command
 from shipgate.errors import InstallError
 from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
 
@@ -25,11 +25,9 @@ class PythonInstaller:
     ) -> None:
         venv = project_root / PROJECT_MANAGED_PYTHON_ENV
         if not venv.exists():
-            subprocess.run(  # noqa: S603
+            run_command(
                 [sys.executable, "-m", "venv", str(venv)],
                 check=True,
-                capture_output=True,
-                text=True,
             )
         if sys.platform == "win32":
             pip = venv / "Scripts" / "pip"
@@ -41,12 +39,7 @@ class PythonInstaller:
                 specs[0] = f"{package}{install_def.version}"
             specs.extend(install_def.requires)
             for spec in specs:
-                result = subprocess.run(  # noqa: S603
-                    [str(pip), "install", spec],
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
+                result = run_command([str(pip), "install", spec])
                 if result.returncode != 0:
                     raise InstallError(
                         f"failed to install {spec}: {result.stderr.strip()}",

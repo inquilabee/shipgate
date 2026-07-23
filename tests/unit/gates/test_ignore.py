@@ -1,9 +1,9 @@
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from shipgate.core import run_command
 from shipgate.gates.ignore import (
     EffectiveIgnores,
     ignore_env,
@@ -60,11 +60,8 @@ def test_ignore_main_exit_codes(monkeypatch, patterns, rel_path, expected_code):
 
 def test_ignore_module_invocation(monkeypatch):
     monkeypatch.setenv("SHIPGATE_IGNORE_PATHS", "tmp/")
-    result = subprocess.run(
+    result = run_command(
         [sys.executable, "-m", "shipgate.gates.ignore", "tmp/cache.txt"],
-        check=False,
-        capture_output=True,
-        text=True,
     )
     assert result.returncode == 0
 

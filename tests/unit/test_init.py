@@ -1,7 +1,7 @@
 import shutil
-import subprocess
 
 from shipgate.cli import main
+from shipgate.core import run_command
 from shipgate.paths import PROJECT_CACHE_ENV, SHIPGATE_DIR, SHIPGATE_YAML, find_project_root
 
 GIT = shutil.which("git")
@@ -77,7 +77,7 @@ def test_init_refuses_existing_config(tmp_path, monkeypatch):
 def test_find_project_root_prefers_shipgate_yaml(tmp_path):
     if GIT is None:
         return
-    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
+    run_command([GIT, "init"], cwd=tmp_path, check=True)
     nested = tmp_path / "nested"
     nested.mkdir()
     config_path = tmp_path / SHIPGATE_YAML

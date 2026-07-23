@@ -238,7 +238,7 @@ sequenceDiagram
                 Adapter-->>Runner: argv tuple
             end
 
-            Runner->>Exec: subprocess.run(argv, cwd=project_root)
+            Runner->>Exec: run_command(argv, cwd=project_root)
             Exec-->>Runner: ProcessResult (stdout, stderr, exit_code)
             Runner->>Disk: write_raw_output
             Runner->>Norm: normalizer.normalize(resolved, result)

@@ -1,9 +1,9 @@
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 
+from shipgate.core import run_command
 from shipgate.planning.incremental import RunScopeSession
 from shipgate.planning.scope_resolver import ScopeResolver
 
@@ -19,15 +19,14 @@ GIT_ENV = {
 
 def git_init_commit(tmp_path: Path) -> None:
     assert GIT is not None
-    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
+    run_command([GIT, "init"], cwd=tmp_path, check=True)
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "a.py").write_text("x = 1\n", encoding="utf-8")
-    subprocess.run([GIT, "add", "."], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(
+    run_command([GIT, "add", "."], cwd=tmp_path, check=True)
+    run_command(
         [GIT, "commit", "-m", "init"],
         cwd=tmp_path,
         check=True,
-        capture_output=True,
         env=GIT_ENV,
     )
 

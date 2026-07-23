@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 
 import pathspec
+
+from shipgate.core.process import run_command
 
 DEFAULT_IGNORED = (
     ".shipgate/",
@@ -46,11 +47,9 @@ def is_ignored_by_git(project_root: Path, path: Path) -> bool:
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
-    result = subprocess.run(  # noqa: S603
-        ["git", "check-ignore", "-q", rel_str],  # noqa: S607
+    result = run_command(
+        ["git", "check-ignore", "-q", rel_str],
         cwd=project_root,
-        capture_output=True,
-        check=False,
     )
     return result.returncode == 0
 

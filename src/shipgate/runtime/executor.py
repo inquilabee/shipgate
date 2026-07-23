@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from shipgate.core.process import run_command
 from shipgate.errors import ExecutionError
 
 if TYPE_CHECKING:
@@ -37,14 +38,11 @@ class Executor:
     ) -> ProcessResult:
         start = time.monotonic()
         try:
-            completed = subprocess.run(  # noqa: S603
-                list(argv),
+            completed = run_command(
+                argv,
                 cwd=cwd,
                 env=env,
-                capture_output=True,
-                text=True,
                 timeout=self.timeout_seconds,
-                check=False,
             )
         except subprocess.TimeoutExpired as exc:
             raise ExecutionError(

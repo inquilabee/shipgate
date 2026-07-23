@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from shipgate.core.process import run_command
 from shipgate.paths import PROJECT_WORKTREES_DIR
 
 
@@ -86,12 +87,10 @@ class WorktreeManager:
 
     def _run_git(self, args: list[str]) -> subprocess.CompletedProcess[str]:
         try:
-            return subprocess.run(  # noqa: S603
-                ["git", *args],  # noqa: S607
+            return run_command(
+                ["git", *args],
                 cwd=self._primary_root,
                 check=True,
-                capture_output=True,
-                text=True,
             )
         except subprocess.CalledProcessError as exc:
             raise self.git_error(exc, f"git {' '.join(args)} failed") from exc
@@ -122,11 +121,8 @@ def current_branch(project_root: Path) -> str:
     if git is None:
         return "unknown"
     try:
-        result = subprocess.run(  # noqa: S603
+        result = run_command(
             [git, "-C", str(project_root), "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True,
-            text=True,
-            check=False,
         )
         branch = result.stdout.strip()
         if result.returncode == 0 and branch and branch != "HEAD":

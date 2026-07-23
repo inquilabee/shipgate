@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from shipgate.core.process import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
 from shipgate.planning.gitignore import expand_scope, minimize_covering_dirs
@@ -197,20 +197,14 @@ def git_changed_files(project_root: Path, since: str) -> set[str]:
     if since == "HEAD":
         return git_changed_against_head(project_root)
     git = git_executable()
-    result = subprocess.run(  # noqa: S603
+    result = run_command(
         [git, "diff", "--name-only", "--relative", since],
         cwd=project_root,
-        capture_output=True,
-        text=True,
-        check=False,
     )
     if result.returncode != 0:
-        result = subprocess.run(  # noqa: S603
+        result = run_command(
             [git, "diff", "--name-only", "--relative", f"{since}..HEAD"],
             cwd=project_root,
-            capture_output=True,
-            text=True,
-            check=False,
         )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout or "").strip()
@@ -231,13 +225,7 @@ def git_changed_against_head(project_root: Path) -> set[str]:
     )
     failures = 0
     for args in commands:
-        result = subprocess.run(  # noqa: S603
-            args,
-            cwd=project_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        result = run_command(args, cwd=project_root)
         if result.returncode != 0:
             failures += 1
             continue
