@@ -5,7 +5,7 @@ from pathlib import Path
 from shipgate.adapter.config_resolve import resolve_config_paths
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
-from shipgate.paths import shipgate_yaml_path
+from shipgate.paths import SHIPGATE_YAML
 from shipgate.project.config_setup import (
     project_config_relpath,
     scaffold_bundled_configs,
@@ -70,7 +70,7 @@ def test_init_shipgate_yaml_enables_changed_only(tmp_path: Path):
 
 def test_init_configs_only_without_shipgate_yaml(tmp_path: Path):
     init_project(tmp_path, configs_only=True)
-    assert not shipgate_yaml_path(tmp_path).is_file(), "policy file should not be created"
+    assert not (tmp_path / SHIPGATE_YAML).is_file(), "policy file should not be created"
     assert (tmp_path / ".shipgate/configs/ruff.toml").is_file(), "configs should be scaffolded"
 
 

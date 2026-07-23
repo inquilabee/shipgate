@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.paths import reports_root
+from shipgate.paths import PROJECT_REPORTS_RAW_DIR
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition
@@ -208,7 +208,7 @@ class OptionResolver:
     ) -> tuple[Path, dict[str, str]]:
         output = options.output
         if output is None:
-            output = reports_root(project_root) / "raw" / f"{check_id}.json"
+            output = project_root / PROJECT_REPORTS_RAW_DIR / f"{check_id}.json"
             sources["output"] = "shipgate_default"
         return output, sources
 

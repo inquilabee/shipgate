@@ -6,14 +6,14 @@ import json
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from shipgate.paths import server_dir
+from shipgate.paths import PROJECT_SERVER_DIR
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
 def requirements_path(primary: Path) -> Path:
-    return server_dir(primary) / "requirements_ack.json"
+    return primary / PROJECT_SERVER_DIR / "requirements_ack.json"
 
 
 def is_acknowledged(primary: Path) -> bool:

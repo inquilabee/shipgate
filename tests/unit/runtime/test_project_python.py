@@ -3,9 +3,10 @@ from pathlib import Path
 from tests.unit.support.python_env import PythonEnvFixture
 
 from shipgate.paths import (
+    PROJECT_CACHE_ENV,
     PROJECT_ENV_CACHE_KEY,
+    PROJECT_MANAGED_PYTHON_ENV,
     parse_env_file,
-    project_root_cache_env_path,
 )
 from shipgate.project.init import init_project
 from shipgate.runtime.project_python import (
@@ -20,14 +21,12 @@ def test_discover_prefers_dot_venv(tmp_path):
 
     discovered = discover_project_python(tmp_path)
     assert discovered == Path(".venv")
-    cache = parse_env_file(project_root_cache_env_path(tmp_path))
+    cache = parse_env_file(tmp_path / PROJECT_CACHE_ENV)
     assert cache[PROJECT_ENV_CACHE_KEY] == ".venv"
 
 
 def test_discover_ignores_managed_virtual_env(tmp_path, monkeypatch):
-    from shipgate.paths import managed_python_env
-
-    managed = managed_python_env(tmp_path)
+    managed = tmp_path / PROJECT_MANAGED_PYTHON_ENV
     PythonEnvFixture.write_venv(managed)
     monkeypatch.setenv("VIRTUAL_ENV", str(managed))
 
@@ -54,7 +53,7 @@ def test_read_cached_project_python_uses_saved_path(tmp_path):
 def test_init_persists_discovered_project_env(tmp_path):
     PythonEnvFixture.write_venv(tmp_path / ".venv")
     init_project(tmp_path)
-    cache = parse_env_file(project_root_cache_env_path(tmp_path))
+    cache = parse_env_file(tmp_path / PROJECT_CACHE_ENV)
     assert cache[PROJECT_ENV_CACHE_KEY] == ".venv"
 
 

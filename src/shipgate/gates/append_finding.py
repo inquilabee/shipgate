@@ -6,8 +6,8 @@ import json
 import sys
 from pathlib import Path
 
+from shipgate.core.json_io import dumps_indented
 from shipgate.gates.core.report import gate_finding_payload
-from shipgate.runtime.core.json_io import dumps_indented
 
 
 def append_finding(

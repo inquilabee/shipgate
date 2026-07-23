@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from shipgate.domain.reports import Finding
-from shipgate.normalize.core.json import JsonItemsNormalizer
-from shipgate.normalize.core.location import location_from_item
+from shipgate.normalize.core import JsonItemsNormalizer, location_from_item
 
 
 class GitleaksNormalizer(JsonItemsNormalizer):

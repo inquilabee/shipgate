@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.errors import ShipGateError
 from shipgate.gates.setup import setup_bundled_gates
-from shipgate.paths import project_root_cache_env_path, shipgate_dir, shipgate_yaml_path
+from shipgate.paths import (
+    PROJECT_CACHE_ENV,
+    PROJECT_CONFIGS_DIR,
+    PROJECT_GATES_DIR,
+    PROJECT_REPORTS_DIR,
+    SHIPGATE_YAML,
+)
 from shipgate.project.catalog import sync_catalog
 from shipgate.project.config_setup import (
     read_pyproject_shipgate_template,
@@ -36,9 +42,9 @@ def scaffold_project_layout(
     """Create .shipgate/ directories and copy missing bundled configs."""
     root = project_root.resolve()
     catalog = CatalogLoader.load()
-    (shipgate_dir(root) / "reports").mkdir(parents=True, exist_ok=True)
-    (shipgate_dir(root) / "gates").mkdir(parents=True, exist_ok=True)
-    (shipgate_dir(root) / "configs").mkdir(parents=True, exist_ok=True)
+    (root / PROJECT_REPORTS_DIR).mkdir(parents=True, exist_ok=True)
+    (root / PROJECT_GATES_DIR).mkdir(parents=True, exist_ok=True)
+    (root / PROJECT_CONFIGS_DIR).mkdir(parents=True, exist_ok=True)
     created = scaffold_bundled_configs(root, catalog)
     created.extend(sync_catalog(root))
     gitignore = scaffold_shipgate_gitignore(root)
@@ -51,7 +57,7 @@ def scaffold_project_layout(
     else:
         discovered = discover_and_persist_project_python(root)
         if discovered is not None:
-            created.append(project_root_cache_env_path(root))
+            created.append(root / PROJECT_CACHE_ENV)
     return created
 
 
@@ -78,7 +84,7 @@ def init_project(
 class ProjectInitializer:
     @staticmethod
     def init_yaml_policy(root: Path, *, project_env: Path | None = None) -> Path:
-        config_path = shipgate_yaml_path(root)
+        config_path = root / SHIPGATE_YAML
         if config_path.is_file():
             raise ShipGateError(f"shipgate.yaml already exists: {config_path}")
         config_path.parent.mkdir(parents=True, exist_ok=True)

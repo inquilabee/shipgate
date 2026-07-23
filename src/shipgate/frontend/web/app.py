@@ -27,7 +27,7 @@ from shipgate.frontend.web.context import (
     overview_context,
     start_new_run,
 )
-from shipgate.paths import SERVER_DB_FILENAME, normalize_finding_path, server_dir
+from shipgate.paths import PROJECT_SERVER_DIR, SERVER_DB_FILENAME, normalize_finding_path
 from shipgate.runtime.report_store import ReportStore
 
 FRONTEND_ROOT = Path(__file__).resolve().parent.parent
@@ -38,7 +38,7 @@ GITHUB_REPO_URL = "https://github.com/inquilabee/shipgate"
 
 def create_app(primary_root: Path) -> FastAPI:
     primary = Path(primary_root).resolve()
-    storage = SqliteStorage(server_dir(primary) / SERVER_DB_FILENAME)
+    storage = SqliteStorage(primary / PROJECT_SERVER_DIR / SERVER_DB_FILENAME)
     backfill_from_report_store(primary, storage)
     catalog = CatalogLoader.load()
     from shipgate.app import ShipGateApp

@@ -18,6 +18,10 @@ def gates_lib_path() -> Path:
     return bundled_root_path() / "gates" / "lib.sh"
 
 
+def gate_init_template_path() -> Path:
+    return Path(str(resources.files("shipgate.gates.templates") / "gate.sh"))
+
+
 def resolve_gate_script(tool: ToolDefinition, project_root: Path) -> Path:
     if tool.script:
         script = Path(tool.script)

@@ -7,7 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from shipgate.paths import managed_python_env
+from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
 from shipgate.runtime.environment import resolve_executable, system_environment
 
 if TYPE_CHECKING:
@@ -137,7 +137,7 @@ def pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
     resolved_package = package_name(tool.install.package)
     if resolved_package is None:
         return None
-    python = managed_python_env(primary_root) / "bin" / "python"
+    python = (primary_root / PROJECT_MANAGED_PYTHON_ENV) / "bin" / "python"
     if not python.is_file():
         return None
     try:

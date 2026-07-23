@@ -6,9 +6,9 @@ import json
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from shipgate.core.json_io import dumps_indented
 from shipgate.domain.reports import RunReport
-from shipgate.paths import failure_report_dir, reports_root
-from shipgate.runtime.core.json_io import dumps_indented
+from shipgate.paths import PROJECT_REPORTS_DIR, PROJECT_REPORTS_FAILURES_DIR
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class ReportStore:
     def __init__(self, project_root: Path) -> None:
         self.project_root = project_root.resolve()
-        self.root = reports_root(project_root)
+        self.root = project_root / PROJECT_REPORTS_DIR
         self.runs_dir = self.root / "runs"
         self.index_path = self.root / "index.json"
 
@@ -63,7 +63,7 @@ class ReportStore:
         return finalized
 
     def _write_failure_report(self, report: RunReport) -> Path:
-        out_dir = failure_report_dir(self.project_root, report.run_id)
+        out_dir = self.project_root / PROJECT_REPORTS_FAILURES_DIR / report.run_id
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / "report.json"
         path.write_text(dumps_indented(report.to_dict()), encoding="utf-8")

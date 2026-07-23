@@ -14,7 +14,7 @@ from shipgate.gates.runtime import (
     is_gate_tool,
     prepare_gate_execution,
 )
-from shipgate.normalize.core.gate_json import GateJsonNormalizer
+from shipgate.normalize.core import GateJsonNormalizer
 from shipgate.runtime.executor import Executor, ProcessResult
 
 

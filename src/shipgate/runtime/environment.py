@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.errors import InstallError
-from shipgate.paths import managed_bin_dir, managed_python_env, tools_dir
+from shipgate.paths import PROJECT_MANAGED_BIN_DIR, PROJECT_MANAGED_PYTHON_ENV, PROJECT_TOOLS_DIR
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -19,8 +19,8 @@ def system_environment() -> ExecutionEnvironment:
 
 
 def managed_environment(project_root: Path) -> ExecutionEnvironment:
-    venv = managed_python_env(project_root)
-    bin_dir = managed_bin_dir(project_root)
+    venv = project_root / PROJECT_MANAGED_PYTHON_ENV
+    bin_dir = project_root / PROJECT_MANAGED_BIN_DIR
     if sys.platform == "win32":
         scripts = venv / "Scripts"
     else:
@@ -54,7 +54,7 @@ def resolve_executable(
 ) -> str:
     name = install_binary or tool_executable
     if project_root is not None:
-        found = find_in_bin_dir(managed_bin_dir(project_root), name)
+        found = find_in_bin_dir(project_root / PROJECT_MANAGED_BIN_DIR, name)
         if found is not None:
             return found
     if environment.kind == "managed" and environment.root is not None:
@@ -87,4 +87,4 @@ def find_in_bin_dir(bin_dir: Path, name: str) -> str | None:
 
 
 def tools_manifest_path(project_root: Path) -> Path:
-    return tools_dir(project_root) / "manifest.json"
+    return project_root / PROJECT_TOOLS_DIR / "manifest.json"

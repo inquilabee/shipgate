@@ -6,7 +6,7 @@ import secrets
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from shipgate.paths import raw_reports_dir
+from shipgate.paths import PROJECT_REPORTS_RAW_DIR
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -27,7 +27,7 @@ def write_raw_output(
     stderr: str = "",
     tool_output: str | None = None,
 ) -> tuple[Path, Path, Path | None]:
-    base = raw_reports_dir(project_root, run_id) / check_id
+    base = project_root / PROJECT_REPORTS_RAW_DIR / run_id / check_id
     base.mkdir(parents=True, exist_ok=True)
     stdout_path = base / "stdout.txt"
     stderr_path = base / "stderr.txt"

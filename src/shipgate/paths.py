@@ -8,8 +8,21 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-PROJECT_SERVER_DIR = ".shipgate/server"
-PROJECT_WORKTREES_DIR = ".shipgate/worktrees"
+SHIPGATE_DIR = Path(".shipgate")
+SHIPGATE_YAML = SHIPGATE_DIR / "shipgate.yaml"
+PROJECT_CATALOG_DIR = SHIPGATE_DIR / "catalog"
+PROJECT_CONFIGS_DIR = SHIPGATE_DIR / "configs"
+PROJECT_GATES_DIR = SHIPGATE_DIR / "gates"
+PROJECT_GATE_CONFIGS_DIR = PROJECT_CONFIGS_DIR / "gates"
+PROJECT_CACHE_ENV = SHIPGATE_DIR / "cache" / ".env"
+PROJECT_REPORTS_DIR = SHIPGATE_DIR / "reports"
+PROJECT_REPORTS_RAW_DIR = PROJECT_REPORTS_DIR / "raw"
+PROJECT_REPORTS_FAILURES_DIR = PROJECT_REPORTS_DIR / "failures"
+PROJECT_TOOLS_DIR = SHIPGATE_DIR / "tools"
+PROJECT_MANAGED_BIN_DIR = PROJECT_TOOLS_DIR / "bin"
+PROJECT_MANAGED_PYTHON_ENV = PROJECT_TOOLS_DIR / "python"
+PROJECT_SERVER_DIR = SHIPGATE_DIR / "server"
+PROJECT_WORKTREES_DIR = SHIPGATE_DIR / "worktrees"
 SERVER_DB_FILENAME = "report.db"
 LEGACY_CONFIG_FILENAMES = ("shipgate.yaml", ".shipgate.yaml")
 PROJECT_ROOT_CACHE_KEY = "SHIPGATE_ROOT"
@@ -18,26 +31,15 @@ PROJECT_ENV_CACHE_KEY = "SHIPGATE_PROJECT_ENV"
 ALLOWED_POLICY_VALUES = frozenset({"yaml", "pyproject"})
 
 
-def shipgate_dir(project_root: Path) -> Path:
-    return project_root / ".shipgate"
-
-
-def shipgate_yaml_path(project_root: Path) -> Path:
-    return shipgate_dir(project_root) / "shipgate.yaml"
-
-
-def project_catalog_dir(project_root: Path) -> Path:
-    return shipgate_dir(project_root) / "catalog"
+def project_gate_config_path(project_root: Path, gate_id: str) -> Path:
+    gate_name = gate_id if gate_id.startswith("gate.") else f"gate.{gate_id}"
+    return project_root / PROJECT_GATE_CONFIGS_DIR / f"{gate_name}.yaml"
 
 
 def has_shipgate_yaml_config(candidate: Path) -> bool:
-    if shipgate_yaml_path(candidate).is_file():
+    if (candidate / SHIPGATE_YAML).is_file():
         return True
     return any((candidate / name).is_file() for name in LEGACY_CONFIG_FILENAMES)
-
-
-def project_root_cache_env_path(project_root: Path) -> Path:
-    return shipgate_dir(project_root) / "cache" / ".env"
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -66,7 +68,7 @@ def read_cached_policy(env_path: Path) -> str | None:
 
 def update_project_cache_env(project_root: Path, updates: Mapping[str, str]) -> Path:
     """Merge keys into ``.shipgate/cache/.env``."""
-    env_path = project_root_cache_env_path(project_root)
+    env_path = project_root / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True, exist_ok=True)
     values = parse_env_file(env_path) if env_path.is_file() else {}
     values.update({key: value for key, value in updates.items() if value})
@@ -92,7 +94,7 @@ def find_cached_policy(start: Path) -> str | None:
     """Walk upward for `.shipgate/cache/.env` and return SHIPGATE_POLICY."""
     current = start.resolve()
     for candidate in [current, *current.parents]:
-        policy = read_cached_policy(project_root_cache_env_path(candidate))
+        policy = read_cached_policy(candidate / PROJECT_CACHE_ENV)
         if policy is not None:
             return policy
     return None
@@ -102,7 +104,7 @@ def find_cached_project_root(start: Path) -> Path | None:
     """Walk upward for `.shipgate/cache/.env` and return a valid cached root."""
     current = start.resolve()
     for candidate in [current, *current.parents]:
-        cached = read_cached_project_root(project_root_cache_env_path(candidate))
+        cached = read_cached_project_root(candidate / PROJECT_CACHE_ENV)
         if cached is None:
             continue
         try:
@@ -131,34 +133,6 @@ def find_project_root(start: Path | None = None) -> Path:
         if (candidate / "pyproject.toml").is_file():
             return candidate
     return current
-
-
-def reports_root(project_root: Path) -> Path:
-    return shipgate_dir(project_root) / "reports"
-
-
-def raw_reports_dir(project_root: Path, run_id: str) -> Path:
-    return reports_root(project_root) / "raw" / run_id
-
-
-def failure_report_dir(project_root: Path, run_id: str) -> Path:
-    return reports_root(project_root) / "failures" / run_id
-
-
-def tools_dir(project_root: Path) -> Path:
-    return shipgate_dir(project_root) / "tools"
-
-
-def managed_bin_dir(project_root: Path) -> Path:
-    return tools_dir(project_root) / "bin"
-
-
-def managed_python_env(project_root: Path) -> Path:
-    return tools_dir(project_root) / "python"
-
-
-def server_dir(project_root: Path) -> Path:
-    return project_root / PROJECT_SERVER_DIR
 
 
 def normalize_finding_path(

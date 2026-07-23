@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from shipgate.normalize.core.json import JsonItemsNormalizer
-from shipgate.normalize.core.ruff_like import ruff_like_finding
+from shipgate.normalize.core import JsonItemsNormalizer, ruff_like_finding
 
 if TYPE_CHECKING:
     from shipgate.domain.reports import Finding

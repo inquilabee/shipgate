@@ -11,9 +11,9 @@ from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.domain.project import ProjectConfig
 from shipgate.errors import ConfigError
 from shipgate.paths import (
+    PROJECT_CACHE_ENV,
     find_cached_policy,
     find_project_root,
-    project_root_cache_env_path,
     read_cached_policy,
 )
 
@@ -123,7 +123,7 @@ class ProjectConfigLoader:
         return ProjectConfigParser.parse(prepared, path)
 
     def _resolve_policy(self) -> str:
-        cached = read_cached_policy(project_root_cache_env_path(self._project_root))
+        cached = read_cached_policy(self._project_root / PROJECT_CACHE_ENV)
         if cached is not None:
             return cached
         walked = find_cached_policy(self._project_root)

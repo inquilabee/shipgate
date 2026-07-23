@@ -1,9 +1,11 @@
 """JSON formatter."""
 
+import json
+
 from shipgate.domain.reports import RunReport
-from shipgate.runtime.core.json_io import dumps_indented
+from shipgate.formatters.core.base import BaseFormatter
 
 
-class JsonFormatter:
-    def render(self, report: RunReport) -> str:
-        return dumps_indented(report.to_dict())
+class JsonFormatter(BaseFormatter):
+    def render_lines(self, report: RunReport) -> list[str]:
+        return json.dumps(report.to_dict(), indent=2).splitlines()

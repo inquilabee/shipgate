@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
-from shipgate.normalize.core.base import BaseNormalizer
-from shipgate.normalize.core.utils import tool_exit_report
+from shipgate.normalize.core import BaseNormalizer, tool_exit_report
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest

@@ -2,12 +2,16 @@ from pathlib import Path
 
 from shipgate.config.discovery import discover_yaml_config_path
 from shipgate.config.loader import ProjectConfigLoader
-from shipgate.paths import find_project_root, shipgate_yaml_path
+from shipgate.paths import SHIPGATE_YAML, find_project_root
 
 
 def write_yaml(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def shipgate_yaml_path(project_root: Path) -> Path:
+    return project_root / SHIPGATE_YAML
 
 
 def test_discover_prefers_shipgate_dir_yaml(tmp_path: Path):

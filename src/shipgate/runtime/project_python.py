@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING
 
 from shipgate.errors import ShipGateError
 from shipgate.paths import (
+    PROJECT_CACHE_ENV,
     PROJECT_ENV_CACHE_KEY,
-    managed_python_env,
+    PROJECT_MANAGED_PYTHON_ENV,
     parse_env_file,
-    project_root_cache_env_path,
     update_project_cache_env,
 )
 
@@ -30,7 +30,7 @@ class ProjectPythonResolver:
         process_environ: Mapping[str, str] | None = None,
     ) -> Path | None:
         root = project_root.resolve()
-        managed_root = managed_python_env(root).resolve()
+        managed_root = (root / PROJECT_MANAGED_PYTHON_ENV).resolve()
         for name in ProjectPythonResolver.PROJECT_VENV_NAMES:
             candidate = root / name
             if ProjectPythonResolver._is_python_env(candidate):
@@ -87,7 +87,7 @@ class ProjectPythonResolver:
 
 
 def read_cached_project_python(project_root: Path) -> Path | None:
-    env_path = project_root_cache_env_path(project_root)
+    env_path = project_root / PROJECT_CACHE_ENV
     if not env_path.is_file():
         return None
     raw = parse_env_file(env_path).get(PROJECT_ENV_CACHE_KEY)
@@ -101,7 +101,7 @@ def resolve_cached_project_python(project_root: Path, raw: str) -> Path | None:
     if not candidate.is_absolute():
         candidate = project_root / candidate
     resolved = candidate.resolve()
-    managed_root = managed_python_env(project_root).resolve()
+    managed_root = (project_root / PROJECT_MANAGED_PYTHON_ENV).resolve()
     if ProjectPythonResolver._is_under(resolved, managed_root):
         return None
     if not ProjectPythonResolver._is_python_env(resolved):

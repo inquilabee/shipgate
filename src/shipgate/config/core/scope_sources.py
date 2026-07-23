@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.errors import ConfigError
+from shipgate.paths import project_gate_config_path
 
 from .pyproject import PyprojectPolicyLoader
 
@@ -98,7 +99,7 @@ class ScopeSourceResolver:
         scope_name: str,
     ) -> tuple[tuple[str, ...], tuple[str, ...]]:
         gate_name = gate_id if gate_id.startswith("gate.") else f"gate.{gate_id}"
-        gate_path = self._project_root / ".shipgate" / "configs" / "gates" / f"{gate_name}.yaml"
+        gate_path = project_gate_config_path(self._project_root, gate_name)
         if not gate_path.is_file():
             raise ConfigError(
                 f"scope {scope_name!r} gate source not found: {gate_path}",

@@ -7,7 +7,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from shipgate.errors import InstallError
-from shipgate.paths import managed_python_env
+from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -23,7 +23,7 @@ class PythonInstaller:
         project_root: Path,
         packages: dict[str, InstallDefinition],
     ) -> None:
-        venv = managed_python_env(project_root)
+        venv = project_root / PROJECT_MANAGED_PYTHON_ENV
         if not venv.exists():
             subprocess.run(  # noqa: S603
                 [sys.executable, "-m", "venv", str(venv)],

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from shipgate.core.registry import Registry
 from shipgate.normalize import (
     bandit,
@@ -13,17 +11,15 @@ from shipgate.normalize import (
     semgrep,
     ty,
 )
-from shipgate.normalize.core.exit import (
+from shipgate.normalize.core import (
     CodespellNormalizer,
     DeadcodeNormalizer,
+    GateJsonNormalizer,
+    GenericExitNormalizer,
     MarkdownlintNormalizer,
+    Normalizer,
     VultureNormalizer,
 )
-from shipgate.normalize.core.gate_json import GateJsonNormalizer
-from shipgate.normalize.core.generic import GenericExitNormalizer
-
-if TYPE_CHECKING:
-    from shipgate.normalize.core.base import Normalizer
 
 NORMALIZER_REGISTRY = Registry(
     {

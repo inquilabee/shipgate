@@ -1,0 +1,1 @@
+"""Bundled gate scaffold templates."""

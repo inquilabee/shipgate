@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from shipgate.gates.paths import bundled_root_path
 from shipgate.paths import (
     POLICY_CACHE_KEY,
+    PROJECT_GATE_CONFIGS_DIR,
     PROJECT_ROOT_CACHE_KEY,
     update_project_cache_env,
 )
@@ -28,7 +29,7 @@ def project_config_relpath(tool: ToolDefinition) -> Path | None:
         and bundled_path.parts[1] == "gates"
     )
     if is_gate:
-        return Path(".shipgate/configs/gates") / f"{tool.id}.yaml"
+        return PROJECT_GATE_CONFIGS_DIR / f"{tool.id}.yaml"
     if bundled_path.name == "mdformat.toml":
         return Path(".mdformat.toml")
     return Path(".shipgate/configs") / bundled_path.name

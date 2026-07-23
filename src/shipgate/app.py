@@ -11,7 +11,7 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.reports import RunReport, report_json_schema
-from shipgate.gates.catalog import merge_gate_catalog
+from shipgate.gates.core import GateCatalogMerger
 from shipgate.gates.init import init_gate
 from shipgate.gates.paths import gates_lib_path
 from shipgate.planning.checks import list_project_checks
@@ -55,7 +55,7 @@ class ShipGateApp:
             if not self._custom_catalog
             else self._base_catalog
         )
-        return merge_gate_catalog(base, project_root)
+        return GateCatalogMerger.merge(base, project_root)
 
     def _run_session(self, project_root: Path) -> RunSession:
         return RunSession(

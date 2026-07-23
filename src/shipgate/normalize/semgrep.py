@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from shipgate.domain.reports import Finding, FindingLocation
-from shipgate.normalize.core.json import JsonItemsNormalizer
+from shipgate.normalize.core import JsonItemsNormalizer
 
 
 class SemgrepNormalizer(JsonItemsNormalizer):

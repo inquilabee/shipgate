@@ -50,6 +50,7 @@ where = ["src"]
 shipgate = [
   "catalog/bundled/**/*",
   "catalog/bundled/setup/.gitignore",
+  "gates/templates/**/*",
 ]
 
 [tool.pytest.ini_options]

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.errors import ConfigError
-from shipgate.paths import project_root_cache_env_path, shipgate_yaml_path
+from shipgate.paths import PROJECT_CACHE_ENV, SHIPGATE_YAML
 from shipgate.project.init import init_project
 
 
@@ -153,8 +153,8 @@ def test_pyproject_only_loads_full_config(tmp_path: Path):
 
 def test_pyproject_merges_with_yaml_override(tmp_path: Path):
     write_pyproject(tmp_path)
-    shipgate_yaml_path(tmp_path).parent.mkdir(parents=True)
-    shipgate_yaml_path(tmp_path).write_text(
+    (tmp_path / SHIPGATE_YAML).parent.mkdir(parents=True)
+    (tmp_path / SHIPGATE_YAML).write_text(
         "suite: python-quality\n"
         "changed-only: false\n"
         "checks:\n"
@@ -333,7 +333,7 @@ def test_init_writes_pyproject_when_present(tmp_path: Path):
     assert path is not None, "init should return pyproject path"
     assert path == tmp_path / "pyproject.toml"
     assert "[tool.shipgate]" in path.read_text(encoding="utf-8")
-    assert not shipgate_yaml_path(tmp_path).is_file()
+    assert not (tmp_path / SHIPGATE_YAML).is_file()
     config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.changed_only is True
 
@@ -341,7 +341,7 @@ def test_init_writes_pyproject_when_present(tmp_path: Path):
 def test_init_force_yaml_with_pyproject(tmp_path: Path):
     (tmp_path / "pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
     path = init_project(tmp_path, mode="yaml")
-    assert path == shipgate_yaml_path(tmp_path)
+    assert path == (tmp_path / SHIPGATE_YAML)
     assert "[tool.shipgate]" not in (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
 
 
@@ -413,8 +413,8 @@ name = "demo"
 "gate.module-size" = ".shipgate/allowlists/module-size.yaml"
 """,
     )
-    shipgate_yaml_path(tmp_path).parent.mkdir(parents=True)
-    shipgate_yaml_path(tmp_path).write_text(
+    (tmp_path / SHIPGATE_YAML).parent.mkdir(parents=True)
+    (tmp_path / SHIPGATE_YAML).write_text(
         "allowlists:\n  gate.module-size: custom/module-size.yaml\n",
         encoding="utf-8",
     )
@@ -434,7 +434,7 @@ def test_pyproject_example_loads():
 
 def test_policy_pyproject_prefers_pyproject_when_only_pyproject(tmp_path: Path):
     write_pyproject(tmp_path)
-    env_path = project_root_cache_env_path(tmp_path)
+    env_path = tmp_path / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True)
     env_path.write_text(
         f"SHIPGATE_ROOT={tmp_path.resolve()}\nSHIPGATE_POLICY=pyproject\n",
@@ -446,9 +446,9 @@ def test_policy_pyproject_prefers_pyproject_when_only_pyproject(tmp_path: Path):
 
 def test_policy_yaml_prefers_yaml_when_both_exist(tmp_path: Path):
     write_pyproject(tmp_path)
-    shipgate_yaml_path(tmp_path).parent.mkdir(parents=True)
-    shipgate_yaml_path(tmp_path).write_text("suite: python-quality\n", encoding="utf-8")
-    env_path = project_root_cache_env_path(tmp_path)
+    (tmp_path / SHIPGATE_YAML).parent.mkdir(parents=True)
+    (tmp_path / SHIPGATE_YAML).write_text("suite: python-quality\n", encoding="utf-8")
+    env_path = tmp_path / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True)
     env_path.write_text(
         f"SHIPGATE_ROOT={tmp_path.resolve()}\nSHIPGATE_POLICY=yaml\n",

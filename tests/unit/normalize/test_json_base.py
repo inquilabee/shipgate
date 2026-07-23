@@ -1,6 +1,5 @@
 from shipgate.domain.reports import Finding
-from shipgate.normalize.core.base import BaseNormalizer
-from shipgate.normalize.core.json import JsonItemsNormalizer
+from shipgate.normalize.core import BaseNormalizer, JsonItemsNormalizer
 
 
 class StubJsonNormalizer(JsonItemsNormalizer):

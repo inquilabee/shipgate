@@ -7,7 +7,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from shipgate.errors import InstallError
-from shipgate.paths import tools_dir
+from shipgate.paths import PROJECT_TOOLS_DIR
 from shipgate.planning.suites import expand_suite
 from shipgate.runtime.environment import tools_manifest_path
 from shipgate.runtime.installers.registry import get_installer
@@ -86,7 +86,7 @@ def write_manifest(
 
 def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
     python_packages, binary_packages = collect_install_requirements(suite_id, catalog)
-    tools_dir(project_root).mkdir(parents=True, exist_ok=True)
+    (project_root / PROJECT_TOOLS_DIR).mkdir(parents=True, exist_ok=True)
     if python_packages:
         get_installer("python").install_packages(project_root, python_packages)
     manifest_path = write_manifest(

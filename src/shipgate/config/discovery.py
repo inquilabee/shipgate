@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from shipgate.paths import LEGACY_CONFIG_FILENAMES, shipgate_yaml_path
+from shipgate.paths import LEGACY_CONFIG_FILENAMES, SHIPGATE_YAML
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -14,7 +14,7 @@ def discover_yaml_config_path(project_root: Path, explicit: Path | None = None) 
     """Discover a YAML policy file, preferring `.shipgate/shipgate.yaml`."""
     if explicit is not None:
         return explicit.resolve()
-    canonical = shipgate_yaml_path(project_root)
+    canonical = project_root / SHIPGATE_YAML
     if canonical.is_file():
         return canonical.resolve()
     for name in LEGACY_CONFIG_FILENAMES:

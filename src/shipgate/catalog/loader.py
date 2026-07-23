@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from shipgate.catalog.core import CatalogParser, CatalogValidator, ToolExtendsResolver
 from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.errors import CatalogError
-from shipgate.paths import project_catalog_dir
+from shipgate.paths import PROJECT_CATALOG_DIR
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog
@@ -87,7 +87,7 @@ class CatalogLoader:
 
     def _load_project_raw(self, project_root: Path) -> dict | None:
         """Load raw catalog data from `.shipgate/catalog/` when present."""
-        catalog_dir = project_catalog_dir(project_root)
+        catalog_dir = project_root / PROJECT_CATALOG_DIR
         if not catalog_dir.is_dir():
             return None
         raw: dict = {}

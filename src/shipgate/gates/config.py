@@ -9,6 +9,7 @@ import yaml
 
 from shipgate.core.yaml_io import load_yaml_mapping
 from shipgate.gates.paths import bundled_root_path
+from shipgate.paths import PROJECT_GATE_CONFIGS_DIR
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition
@@ -105,7 +106,7 @@ def resolve_gate_config_path(
             return candidate
     for convention in (
         project_root / f"{tool.id}.yaml",
-        project_root / ".shipgate" / "configs" / "gates" / f"{tool.id}.yaml",
+        project_root / PROJECT_GATE_CONFIGS_DIR / f"{tool.id}.yaml",
     ):
         if convention.is_file():
             return convention

@@ -1,16 +1,18 @@
 """Normalize framework: protocols, base classes, and shared helpers."""
 
-from shipgate.normalize.core.base import BaseNormalizer, Normalizer
-from shipgate.normalize.core.exit import (
+from .base import BaseNormalizer, Normalizer  # noqa
+from .exit import (  # noqa
     CodespellNormalizer,
     DeadcodeNormalizer,
     MarkdownlintNormalizer,
     VultureNormalizer,
 )
-from shipgate.normalize.core.gate_json import GateJsonNormalizer
-from shipgate.normalize.core.generic import GenericExitNormalizer
-from shipgate.normalize.core.json import JsonItemsNormalizer
-from shipgate.normalize.core.utils import (
+from .gate_json import GateJsonNormalizer  # noqa
+from .generic import GenericExitNormalizer  # noqa
+from .json import JsonItemsNormalizer  # noqa
+from .location import finding_location, location_from_item  # noqa
+from .ruff_like import is_ruff_like_item, ruff_like_finding  # noqa
+from .utils import (  # noqa
     decode_json_payload,
     empty_pass_report,
     extract_items,
@@ -18,21 +20,3 @@ from shipgate.normalize.core.utils import (
     read_tool_output,
     tool_exit_report,
 )
-
-__all__ = [
-    "BaseNormalizer",
-    "CodespellNormalizer",
-    "DeadcodeNormalizer",
-    "GateJsonNormalizer",
-    "GenericExitNormalizer",
-    "JsonItemsNormalizer",
-    "MarkdownlintNormalizer",
-    "Normalizer",
-    "VultureNormalizer",
-    "decode_json_payload",
-    "empty_pass_report",
-    "extract_items",
-    "findings_report",
-    "read_tool_output",
-    "tool_exit_report",
-]

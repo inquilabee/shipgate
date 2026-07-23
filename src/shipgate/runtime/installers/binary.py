@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from shipgate.errors import InstallError
-from shipgate.paths import managed_bin_dir
+from shipgate.paths import PROJECT_MANAGED_BIN_DIR
 from shipgate.runtime.installers.base import download_https_file, link_binary
 
 if TYPE_CHECKING:
@@ -187,7 +187,7 @@ class BinaryInstaller:
         project_root: Path,
         packages: dict[str, InstallDefinition],
     ) -> None:
-        bin_dir = managed_bin_dir(project_root)
+        bin_dir = project_root / PROJECT_MANAGED_BIN_DIR
         bin_dir.mkdir(parents=True, exist_ok=True)
         for _name, install_def in sorted(packages.items()):
             binary_name = install_def.binary or install_def.package

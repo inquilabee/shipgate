@@ -6,9 +6,12 @@ from typing import Any, cast
 
 from shipgate.domain.reports import Finding, FindingLocation
 from shipgate.errors import NormalizationError
-from shipgate.normalize.core.json import JsonItemsNormalizer
-from shipgate.normalize.core.location import finding_location
-from shipgate.normalize.core.ruff_like import is_ruff_like_item, ruff_like_finding
+from shipgate.normalize.core import (
+    JsonItemsNormalizer,
+    finding_location,
+    is_ruff_like_item,
+    ruff_like_finding,
+)
 
 
 class TyNormalizer(JsonItemsNormalizer):
