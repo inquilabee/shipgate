@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from shipgate.app import ShipGateApp
-from shipgate.catalog.loader import load_catalog, merge_catalog_raw
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.project.catalog import sync_catalog
 from shipgate.project.init import init_project, scaffold_project_layout
 
@@ -33,19 +33,19 @@ def test_load_catalog_project_overrides_bundled(tmp_path: Path):
         "ruff.lint:\n  executable: custom-ruff\n  modes:\n    - check\n",
         encoding="utf-8",
     )
-    catalog = load_catalog(project_root=tmp_path)
+    catalog = CatalogLoader.load(project_root=tmp_path)
     assert catalog.get_tool("ruff.lint").executable == "custom-ruff"
 
 
 def test_load_catalog_falls_back_to_bundled_without_project_catalog(tmp_path: Path):
-    catalog = load_catalog(project_root=tmp_path)
+    catalog = CatalogLoader.load(project_root=tmp_path)
     assert catalog.get_tool("ruff.lint").executable == "ruff"
 
 
 def test_merge_catalog_raw_overlay_wins():
     base = {"tools": {"a": {"id": "a"}}, "suites": {"standard": {"members": ["a"]}}}
     overlay = {"tools": {"b": {"id": "b"}}, "suites": {"custom": {"members": ["b"]}}}
-    merged = merge_catalog_raw(base, overlay)
+    merged = CatalogLoader.merge(base, overlay)
     assert "a" in merged["tools"]
     assert "b" in merged["tools"]
     assert "standard" in merged["suites"]

@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from shipgate import __version__ as shipgate_version
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.frontend.domain.models import FindingCategory
 from shipgate.frontend.services.backfill import backfill_from_report_store
 from shipgate.frontend.services.orchestrator import RunOrchestrator
@@ -40,7 +40,7 @@ def create_app(primary_root: Path) -> FastAPI:
     primary = Path(primary_root).resolve()
     storage = SqliteStorage(server_dir(primary) / SERVER_DB_FILENAME)
     backfill_from_report_store(primary, storage)
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     from shipgate.app import ShipGateApp
 
     app_instance = ShipGateApp(catalog=catalog)

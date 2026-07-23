@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
@@ -10,7 +10,7 @@ from shipgate.runtime.executor import ProcessResult
 
 
 def test_ty_normalizer_parses_gitlab_json(tmp_path: Path):
-    tool = load_catalog().get_tool("ty.check")
+    tool = CatalogLoader.load().get_tool("ty.check")
     resolved = ResolvedRequest(
         runnable="ty.check",
         tool=tool,

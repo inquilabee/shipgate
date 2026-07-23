@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from shipgate.baseline import load_baseline, save_baseline
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import load_config
 from shipgate.domain.modes import RunMode
 from shipgate.domain.reports import RunReport, report_json_schema
@@ -45,13 +45,13 @@ class ShipGateApp:
         executor: Executor | None = None,
     ) -> None:
         self._custom_catalog = catalog is not None
-        self._base_catalog = catalog or load_catalog()
+        self._base_catalog = catalog or CatalogLoader.load()
         self._executor_is_default = executor is None
         self.executor = executor or Executor()
 
     def _catalog_for(self, project_root: Path) -> Catalog:
         base = (
-            load_catalog(project_root=project_root)
+            CatalogLoader.load(project_root=project_root)
             if not self._custom_catalog
             else self._base_catalog
         )

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
 from shipgate.planning.incremental import (
@@ -55,7 +55,7 @@ def test_git_changed_files_includes_staged_changes(tmp_path):
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")
 def test_tool_paths_after_incremental_root_delivery_uses_changed_files(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     source = tmp_path / "src"
     source.mkdir()

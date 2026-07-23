@@ -1,5 +1,5 @@
 from shipgate.adapter.argv import build_argv
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
@@ -7,7 +7,7 @@ from shipgate.planning.requests import build_execution_request, resolve_request
 
 
 def test_ruff_lint_argv(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     request = build_execution_request(
         runnable="ruff.lint",
@@ -30,7 +30,7 @@ def test_ruff_lint_argv(tmp_path):
 
 
 def test_ruff_lint_apply_argv(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     request = build_execution_request(
         runnable="ruff.lint",
@@ -48,7 +48,7 @@ def test_ruff_lint_apply_argv(tmp_path):
 
 
 def test_ruff_format_check_mode(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.format")
     request = build_execution_request(
         runnable="ruff.format",
@@ -63,7 +63,7 @@ def test_ruff_format_check_mode(tmp_path):
 
 
 def test_shfmt_apply_matches_trunk_flags(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("shfmt.apply")
     script = tmp_path / "script.sh"
     script.write_text("#!/bin/bash\necho hi\n", encoding="utf-8")
@@ -80,7 +80,7 @@ def test_shfmt_apply_matches_trunk_flags(tmp_path):
 
 
 def test_shfmt_check_uses_diff_without_write(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("shfmt.apply")
     script = tmp_path / "script.sh"
     script.write_text("#!/bin/bash\necho hi\n", encoding="utf-8")
@@ -99,7 +99,7 @@ def test_shfmt_check_uses_diff_without_write(tmp_path):
 
 
 def test_mdformat_apply_enables_frontmatter_by_default(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("mdformat.apply")
     request = build_execution_request(
         runnable="mdformat.apply",
@@ -115,7 +115,7 @@ def test_mdformat_apply_enables_frontmatter_by_default(tmp_path):
 
 
 def test_ty_check_passes_config_file(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ty.check")
     config_path = tmp_path / ".shipgate" / "configs" / "ty.toml"
     config_path.parent.mkdir(parents=True)
@@ -138,7 +138,7 @@ def test_ty_check_passes_config_file(tmp_path):
 
 
 def test_gitleaks_scan_uses_project_root_for_multiple_scope_paths(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("gitleaks.scan")
     docs = tmp_path / "docs"
     src = tmp_path / "src"

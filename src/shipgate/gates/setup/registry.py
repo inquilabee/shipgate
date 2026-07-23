@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.gates.config import load_bundled_gate_config
 from shipgate.gates.setup.scaffold import scaffold_from_gate_config
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 def make_setup(gate_id: str) -> Callable[[Path], None]:
     def setup(project_root: Path) -> None:
-        tool = load_catalog().get_tool(gate_id)
+        tool = CatalogLoader.load().get_tool(gate_id)
         scaffold_from_gate_config(
             project_root,
             load_bundled_gate_config(tool),

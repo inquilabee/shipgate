@@ -1,6 +1,6 @@
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
@@ -9,7 +9,7 @@ from shipgate.planning.requests import build_execution_request, resolve_request
 
 
 def test_check_mode_rejects_fix(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     request = build_execution_request(
         runnable="ruff.lint",
@@ -23,7 +23,7 @@ def test_check_mode_rejects_fix(tmp_path):
 
 
 def test_default_output_path_recorded(tmp_path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     request = build_execution_request(
         runnable="ruff.lint",

@@ -2,14 +2,14 @@ from pathlib import Path
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.gates.setup import setup_bundled_gates
 from shipgate.gates.setup.registry import SETUPS
 from shipgate.policy.path_allowlist import PathAllowlistLoader
 
 
 def test_setup_bundled_gates_scaffolds_allowlists(tmp_path: Path):
-    setup_bundled_gates(tmp_path, load_catalog())
+    setup_bundled_gates(tmp_path, CatalogLoader.load())
     allowlists = tmp_path / ".shipgate" / "allowlists"
     assert (allowlists / "module-private-vars.yaml").is_file()
     assert (allowlists / "acronyms.yaml").is_file()

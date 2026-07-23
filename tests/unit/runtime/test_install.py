@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.errors import InstallError
 from shipgate.runtime.environment import tools_manifest_path
 from shipgate.runtime.install import (
@@ -15,20 +15,20 @@ from shipgate.runtime.installers.registry import INSTALLER_REGISTRY, get_install
 
 
 def test_install_plan_deduplicates_packages():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python_packages, _binaries = collect_install_requirements("full", catalog)
     ruff_count = sum(1 for p in python_packages if p == "ruff")
     assert ruff_count == 1
 
 
 def test_install_plan_collects_binaries():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     _python, binaries = collect_install_requirements("security", catalog)
     assert "gitleaks" in binaries
 
 
 def test_install_plan_unions_format_suite_tools():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python_packages, binaries = collect_install_requirements("full", catalog)
     assert "mdformat" in python_packages
     assert "shfmt" in binaries
@@ -36,14 +36,14 @@ def test_install_plan_unions_format_suite_tools():
 
 
 def test_install_plan_includes_mdformat_frontmatter_requires():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python_packages, _binaries = collect_install_requirements("format", catalog)
     install_def = python_packages["mdformat"]
     assert "mdformat-frontmatter>=2.0" in install_def.requires
 
 
 def test_install_plan_format_suite_not_doubled():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python_packages, binaries = collect_install_requirements("format", catalog)
     assert "mdformat" in python_packages
     assert "shfmt" in binaries
@@ -62,7 +62,7 @@ def test_install_suite_writes_manifest_after_python_before_binaries(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python_installer = MagicMock()
     binary_installer = MagicMock()
     binary_installer.install_packages.side_effect = InstallError("download failed")
@@ -83,7 +83,7 @@ def test_install_suite_records_successful_binaries_on_partial_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python_installer = MagicMock()
     binary_installer = MagicMock()
 

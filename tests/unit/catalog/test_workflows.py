@@ -1,8 +1,8 @@
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 
 
 def test_catalog_loads_workflows_and_capabilities():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     assert "default" in catalog.workflows
     assert "ci" in catalog.workflows
     assert catalog.workflows["default"].steps[0].mode.value == "check"

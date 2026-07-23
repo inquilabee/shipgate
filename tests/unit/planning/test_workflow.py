@@ -1,6 +1,6 @@
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import CheckBinding, ProjectConfig
 from shipgate.errors import PlanningError
@@ -10,7 +10,7 @@ from shipgate.planning.workflow import resolve_runnables
 
 @pytest.fixture
 def catalog():
-    return load_catalog()
+    return CatalogLoader.load()
 
 
 def test_default_selects_standard(catalog):

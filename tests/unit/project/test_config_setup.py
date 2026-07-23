@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from shipgate.adapter.config_resolve import resolve_config_paths
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import load_config
 from shipgate.paths import shipgate_yaml_path
 from shipgate.project.config_setup import (
@@ -14,7 +14,7 @@ from shipgate.project.init import init_project, scaffold_project_layout
 
 
 def test_project_config_relpath_deduplicates_ruff():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     ruff_lint = catalog.get_tool("ruff.lint")
     ruff_format = catalog.get_tool("ruff.format")
     assert project_config_relpath(ruff_lint) == Path(".shipgate/configs/ruff.toml"), (
@@ -26,7 +26,7 @@ def test_project_config_relpath_deduplicates_ruff():
 
 
 def test_project_config_relpath_for_gate():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("gate.module-size")
     assert project_config_relpath(tool) == Path(".shipgate/configs/gates/gate.module-size.yaml"), (
         "gate config path mismatch"
@@ -34,7 +34,7 @@ def test_project_config_relpath_for_gate():
 
 
 def test_scaffold_bundled_configs_creates_files(tmp_path: Path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     created = scaffold_bundled_configs(tmp_path, catalog)
     assert (tmp_path / ".shipgate/configs/ruff.toml").is_file(), "ruff config missing"
     assert (tmp_path / ".shipgate/configs/gates/gate.module-size.yaml").is_file(), (
@@ -44,7 +44,7 @@ def test_scaffold_bundled_configs_creates_files(tmp_path: Path):
 
 
 def test_scaffold_bundled_configs_does_not_overwrite(tmp_path: Path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     path = tmp_path / ".shipgate/configs/ruff.toml"
     path.parent.mkdir(parents=True)
     path.write_text("custom = true\n", encoding="utf-8")
@@ -75,7 +75,7 @@ def test_init_configs_only_without_shipgate_yaml(tmp_path: Path):
 
 
 def test_resolve_prefers_shipgate_config(tmp_path: Path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     scaffold_project_layout(tmp_path)
     project = load_config(project_root=tmp_path)
     tool = catalog.get_tool("ruff.lint")

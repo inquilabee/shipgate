@@ -1,17 +1,17 @@
 import pytest
 
-from shipgate.catalog.loader import load_catalog
-from shipgate.catalog.validate import validate_catalog
-from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
+from shipgate.catalog.core.validate import CatalogValidator
+from shipgate.catalog.loader import CatalogLoader
+from shipgate.domain.catalog import Catalog, CliOptionDefinition, SuiteDefinition, ToolDefinition
 from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
 
 
 def test_bundled_tools_declare_scope():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     for tool_id, tool in catalog.tools.items():
         assert tool.scope.delivery in {"root", "dirs", "files"}, tool_id
-    validate_catalog(catalog)
+    CatalogValidator.validate(catalog)
 
 
 def test_cycle_fails():
@@ -23,7 +23,23 @@ def test_cycle_fails():
         },
     )
     with pytest.raises(CatalogError, match="cycle"):
-        validate_catalog(catalog)
+        CatalogValidator.validate(catalog)
+
+
+def test_validator_class_entry_rejects_bad_cli_style():
+    catalog = Catalog(
+        tools={
+            "bad.tool": ToolDefinition(
+                id="bad.tool",
+                executable="bad",
+                modes=(RunMode.CHECK,),
+                cli={"paths": CliOptionDefinition(flag="--paths", style="invalid")},
+            )
+        },
+        suites={},
+    )
+    with pytest.raises(CatalogError, match="unsupported style"):
+        CatalogValidator.validate(catalog)
 
 
 def test_missing_member_fails():
@@ -32,4 +48,4 @@ def test_missing_member_fails():
         suites={"bad": SuiteDefinition(id="bad", members=("missing.tool",))},
     )
     with pytest.raises(CatalogError):
-        validate_catalog(catalog)
+        CatalogValidator.validate(catalog)

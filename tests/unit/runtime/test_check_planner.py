@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig
@@ -31,7 +31,7 @@ def make_run_context(tmp_path: Path, planned: PlannedCheck) -> RunContext:
 
 def test_prepare_check_builds_resolved_request(tmp_path: Path):
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
     command = RunCommand(
         project_root=tmp_path,
@@ -59,7 +59,7 @@ def test_prepare_check_builds_resolved_request(tmp_path: Path):
 
 def test_prepare_check_apply_mode_sets_check_false(tmp_path: Path):
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     planned = PlannedCheck(tool_id="ruff.format", mode=RunMode.APPLY)
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="ruff.format")
     prepared = prepare_check(
@@ -73,7 +73,7 @@ def test_prepare_check_apply_mode_sets_check_false(tmp_path: Path):
 
 
 def test_prepare_check_skips_when_no_matching_files(tmp_path: Path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     planned = PlannedCheck(tool_id="yamllint.check", mode=RunMode.CHECK)
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="yamllint.check")
     prepared = prepare_check(
@@ -99,7 +99,7 @@ def test_prepare_check_ty_includes_project_python(tmp_path: Path):
         bindir.mkdir(parents=True)
         (bindir / "python").write_text("", encoding="utf-8")
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     planned = PlannedCheck(tool_id="ty.check", mode=RunMode.CHECK)
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="ty.check")
     prepared = prepare_check(
@@ -115,7 +115,7 @@ def test_prepare_check_ty_includes_project_python(tmp_path: Path):
 def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):
     from shipgate.planning.incremental import RunScopeSession
 
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
     command = RunCommand(
         project_root=tmp_path,

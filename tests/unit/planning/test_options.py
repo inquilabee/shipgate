@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.project import ProjectConfig
@@ -9,7 +9,7 @@ from shipgate.planning.options import resolve_option_sources
 
 
 def test_ty_check_default_format_from_catalog():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ty.check")
     merged, sources = resolve_option_sources(
         cli_options=NormalizedOptions(),
@@ -21,7 +21,7 @@ def test_ty_check_default_format_from_catalog():
 
 
 def test_option_resolver_merges_precedence(tmp_path: Path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     merged, sources = OptionResolver().resolve(
         cli_options=NormalizedOptions(verbose=True),
@@ -39,7 +39,7 @@ def test_option_resolver_merges_precedence(tmp_path: Path):
 
 
 def test_option_resolver_defaults_fix_in_apply_mode(tmp_path: Path):
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     merged, sources = OptionResolver().resolve(
         cli_options=NormalizedOptions(),

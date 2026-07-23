@@ -1,5 +1,5 @@
 from shipgate.app import RunCommand, ShipGateApp
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.runtime.executor import Executor, ProcessResult
 
 
@@ -41,14 +41,14 @@ class FailExecutor(Executor):
 
 
 def test_list_suites():
-    app = ShipGateApp(catalog=load_catalog(), executor=FakeExecutor())
+    app = ShipGateApp(catalog=CatalogLoader.load(), executor=FakeExecutor())
     output = app.list_suites()
     assert "standard" in output
     assert "python-quality" in output
 
 
 def test_quiet_success_no_output(tmp_path, capsys):
-    app = ShipGateApp(catalog=load_catalog(), executor=FakeExecutor())
+    app = ShipGateApp(catalog=CatalogLoader.load(), executor=FakeExecutor())
     code = app.check(
         RunCommand(
             project_root=tmp_path,
@@ -64,7 +64,7 @@ def test_quiet_success_no_output(tmp_path, capsys):
 
 
 def test_display_cli_prints_subprocess_argv(tmp_path, capsys):
-    app = ShipGateApp(catalog=load_catalog(), executor=FakeExecutor())
+    app = ShipGateApp(catalog=CatalogLoader.load(), executor=FakeExecutor())
     code = app.check(
         RunCommand(
             project_root=tmp_path,
@@ -81,7 +81,7 @@ def test_display_cli_prints_subprocess_argv(tmp_path, capsys):
 
 
 def test_failing_report_exits_one(tmp_path, capsys):
-    app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
+    app = ShipGateApp(catalog=CatalogLoader.load(), executor=FailExecutor())
     code = app.check(
         RunCommand(
             project_root=tmp_path,
@@ -97,7 +97,7 @@ def test_failing_report_exits_one(tmp_path, capsys):
 
 def test_ci_defaults_to_github_format(tmp_path, capsys, monkeypatch):
     monkeypatch.setenv("CI", "true")
-    app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
+    app = ShipGateApp(catalog=CatalogLoader.load(), executor=FailExecutor())
     code = app.check(
         RunCommand(
             project_root=tmp_path,
@@ -111,7 +111,7 @@ def test_ci_defaults_to_github_format(tmp_path, capsys, monkeypatch):
 
 
 def test_quiet_failure_suppresses_stderr(tmp_path, capsys):
-    app = ShipGateApp(catalog=load_catalog(), executor=FailExecutor())
+    app = ShipGateApp(catalog=CatalogLoader.load(), executor=FailExecutor())
     code = app.check(
         RunCommand(
             project_root=tmp_path,

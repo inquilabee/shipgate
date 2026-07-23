@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
-from shipgate.catalog.tool_extends import resolve_tool_extends
+from shipgate.catalog.core.tool_extends import ToolExtendsResolver
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.errors import CatalogError
 from shipgate.runtime.install import collect_install_requirements
 
@@ -26,7 +26,7 @@ def test_child_inherits_parent_and_overrides_threshold():
             "scope": {"extensions": [".py"]},
         },
     }
-    resolved = resolve_tool_extends(bundled)
+    resolved = ToolExtendsResolver.resolve(bundled)
     child = resolved["child.tool"]
     assert child["executable"] == "tool"
     assert child["install"]["binary"] == "tool"
@@ -42,7 +42,7 @@ def test_multi_hop_inheritance():
         "b.tool": {"extends": "a.tool", "cli": {"paths": {"style": "positional"}}},
         "c.tool": {"extends": "b.tool", "normalizer": "ruff"},
     }
-    resolved = resolve_tool_extends(bundled)
+    resolved = ToolExtendsResolver.resolve(bundled)
     assert resolved["c.tool"]["executable"] == "a"
     assert resolved["c.tool"]["capabilities"] == ["Quality"]
     assert resolved["c.tool"]["cli"]["paths"]["style"] == "positional"
@@ -56,7 +56,7 @@ def test_project_child_extends_bundled_parent(tmp_path: Path):
         "custom.variant:\n  extends: ruff.lint\n  cli:\n    threshold:\n      default: '1'\n",
         encoding="utf-8",
     )
-    catalog = load_catalog(project_root=tmp_path)
+    catalog = CatalogLoader.load(project_root=tmp_path)
     variant = catalog.get_tool("custom.variant")
     parent = catalog.get_tool("ruff.lint")
     assert variant.executable == parent.executable
@@ -71,7 +71,7 @@ def test_same_id_project_extends_bundled_parent(tmp_path: Path):
         "ruff.lint:\n  extends: ruff.lint\n  executable: custom-ruff\n",
         encoding="utf-8",
     )
-    catalog = load_catalog(project_root=tmp_path)
+    catalog = CatalogLoader.load(project_root=tmp_path)
     tool = catalog.get_tool("ruff.lint")
     assert tool.executable == "custom-ruff"
     assert tool.cli["paths"].style == "positional"
@@ -84,7 +84,7 @@ def test_project_without_extends_replaces_bundled_tool(tmp_path: Path):
         "ruff.lint:\n  executable: custom-ruff\n  modes:\n    - check\n",
         encoding="utf-8",
     )
-    catalog = load_catalog(project_root=tmp_path)
+    catalog = CatalogLoader.load(project_root=tmp_path)
     tool = catalog.get_tool("ruff.lint")
     assert tool.executable == "custom-ruff"
     assert tool.cli == {}
@@ -93,13 +93,13 @@ def test_project_without_extends_replaces_bundled_tool(tmp_path: Path):
 def test_missing_parent_raises():
     bundled = {"child.tool": {"extends": "missing.tool", "executable": "child"}}
     with pytest.raises(CatalogError, match="extends unknown parent"):
-        resolve_tool_extends(bundled)
+        ToolExtendsResolver.resolve(bundled)
 
 
 def test_invalid_extends_type_raises():
     bundled = {"child.tool": {"extends": 42, "executable": "child"}}
     with pytest.raises(CatalogError, match="extends must be a tool id string"):
-        resolve_tool_extends(bundled)
+        ToolExtendsResolver.resolve(bundled)
 
 
 def test_cycle_raises():
@@ -108,11 +108,11 @@ def test_cycle_raises():
         "b.tool": {"extends": "a.tool", "executable": "b"},
     }
     with pytest.raises(CatalogError, match="inheritance cycle"):
-        resolve_tool_extends(bundled)
+        ToolExtendsResolver.resolve(bundled)
 
 
 def test_bundled_jscpd_variants_share_install_and_differ_by_scope():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     python = catalog.get_tool("jscpd.check.python")
     other = catalog.get_tool("jscpd.check.other")
     assert python.executable == other.executable
@@ -126,7 +126,7 @@ def test_bundled_jscpd_variants_share_install_and_differ_by_scope():
 
 
 def test_extended_suite_installs_jscpd_once():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     _python, binaries = collect_install_requirements("extended", catalog)
     assert "jscpd" in binaries
     assert sum(1 for name in binaries if name == "jscpd") == 1

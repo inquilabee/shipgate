@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.errors import ShipGateError
 from shipgate.gates.setup import setup_bundled_gates
 from shipgate.paths import project_root_cache_env_path, shipgate_dir, shipgate_yaml_path
@@ -35,7 +35,7 @@ def scaffold_project_layout(
 ) -> list[Path]:
     """Create .shipgate/ directories and copy missing bundled configs."""
     root = project_root.resolve()
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     (shipgate_dir(root) / "reports").mkdir(parents=True, exist_ok=True)
     (shipgate_dir(root) / "gates").mkdir(parents=True, exist_ok=True)
     (shipgate_dir(root) / "configs").mkdir(parents=True, exist_ok=True)

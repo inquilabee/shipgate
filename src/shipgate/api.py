@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.app import InstallCommand, RunCommand, ShipGateApp
-from shipgate.catalog.loader import load_catalog as _load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import load_config as _load_config
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ def load_config(
 
 
 def load_catalog(path: Path | None = None, *, project_root: Path | None = None) -> Catalog:
-    return _load_catalog(path, project_root=project_root)
+    return CatalogLoader.load(path, project_root=project_root)
 
 
 def install(

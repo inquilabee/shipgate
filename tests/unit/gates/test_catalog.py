@@ -14,9 +14,9 @@ def test_merge_gate_catalog(tmp_path: Path):
     gates_dir = tmp_path / ".shipgate" / "gates"
     gates_dir.mkdir(parents=True)
     (gates_dir / "sample.sh").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    from shipgate.catalog.loader import load_catalog
+    from shipgate.catalog.loader import CatalogLoader
 
-    base = load_catalog()
+    base = CatalogLoader.load()
     merged = merge_gate_catalog(base, tmp_path)
     assert "gate.sample" in merged.tools
     assert merged.tools["gate.sample"].normalizer == "gate_json"

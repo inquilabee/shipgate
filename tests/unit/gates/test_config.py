@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.project import ProjectConfig
 from shipgate.gates.config import apply_project_allowlist, load_gate_config
 
@@ -41,7 +41,7 @@ def test_load_gate_config_applies_project_allowlist(tmp_path: Path):
     project = ProjectConfig(
         allowlists={"gate.module-size": "custom-allowlist.yaml"},
     )
-    tool = load_catalog().get_tool("gate.module-size")
+    tool = CatalogLoader.load().get_tool("gate.module-size")
     config = load_gate_config(tool, tmp_path, project, config_paths=())
     assert config["allowlist_file"] == str(custom.resolve())
 
@@ -52,6 +52,6 @@ def test_load_gate_config_allowlist_without_gate_yaml(tmp_path: Path):
     project = ProjectConfig(
         allowlists={"gate.module-size": "custom-allowlist.yaml"},
     )
-    tool = load_catalog().get_tool("gate.module-size")
+    tool = CatalogLoader.load().get_tool("gate.module-size")
     config = load_gate_config(tool, tmp_path, project, config_paths=())
     assert config["allowlist_file"] == str(custom.resolve())

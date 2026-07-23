@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
@@ -9,7 +9,7 @@ from shipgate.runtime.executor import ProcessResult
 
 
 def test_read_tool_output_prefers_file_when_stdout_is_progress_bar(tmp_path: Path):
-    tool = load_catalog().get_tool("bandit.scan")
+    tool = CatalogLoader.load().get_tool("bandit.scan")
     output_path = tmp_path / "bandit.scan.json"
     output_path.write_text('{"results": []}', encoding="utf-8")
     resolved = ResolvedRequest(

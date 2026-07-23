@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
@@ -14,7 +14,7 @@ def make_resolved_request(
     *,
     paths: tuple[Path, ...],
 ) -> ResolvedRequest:
-    tool = load_catalog().get_tool(tool_id)
+    tool = CatalogLoader.load().get_tool(tool_id)
     return ResolvedRequest(
         runnable=tool.id,
         tool=tool,

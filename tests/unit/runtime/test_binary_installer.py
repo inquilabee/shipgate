@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.catalog import InstallDefinition
 from shipgate.runtime.installers.binary import (
     NpmInstaller,
@@ -72,7 +72,7 @@ def test_shellcheck_release_url_keeps_x86_64_arch(_mock_arch, _mock_os):
 
 
 def test_npm_installer_handles_jscpd():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     install_def = catalog.get_tool("jscpd.check.python").install
     assert install_def is not None
     installer = NpmInstaller()
@@ -80,7 +80,7 @@ def test_npm_installer_handles_jscpd():
 
 
 def test_npm_installer_handles_markdownlint():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     install_def = catalog.get_tool("markdownlint.check").install
     assert install_def is not None
     installer = NpmInstaller()

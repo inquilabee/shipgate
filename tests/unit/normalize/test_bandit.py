@@ -1,13 +1,13 @@
 import json
 from pathlib import Path
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.options import NormalizedOptions
 from shipgate.normalize.bandit import BanditNormalizer
 
 
 def test_bandit_normalizer_parses_results(make_resolved_request, make_process_result):
-    tool = load_catalog().get_tool("bandit.scan")
+    tool = CatalogLoader.load().get_tool("bandit.scan")
     base = make_resolved_request(tool=tool)
     resolved = make_resolved_request(
         tool=tool,
@@ -41,7 +41,7 @@ def test_bandit_normalizer_reads_json_from_output_file_with_progress_stdout(
     make_resolved_request,
     make_process_result,
 ):
-    tool = load_catalog().get_tool("bandit.scan")
+    tool = CatalogLoader.load().get_tool("bandit.scan")
     output_path = tmp_path / ".shipgate/reports/raw/bandit.scan.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -74,7 +74,7 @@ def test_bandit_normalizer_reads_json_from_output_file_with_progress_stdout(
 def test_bandit_normalizer_falls_back_on_unparseable_output(
     make_resolved_request, make_process_result
 ):
-    tool = load_catalog().get_tool("bandit.scan")
+    tool = CatalogLoader.load().get_tool("bandit.scan")
     base = make_resolved_request(tool=tool)
     resolved = make_resolved_request(
         tool=tool,

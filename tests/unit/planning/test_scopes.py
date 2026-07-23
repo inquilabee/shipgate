@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from shipgate.adapter.config_resolve import bundled_configs_root
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
 from shipgate.planning.gitignore import (
@@ -29,7 +29,7 @@ def test_scope_resolver_default_excludes(tmp_path: Path):
 
 
 def test_jscpd_bundled_configs_write_under_shipgate_reports():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     for tool_id, output_dir in (
         ("jscpd.check.python", "jscpd-python"),
         ("jscpd.check.other", "jscpd-other"),
@@ -112,7 +112,7 @@ def test_scope_paths_returns_target_when_disabled(tmp_path: Path):
 
 def test_scope_paths_for_tool_delivery_root(tmp_path: Path):
     scaffold_src_and_docs(tmp_path)
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("ruff.lint")
     scope = Scope(target=tmp_path, respect_gitignore=True)
     paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
@@ -122,7 +122,7 @@ def test_scope_paths_for_tool_delivery_root(tmp_path: Path):
 def test_scope_paths_for_tool_delivery_files(tmp_path: Path):
     (tmp_path / "README.md").write_text("# hi\n", encoding="utf-8")
     (tmp_path / "notes.txt").write_text("plain\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("markdownlint.check")
     scope = Scope(target=tmp_path, respect_gitignore=True)
     paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
@@ -131,7 +131,7 @@ def test_scope_paths_for_tool_delivery_files(tmp_path: Path):
 
 def test_scope_paths_for_tool_empty_scope_short_circuit(tmp_path: Path):
     (tmp_path / "notes.txt").write_text("plain\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("markdownlint.check")
     scope = Scope(target=tmp_path, respect_gitignore=True)
     paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
@@ -143,7 +143,7 @@ def test_scope_paths_for_tool_delivery_dirs(tmp_path: Path):
     package.mkdir(parents=True)
     (package / "a.py").write_text("x = 1\n", encoding="utf-8")
     (package / "b.py").write_text("y = 2\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("gate.folder-breadth")
     scope = Scope(target=tmp_path, respect_gitignore=True)
     paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
@@ -156,7 +156,7 @@ def test_deadcode_dirs_respects_include(tmp_path: Path):
     (included / "ok.py").write_text("x = 1\n", encoding="utf-8")
     (tmp_path / "src" / "tests").mkdir(parents=True)
     (tmp_path / "src" / "tests" / "bad.py").write_text("y = 2\n", encoding="utf-8")
-    tool = load_catalog().get_tool("deadcode.check")
+    tool = CatalogLoader.load().get_tool("deadcode.check")
     scope = Scope(target=tmp_path, include=("src/reslab",), respect_gitignore=True)
     assert scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK) == (Path("src/reslab"),)
 
@@ -195,7 +195,7 @@ def test_scope_paths_for_tool_excludes_venv_yaml(tmp_path: Path):
     venv = tmp_path / ".venv"
     venv.mkdir()
     (venv / "ignored.yaml").write_text("key: ignored\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("yamlfmt.apply")
     scope = Scope(target=tmp_path, respect_gitignore=True)
     paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)

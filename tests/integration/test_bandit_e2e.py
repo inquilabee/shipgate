@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from shipgate.app import RunCommand, ShipGateApp
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 
 pytestmark = pytest.mark.integration
 
@@ -12,7 +12,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
 @pytest.fixture
 def catalog():
-    return load_catalog()
+    return CatalogLoader.load()
 
 
 @pytest.mark.skipif(

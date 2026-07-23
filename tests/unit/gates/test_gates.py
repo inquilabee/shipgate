@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
@@ -24,7 +24,7 @@ def gate_request(
     *,
     paths: tuple[Path, ...],
 ) -> ResolvedRequest:
-    tool = load_catalog().get_tool(tool_id)
+    tool = CatalogLoader.load().get_tool(tool_id)
     return ResolvedRequest(
         runnable=tool.id,
         tool=tool,
@@ -46,7 +46,7 @@ def run_gate_check(tmp_path: Path, request: ResolvedRequest) -> tuple[ProcessRes
 
 
 def test_catalog_includes_bundled_policy_gates():
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     for gate_id in (
         "gate.module-size",
         "gate.module-private-vars",
@@ -136,7 +136,7 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "ok.py").write_text("print('ok')\n", encoding="utf-8")
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("gate.module-size")
     assert is_gate_tool(tool)
     script = resolve_gate_script(tool, tmp_path)
@@ -154,7 +154,7 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
 
 def test_gate_scope_paths_includes_dirs_for_dir_delivery(tmp_path: Path):
     (tmp_path / "src").mkdir()
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("gate.folder-breadth")
     request = gate_request(tmp_path, tool.id, paths=(Path("src"),))
     assert gate_scope_paths(request) == ("src",)
@@ -166,7 +166,7 @@ def test_prepare_gate_execution_sets_scope_paths_for_dirs_delivery(
 ):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "src").mkdir()
-    catalog = load_catalog()
+    catalog = CatalogLoader.load()
     tool = catalog.get_tool("gate.folder-breadth")
     request = gate_request(tmp_path, tool.id, paths=(Path("src"),))
     _argv, env = prepare_gate_execution(request)
@@ -181,7 +181,7 @@ def test_module_private_vars_flags_existing_module_function(tmp_path: Path, monk
         "def _helper():\n    return 1\n",
         encoding="utf-8",
     )
-    tool = load_catalog().get_tool("gate.module-private-vars")
+    tool = CatalogLoader.load().get_tool("gate.module-private-vars")
     request = gate_request(tmp_path, tool.id, paths=(tmp_path / "tests",))
     result, report = run_gate_check(tmp_path, request)
     assert result.exit_code == 1, result.stderr
@@ -195,7 +195,7 @@ def test_module_size_flags_existing_oversized_module(tmp_path: Path, monkeypatch
     (tmp_path / "src").mkdir()
     body = "\n".join("x = 1" for _ in range(501))
     (tmp_path / "src" / "legacy.py").write_text(body + "\n", encoding="utf-8")
-    tool = load_catalog().get_tool("gate.module-size")
+    tool = CatalogLoader.load().get_tool("gate.module-size")
     request = gate_request(tmp_path, tool.id, paths=(tmp_path / "src",))
     result, report = run_gate_check(tmp_path, request)
     assert result.exit_code == 1, result.stderr

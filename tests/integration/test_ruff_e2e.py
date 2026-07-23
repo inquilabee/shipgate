@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from shipgate.catalog.loader import load_catalog
+from shipgate.catalog.loader import CatalogLoader
 from shipgate.runtime.install import collect_install_requirements
 
 pytestmark = pytest.mark.integration
@@ -13,7 +13,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
 @pytest.fixture
 def catalog():
-    return load_catalog()
+    return CatalogLoader.load()
 
 
 def test_collect_install_requirements(catalog):
