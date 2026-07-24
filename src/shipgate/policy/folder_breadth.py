@@ -55,187 +55,12 @@ class FolderBreadthGate(PolicyGate):
         self._report: FolderBreadthReport | None = None
         self._enforcing = True
         self._enforcing_override: bool | None = None
-
-    @staticmethod
-    def iter_scan_directories(base: Path) -> list[Path]:
-        if not base.is_dir():
-            return []
-        directories = [base]
-        for path in sorted(base.rglob("*")):
-            if path.is_dir() and path.name not in SKIP_DIR_NAMES:
-                directories.append(path)
-        return directories
-
-    @staticmethod
-    def count_direct_files(directory: Path, extensions: tuple[str, ...]) -> int:
-        count = 0
-        for child in directory.iterdir():
-            if not child.is_file():
-                continue
-            if child.name == "__init__.py":
-                continue
-            if child.suffix in extensions:
-                count += 1
-        return count
-
-    @staticmethod
-    def is_allowlisted(rel_posix: str, allowlist: set[str]) -> bool:
-        normalized = rel_posix.rstrip("/")
-        if normalized in allowlist:
-            return True
-        # Optional subtree exemption: `path/*` skips that directory and descendants.
-        for entry in allowlist:
-            if entry.endswith("/*"):
-                prefix = entry[:-2].rstrip("/")
-                if normalized == prefix or normalized.startswith(f"{prefix}/"):
-                    return True
-        return False
-
-    @staticmethod
-    def should_skip_directory(
-        rel: str, allowlist: set[str], ignores: EffectiveIgnores | None
-    ) -> bool:
-        if FolderBreadthGate.is_allowlisted(rel, allowlist):
-            return True
-        return bool(ignores and ignores.is_ignored(rel))
-
-    @staticmethod
-    def breadth_violation(
-        rel: str, file_count: int, max_allowed: int
-    ) -> DirBreadthViolation | None:
-        if file_count <= max_allowed:
-            return None
-        return DirBreadthViolation(path=rel, count=file_count, max_allowed=max_allowed)
-
-    @staticmethod
-    def directory_breadth_outcome(
-        directory: Path,
-        root: Path,
-        *,
-        max_allowed: int,
-        extensions: tuple[str, ...],
-        allowlist: set[str],
-        ignores: EffectiveIgnores | None,
-    ) -> tuple[DirBreadthViolation | None, int, str] | None:
-        rel = directory.relative_to(root).as_posix()
-        if FolderBreadthGate.should_skip_directory(rel, allowlist, ignores):
-            return None
-        file_count = FolderBreadthGate.count_direct_files(directory, extensions)
-        if file_count == 0:
-            return None
-        violation = FolderBreadthGate.breadth_violation(rel, file_count, max_allowed)
-        return violation, file_count, rel
-
-    @staticmethod
-    def scan_root_breadth(
-        root: Path,
-        scan_root: str,
-        *,
-        max_allowed: int,
-        extensions: tuple[str, ...],
-        allowlist: set[str],
-        ignores: EffectiveIgnores | None,
-        worst_path: str,
-        worst_count: int,
-    ) -> tuple[int, str, int, list[DirBreadthViolation]]:
-        violations: list[DirBreadthViolation] = []
-        dirs_scanned = 0
-        base = root / scan_root
-        for directory in FolderBreadthGate.iter_scan_directories(base):
-            outcome = FolderBreadthGate.directory_breadth_outcome(
-                directory,
-                root,
-                max_allowed=max_allowed,
-                extensions=extensions,
-                allowlist=allowlist,
-                ignores=ignores,
-            )
-            if outcome is None:
-                continue
-            violation, file_count, rel = outcome
-            dirs_scanned += 1
-            if file_count > worst_count:
-                worst_count = file_count
-                worst_path = rel
-            if violation is not None:
-                violations.append(violation)
-        return dirs_scanned, worst_path, worst_count, violations
-
-    @staticmethod
-    def settings_from_config(
-        config: dict[str, Any],
-    ) -> tuple[int, tuple[str, ...], tuple[str, ...], bool]:
-        max_allowed = int(config.get("max_allowed", 12))
-        scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
-        extensions_raw = config.get("extensions", [".py", ".md", ".yaml", ".sh"])
-        extensions: list[str] = []
-        for part in extensions_raw:
-            stripped = str(part).strip()
-            if not stripped:
-                continue
-            extensions.append(stripped if stripped.startswith(".") else f".{stripped}")
-        strict = bool(config.get("strict", True))
-        return max_allowed, scan_roots, tuple(extensions), strict
-
-    @staticmethod
-    def scan_folder_breadth(
-        root: Path,
-        *,
-        max_allowed: int,
-        scan_roots: tuple[str, ...],
-        extensions: tuple[str, ...],
-        allowlist: set[str],
-        ignores: EffectiveIgnores | None = None,
-    ) -> FolderBreadthReport:
-        violations: list[DirBreadthViolation] = []
-        dirs_scanned = 0
-        worst_path = ""
-        worst_count = 0
-
-        scoped_roots = scope_paths_from_env()
-        roots_to_scan = scoped_roots if scoped_roots else scan_roots
-
-        for scan_root in roots_to_scan:
-            scanned, worst_path, worst_count, root_violations = FolderBreadthGate.scan_root_breadth(
-                root,
-                scan_root,
-                max_allowed=max_allowed,
-                extensions=extensions,
-                allowlist=allowlist,
-                ignores=ignores,
-                worst_path=worst_path,
-                worst_count=worst_count,
-            )
-            dirs_scanned += scanned
-            violations.extend(root_violations)
-
-        violations.sort(key=lambda item: (-item.count, item.path))
-        return FolderBreadthReport(
-            max_allowed=max_allowed,
-            scan_roots=scan_roots,
-            extensions=extensions,
-            leaf_dirs_scanned=dirs_scanned,
-            leaf_dirs_over_max=len(violations),
-            worst_leaf_dir=worst_path,
-            worst_leaf_count=worst_count,
-            violations=tuple(violations),
-        )
-
-    @staticmethod
-    def findings_from_report(report: FolderBreadthReport) -> list[PolicyFinding]:
-        findings: list[PolicyFinding] = []
-        for violation in report.violations:
-            findings.append(
-                PolicyFinding(
-                    rule_id="folder-breadth",
-                    message=(
-                        f"{violation.path} has {violation.count} sibling files "
-                        f"(max {violation.max_allowed})"
-                    ),
-                    location=FindingLocation(file=violation.path),
-                )
-            )
-        return findings
+        self._root: Path | None = None
+        self._max_allowed = 12
+        self._scan_roots: tuple[str, ...] = (".",)
+        self._extensions: tuple[str, ...] = (".py", ".md", ".yaml", ".sh")
+        self._allowlist: set[str] = set()
+        self._ignores: EffectiveIgnores | None = None
 
     def configure_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--strict", action="store_true", default=None)
@@ -249,20 +74,21 @@ class FolderBreadthGate(PolicyGate):
         allowlist: set[str],
         ignores: EffectiveIgnores | None,
     ) -> Sequence[PolicyFinding]:
-        max_allowed, scan_roots, extensions, config_strict = self.settings_from_config(dict(config))
+        max_allowed, scan_roots, extensions, config_strict = self._settings_from_config(
+            dict(config)
+        )
         if self._enforcing_override is None:
             self._enforcing = config_strict
         else:
             self._enforcing = self._enforcing_override
-        self._report = self.scan_folder_breadth(
-            root,
-            max_allowed=max_allowed,
-            scan_roots=scan_roots,
-            extensions=extensions,
-            allowlist=allowlist,
-            ignores=ignores,
-        )
-        return self.findings_from_report(self._report)
+        self._root = root
+        self._max_allowed = max_allowed
+        self._scan_roots = scan_roots
+        self._extensions = extensions
+        self._allowlist = allowlist
+        self._ignores = ignores
+        self._report = self._scan_folder_breadth()
+        return self._findings_from_report(self._report)
 
     def report_extra(self, findings: Sequence[PolicyFinding]) -> Mapping[str, object] | None:
         if self._report is None:
@@ -289,6 +115,151 @@ class FolderBreadthGate(PolicyGate):
             config=config,
             report_path=args.report,
         )
+
+    def _settings_from_config(
+        self, config: dict[str, Any]
+    ) -> tuple[int, tuple[str, ...], tuple[str, ...], bool]:
+        max_allowed = int(config.get("max_allowed", 12))
+        scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
+        extensions_raw = config.get("extensions", [".py", ".md", ".yaml", ".sh"])
+        extensions: list[str] = []
+        for part in extensions_raw:
+            stripped = str(part).strip()
+            if not stripped:
+                continue
+            extensions.append(stripped if stripped.startswith(".") else f".{stripped}")
+        strict = bool(config.get("strict", True))
+        return max_allowed, scan_roots, tuple(extensions), strict
+
+    def _scan_folder_breadth(self) -> FolderBreadthReport:
+        if self._root is None:
+            msg = "scan root is not bound"
+            raise RuntimeError(msg)
+        violations: list[DirBreadthViolation] = []
+        dirs_scanned = 0
+        worst_path = ""
+        worst_count = 0
+
+        scoped_roots = scope_paths_from_env()
+        roots_to_scan = scoped_roots if scoped_roots else self._scan_roots
+
+        for scan_root in roots_to_scan:
+            scanned, worst_path, worst_count, root_violations = self._scan_root_breadth(
+                scan_root,
+                worst_path=worst_path,
+                worst_count=worst_count,
+            )
+            dirs_scanned += scanned
+            violations.extend(root_violations)
+
+        violations.sort(key=lambda item: (-item.count, item.path))
+        return FolderBreadthReport(
+            max_allowed=self._max_allowed,
+            scan_roots=self._scan_roots,
+            extensions=self._extensions,
+            leaf_dirs_scanned=dirs_scanned,
+            leaf_dirs_over_max=len(violations),
+            worst_leaf_dir=worst_path,
+            worst_leaf_count=worst_count,
+            violations=tuple(violations),
+        )
+
+    def _scan_root_breadth(
+        self,
+        scan_root: str,
+        *,
+        worst_path: str,
+        worst_count: int,
+    ) -> tuple[int, str, int, list[DirBreadthViolation]]:
+        if self._root is None:
+            return 0, worst_path, worst_count, []
+        violations: list[DirBreadthViolation] = []
+        dirs_scanned = 0
+        base = self._root / scan_root
+        for directory in self._iter_scan_directories(base):
+            outcome = self._directory_breadth_outcome(directory)
+            if outcome is None:
+                continue
+            violation, file_count, rel = outcome
+            dirs_scanned += 1
+            if file_count > worst_count:
+                worst_count = file_count
+                worst_path = rel
+            if violation is not None:
+                violations.append(violation)
+        return dirs_scanned, worst_path, worst_count, violations
+
+    def _directory_breadth_outcome(
+        self, directory: Path
+    ) -> tuple[DirBreadthViolation | None, int, str] | None:
+        if self._root is None:
+            return None
+        rel = directory.relative_to(self._root).as_posix()
+        if self._should_skip_directory(rel):
+            return None
+        file_count = self._count_direct_files(directory)
+        if file_count == 0:
+            return None
+        violation = self._breadth_violation(rel, file_count)
+        return violation, file_count, rel
+
+    def _should_skip_directory(self, rel: str) -> bool:
+        if self._is_allowlisted(rel):
+            return True
+        return bool(self._ignores and self._ignores.is_ignored(rel))
+
+    def _is_allowlisted(self, rel_posix: str) -> bool:
+        normalized = rel_posix.rstrip("/")
+        if normalized in self._allowlist:
+            return True
+        for entry in self._allowlist:
+            if entry.endswith("/*"):
+                prefix = entry[:-2].rstrip("/")
+                if normalized == prefix or normalized.startswith(f"{prefix}/"):
+                    return True
+        return False
+
+    def _breadth_violation(self, rel: str, file_count: int) -> DirBreadthViolation | None:
+        if file_count <= self._max_allowed:
+            return None
+        return DirBreadthViolation(path=rel, count=file_count, max_allowed=self._max_allowed)
+
+    @staticmethod
+    def _iter_scan_directories(base: Path) -> list[Path]:
+        if not base.is_dir():
+            return []
+        directories = [base]
+        for path in sorted(base.rglob("*")):
+            if path.is_dir() and path.name not in SKIP_DIR_NAMES:
+                directories.append(path)
+        return directories
+
+    def _count_direct_files(self, directory: Path) -> int:
+        count = 0
+        for child in directory.iterdir():
+            if not child.is_file():
+                continue
+            if child.name == "__init__.py":
+                continue
+            if child.suffix in self._extensions:
+                count += 1
+        return count
+
+    @staticmethod
+    def _findings_from_report(report: FolderBreadthReport) -> list[PolicyFinding]:
+        findings: list[PolicyFinding] = []
+        for violation in report.violations:
+            findings.append(
+                PolicyFinding(
+                    rule_id="folder-breadth",
+                    message=(
+                        f"{violation.path} has {violation.count} sibling files "
+                        f"(max {violation.max_allowed})"
+                    ),
+                    location=FindingLocation(file=violation.path),
+                )
+            )
+        return findings
 
 
 def main(argv: list[str] | None = None) -> int:

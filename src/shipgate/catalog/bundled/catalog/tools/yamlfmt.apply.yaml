@@ -10,6 +10,7 @@ yamlfmt.apply:
     package: yamlfmt
     version: ">=0.0.1"
     binary: yamlfmt
+    allow_path: false
   cli:
     paths:
       style: positional

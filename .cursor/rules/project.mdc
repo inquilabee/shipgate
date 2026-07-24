@@ -37,7 +37,13 @@ Bundled semgrep rulesets, ruff McCabe, radon grades, etc. are intentional. Fix v
 | `runtime/` | Executor, install, environment, reports, cache, parallel, remote |
 | `normalize/` | Tool output → canonical `CheckReport` |
 | `formatters/` | Canonical report → human/CI text |
-| `gates/` | Project-local script gates |
+| `gates/` | Script-gate runtime and local-gate discovery |
+| `policy/` | Bundled `PolicyGate` modules (`module:` catalog tools) |
+| `frontend/` | Report UI; reads canonical reports only |
+| `project/` | `init` / scaffold / project Python helpers |
+| `registries/` | Shared ID registries |
+| `core/` | Shared process/path utilities |
+| `plugins/` | Deferred stub (Decision 005) |
 | `app.py` | Orchestration with dependency injection |
 | `cli.py` | argparse entrypoint only |
 

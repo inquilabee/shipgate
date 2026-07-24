@@ -28,7 +28,7 @@ shipgate check  →  resolve suite/check  →  SelectedTool
 
 1. **Load** — bundled tools (plus project catalog overlays) become frozen `ToolDefinition` objects.
 1. **Select** — project `suite:`, `--suite`, or `--check` decides which tool ids run.
-1. **Plan** — resolve target/scope, config files, and options for each tool.
+1. **Plan** — resolve target/scope, config files, and options for each tool. Scope uses gitignore; see **Scoping and ignores** in `docs/architecture.md`.
 1. **Serialize** — catalog metadata + options become argv (no tool-specific branches).
 1. **Run** — subprocess; normalizer turns output into a canonical report.
 

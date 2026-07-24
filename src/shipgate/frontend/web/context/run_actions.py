@@ -1,0 +1,85 @@
+"""New-run page context and start-run actions."""
+
+from __future__ import annotations
+
+import os
+from typing import TYPE_CHECKING, Any
+from urllib.parse import quote
+
+from fastapi.responses import RedirectResponse
+
+from shipgate.config.loader import ProjectConfigLoader
+from shipgate.frontend.domain.requirements import acknowledge, is_acknowledged
+from shipgate.frontend.services.orchestrator import OrchestratorError
+from shipgate.frontend.services.worktree import WorktreeError
+from shipgate.frontend.web.context.serialize import requirements_text
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from fastapi import Request
+
+    from shipgate.frontend.services.orchestrator import RunOrchestrator
+    from shipgate.frontend.services.worktree import WorktreeManager
+
+
+def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
+    primary: Path = request.app.state.primary_root
+    catalog = request.app.state.catalog
+    worktrees: WorktreeManager = request.app.state.worktrees
+    return {
+        "request": request,
+        "branches": safe_branches(worktrees),
+        "suites": sorted(catalog.suites.keys()),
+        "default_suite": default_suite(catalog, primary),
+        "needs_ack": not is_acknowledged(primary),
+        "requirements_text": requirements_text(),
+        "error": error,
+        "csrf_token": request.app.state.csrf_token,
+        "ui_token": os.environ.get("SHIPGATE_UI_TOKEN") or "",
+    }
+
+
+def start_new_run(
+    primary: Path,
+    orchestrator: RunOrchestrator,
+    branch: str,
+    suite_id: str,
+    acknowledge_requirements: str | None,
+) -> RedirectResponse:
+    if not is_acknowledged(primary):
+        if not acknowledge_requirements:
+            return RedirectResponse(
+                url="/runs/new?error=Please+acknowledge+the+requirements+before+starting",
+                status_code=303,
+            )
+        acknowledge(primary)
+    try:
+        run = orchestrator.start_run(branch, suite_id)
+    except OrchestratorError as exc:
+        return RedirectResponse(url=f"/runs/new?error={query_escape(str(exc))}", status_code=303)
+    return RedirectResponse(url=f"/?run_id={run.id}", status_code=303)
+
+
+def safe_branches(worktrees: WorktreeManager) -> list[str]:
+    try:
+        return worktrees.list_branches()
+    except WorktreeError:
+        return []
+
+
+def default_suite(catalog, primary: Path) -> str:
+    project = None
+    try:
+        project = ProjectConfigLoader.load(project_root=primary)
+    except Exception:
+        project = None
+    if project is not None and project.suite is not None and project.suite in catalog.suites:
+        return project.suite
+    if "standard" in catalog.suites:
+        return "standard"
+    return next(iter(sorted(catalog.suites.keys())), "")
+
+
+def query_escape(value: str) -> str:
+    return quote(value, safe="")

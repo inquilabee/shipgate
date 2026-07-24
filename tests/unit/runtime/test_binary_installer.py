@@ -122,7 +122,25 @@ def test_npm_installer_skips_github_binaries():
     assert not installer.can_install("gitleaks", install_def)
 
 
-def test_npm_installer_skips_yamlfmt_for_go_installer():
-    install_def = InstallDefinition(manager="binary", package="yamlfmt", binary="yamlfmt")
-    installer = NpmInstaller()
+def test_path_installer_respects_allow_path_false(monkeypatch):
+    from shipgate.runtime.installers.binary import PathBinaryInstaller
+
+    monkeypatch.setattr(
+        "shipgate.runtime.installers.binary_path.shutil.which",
+        lambda _name: "/usr/bin/yamlfmt",
+    )
+    install_def = InstallDefinition(
+        manager="binary",
+        package="yamlfmt",
+        binary="yamlfmt",
+        allow_path=False,
+    )
+    installer = PathBinaryInstaller()
     assert not installer.can_install("yamlfmt", install_def)
+
+
+def test_catalog_yamlfmt_disallows_path():
+    catalog = CatalogLoader.load()
+    install_def = catalog.get_tool("yamlfmt.apply").install
+    assert install_def is not None
+    assert install_def.allow_path is False

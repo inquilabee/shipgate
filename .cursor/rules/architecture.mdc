@@ -16,17 +16,22 @@ Before implementing, name the layer:
 
 ## Scoping
 
-Check mode respects `.gitignore` via `planning/utils/gitignore.py`. Prefer gitignore over per-tool ignore YAML in bundled configs.
+Check mode respects `.gitignore` via `planning/utils/gitignore.py`. Prefer gitignore over per-tool ignore YAML in bundled configs. Keep tool-native excludes only when the tool walks trees beyond ShipGate-passed paths (e.g. Bandit `exclude_dirs`). Project overrides go in `.shipgate/configs/` / allowlists, not bundled defaults.
 
 ## Catalog layout
 
 `catalog/bundled/catalog/`: `tools/*.yaml`, `suites.yaml`. Extend via ToolDefinition + bundled config + normalizer Protocol.
 
+## Parallel packages
+
+`policy/` (bundled PolicyGate modules), `gates/` (script-gate runtime), `frontend/` (canonical-report UI), `project/` (init/scaffold), `registries/`, `core/`, `plugins/` (Decision 005 stub).
+
 ## CliSerializer
 
-- `scalar` options: first path only when value is a list
+- `scalar` options with a list: emit every entry when `aggregate` is `None` or `repeat`
+- `aggregate: root`: `CliOptionDefinition.aggregate_value` widens multi-path lists to `project_root` before serialize
 - `repeated` options: all paths emitted
-- Red flag: scalar paths dropping dirs — security tools must scan all scoped dirs
+- Red flag: scalar paths dropping dirs for security tools — prefer `aggregate: root` or positional/repeated delivery that covers the full scope
 
 ## Red flags (stop and redesign)
 

@@ -1,0 +1,1 @@
+This run uses a separate git worktree under `.shipgate/worktrees/` so your current checkout is not switched. Quality tools run from shipgate's managed environment under `.shipgate/tools/`. Disk space is used under `.shipgate/` for worktrees, tools, and the local SQLite database.

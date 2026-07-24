@@ -31,7 +31,24 @@ domain/ → config/ → catalog/ → planning/ → adapter/ → runtime/ → nor
 | `gates/` | Script-gate runtime and local-gate discovery |
 | `app.py` / `cli.py` | Orchestration and argparse entry |
 
+| Parallel package | Responsibility |
+| --- | --- |
+| `policy/` | Bundled `PolicyGate` modules (`module:` catalog tools) |
+| `frontend/` | Report UI; reads canonical reports only |
+| `project/` | `init` / scaffold / project Python helpers |
+| `registries/` | Shared ID registries |
+| `core/` | Shared process/path utilities |
+| `plugins/` | Deferred stub (Decision 005) |
+
 Policy stays out of argv details. Catalog metadata owns flags, config discovery, and normalizer binding. No tool-specific branches in planner, adapter, or executor.
+
+## Scoping and ignores
+
+ShipGate resolves check paths through gitignore-aware scoping ([`planning/utils/gitignore.py`](../src/shipgate/planning/utils/gitignore.py)) before building argv. Prefer that single source of truth over duplicating exclude lists in every bundled tool config.
+
+Bundled per-tool excludes remain only when the tool **also** walks trees itself outside ShipGate's path list (for example Bandit's `exclude_dirs` in `configs/bandit.yaml`). Tools that only see the paths ShipGate passes (yamlfmt notes this in its config header) should not grow parallel ignore YAML.
+
+Project pain belongs in `.shipgate/configs/` or `.shipgate/allowlists/`, not in portable bundled catalog defaults.
 
 ## Decisions
 

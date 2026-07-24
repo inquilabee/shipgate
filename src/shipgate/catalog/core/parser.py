@@ -98,6 +98,7 @@ class CatalogParser:
             version=raw.get("version", ""),
             binary=raw.get("binary"),
             requires=tuple(raw.get("requires", []) or []),
+            allow_path=bool(raw.get("allow_path", True)),
         )
 
     def _parse_scope(self, raw: dict) -> ScopeCriteria:

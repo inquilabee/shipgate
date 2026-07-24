@@ -61,6 +61,16 @@ Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/q
 domain/ → config/ → catalog/ → planning/ → adapter/ → runtime/ → normalize/ → formatters/ → app.py → cli.py
 ```
 
+| Parallel package | Responsibility |
+| --- | --- |
+| `policy/` | Bundled `PolicyGate` modules (`module:` catalog tools) |
+| `gates/` | Script-gate runtime and local-gate discovery |
+| `frontend/` | Report UI; reads canonical reports only |
+| `project/` | `init` / scaffold / project Python helpers |
+| `registries/` | Shared ID registries |
+| `core/` | Shared process/path utilities |
+| `plugins/` | Deferred stub (Decision 005) |
+
 **Boundary rule:** Does this belong in project policy, catalog metadata, planning, execution, normalization, or formatting? If unclear, stop.
 
 ## Agent rules

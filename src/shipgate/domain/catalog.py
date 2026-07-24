@@ -50,6 +50,7 @@ class InstallDefinition:
     version: str = ""
     binary: str | None = None
     requires: tuple[str, ...] = ()
+    allow_path: bool = True
 
 
 @dataclass(frozen=True)
