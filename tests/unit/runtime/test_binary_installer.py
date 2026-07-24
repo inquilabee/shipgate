@@ -5,9 +5,8 @@ import pytest
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.catalog import InstallDefinition
 from shipgate.runtime.installers.binary import (
+    GitHubReleaseInstaller,
     NpmInstaller,
-    build_github_release_url,
-    release_arch,
 )
 
 
@@ -22,52 +21,82 @@ from shipgate.runtime.installers.binary import (
     ],
 )
 def test_release_arch_mapping(binary_name, arch, expected):
-    assert release_arch(binary_name, arch) == expected
+    assert GitHubReleaseInstaller.release_arch(binary_name, arch) == expected
 
 
-@patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
-@patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_os",
+    return_value="linux",
+)
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_arch",
+    return_value="x86_64",
+)
 def test_gitleaks_release_url_uses_x64_arch(_mock_arch, _mock_os):
-    url, asset_name = build_github_release_url("gitleaks", "v8.18.2")
+    url, asset_name = GitHubReleaseInstaller.build_github_release_url("gitleaks", "v8.18.2")
     assert asset_name == "gitleaks_8.18.2_linux_x64.tar.gz"
     assert url.endswith("/releases/download/v8.18.2/gitleaks_8.18.2_linux_x64.tar.gz")
 
 
-@patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
-@patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_os",
+    return_value="linux",
+)
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_arch",
+    return_value="x86_64",
+)
 def test_shfmt_release_url_uses_amd64_arch(_mock_arch, _mock_os):
-    url, asset_name = build_github_release_url("shfmt", "v3.8.0")
+    url, asset_name = GitHubReleaseInstaller.build_github_release_url("shfmt", "v3.8.0")
     assert asset_name == "shfmt_v3.8.0_linux_amd64"
     assert url.endswith("/releases/download/v3.8.0/shfmt_v3.8.0_linux_amd64")
 
 
 @patch(
-    "shipgate.runtime.installers.binary.fetch_latest_release_tag",
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.fetch_latest_release_tag",
     return_value="v8.30.1",
 )
-@patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
-@patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_os",
+    return_value="linux",
+)
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_arch",
+    return_value="x86_64",
+)
 def test_gitleaks_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_latest):
-    url, asset_name = build_github_release_url("gitleaks", "latest")
+    url, asset_name = GitHubReleaseInstaller.build_github_release_url("gitleaks", "latest")
     assert asset_name == "gitleaks_8.30.1_linux_x64.tar.gz"
     assert "/releases/latest/download/" in url
 
 
 @patch(
-    "shipgate.runtime.installers.binary.fetch_latest_release_tag",
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.fetch_latest_release_tag",
     return_value="v3.13.1",
 )
-@patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
-@patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_os",
+    return_value="linux",
+)
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_arch",
+    return_value="x86_64",
+)
 def test_shfmt_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_latest):
-    _url, asset_name = build_github_release_url("shfmt", "latest")
+    _url, asset_name = GitHubReleaseInstaller.build_github_release_url("shfmt", "latest")
     assert asset_name == "shfmt_v3.13.1_linux_amd64"
 
 
-@patch("shipgate.runtime.installers.binary.github_os", return_value="linux")
-@patch("shipgate.runtime.installers.binary.github_arch", return_value="x86_64")
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_os",
+    return_value="linux",
+)
+@patch(
+    "shipgate.runtime.installers.binary.GitHubReleaseInstaller.github_arch",
+    return_value="x86_64",
+)
 def test_shellcheck_release_url_keeps_x86_64_arch(_mock_arch, _mock_os):
-    _url, asset_name = build_github_release_url("shellcheck", "v0.10.0")
+    _url, asset_name = GitHubReleaseInstaller.build_github_release_url("shellcheck", "v0.10.0")
     assert asset_name == "shellcheck-0.10.0-linux.x86_64.tar.xz"
 
 

@@ -11,17 +11,23 @@ def assert_init_layout(root):
     sg = root / SHIPGATE_DIR
     assert (sg / "reports").is_dir(), "reports directory missing"
     assert (sg / "gates").is_dir(), "gates directory missing"
-    assert (sg / "allowlists" / "acronyms.yaml").is_file(), "acronyms allowlist missing"
-    assert (sg / "allowlists" / "module-private-vars.yaml").is_file(), (
-        "module-private-vars allowlist missing"
-    )
-    assert (sg / "allowlists" / "test-only-symbols.yaml").is_file(), (
-        "test-only-symbols allowlist missing"
-    )
+    assert_init_allowlists(sg)
     assert (sg / "configs" / "ruff.toml").is_file(), "ruff config missing"
     gitignore = (sg / ".gitignore").read_text(encoding="utf-8")
     assert "tools/" in gitignore, "tools/ not ignored"
     assert "!configs/" in gitignore, "configs/ not un-ignored"
+
+
+def assert_init_allowlists(sg) -> None:
+    allowlists = sg / "allowlists"
+    for name in (
+        "acronyms.yaml",
+        "module-private-vars.yaml",
+        "test-only-symbols.yaml",
+        "repeated-strings.yaml",
+        "class-local-functions.yaml",
+    ):
+        assert (allowlists / name).is_file(), f"{name} allowlist missing"
 
 
 def assert_default_yaml_policy(content: str) -> None:

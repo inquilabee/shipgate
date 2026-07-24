@@ -12,8 +12,24 @@ if TYPE_CHECKING:
     from shipgate.gates.ignore import EffectiveIgnores
 
 
+def path_is_allowlisted(rel: str, allowlist: set[str]) -> bool:
+    """True when rel matches an allowlist path or sits under an allowlisted directory."""
+    cleaned = rel.rstrip("/")
+    if cleaned in allowlist:
+        return True
+    parts = cleaned.split("/")
+    return any("/".join(parts[:index]) in allowlist for index in range(1, len(parts)))
+
+
+def symbol_is_allowlisted(rel: str, symbol: str, allowlist: set[str]) -> bool:
+    cleaned = rel.rstrip("/")
+    if path_is_allowlisted(cleaned, allowlist):
+        return True
+    return f"{cleaned}:{symbol}" in allowlist
+
+
 def should_skip_file(rel: str, allowlist: set[str], ignores: EffectiveIgnores | None) -> bool:
-    if rel.rstrip("/") in allowlist:
+    if path_is_allowlisted(rel, allowlist):
         return True
     return bool(ignores and ignores.is_ignored(rel))
 

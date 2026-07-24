@@ -54,6 +54,8 @@ def test_catalog_includes_bundled_policy_gates():
         "gate.folder-breadth",
         "gate.acronym-allowlist",
         "gate.test-only-symbols",
+        "gate.repeated-strings",
+        "gate.class-local-functions",
     ):
         tool = catalog.get_tool(gate_id)
         assert tool.normalizer == "gate_json"

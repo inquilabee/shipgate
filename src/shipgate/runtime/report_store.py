@@ -15,6 +15,8 @@ from shipgate.runtime.reports import validate_run_id
 if TYPE_CHECKING:
     from pathlib import Path
 
+REPORT_FILENAME = "report.json"
+
 
 class ReportStore:
     def __init__(self, project_root: Path) -> None:
@@ -27,7 +29,7 @@ class ReportStore:
         run_id = validate_run_id(report.run_id)
         run_dir = self._contained_run_dir(self.runs_dir, run_id)
         run_dir.mkdir(parents=True, exist_ok=True)
-        report_path = run_dir / "report.json"
+        report_path = run_dir / REPORT_FILENAME
         report_path.write_text(
             dumps_indented(report.to_dict(), trailing_newline=False),
             encoding="utf-8",
@@ -70,7 +72,7 @@ class ReportStore:
         failures_root = (self.project_root / PROJECT_REPORTS_FAILURES_DIR).resolve()
         out_dir = self._contained_run_dir(failures_root, run_id)
         out_dir.mkdir(parents=True, exist_ok=True)
-        path = out_dir / "report.json"
+        path = out_dir / REPORT_FILENAME
         path.write_text(dumps_indented(report.to_dict()), encoding="utf-8")
         return path
 
@@ -94,10 +96,10 @@ class ReportStore:
 
     def load(self, run_id: str) -> RunReport:
         safe_run_id = validate_run_id(run_id)
-        path = self._contained_run_dir(self.runs_dir, safe_run_id) / "report.json"
+        path = self._contained_run_dir(self.runs_dir, safe_run_id) / REPORT_FILENAME
         if not path.is_file():
             failures_root = (self.root / "failures").resolve()
-            failures = self._contained_run_dir(failures_root, safe_run_id) / "report.json"
+            failures = self._contained_run_dir(failures_root, safe_run_id) / REPORT_FILENAME
             if failures.is_file():
                 path = failures
             else:

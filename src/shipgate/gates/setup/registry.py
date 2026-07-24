@@ -34,6 +34,8 @@ SETUPS: dict[str, Callable[[Path], None]] = {
         "gate.folder-breadth",
         "gate.acronym-allowlist",
         "gate.test-only-symbols",
+        "gate.repeated-strings",
+        "gate.class-local-functions",
     )
 }
 

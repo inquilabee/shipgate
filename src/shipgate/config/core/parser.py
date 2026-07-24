@@ -164,13 +164,13 @@ class ProjectConfigParser:
             allowlist_path = value.strip()
             if not allowlist_path:
                 raise ConfigError(
-                    f"allowlists[{gate_id!r}] requires a non-empty path",
+                    self._allowlist_message(gate_id, "requires a non-empty path"),
                     path=str(self._path),
                 )
             return allowlist_path
         if isinstance(value, dict):
             raise ConfigError(
-                f"allowlists[{gate_id!r}] must be an allowlist file path",
+                self._allowlist_message(gate_id, "must be an allowlist file path"),
                 hint=(
                     "use gate-id: <allowlist-file>; document each exception with "
                     "path and reason in that file"
@@ -178,6 +178,10 @@ class ProjectConfigParser:
                 path=str(self._path),
             )
         raise ConfigError(
-            f"allowlists[{gate_id!r}] must be an allowlist file path",
+            self._allowlist_message(gate_id, "must be an allowlist file path"),
             path=str(self._path),
         )
+
+    @staticmethod
+    def _allowlist_message(gate_id: str, detail: str) -> str:
+        return f"allowlists[{gate_id!r}] {detail}"

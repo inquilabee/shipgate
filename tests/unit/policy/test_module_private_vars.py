@@ -1,31 +1,28 @@
 from __future__ import annotations
 
 from shipgate.policy.core.finding import FindingLocation
-from shipgate.policy.module_private_vars import (
-    ModulePrivateVarsGate,
-    findings_for_file,
-)
+from shipgate.policy.module_private_vars import ModulePrivateVarsGate
 
 
 def test_finds_assignment_function_class() -> None:
     text = "_secret = 1\ndef _helper():\n    pass\nclass _Hidden:\n    pass\n"
-    findings = findings_for_file("m.py", text)
+    findings = ModulePrivateVarsGate.findings_for_file("m.py", text)
     ids = {f.rule_id for f in findings}
     assert ids == {"private-assignment", "private-function", "private-class"}
 
 
 def test_ignores_dunder_and_indented() -> None:
     text = "__all__ = []\nDef = 1\n    _indented = 1\n"
-    assert findings_for_file("m.py", text) == []
+    assert ModulePrivateVarsGate.findings_for_file("m.py", text) == []
 
 
 def test_async_def_detected() -> None:
-    findings = findings_for_file("m.py", "async def _go():\n    pass\n")
+    findings = ModulePrivateVarsGate.findings_for_file("m.py", "async def _go():\n    pass\n")
     assert findings[0].rule_id == "private-function"
 
 
 def test_message_format_matches_grep_style() -> None:
-    findings = findings_for_file("m.py", "_secret = 1\n")
+    findings = ModulePrivateVarsGate.findings_for_file("m.py", "_secret = 1\n")
     assert findings[0].message == "m.py:1:_secret = 1"
     assert findings[0].location == FindingLocation(file="m.py", line=1)
 

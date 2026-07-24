@@ -38,6 +38,7 @@ from shipgate.runtime.report_store import ReportStore
 FRONTEND_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = FRONTEND_ROOT / "templates"
 STATIC_DIR = FRONTEND_ROOT / "static"
+RUN_NOT_FOUND = "run not found"
 GITHUB_REPO_URL = "https://github.com/inquilabee/shipgate"
 
 
@@ -169,7 +170,7 @@ def register_run_routes(app: FastAPI) -> None:
     def run_progress(request: Request, run_id: str) -> HTMLResponse:
         run = request.app.state.storage.get_run(run_id)
         if run is None:
-            raise HTTPException(status_code=404, detail="run not found")
+            raise HTTPException(status_code=404, detail=RUN_NOT_FOUND)
         return request.app.state.templates.TemplateResponse(
             request,
             "partials/run_progress.html",
@@ -187,7 +188,7 @@ def register_run_log_routes(app: FastAPI) -> None:
         try:
             report = store.load(run_id)
         except (FileNotFoundError, json.JSONDecodeError) as exc:
-            raise HTTPException(status_code=404, detail="run not found") from exc
+            raise HTTPException(status_code=404, detail=RUN_NOT_FOUND) from exc
         check_report = next((c for c in report.reports if c.check_id == check_id), None)
         if check_report is None:
             raise HTTPException(status_code=404, detail="check not found")
@@ -227,7 +228,7 @@ def register_api_routes(app: FastAPI) -> None:
         try:
             report = store.load(run_id)
         except (FileNotFoundError, json.JSONDecodeError) as exc:
-            raise HTTPException(status_code=404, detail="run not found") from exc
+            raise HTTPException(status_code=404, detail=RUN_NOT_FOUND) from exc
         return report.to_dict()
 
     @app.get("/api/runs/{run_id}/summary")
@@ -250,7 +251,7 @@ def register_api_routes(app: FastAPI) -> None:
     ) -> dict:
         storage: SqliteStorage = request.app.state.storage
         if storage.get_run(run_id) is None:
-            raise HTTPException(status_code=404, detail="run not found")
+            raise HTTPException(status_code=404, detail=RUN_NOT_FOUND)
         file_filter = normalize_finding_path(file) if file else None
         filters = finding_filters(severity, check_id, file_filter)
         total = storage.count_findings(run_id, category=FindingCategory.CODE, **filters)

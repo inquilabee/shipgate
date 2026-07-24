@@ -19,6 +19,8 @@ if TYPE_CHECKING:
     from shipgate.domain.run_command import RunCommand
 
 MAX_INCREMENTAL_EXPLICIT_FILES = 64
+GIT_NAME_ONLY = "--name-only"
+GIT_RELATIVE = "--relative"
 
 
 @dataclass
@@ -198,12 +200,12 @@ def git_changed_files(project_root: Path, since: str) -> set[str]:
         return git_changed_against_head(project_root)
     git = git_executable()
     result = run_command(
-        [git, "diff", "--name-only", "--relative", since],
+        [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, since],
         cwd=project_root,
     )
     if result.returncode != 0:
         result = run_command(
-            [git, "diff", "--name-only", "--relative", f"{since}..HEAD"],
+            [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, f"{since}..HEAD"],
             cwd=project_root,
         )
     if result.returncode != 0:
@@ -219,8 +221,8 @@ def git_changed_against_head(project_root: Path) -> set[str]:
     git = git_executable()
     changed: set[str] = set()
     commands = (
-        [git, "diff", "--name-only", "--relative", "--cached", "HEAD"],
-        [git, "diff", "--name-only", "--relative", "HEAD"],
+        [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, "--cached", "HEAD"],
+        [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, "HEAD"],
         [git, "ls-files", "--others", "--exclude-standard"],
     )
     failures = 0

@@ -7,8 +7,6 @@ from shipgate.gates.ignore import EffectiveIgnores
 from shipgate.policy.core.finding import FindingLocation
 from shipgate.policy.module_size import (
     ModuleSizeGate,
-    check_file_size,
-    count_non_blank_lines,
     should_skip_file,
 )
 
@@ -18,11 +16,11 @@ if TYPE_CHECKING:
 
 def test_count_non_blank_lines_skips_whitespace_only() -> None:
     text = "a\n\n  \nb\n"
-    assert count_non_blank_lines(text) == 2
+    assert ModuleSizeGate.count_non_blank_lines(text) == 2
 
 
 def test_check_file_size_module_cap() -> None:
-    finding = check_file_size("a.py", 501, module_max=500, portfolio_max=1000)
+    finding = ModuleSizeGate.check_file_size("a.py", 501, module_max=500, portfolio_max=1000)
     assert finding is not None
     assert finding.rule_id == "module-size"
     assert finding.message == "a.py has 501 lines (module cap 500)"
@@ -30,7 +28,7 @@ def test_check_file_size_module_cap() -> None:
 
 
 def test_check_file_size_portfolio_cap_when_below_module() -> None:
-    finding = check_file_size("a.py", 600, module_max=800, portfolio_max=500)
+    finding = ModuleSizeGate.check_file_size("a.py", 600, module_max=800, portfolio_max=500)
     assert finding is not None
     assert "portfolio cap 500" in finding.message
 

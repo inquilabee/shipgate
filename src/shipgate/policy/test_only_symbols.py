@@ -46,6 +46,10 @@ class DefinitionCollector(ast.NodeVisitor):
         self.definitions: list[SymbolDefinition] = []
         self._class_stack: list[str] = []
 
+    @staticmethod
+    def is_dunder(name: str) -> bool:
+        return name.startswith("__") and name.endswith("__")
+
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         qualname = ".".join([*self._class_stack, node.name])
         self.definitions.append(
@@ -74,7 +78,7 @@ class DefinitionCollector(ast.NodeVisitor):
     def _add_module_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         if self._class_stack:
             return
-        if is_dunder(node.name):
+        if self.is_dunder(node.name):
             return
         self.definitions.append(
             SymbolDefinition(
@@ -87,7 +91,7 @@ class DefinitionCollector(ast.NodeVisitor):
         )
 
     def _add_method(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
-        if is_dunder(node.name):
+        if self.is_dunder(node.name):
             return
         qualname = ".".join([*self._class_stack, node.name])
         self.definitions.append(
@@ -131,96 +135,94 @@ class ReferenceCollector(ast.NodeVisitor):
                 self.names.add(alias.name.split(".", 1)[0])
 
 
-def is_dunder(name: str) -> bool:
-    return name.startswith("__") and name.endswith("__")
-
-
-def collect_definitions(rel: str, tree: ast.AST) -> list[SymbolDefinition]:
-    collector = DefinitionCollector(rel)
-    collector.visit(tree)
-    return collector.definitions
-
-
-def collect_references(tree: ast.AST) -> set[str]:
-    collector = ReferenceCollector()
-    collector.visit(tree)
-    return collector.names
-
-
-def parse_python(path: Path) -> ast.AST | None:
-    try:
-        return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    except (OSError, SyntaxError, UnicodeDecodeError):
-        return None
-
-
-def should_skip_symbol(rel: str, qualname: str, allowlist: set[str]) -> bool:
-    if rel.rstrip("/") in allowlist:
-        return True
-    return f"{rel.rstrip('/')}:{qualname}" in allowlist
-
-
-def index_python_files(
-    root: Path,
-    files: Sequence[str],
-) -> SymbolIndex:
-    definitions: list[SymbolDefinition] = []
-    production_refs: set[str] = set()
-    test_refs: set[str] = set()
-    for rel in files:
-        path = root / rel
-        if not path.is_file():
-            continue
-        tree = parse_python(path)
-        if tree is None:
-            continue
-        if is_test_path(rel):
-            test_refs |= collect_references(tree)
-            continue
-        definitions.extend(collect_definitions(rel, tree))
-        production_refs |= collect_references(tree)
-    return SymbolIndex(
-        definitions=tuple(definitions),
-        production_refs=frozenset(production_refs),
-        test_refs=frozenset(test_refs),
-    )
-
-
-def is_test_only_symbol(symbol: SymbolDefinition, index: SymbolIndex) -> bool:
-    if symbol.name not in index.test_refs:
-        return False
-    return symbol.name not in index.production_refs
-
-
-def finding_for_symbol(symbol: SymbolDefinition) -> PolicyFinding:
-    return PolicyFinding(
-        rule_id="test-only-symbol",
-        message=(f"{symbol.kind} {symbol.qualname} in {symbol.file} is only referenced from tests"),
-        location=FindingLocation(file=symbol.file, line=symbol.line),
-    )
-
-
-def finding_sort_key(item: PolicyFinding) -> tuple[str, int]:
-    location = item.location
-    if location is None:
-        return ("", 0)
-    return (location.file, location.line or 0)
-
-
-def findings_from_index(index: SymbolIndex, allowlist: set[str]) -> list[PolicyFinding]:
-    findings = [
-        finding_for_symbol(symbol)
-        for symbol in index.definitions
-        if not should_skip_symbol(symbol.file, symbol.qualname, allowlist)
-        and is_test_only_symbol(symbol, index)
-    ]
-    findings.sort(key=finding_sort_key)
-    return findings
-
-
 class TestOnlySymbolsGate(PolicyGate):
     gate_id: ClassVar[str] = "test-only-symbols"
     description: ClassVar[str] = "Test-only symbols gate."
+
+    @staticmethod
+    def collect_definitions(rel: str, tree: ast.AST) -> list[SymbolDefinition]:
+        collector = DefinitionCollector(rel)
+        collector.visit(tree)
+        return collector.definitions
+
+    @staticmethod
+    def collect_references(tree: ast.AST) -> set[str]:
+        collector = ReferenceCollector()
+        collector.visit(tree)
+        return collector.names
+
+    @staticmethod
+    def parse_python(path: Path) -> ast.AST | None:
+        try:
+            return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            return None
+
+    @staticmethod
+    def should_skip_symbol(rel: str, qualname: str, allowlist: set[str]) -> bool:
+        if rel.rstrip("/") in allowlist:
+            return True
+        return f"{rel.rstrip('/')}:{qualname}" in allowlist
+
+    @staticmethod
+    def index_python_files(
+        root: Path,
+        files: Sequence[str],
+    ) -> SymbolIndex:
+        definitions: list[SymbolDefinition] = []
+        production_refs: set[str] = set()
+        test_refs: set[str] = set()
+        for rel in files:
+            path = root / rel
+            if not path.is_file():
+                continue
+            tree = TestOnlySymbolsGate.parse_python(path)
+            if tree is None:
+                continue
+            if is_test_path(rel):
+                test_refs |= TestOnlySymbolsGate.collect_references(tree)
+                continue
+            definitions.extend(TestOnlySymbolsGate.collect_definitions(rel, tree))
+            production_refs |= TestOnlySymbolsGate.collect_references(tree)
+        return SymbolIndex(
+            definitions=tuple(definitions),
+            production_refs=frozenset(production_refs),
+            test_refs=frozenset(test_refs),
+        )
+
+    @staticmethod
+    def is_test_only_symbol(symbol: SymbolDefinition, index: SymbolIndex) -> bool:
+        if symbol.name not in index.test_refs:
+            return False
+        return symbol.name not in index.production_refs
+
+    @staticmethod
+    def finding_for_symbol(symbol: SymbolDefinition) -> PolicyFinding:
+        return PolicyFinding(
+            rule_id="test-only-symbol",
+            message=(
+                f"{symbol.kind} {symbol.qualname} in {symbol.file} is only referenced from tests"
+            ),
+            location=FindingLocation(file=symbol.file, line=symbol.line),
+        )
+
+    @staticmethod
+    def finding_sort_key(item: PolicyFinding) -> tuple[str, int]:
+        location = item.location
+        if location is None:
+            return ("", 0)
+        return (location.file, location.line or 0)
+
+    @staticmethod
+    def findings_from_index(index: SymbolIndex, allowlist: set[str]) -> list[PolicyFinding]:
+        findings = [
+            TestOnlySymbolsGate.finding_for_symbol(symbol)
+            for symbol in index.definitions
+            if not TestOnlySymbolsGate.should_skip_symbol(symbol.file, symbol.qualname, allowlist)
+            and TestOnlySymbolsGate.is_test_only_symbol(symbol, index)
+        ]
+        findings.sort(key=TestOnlySymbolsGate.finding_sort_key)
+        return findings
 
     def collect_findings(
         self,
@@ -235,7 +237,7 @@ class TestOnlySymbolsGate(PolicyGate):
             for rel in iter_python_files(root, scan_roots_from_config(dict(config)))
             if not should_skip_file(rel, set(), ignores)
         ]
-        return findings_from_index(index_python_files(root, files), allowlist)
+        return self.findings_from_index(self.index_python_files(root, files), allowlist)
 
 
 def main(argv: list[str] | None = None) -> int:

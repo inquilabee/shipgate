@@ -7,6 +7,7 @@ from shipgate.policy.core.config import (
 )
 from shipgate.policy.core.files import (
     iter_python_files,
+    path_is_allowlisted,
     scan_roots_from_config,
     should_skip_file,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "iter_python_files",
     "load_allowlist_paths",
     "load_gate_mapping",
+    "path_is_allowlisted",
     "resolve_config_allowlist",
     "scan_roots_from_config",
     "should_skip_file",

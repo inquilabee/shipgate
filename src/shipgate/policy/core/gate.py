@@ -14,11 +14,16 @@ from shipgate.policy.core.config import (
     load_gate_mapping,
     resolve_config_allowlist,
 )
+from shipgate.policy.core.files import (
+    iter_python_files,
+    scan_roots_from_config,
+    should_skip_file,
+)
 from shipgate.policy.core.finding import PolicyFinding
 from shipgate.policy.core.report import write_findings_report
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterator, Mapping, Sequence
 
     from shipgate.gates.ignore import EffectiveIgnores
 
@@ -52,6 +57,28 @@ class PolicyGate(ABC):
 
     def resolve_allowlist(self, root: Path, config: Mapping[str, Any]) -> set[str]:
         return load_allowlist_paths(resolve_config_allowlist(root, dict(config)))
+
+    def iter_scoped_python_files(
+        self,
+        root: Path,
+        config: Mapping[str, Any],
+        allowlist: set[str],
+        ignores: EffectiveIgnores | None,
+    ) -> Iterator[tuple[str, Path]]:
+        for rel in iter_python_files(root, scan_roots_from_config(dict(config))):
+            if should_skip_file(rel, allowlist, ignores):
+                continue
+            path = root / rel
+            if path.is_file():
+                yield rel, path
+
+    def parse_cli_args(self, argv: list[str] | None = None) -> argparse.Namespace:
+        parser = argparse.ArgumentParser(description=self.description)
+        parser.add_argument("--root", type=Path, default=Path.cwd())
+        parser.add_argument("--config", type=Path, required=True)
+        parser.add_argument("--report", type=Path, default=None)
+        self.configure_parser(parser)
+        return parser.parse_args(argv)
 
     def run(
         self,
@@ -88,12 +115,7 @@ class PolicyGate(ABC):
         return 1
 
     def main(self, argv: list[str] | None = None) -> int:
-        parser = argparse.ArgumentParser(description=self.description)
-        parser.add_argument("--root", type=Path, default=Path.cwd())
-        parser.add_argument("--config", type=Path, required=True)
-        parser.add_argument("--report", type=Path, default=None)
-        self.configure_parser(parser)
-        args = parser.parse_args(argv)
+        args = self.parse_cli_args(argv)
         return self.run(
             root=args.root.resolve(),
             config=load_gate_mapping(args.config),

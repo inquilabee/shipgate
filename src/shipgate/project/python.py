@@ -50,7 +50,7 @@ class ProjectPythonResolver:
         *,
         process_environ: Mapping[str, str] | None = None,
     ) -> Path | None:
-        cached = read_cached_project_python(project_root)
+        cached = ProjectPythonResolver.read_cached_project_python(project_root)
         if cached is not None:
             return cached
         discovered = ProjectPythonResolver.discover(
@@ -60,6 +60,16 @@ class ProjectPythonResolver:
         if discovered is not None:
             persist_project_python(project_root, discovered)
         return discovered
+
+    @staticmethod
+    def read_cached_project_python(project_root: Path) -> Path | None:
+        env_path = project_root / PROJECT_CACHE_ENV
+        if not env_path.is_file():
+            return None
+        raw = parse_env_file(env_path).get(PROJECT_ENV_CACHE_KEY)
+        if not raw:
+            return None
+        return resolve_cached_project_python(project_root, raw)
 
     @staticmethod
     def _is_python_env(path: Path) -> bool:
@@ -87,13 +97,7 @@ class ProjectPythonResolver:
 
 
 def read_cached_project_python(project_root: Path) -> Path | None:
-    env_path = project_root / PROJECT_CACHE_ENV
-    if not env_path.is_file():
-        return None
-    raw = parse_env_file(env_path).get(PROJECT_ENV_CACHE_KEY)
-    if not raw:
-        return None
-    return resolve_cached_project_python(project_root, raw)
+    return ProjectPythonResolver.read_cached_project_python(project_root)
 
 
 def resolve_cached_project_python(project_root: Path, raw: str) -> Path | None:

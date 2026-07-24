@@ -10,6 +10,8 @@ from shipgate.core.yaml_io import load_yaml_mapping
 if TYPE_CHECKING:
     from pathlib import Path
 
+ENTRY_LABEL = "path allowlist entry"
+
 
 @dataclass(frozen=True, slots=True)
 class PathAllowlistEntry:
@@ -60,14 +62,14 @@ class PathAllowlist:
     @staticmethod
     def _parse_entry(item: object, index: int, path: Path) -> PathAllowlistEntry:
         if not isinstance(item, dict):
-            msg = f"path allowlist entry {index} must be a mapping: {path}"
+            msg = f"{ENTRY_LABEL} {index} must be a mapping: {path}"
             raise ValueError(msg)
         entry_path = item.get("path")
         reason = item.get("reason")
         if not entry_path or not isinstance(entry_path, str):
-            msg = f"path allowlist entry {index} requires path: {path}"
+            msg = f"{ENTRY_LABEL} {index} requires path: {path}"
             raise ValueError(msg)
         if not reason or not isinstance(reason, str) or not reason.strip():
-            msg = f"path allowlist entry {index} requires reason: {path}"
+            msg = f"{ENTRY_LABEL} {index} requires reason: {path}"
             raise ValueError(msg)
         return PathAllowlistEntry(path=entry_path.strip().rstrip("/"), reason=reason.strip())

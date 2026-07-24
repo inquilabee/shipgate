@@ -18,6 +18,8 @@ class WorktreeError(Exception):
 
 UNSAFE_CHARS = re.compile(r"[^A-Za-z0-9_]+")
 HASH_LEN = 12
+GIT_REV_PARSE = "rev-parse"
+GIT_ABBREV_REF = "--abbrev-ref"
 
 
 class WorktreeManager:
@@ -54,7 +56,7 @@ class WorktreeManager:
         return self.ensure_worktree(branch)
 
     def _current_branch(self) -> str | None:
-        result = self._run_git(["rev-parse", "--abbrev-ref", "HEAD"])
+        result = self._run_git([GIT_REV_PARSE, GIT_ABBREV_REF, "HEAD"])
         name = result.stdout.strip()
         if name == "HEAD":
             return None
@@ -63,7 +65,7 @@ class WorktreeManager:
     def _checked_out_branch(self, worktree_path: Path) -> str:
         try:
             result = self._run_git(
-                ["-C", str(worktree_path), "rev-parse", "--abbrev-ref", "HEAD"],
+                ["-C", str(worktree_path), GIT_REV_PARSE, GIT_ABBREV_REF, "HEAD"],
             )
         except WorktreeError as exc:
             raise WorktreeError(f"failed to read branch at {worktree_path}") from exc
@@ -71,7 +73,7 @@ class WorktreeManager:
 
     def _require_git_repo(self) -> None:
         try:
-            result = self._run_git(["rev-parse", "--is-inside-work-tree"])
+            result = self._run_git([GIT_REV_PARSE, "--is-inside-work-tree"])
         except WorktreeError as exc:
             raise WorktreeError(f"Not a git repository: {self._primary_root}") from exc
         if result.stdout.strip() != "true":
@@ -122,7 +124,7 @@ def current_branch(project_root: Path) -> str:
         return "unknown"
     try:
         result = run_command(
-            [git, "-C", str(project_root), "rev-parse", "--abbrev-ref", "HEAD"],
+            [git, "-C", str(project_root), GIT_REV_PARSE, GIT_ABBREV_REF, "HEAD"],
         )
         branch = result.stdout.strip()
         if result.returncode == 0 and branch and branch != "HEAD":
