@@ -1,4 +1,4 @@
-"""Script gate argv and environment construction."""
+"""Script/module gate argv and environment construction."""
 
 from __future__ import annotations
 
@@ -16,12 +16,13 @@ from shipgate.gates.paths import gates_lib_path, resolve_gate_script
 from shipgate.gates.scope_paths import gate_scope_paths
 
 if TYPE_CHECKING:
+    from shipgate.domain.catalog import ToolDefinition
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.domain.project import ProjectConfig
 
 
-def is_gate_tool(tool) -> bool:
-    return tool.script is not None
+def is_gate_tool(tool: ToolDefinition) -> bool:
+    return tool.script is not None or tool.module is not None
 
 
 def prepare_gate_execution(
@@ -29,10 +30,6 @@ def prepare_gate_execution(
     *,
     project: ProjectConfig | None = None,
 ) -> tuple[tuple[str, ...], dict[str, str]]:
-    script_path = resolve_gate_script(resolved.tool, resolved.project_root)
-    bash = shutil.which("bash") or "/bin/bash"
-    argv = (bash, str(script_path))
-
     target = "."
     if resolved.options.paths:
         target = str(resolved.options.paths[0])
@@ -45,7 +42,6 @@ def prepare_gate_execution(
             "SHIPGATE_CHECK_ID": resolved.tool.id,
             "SHIPGATE_PYTHON": sys.executable,
             "SHIPGATE_REPORT": str(resolved.output_path),
-            "SHIPGATE_GATES_LIB": str(gates_lib_path()),
         }
     )
 
@@ -73,4 +69,31 @@ def prepare_gate_execution(
     scope_paths = gate_scope_paths(resolved)
     if scope_paths:
         env["SHIPGATE_SCOPE_PATHS"] = "\n".join(scope_paths)
-    return argv, env
+
+    if resolved.tool.module:
+        return (
+            module_gate_argv(resolved, config_path=env["SHIPGATE_GATE_CONFIG"]),
+            env,
+        )
+
+    env["SHIPGATE_GATES_LIB"] = str(gates_lib_path())
+    script_path = resolve_gate_script(resolved.tool, resolved.project_root)
+    bash = shutil.which("bash") or "/bin/bash"
+    return (bash, str(script_path)), env
+
+
+def module_gate_argv(resolved: ResolvedRequest, *, config_path: str) -> tuple[str, ...]:
+    module = resolved.tool.module
+    if not module:
+        raise RuntimeError(f"tool {resolved.tool.id!r} has no module")
+    return (
+        sys.executable,
+        "-m",
+        module,
+        "--root",
+        str(resolved.project_root),
+        "--config",
+        config_path,
+        "--report",
+        str(resolved.output_path),
+    )

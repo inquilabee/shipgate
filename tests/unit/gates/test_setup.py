@@ -5,7 +5,7 @@ import pytest
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.gates.setup import setup_bundled_gates
 from shipgate.gates.setup.registry import SETUPS
-from shipgate.policy.path_allowlist import PathAllowlistLoader
+from shipgate.policy.core.path_allowlist import PathAllowlist
 
 
 def test_setup_bundled_gates_scaffolds_allowlists(tmp_path: Path):
@@ -15,6 +15,7 @@ def test_setup_bundled_gates_scaffolds_allowlists(tmp_path: Path):
     assert (allowlists / "acronyms.yaml").is_file()
     assert (allowlists / "folder-breadth.yaml").is_file()
     assert (allowlists / "module-size.yaml").is_file()
+    assert (allowlists / "test-only-symbols.yaml").is_file()
 
 
 def test_gate_setup_does_not_overwrite_existing_allowlist(tmp_path: Path):
@@ -35,7 +36,7 @@ def test_path_allowlist_requires_reason(tmp_path: Path):
         encoding="utf-8",
     )
     with pytest.raises(ValueError, match="requires reason"):
-        PathAllowlistLoader.load_entries(path)
+        PathAllowlist(path)
 
 
 def test_path_allowlist_loads_entries(tmp_path: Path):
@@ -44,8 +45,8 @@ def test_path_allowlist_loads_entries(tmp_path: Path):
         "entries:\n  - path: src/foo.py\n    reason: pending refactor\n",
         encoding="utf-8",
     )
-    entries = PathAllowlistLoader.load_entries(path)
-    assert len(entries) == 1
-    assert entries[0].path == "src/foo.py"
-    assert entries[0].reason == "pending refactor"
-    assert PathAllowlistLoader.contains("src/foo.py", path)
+    allowlist = PathAllowlist(path)
+    assert len(allowlist.entries) == 1
+    assert allowlist.entries[0].path == "src/foo.py"
+    assert allowlist.entries[0].reason == "pending refactor"
+    assert allowlist.contains("src/foo.py")

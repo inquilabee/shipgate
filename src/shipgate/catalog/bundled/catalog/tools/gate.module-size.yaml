@@ -1,6 +1,6 @@
 gate.module-size:
-  executable: bash
-  script: gates/module-size.sh
+  executable: python
+  module: shipgate.policy.module_size
   modes:
     - check
   normalizer: gate_json

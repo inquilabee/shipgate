@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
-import argparse
-import json
 import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import yaml
 
-from shipgate.gates.ignore import EffectiveIgnores, ignores_from_env
 from shipgate.gates.scope_paths import scope_paths_from_env
+from shipgate.policy.core.finding import FindingLocation, PolicyFinding
+from shipgate.policy.core.gate import PolicyGate
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from shipgate.gates.ignore import EffectiveIgnores
 
 ACRONYM_RE = re.compile(r"\b[A-Z]{2,}\b")
 FENCED_CODE_BLOCK_RE = re.compile(r"(`{3,})[\s\S]*?\1", re.DOTALL)
@@ -168,18 +172,15 @@ def scan_paths(
 
 def findings_from_violations(
     violations: list[AcronymViolation],
-) -> list[dict[str, Any]]:
-    findings: list[dict[str, Any]] = []
-    for item in violations:
-        findings.append(
-            {
-                "rule_id": "undocumented-acronym",
-                "severity": "error",
-                "message": f"undocumented acronym {item.token!r}",
-                "location": {"file": item.path, "line": item.line},
-            }
+) -> list[PolicyFinding]:
+    return [
+        PolicyFinding(
+            rule_id="undocumented-acronym",
+            message=f"undocumented acronym {item.token!r}",
+            location=FindingLocation(file=item.path, line=item.line),
         )
-    return findings
+        for item in violations
+    ]
 
 
 def settings_from_config(config: dict[str, Any]) -> tuple[tuple[str, ...], Path | None]:
@@ -187,24 +188,6 @@ def settings_from_config(config: dict[str, Any]) -> tuple[tuple[str, ...], Path 
     allowlist_file = config.get("allowlist_file")
     allowlist_path = Path(str(allowlist_file)) if allowlist_file else None
     return scan_roots, allowlist_path
-
-
-def run_gate(
-    *,
-    root: Path,
-    config: dict[str, Any],
-    report_path: Path | None,
-) -> int:
-    scan_roots, allowlist_path = settings_from_config(config)
-    allowlist_path = require_allowlist_path(root, allowlist_path)
-    violations = scan_paths(
-        repo_root=root,
-        allowlist_path=allowlist_path,
-        scan_roots=scan_roots,
-        ignores=ignores_from_env(root),
-    )
-    write_acronym_report(violations, report_path)
-    return acronym_exit(violations)
 
 
 def require_allowlist_path(root: Path, allowlist_path: Path | None) -> Path:
@@ -216,38 +199,48 @@ def require_allowlist_path(root: Path, allowlist_path: Path | None) -> Path:
     return allowlist_path
 
 
-def write_acronym_report(violations: list[AcronymViolation], report_path: Path | None) -> None:
-    if not report_path:
-        return
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"findings": findings_from_violations(violations)}
-    report_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+class AcronymAllowlistGate(PolicyGate):
+    gate_id: ClassVar[str] = "acronym-allowlist"
+    description: ClassVar[str] = "Documented-acronym gate."
 
+    def resolve_allowlist(self, root: Path, config: Mapping[str, Any]) -> set[str]:
+        # Token allowlists are loaded inside collect_findings / scan_paths.
+        return set()
 
-def acronym_exit(violations: list[AcronymViolation]) -> int:
-    if not violations:
-        return 0
-    for item in violations:
-        print(
-            f"FAIL acronym: {item.path}:{item.line}: undocumented acronym {item.token!r}",
-            file=sys.stderr,
+    def collect_findings(
+        self,
+        *,
+        root: Path,
+        config: Mapping[str, Any],
+        allowlist: set[str],
+        ignores: EffectiveIgnores | None,
+    ) -> Sequence[PolicyFinding]:
+        scan_roots, allowlist_path = settings_from_config(dict(config))
+        violations = scan_paths(
+            repo_root=root,
+            allowlist_path=require_allowlist_path(root, allowlist_path),
+            scan_roots=scan_roots,
+            ignores=ignores,
         )
-    return 1
+        return findings_from_violations(violations)
+
+    def fail_label(self, finding: PolicyFinding) -> str:
+        return "acronym"
+
+    def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:
+        if not findings:
+            return 0
+        for finding in findings:
+            loc = finding.location
+            where = ""
+            if loc is not None:
+                where = f"{loc.file}:{loc.line}: " if loc.line is not None else f"{loc.file}: "
+            print(f"FAIL acronym: {where}{finding.message}", file=sys.stderr)
+        return 1
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Documented-acronym gate.")
-    parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--report", type=Path, default=None)
-    args = parser.parse_args(argv)
-
-    root = args.root.resolve()
-    config = yaml.safe_load(args.config.read_text(encoding="utf-8")) or {}
-    if not isinstance(config, dict):
-        msg = f"Gate config must be a mapping: {args.config}"
-        raise ValueError(msg)
-    return run_gate(root=root, config=config, report_path=args.report)
+    return AcronymAllowlistGate().main(argv)
 
 
 if __name__ == "__main__":

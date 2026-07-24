@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import argparse
-import json
-import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from shipgate.gates.ignore import EffectiveIgnores, ignores_from_env
 from shipgate.gates.scope_paths import scope_paths_from_env
+from shipgate.policy.core.config import load_gate_mapping
+from shipgate.policy.core.finding import FindingLocation, PolicyFinding
+from shipgate.policy.core.gate import PolicyGate
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, Sequence
+
+    from shipgate.gates.ignore import EffectiveIgnores
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,9 +48,9 @@ SKIP_DIR_NAMES = frozenset({"__pycache__"})
 
 
 def load_allowlist(path: Path) -> set[str]:
-    from shipgate.policy.path_allowlist import PathAllowlistLoader
+    from shipgate.policy.core.path_allowlist import PathAllowlist
 
-    return PathAllowlistLoader.load_paths(path)
+    return set(PathAllowlist(path).paths())
 
 
 def settings_from_config(
@@ -209,108 +214,92 @@ def breadth_violation(rel: str, file_count: int, max_allowed: int) -> DirBreadth
     return DirBreadthViolation(path=rel, count=file_count, max_allowed=max_allowed)
 
 
-def findings_from_report(report: FolderBreadthReport) -> list[dict[str, Any]]:
-    findings: list[dict[str, Any]] = []
+def findings_from_report(report: FolderBreadthReport) -> list[PolicyFinding]:
+    findings: list[PolicyFinding] = []
     for violation in report.violations:
         findings.append(
-            {
-                "rule_id": "folder-breadth",
-                "severity": "error",
-                "message": (
+            PolicyFinding(
+                rule_id="folder-breadth",
+                message=(
                     f"{violation.path} has {violation.count} sibling files "
                     f"(max {violation.max_allowed})"
                 ),
-                "location": {"file": violation.path},
-            }
+                location=FindingLocation(file=violation.path),
+            )
         )
     return findings
 
 
-def run_gate(
-    *,
-    root: Path,
-    config: dict[str, Any],
-    allowlist_path: Path | None,
-    report_path: Path | None,
-    strict: bool | None = None,
-) -> int:
-    max_allowed, scan_roots, extensions, config_strict = settings_from_config(config)
-    enforcing = config_strict if strict is None else strict
-    report = scan_folder_breadth(
-        root,
-        max_allowed=max_allowed,
-        scan_roots=scan_roots,
-        extensions=extensions,
-        allowlist=load_allowlist(allowlist_path or Path()),
-        ignores=ignores_from_env(root),
-    )
-    write_folder_breadth_report(report, report_path)
-    return folder_breadth_exit(report, enforcing)
+class FolderBreadthGate(PolicyGate):
+    gate_id: ClassVar[str] = "folder-breadth"
+    description: ClassVar[str] = "Folder breadth gate."
 
+    def __init__(self) -> None:
+        self._report: FolderBreadthReport | None = None
+        self._enforcing = True
+        self._enforcing_override: bool | None = None
 
-def write_folder_breadth_report(report: FolderBreadthReport, report_path: Path | None) -> None:
-    if not report_path:
-        return
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"findings": findings_from_report(report), **report.report_metadata()}
-    report_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    def configure_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--strict", action="store_true", default=None)
+        parser.add_argument("--advisory", action="store_true", default=False)
 
-
-def folder_breadth_exit(report: FolderBreadthReport, enforcing: bool) -> int:
-    if not enforcing or report.leaf_dirs_over_max == 0:
-        return 0
-    for violation in report.violations:
-        print(
-            (
-                f"FAIL folder-breadth: {violation.path} has {violation.count} files "
-                f"(max {violation.max_allowed})"
-            ),
-            file=sys.stderr,
+    def collect_findings(
+        self,
+        *,
+        root: Path,
+        config: Mapping[str, Any],
+        allowlist: set[str],
+        ignores: EffectiveIgnores | None,
+    ) -> Sequence[PolicyFinding]:
+        max_allowed, scan_roots, extensions, config_strict = settings_from_config(dict(config))
+        if self._enforcing_override is None:
+            self._enforcing = config_strict
+        else:
+            self._enforcing = self._enforcing_override
+        self._report = scan_folder_breadth(
+            root,
+            max_allowed=max_allowed,
+            scan_roots=scan_roots,
+            extensions=extensions,
+            allowlist=allowlist,
+            ignores=ignores,
         )
-    return 1
+        return findings_from_report(self._report)
+
+    def report_extra(self, findings: Sequence[PolicyFinding]) -> Mapping[str, object] | None:
+        if self._report is None:
+            return None
+        return self._report.report_metadata()
+
+    def fail_label(self, finding: PolicyFinding) -> str:
+        return self.gate_id
+
+    def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:
+        if not self._enforcing or not findings:
+            return 0
+        return super().emit_exit(findings)
+
+    def main(self, argv: list[str] | None = None) -> int:
+        parser = argparse.ArgumentParser(description=self.description)
+        parser.add_argument("--root", type=Path, default=Path.cwd())
+        parser.add_argument("--config", type=Path, required=True)
+        parser.add_argument("--report", type=Path, default=None)
+        self.configure_parser(parser)
+        args = parser.parse_args(argv)
+        config = load_gate_mapping(args.config)
+        if args.advisory:
+            self._enforcing_override = False
+        elif args.strict:
+            self._enforcing_override = True
+        return self.run(
+            root=args.root.resolve(),
+            config=config,
+            report_path=args.report,
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = parse_folder_breadth_args(argv)
-    root = args.root.resolve()
-    config = load_gate_mapping(args.config)
-    return run_gate(
-        root=root,
-        config=config,
-        allowlist_path=resolve_config_allowlist(root, config),
-        report_path=args.report,
-        strict=False if args.advisory else args.strict,
-    )
-
-
-def parse_folder_breadth_args(argv: list[str] | None):
-    parser = argparse.ArgumentParser(description="Folder breadth gate.")
-    parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--report", type=Path, default=None)
-    parser.add_argument("--strict", action="store_true", default=None)
-    parser.add_argument("--advisory", action="store_true", default=False)
-    return parser.parse_args(argv)
-
-
-def load_gate_mapping(config_path: Path) -> dict[str, Any]:
-    import yaml
-
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    if not isinstance(config, dict):
-        msg = f"Gate config must be a mapping: {config_path}"
-        raise ValueError(msg)
-    return config
-
-
-def resolve_config_allowlist(root: Path, config: dict[str, Any]) -> Path | None:
-    allowlist_file = config.get("allowlist_file")
-    if not allowlist_file:
-        return None
-    allowlist_path = Path(str(allowlist_file))
-    if not allowlist_path.is_absolute():
-        allowlist_path = root / allowlist_path
-    return allowlist_path
+    return FolderBreadthGate().main(argv)
 
 
 if __name__ == "__main__":

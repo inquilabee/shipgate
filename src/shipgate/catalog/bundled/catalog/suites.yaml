@@ -67,6 +67,7 @@ suites:
       - gate.module-private-vars
       - gate.folder-breadth
       - gate.acronym-allowlist
+      - gate.test-only-symbols
     parallel: true
     fail_fast: true
   docker:

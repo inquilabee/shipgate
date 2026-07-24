@@ -15,6 +15,9 @@ def assert_init_layout(root):
     assert (sg / "allowlists" / "module-private-vars.yaml").is_file(), (
         "module-private-vars allowlist missing"
     )
+    assert (sg / "allowlists" / "test-only-symbols.yaml").is_file(), (
+        "test-only-symbols allowlist missing"
+    )
     assert (sg / "configs" / "ruff.toml").is_file(), "ruff config missing"
     gitignore = (sg / ".gitignore").read_text(encoding="utf-8")
     assert "tools/" in gitignore, "tools/ not ignored"

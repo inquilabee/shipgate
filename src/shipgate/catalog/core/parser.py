@@ -55,6 +55,7 @@ class CatalogParser:
             id=tool_id,
             executable=raw.get("executable", tool_id),
             script=raw.get("script"),
+            module=raw.get("module"),
             subcommand=tuple(raw.get("subcommand", []) or []),
             cli=cli,
             configuration=configuration,

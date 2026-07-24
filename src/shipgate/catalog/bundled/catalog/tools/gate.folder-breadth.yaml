@@ -1,6 +1,6 @@
 gate.folder-breadth:
-  executable: bash
-  script: gates/folder-breadth.sh
+  executable: python
+  module: shipgate.policy.folder_breadth
   modes:
     - check
   normalizer: gate_json

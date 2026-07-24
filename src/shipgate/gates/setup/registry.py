@@ -33,6 +33,7 @@ SETUPS: dict[str, Callable[[Path], None]] = {
         "gate.module-private-vars",
         "gate.folder-breadth",
         "gate.acronym-allowlist",
+        "gate.test-only-symbols",
     )
 }
 

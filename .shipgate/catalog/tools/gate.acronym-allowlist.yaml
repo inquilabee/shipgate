@@ -1,6 +1,6 @@
 gate.acronym-allowlist:
-  executable: bash
-  script: gates/acronym-allowlist.sh
+  executable: python
+  module: shipgate.policy.acronym_allowlist
   modes:
     - check
   normalizer: gate_json
@@ -16,5 +16,5 @@ gate.acronym-allowlist:
     extensions:
       - .md
     globs:
-      - '**/*.mdc'
+      - "**/*.mdc"
     delivery: files

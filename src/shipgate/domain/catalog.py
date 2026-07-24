@@ -64,6 +64,7 @@ class ToolDefinition:
     id: str
     executable: str
     script: str | None = None
+    module: str | None = None
     subcommand: tuple[str, ...] = ()
     cli: Mapping[str, CliOptionDefinition] = field(default_factory=dict)
     configuration: ConfigurationDefinition = field(default_factory=ConfigurationDefinition)

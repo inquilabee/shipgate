@@ -1,26 +1,24 @@
----
-description: Script gates contract and bundled vs project gates
-alwaysApply: true
----
-
 # Gates
 
 Gates are a first-class deliverable — not ad-hoc shell scripts.
 
-## Bundled gates
+## Bundled policy gates
 
-- Shell: `src/shipgate/catalog/bundled/gates/` + configs in `configs/gates/`
-- Python helpers: `src/shipgate/gates/` and `src/shipgate/policy/` — never inline heredocs in shell gates
-- Emit JSON to `SHIPGATE_REPORT`; shell helpers in `lib.sh` (`gate_init`, `gate_fail`, `gate_finish`)
+- Python modules under `src/shipgate/policy/` implementing `PolicyGate`
+- Catalog tools use `module: shipgate.policy.<name>` (no bash orchestrator)
+- Configs in `configs/gates/`; shared primitives in `policy/core/`
+- Emit JSON findings via `write_findings_report`
 
-## Project gates
+## Project-local script gates
 
 - Scaffold: `shipgate gates init <name>` → `.shipgate/gates/<name>.sh`
+- Shell helpers in bundled `gates/lib.sh` (`gate_init`, `gate_fail`, `gate_finish`)
 - Discovered at runtime into the `local-gates` suite
-- `policy` suite = bundled gates; `local-gates` = project-discovered gates
+- `policy` suite = bundled policy gates; `local-gates` = project-discovered gates
 
 ## Rules
 
 - Gates must be deterministic and scoped to the project target
-- Reuse `lib.sh` and Python modules — do not duplicate finding JSON shape
-- New bundled gates need catalog tool YAML + config + normalizer (`gate_json` or dedicated)
+- Reuse `policy/core` helpers — do not duplicate finding JSON shape
+- New bundled policy gates need catalog tool YAML (`module:`) + config + `gate_json` (or dedicated) normalizer
+- Do not inline Python in shell gates; do not wrap pure-Python policy modules in bash

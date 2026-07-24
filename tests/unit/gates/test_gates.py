@@ -9,7 +9,7 @@ from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport
-from shipgate.gates.paths import gates_lib_path, resolve_gate_script
+from shipgate.gates.paths import gates_lib_path
 from shipgate.gates.runtime import (
     gate_scope_paths,
     is_gate_tool,
@@ -53,10 +53,12 @@ def test_catalog_includes_bundled_policy_gates():
         "gate.module-private-vars",
         "gate.folder-breadth",
         "gate.acronym-allowlist",
+        "gate.test-only-symbols",
     ):
         tool = catalog.get_tool(gate_id)
         assert tool.normalizer == "gate_json"
-        assert tool.script is not None
+        assert tool.module is not None
+        assert tool.script is None
         assert is_gate_tool(tool)
     assert "policy" in catalog.suites
     assert "gate.module-size" in catalog.suites["policy"].members
@@ -145,19 +147,26 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "ok.py").write_text("print('ok')\n", encoding="utf-8")
-    catalog = CatalogLoader.load()
-    tool = catalog.get_tool("gate.module-size")
+    tool = CatalogLoader.load().get_tool("gate.module-size")
     assert is_gate_tool(tool)
-    script = resolve_gate_script(tool, tmp_path)
-    assert script.is_file()
-    request = gate_request(tmp_path, tool.id, paths=(tmp_path / "src",))
-    argv, env = prepare_gate_execution(request)
-    assert argv[0].endswith("bash")
-    assert str(script) in argv[1]
-    assert env["SHIPGATE_ROOT"] == str(tmp_path)
+    assert tool.module == "shipgate.policy.module_size"
+    argv, env = prepare_gate_execution(gate_request(tmp_path, tool.id, paths=(tmp_path / "src",)))
+    assert_module_gate_argv(argv, env, tmp_path)
+    assert_module_gate_env(env, tmp_path)
+
+
+def assert_module_gate_argv(argv: tuple[str, ...], env: dict[str, str], root: Path) -> None:
+    assert argv[0] == env["SHIPGATE_PYTHON"] or argv[0].endswith("python")
+    assert argv[1:3] == ("-m", "shipgate.policy.module_size")
+    assert "--root" in argv and str(root) in argv
+    assert "--config" in argv and "--report" in argv
+
+
+def assert_module_gate_env(env: dict[str, str], root: Path) -> None:
+    assert env["SHIPGATE_ROOT"] == str(root)
     assert env["SHIPGATE_REPORT"].endswith("gate.module-size.json")
     assert Path(env["SHIPGATE_GATE_CONFIG"]).is_file()
-    assert env["SHIPGATE_GATES_LIB"].endswith("lib.sh")
+    assert "SHIPGATE_GATES_LIB" not in env
     assert "." in env["GATE_SCAN_ROOTS"]
 
 

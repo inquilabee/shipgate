@@ -69,6 +69,7 @@ class CatalogValidator:
         self._validate_tool_scope(tool)
         self._validate_tool_bundled_config(tool)
         self._validate_tool_script(tool)
+        self._validate_tool_module(tool)
         self._validate_tool_install(tool)
 
     def _validate_tool_cli(self, tool: ToolDefinition) -> None:
@@ -102,7 +103,10 @@ class CatalogValidator:
             raise CatalogError(
                 f"tool {tool.id!r} with delivery 'files' requires extensions or globs",
             )
-        if tool.script is not None and delivery not in {"files", "dirs"}:
+        if (tool.script is not None or tool.module is not None) and delivery not in {
+            "files",
+            "dirs",
+        }:
             raise CatalogError(
                 f"gate tool {tool.id!r} must use delivery 'files' or 'dirs'",
             )
@@ -114,11 +118,25 @@ class CatalogValidator:
                 raise CatalogError(f"tool {tool.id!r} missing bundled config: {bundled_path}")
 
     def _validate_tool_script(self, tool: ToolDefinition) -> None:
+        if tool.script and tool.module:
+            raise CatalogError(
+                f"tool {tool.id!r} cannot set both script and module",
+            )
         if not tool.script or self._bundled_root is None:
             return
         script_path = self._bundled_root / tool.script
         if not script_path.is_file():
             raise CatalogError(f"tool {tool.id!r} missing bundled script: {script_path}")
+
+    def _validate_tool_module(self, tool: ToolDefinition) -> None:
+        if not tool.module:
+            return
+        if not isinstance(tool.module, str) or not tool.module.strip():
+            raise CatalogError(f"tool {tool.id!r} module must be a non-empty string")
+        if "/" in tool.module or tool.module.endswith(".py"):
+            raise CatalogError(
+                f"tool {tool.id!r} module must be an import path (got {tool.module!r})",
+            )
 
     def _validate_tool_install(self, tool: ToolDefinition) -> None:
         if tool.install is not None and tool.install.manager not in ("python", "binary"):
