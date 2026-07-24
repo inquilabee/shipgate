@@ -5,13 +5,13 @@ from shipgate.adapter.config_resolve import bundled_configs_root
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
-from shipgate.planning.gitignore import (
+from shipgate.planning.core.scope_resolver import ScopeResolver
+from shipgate.planning.core.scopes import scope_paths, scope_paths_for_tool
+from shipgate.planning.utils.gitignore import (
     expand_scope,
     matches_tool_criteria,
     minimize_covering_dirs,
 )
-from shipgate.planning.scope_resolver import ScopeResolver
-from shipgate.planning.scopes import scope_paths, scope_paths_for_tool
 
 
 def scaffold_src_and_docs(tmp_path: Path) -> None:

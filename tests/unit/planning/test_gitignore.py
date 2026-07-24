@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from shipgate.planning.gitignore import (
+from shipgate.planning.utils.gitignore import (
     expand_scope,
     matches_tool_criteria,
     should_ignore,

@@ -14,7 +14,7 @@ from shipgate.runtime.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
 from shipgate.runtime.parallel import run_parallel
 from shipgate.runtime.reports import write_raw_output
-from shipgate.runtime.session.check_planner import prepare_check
+from shipgate.runtime.session.check_resolver import prepare_run
 from shipgate.runtime.session.finalizer import emit_progress
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig
     from shipgate.domain.run_command import RunCommand
-    from shipgate.planning.workflow import PlannedCheck
+    from shipgate.planning.workflow import SelectedTool
     from shipgate.runtime.executor import ProcessResult
     from shipgate.runtime.session.context import RunContext
 
@@ -66,11 +66,11 @@ class CheckRunner:
         run_id: str,
         on_progress: Callable[..., None] | None,
     ) -> list[CheckReport]:
-        checks_total = len(context.planned_checks)
+        checks_total = len(context.selected_tools)
 
-        def run_one(planned: PlannedCheck) -> CheckReport:
-            report = self.run_planned_check(
-                planned=planned,
+        def run_one(selected: SelectedTool) -> CheckReport:
+            report = self.run_selected_tool(
+                selected=selected,
                 command=command,
                 context=context,
                 run_id=run_id,
@@ -82,7 +82,7 @@ class CheckRunner:
         if context.parallel:
             try:
                 reports = run_parallel(
-                    list(context.planned_checks),
+                    list(context.selected_tools),
                     run_one,
                     fail_fast=context.fail_fast,
                 )
@@ -90,39 +90,39 @@ class CheckRunner:
                 reports = [exc.report]
         else:
             reports = []
-            for planned in context.planned_checks:
+            for selected in context.selected_tools:
                 try:
-                    report = run_one(planned)
+                    report = run_one(selected)
                 except FailFastError as exc:
                     reports.append(exc.report)
                     break
                 reports.append(report)
-        for index, planned in enumerate(context.planned_checks[: len(reports)]):
-            emit_progress(on_progress, planned.tool_id, index, checks_total)
-            emit_progress(on_progress, planned.tool_id, index + 1, checks_total)
+        for index, selected in enumerate(context.selected_tools[: len(reports)]):
+            emit_progress(on_progress, selected.tool_id, index, checks_total)
+            emit_progress(on_progress, selected.tool_id, index + 1, checks_total)
         return reports
 
-    def run_planned_check(
+    def run_selected_tool(
         self,
         *,
-        planned: PlannedCheck,
+        selected: SelectedTool,
         command: RunCommand,
         context: RunContext,
         run_id: str,
     ) -> CheckReport:
-        prepared = prepare_check(
-            planned=planned,
+        prepared = prepare_run(
+            selected=selected,
             command=command,
             context=context,
             catalog=self._catalog,
         )
         if prepared.report is not None:
             if command.display_cli:
-                sys.stderr.write(f"{planned.tool_id}: (skipped: no matching files in scope)\n")
+                sys.stderr.write(f"{selected.tool_id}: (skipped: no matching files in scope)\n")
             return prepared.report
         if prepared.request is None:
             raise RuntimeError(
-                f"prepare_check returned neither report nor request for {planned.tool_id}"
+                f"prepare_run returned neither report nor request for {selected.tool_id}"
             )
         return self.execute_check(
             prepared.request,

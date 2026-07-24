@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from shipgate.ci import apply_ci_defaults, is_ci_environment
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.run_command import RunCommand
-from shipgate.planning.incremental import RunScopeSession, effective_incremental
+from shipgate.planning.utils.incremental import RunScopeSession, effective_incremental
 from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from shipgate.domain.execution import ExecutionEnvironment
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig
-    from shipgate.planning.workflow import PlannedCheck
+    from shipgate.planning.workflow import SelectedTool
 
 __all__ = [
     "RunCommand",
@@ -42,7 +42,7 @@ class RunContext:
     project: ProjectConfig
     project_root: Path
     suite_id: str
-    planned_checks: tuple[PlannedCheck, ...]
+    selected_tools: tuple[SelectedTool, ...]
     environment: ExecutionEnvironment
     parallel: bool
     fail_fast: bool
@@ -62,7 +62,7 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
         project_root=command.project_root,
     )
     project_root = command.project_root.resolve()
-    suite_id, planned_checks = resolve_runnables(
+    suite_id, selected_tools = resolve_runnables(
         mode=mode,
         project=project,
         catalog=catalog,
@@ -81,7 +81,7 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
         project=project,
         project_root=project_root,
         suite_id=suite_id,
-        planned_checks=tuple(planned_checks),
+        selected_tools=tuple(selected_tools),
         environment=environment,
         parallel=parallel,
         fail_fast=fail_fast,

@@ -16,7 +16,7 @@ Before implementing, name the layer:
 
 ## Scoping
 
-Check mode respects `.gitignore` via `planning/gitignore.py`. Prefer gitignore over per-tool ignore YAML in bundled configs.
+Check mode respects `.gitignore` via `planning/utils/gitignore.py`. Prefer gitignore over per-tool ignore YAML in bundled configs.
 
 ## Catalog layout
 

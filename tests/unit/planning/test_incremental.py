@@ -8,7 +8,7 @@ from shipgate.core import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
 from shipgate.errors import PlanningError
-from shipgate.planning.incremental import (
+from shipgate.planning.utils.incremental import (
     git_changed_files,
     tool_paths_after_incremental,
 )

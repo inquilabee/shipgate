@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.errors import InstallError
 from shipgate.paths import PROJECT_TOOLS_DIR
-from shipgate.planning.suites import expand_suite
+from shipgate.planning.core.suites import expand_suite
 from shipgate.runtime.environment import tools_manifest_path
 from shipgate.runtime.installers.registry import get_installer
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from shipgate.planning.option_resolver import OptionResolver
+from shipgate.planning.core.option_resolver import OptionResolver
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition

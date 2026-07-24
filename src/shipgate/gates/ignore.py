@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pathspec
 
-from shipgate.planning.gitignore import default_ignores, load_gitignore_lines
+from shipgate.planning.utils.gitignore import default_ignores, load_gitignore_lines
 
 
 @dataclass(frozen=True)

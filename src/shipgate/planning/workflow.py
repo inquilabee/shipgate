@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
-from shipgate.planning.suites import expand_suite
+from shipgate.planning.core.suites import expand_suite
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class PlannedCheck:
+class SelectedTool:
     tool_id: str
     mode: RunMode
     scope_name: str | None = None
@@ -28,13 +28,13 @@ def resolve_runnables(
     catalog: Catalog,
     suite_override: str | None = None,
     check_override: str | None = None,
-) -> tuple[str, list[PlannedCheck]]:
-    """Return (run_label, planned checks) for the given mode and overrides."""
+) -> tuple[str, list[SelectedTool]]:
+    """Return (run_label, selected tools) for the given mode and overrides."""
     if check_override:
         return resolve_check_override(check_override, mode, project, catalog)
     if project.checks and not suite_override:
-        planned = planned_from_check_names(project, catalog, mode)
-        return project.suite or "custom", planned
+        selected = selected_from_check_names(project, catalog, mode)
+        return project.suite or "custom", selected
     return resolve_suite(
         mode=mode,
         project=project,
@@ -48,7 +48,7 @@ def resolve_check_override(
     mode: RunMode,
     project: ProjectConfig,
     catalog: Catalog,
-) -> tuple[str, list[PlannedCheck]]:
+) -> tuple[str, list[SelectedTool]]:
     if not catalog.is_tool(check_override):
         raise PlanningError(
             f"unknown check {check_override!r}",
@@ -56,7 +56,7 @@ def resolve_check_override(
         )
     scope_name = project.scope_for_check(check_override)
     return check_override, [
-        PlannedCheck(
+        SelectedTool(
             tool_id=check_override,
             mode=mode,
             scope_name=scope_name,
@@ -70,7 +70,7 @@ def resolve_suite(
     project: ProjectConfig,
     catalog: Catalog,
     suite_override: str | None,
-) -> tuple[str, list[PlannedCheck]]:
+) -> tuple[str, list[SelectedTool]]:
     if suite_override:
         suite_id = suite_override
     elif mode == RunMode.APPLY:
@@ -79,23 +79,23 @@ def resolve_suite(
         suite_id = project.suite or "standard"
 
     tool_ids = expand_suite(suite_id, catalog)
-    planned = [
-        PlannedCheck(
+    selected = [
+        SelectedTool(
             tool_id=tool_id,
             mode=mode,
             scope_name=project.scope_for_check(tool_id),
         )
         for tool_id in tool_ids
     ]
-    return suite_id, planned
+    return suite_id, selected
 
 
-def planned_from_check_names(
+def selected_from_check_names(
     project: ProjectConfig,
     catalog: Catalog,
     mode: RunMode,
-) -> list[PlannedCheck]:
-    planned: list[PlannedCheck] = []
+) -> list[SelectedTool]:
+    selected: list[SelectedTool] = []
     seen: set[str] = set()
     check_names = project.checks or tuple(binding.runnable for binding in project.check_bindings)
     for check_name in check_names:
@@ -103,15 +103,15 @@ def planned_from_check_names(
             if tool_id in seen:
                 continue
             seen.add(tool_id)
-            planned.append(
-                PlannedCheck(
+            selected.append(
+                SelectedTool(
                     tool_id=tool_id,
                     mode=mode,
                     scope_name=project.scope_for_check(tool_id)
                     or project.scope_for_check(check_name),
                 )
             )
-    return planned
+    return selected
 
 
 def suite_execution_flags(

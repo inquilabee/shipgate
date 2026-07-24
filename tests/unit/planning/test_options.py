@@ -4,8 +4,8 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.project import ProjectConfig
-from shipgate.planning.option_resolver import OptionResolver
-from shipgate.planning.options import resolve_option_sources
+from shipgate.planning.core.option_resolver import OptionResolver
+from shipgate.planning.core.options import resolve_option_sources
 
 
 def test_ty_check_default_format_from_catalog():

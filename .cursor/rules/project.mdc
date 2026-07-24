@@ -1,5 +1,5 @@
 ---
-description: ShipGate vision, module map, ADR invariants
+description: ShipGate vision, module map, architecture invariants
 alwaysApply: true
 ---
 
@@ -19,14 +19,11 @@ Bundled semgrep rulesets, ruff McCabe, radon grades, etc. are intentional. Fix v
 
 | Layer | Path |
 | --- | --- |
-| Design | `docs/sdd.md` |
-| Implementation | `docs/implementation.md` |
-| ADR index | `docs/adr-support.md` |
+| Architecture | `docs/architecture.md` |
+| Check flow | `docs/check-flow.md` |
 | Option mappings | `docs/res/config.md` |
 | Agent index | `AGENTS.md` |
 | Gates | `.cursor/rules/gates.mdc` |
-
-Conflict resolution: `docs/sdd.md` > `docs/implementation.md`.
 
 ## Module map
 
@@ -35,7 +32,7 @@ Conflict resolution: `docs/sdd.md` > `docs/implementation.md`.
 | `domain/` | Frozen types: IDs, modes, options, project, catalog, execution, reports |
 | `config/` | Project config discovery, schema, loader |
 | `catalog/` | Bundled catalog YAML, validation, loader |
-| `planning/` | Workflows, suites, scopes, request resolution |
+| `planning/` | Suites, scopes, request resolution |
 | `adapter/` | Resolved request → argv serialization |
 | `runtime/` | Executor, install, environment, reports, cache, parallel, remote |
 | `normalize/` | Tool output → canonical `CheckReport` |
@@ -44,6 +41,6 @@ Conflict resolution: `docs/sdd.md` > `docs/implementation.md`.
 | `app.py` | Orchestration with dependency injection |
 | `cli.py` | argparse entrypoint only |
 
-## ADR invariants
+## Invariants
 
-ADR-001 through ADR-009 — see `docs/adr-support.md`. Policy separate from execution; Execution Request is the internal API.
+Policy separate from execution; Execution Request is the internal API; suites are the only catalog grouping for selection. See `docs/architecture.md`.

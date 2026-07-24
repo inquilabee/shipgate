@@ -6,19 +6,19 @@ from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig
 from shipgate.domain.run_command import RunCommand
-from shipgate.planning.workflow import PlannedCheck
-from shipgate.runtime.session.check_planner import prepare_check
+from shipgate.planning.workflow import SelectedTool
+from shipgate.runtime.session.check_resolver import prepare_run
 from shipgate.runtime.session.context import RunContext
 
 
-def make_run_context(tmp_path: Path, planned: PlannedCheck) -> RunContext:
-    from shipgate.planning.incremental import RunScopeSession
+def make_run_context(tmp_path: Path, selected: SelectedTool) -> RunContext:
+    from shipgate.planning.utils.incremental import RunScopeSession
 
     return RunContext(
         project=ProjectConfig(env="system", target=Path()),
         project_root=tmp_path.resolve(),
-        suite_id=planned.tool_id,
-        planned_checks=(planned,),
+        suite_id=selected.tool_id,
+        selected_tools=(selected,),
         environment=ExecutionEnvironment(kind="system", root=None, env={}),
         parallel=False,
         fail_fast=False,
@@ -30,10 +30,10 @@ def make_run_context(tmp_path: Path, planned: PlannedCheck) -> RunContext:
     )
 
 
-def test_prepare_check_builds_resolved_request(tmp_path: Path):
+def test_prepare_run_builds_resolved_request(tmp_path: Path):
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
+    selected = SelectedTool(tool_id="ruff.lint", mode=RunMode.CHECK)
     command = RunCommand(
         project_root=tmp_path,
         target=tmp_path,
@@ -41,10 +41,10 @@ def test_prepare_check_builds_resolved_request(tmp_path: Path):
         extra_args=("--select", "F401"),
         verbose=True,
     )
-    prepared = prepare_check(
-        planned=planned,
+    prepared = prepare_run(
+        selected=selected,
         command=command,
-        context=make_run_context(tmp_path, planned),
+        context=make_run_context(tmp_path, selected),
         catalog=catalog,
     )
     assert prepared.report is None
@@ -58,29 +58,29 @@ def test_prepare_check_builds_resolved_request(tmp_path: Path):
     assert prepared.request.options.config
 
 
-def test_prepare_check_apply_mode_sets_check_false(tmp_path: Path):
+def test_prepare_run_apply_mode_sets_check_false(tmp_path: Path):
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id="ruff.format", mode=RunMode.APPLY)
+    selected = SelectedTool(tool_id="ruff.format", mode=RunMode.APPLY)
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="ruff.format")
-    prepared = prepare_check(
-        planned=planned,
+    prepared = prepare_run(
+        selected=selected,
         command=command,
-        context=make_run_context(tmp_path, planned),
+        context=make_run_context(tmp_path, selected),
         catalog=catalog,
     )
     assert prepared.request is not None
     assert prepared.request.options.check is False
 
 
-def test_prepare_check_skips_when_no_matching_files(tmp_path: Path):
+def test_prepare_run_skips_when_no_matching_files(tmp_path: Path):
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id="yamllint.check", mode=RunMode.CHECK)
+    selected = SelectedTool(tool_id="yamllint.check", mode=RunMode.CHECK)
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="yamllint.check")
-    prepared = prepare_check(
-        planned=planned,
+    prepared = prepare_run(
+        selected=selected,
         command=command,
-        context=make_run_context(tmp_path, planned),
+        context=make_run_context(tmp_path, selected),
         catalog=catalog,
     )
     assert prepared.request is None
@@ -92,8 +92,8 @@ def test_prepare_check_skips_when_no_matching_files(tmp_path: Path):
 
 def test_options_for_mode_apply_preserves_exclude(tmp_path: Path):
     from shipgate.domain.catalog import CliOptionDefinition, ToolDefinition
-    from shipgate.planning.check_planner import CheckPlanner
-    from shipgate.planning.incremental import RunScopeSession
+    from shipgate.planning.check_resolver import CheckResolver
+    from shipgate.planning.utils.incremental import RunScopeSession
 
     tool = ToolDefinition(
         id="demo.format",
@@ -105,9 +105,9 @@ def test_options_for_mode_apply_preserves_exclude(tmp_path: Path):
         },
     )
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id=tool.id, mode=RunMode.APPLY)
-    context = make_run_context(tmp_path, planned)
-    planner = CheckPlanner(
+    selected = SelectedTool(tool_id=tool.id, mode=RunMode.APPLY)
+    context = make_run_context(tmp_path, selected)
+    resolver = CheckResolver(
         project_root=context.project_root,
         project=context.project,
         catalog=catalog,
@@ -118,8 +118,8 @@ def test_options_for_mode_apply_preserves_exclude(tmp_path: Path):
         ),
         environment=context.environment,
     )
-    options = planner._options_for_mode(
-        planned,
+    options = resolver._options_for_mode(
+        selected,
         tool,
         paths=(Path("a.py"),),
         config_paths=(),
@@ -130,7 +130,7 @@ def test_options_for_mode_apply_preserves_exclude(tmp_path: Path):
     assert options.check is False
 
 
-def test_prepare_check_ty_includes_project_python(tmp_path: Path):
+def test_prepare_run_ty_includes_project_python(tmp_path: Path):
     if sys.platform == "win32":
         scripts = tmp_path / ".venv" / "Scripts"
         scripts.mkdir(parents=True)
@@ -141,37 +141,37 @@ def test_prepare_check_ty_includes_project_python(tmp_path: Path):
         (bindir / "python").write_text("", encoding="utf-8")
     (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id="ty.check", mode=RunMode.CHECK)
+    selected = SelectedTool(tool_id="ty.check", mode=RunMode.CHECK)
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="ty.check")
-    prepared = prepare_check(
-        planned=planned,
+    prepared = prepare_run(
+        selected=selected,
         command=command,
-        context=make_run_context(tmp_path, planned),
+        context=make_run_context(tmp_path, selected),
         catalog=catalog,
     )
     assert prepared.request is not None
     assert prepared.request.options.python == ".venv"
 
 
-def test_check_planner_reuses_scope_resolver(tmp_path: Path):
-    from shipgate.planning.check_planner import CheckPlanner
+def test_check_resolver_reuses_scope_resolver(tmp_path: Path):
+    from shipgate.planning.check_resolver import CheckResolver
 
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
-    context = make_run_context(tmp_path, planned)
-    planner = CheckPlanner(
+    selected = SelectedTool(tool_id="ruff.lint", mode=RunMode.CHECK)
+    context = make_run_context(tmp_path, selected)
+    resolver = CheckResolver(
         project_root=context.project_root,
         project=context.project,
         catalog=catalog,
         scope_session=context.scope_session,
         environment=context.environment,
     )
-    assert planner._scope_resolver is not None
-    first = planner._scope_resolver
+    assert resolver._scope_resolver is not None
+    first = resolver._scope_resolver
     command = RunCommand(project_root=tmp_path, target=tmp_path, check="ruff.lint")
     (tmp_path / "a.py").write_text("x = 1\n", encoding="utf-8")
-    planner.prepare(planned, command)
-    assert planner._scope_resolver is first
+    resolver.prepare(selected, command)
+    assert resolver._scope_resolver is first
 
 
 def test_build_run_report_treats_skipped_as_non_failure():
@@ -202,11 +202,11 @@ def test_build_run_report_treats_skipped_as_non_failure():
     assert report.status == "passed"
 
 
-def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):
-    from shipgate.planning.incremental import RunScopeSession
+def test_prepare_run_short_circuits_when_incremental_clean(tmp_path: Path):
+    from shipgate.planning.utils.incremental import RunScopeSession
 
     catalog = CatalogLoader.load()
-    planned = PlannedCheck(tool_id="ruff.lint", mode=RunMode.CHECK)
+    selected = SelectedTool(tool_id="ruff.lint", mode=RunMode.CHECK)
     command = RunCommand(
         project_root=tmp_path,
         target=tmp_path,
@@ -216,8 +216,8 @@ def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):
     context = RunContext(
         project=ProjectConfig(env="system", target=Path(), changed_only=True),
         project_root=tmp_path.resolve(),
-        suite_id=planned.tool_id,
-        planned_checks=(planned,),
+        suite_id=selected.tool_id,
+        selected_tools=(selected,),
         environment=ExecutionEnvironment(kind="system", root=None, env={}),
         parallel=False,
         fail_fast=False,
@@ -228,8 +228,8 @@ def test_prepare_check_short_circuits_when_incremental_clean(tmp_path: Path):
             _incremental_clean=True,
         ),
     )
-    prepared = prepare_check(
-        planned=planned,
+    prepared = prepare_run(
+        selected=selected,
         command=command,
         context=context,
         catalog=catalog,

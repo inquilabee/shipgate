@@ -16,13 +16,13 @@ from shipgate.gates.config import (
     write_resolved_gate_config,
 )
 from shipgate.gates.runtime import is_gate_tool
-from shipgate.planning.incremental import (
+from shipgate.planning.core.requests import build_execution_request, resolve_request
+from shipgate.planning.core.scope_resolver import ScopeResolver
+from shipgate.planning.core.scopes import resolve_scope, scope_paths_for_tool
+from shipgate.planning.utils.incremental import (
     effective_incremental,
     tool_paths_after_incremental,
 )
-from shipgate.planning.requests import build_execution_request, resolve_request
-from shipgate.planning.scope_resolver import ScopeResolver
-from shipgate.planning.scopes import resolve_scope, scope_paths_for_tool
 from shipgate.project.python import discover_project_python
 
 if TYPE_CHECKING:
@@ -32,18 +32,18 @@ if TYPE_CHECKING:
     from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
     from shipgate.domain.project import ProjectConfig
     from shipgate.domain.run_command import RunCommand
-    from shipgate.planning.incremental import RunScopeSession
-    from shipgate.planning.workflow import PlannedCheck
+    from shipgate.planning.utils.incremental import RunScopeSession
+    from shipgate.planning.workflow import SelectedTool
 
 
 @dataclass(frozen=True)
-class PreparedCheck:
+class PreparedRun:
     request: ResolvedRequest | None = None
     report: CheckReport | None = None
 
 
-class CheckPlanner:
-    """Build a ResolvedRequest (or skip report) for one planned check."""
+class CheckResolver:
+    """Build a ResolvedRequest (or skip report) for one selected tool."""
 
     def __init__(
         self,
@@ -61,23 +61,23 @@ class CheckPlanner:
         self.environment = environment
         self._scope_resolver = ScopeResolver(project_root, scope_session=scope_session)
 
-    def prepare(self, planned: PlannedCheck, command: RunCommand) -> PreparedCheck:
+    def prepare(self, selected: SelectedTool, command: RunCommand) -> PreparedRun:
         if self.scope_session.is_incremental_clean():
-            return self._skipped(planned.tool_id)
+            return self._skipped(selected.tool_id)
 
         scope = resolve_scope(
             self.project_root,
             self.project,
             target_override=command.target,
-            scope_name=planned.scope_name,
+            scope_name=selected.scope_name,
             resolver=self._scope_resolver,
         )
-        tool = self.catalog.get_tool(planned.tool_id)
+        tool = self.catalog.get_tool(selected.tool_id)
         paths = scope_paths_for_tool(
             scope,
             tool,
             self.project_root,
-            mode=planned.mode,
+            mode=selected.mode,
             resolver=self._scope_resolver,
         )
         changed_only, since = effective_incremental(command, self.project)
@@ -86,20 +86,20 @@ class CheckPlanner:
             tool=tool,
             scope=scope,
             project_root=self.project_root,
-            mode=planned.mode,
+            mode=selected.mode,
             since=since,
             changed_only=changed_only,
             scope_session=self.scope_session,
         )
         if not paths:
-            return self._skipped(planned.tool_id)
+            return self._skipped(selected.tool_id)
 
         config_paths = resolve_config_paths(tool, self.project, self.project_root)
         exclude = (
             tuple(entry.rstrip("/") for entry in scope.exclude) if "exclude" in tool.cli else ()
         )
         tool_options = self._options_for_mode(
-            planned,
+            selected,
             tool,
             paths=paths,
             config_paths=config_paths,
@@ -111,8 +111,8 @@ class CheckPlanner:
             tool_options = self._prepare_gate_options(tool, tool_options)
 
         request = build_execution_request(
-            runnable=planned.tool_id,
-            mode=planned.mode if planned.mode in tool.modes else RunMode.CHECK,
+            runnable=selected.tool_id,
+            mode=selected.mode if selected.mode in tool.modes else RunMode.CHECK,
             project_root=self.project_root,
             options=tool_options,
             extra_args=command.extra_args,
@@ -124,11 +124,11 @@ class CheckPlanner:
             target=scope.target,
             project=self.project,
         )
-        return PreparedCheck(request=resolved)
+        return PreparedRun(request=resolved)
 
     def _options_for_mode(
         self,
-        planned: PlannedCheck,
+        selected: SelectedTool,
         tool: ToolDefinition,
         *,
         paths,
@@ -136,7 +136,7 @@ class CheckPlanner:
         exclude,
         command: RunCommand,
     ) -> NormalizedOptions:
-        if planned.mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
+        if selected.mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
             return NormalizedOptions(
                 paths=paths,
                 config=config_paths,
@@ -151,7 +151,9 @@ class CheckPlanner:
             exclude=exclude,
             verbose=command.verbose,
             quiet=command.quiet,
-            check=(True if planned.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None),
+            check=(
+                True if selected.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None
+            ),
         )
 
     def _apply_project_python(
@@ -188,8 +190,8 @@ class CheckPlanner:
         return replace(options, extra=extra)
 
     @staticmethod
-    def _skipped(tool_id: str) -> PreparedCheck:
-        return PreparedCheck(
+    def _skipped(tool_id: str) -> PreparedRun:
+        return PreparedRun(
             report=CheckReport(
                 check_id=tool_id,
                 tool_id=tool_id,

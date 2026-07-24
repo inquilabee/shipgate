@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from shipgate.planning.scope_resolver import DEFAULT_EXCLUDES, ScopeResolver
+from shipgate.planning.core.scope_resolver import DEFAULT_EXCLUDES, ScopeResolver
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig, Scope
-    from shipgate.planning.incremental import RunScopeSession
+    from shipgate.planning.utils.incremental import RunScopeSession
 
 __all__ = [
     "DEFAULT_EXCLUDES",

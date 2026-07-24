@@ -15,7 +15,7 @@ from shipgate.domain.run_command import RunCommand
 from shipgate.gates.core import GateCatalogMerger
 from shipgate.gates.init import init_gate
 from shipgate.gates.paths import gates_lib_path
-from shipgate.planning.checks import list_project_checks
+from shipgate.planning.core.checks import list_project_checks
 from shipgate.project.configs import diff_configs, list_resolved_configs, sync_configs
 from shipgate.project.init import init_project
 from shipgate.runtime.executor import Executor

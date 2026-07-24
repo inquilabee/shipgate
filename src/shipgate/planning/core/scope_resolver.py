@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
-from shipgate.planning.gitignore import (
+from shipgate.planning.utils.gitignore import (
     expand_scope,
     minimize_covering_dirs,
     should_ignore,
@@ -17,7 +17,7 @@ from shipgate.planning.gitignore import (
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
     from shipgate.domain.project import ProjectConfig
-    from shipgate.planning.incremental import RunScopeSession
+    from shipgate.planning.utils.incremental import RunScopeSession
 
 
 @dataclass(frozen=True)

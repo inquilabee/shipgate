@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 
 from shipgate.core import run_command
-from shipgate.planning.incremental import RunScopeSession
-from shipgate.planning.scope_resolver import ScopeResolver
+from shipgate.planning.core.scope_resolver import ScopeResolver
+from shipgate.planning.utils.incremental import RunScopeSession
 
 GIT = shutil.which("git")
 GIT_ENV = {

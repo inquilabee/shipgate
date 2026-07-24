@@ -13,7 +13,7 @@ from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.project import ProjectConfig
 from shipgate.errors import PlanningError
-from shipgate.planning.option_resolver import OptionResolver
+from shipgate.planning.core.option_resolver import OptionResolver
 
 if TYPE_CHECKING:
     from pathlib import Path

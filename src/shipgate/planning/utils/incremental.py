@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 from shipgate.core.process import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
-from shipgate.planning.gitignore import expand_scope, minimize_covering_dirs
-from shipgate.planning.scope_resolver import ExpandScopeKey, ScopeResolver
+from shipgate.planning.core.scope_resolver import ExpandScopeKey, ScopeResolver
+from shipgate.planning.utils.gitignore import expand_scope, minimize_covering_dirs
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import ToolDefinition

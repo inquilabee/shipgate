@@ -2,7 +2,7 @@
 
 from shipgate.domain.catalog import Catalog
 from shipgate.domain.project import ProjectConfig
-from shipgate.planning.suites import expand_suite
+from shipgate.planning.core.suites import expand_suite
 
 
 def list_catalog_checks(catalog: Catalog) -> list[str]:

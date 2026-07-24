@@ -3,7 +3,7 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.planning.requests import build_execution_request, resolve_request
+from shipgate.planning.core.requests import build_execution_request, resolve_request
 
 
 def test_ruff_lint_argv(tmp_path):

@@ -6,7 +6,7 @@ import difflib
 from typing import TYPE_CHECKING
 
 from shipgate.adapter.config_resolve import resolve_config_paths
-from shipgate.planning.suites import expand_suite
+from shipgate.planning.core.suites import expand_suite
 from shipgate.project.config_setup import bundled_template_path, project_config_relpath
 
 if TYPE_CHECKING:
