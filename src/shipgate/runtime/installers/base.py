@@ -22,6 +22,8 @@ class Installer(Protocol):
         self,
         project_root: Path,
         packages: dict[str, InstallDefinition],
+        *,
+        force: bool = False,
     ) -> None: ...
 
 
@@ -43,6 +45,6 @@ def download_https_file(url: str, destination: Path) -> None:
     if parsed.scheme != "https" or parsed.netloc != "github.com":
         raise InstallError(f"refusing untrusted download URL: {url}")
     request = urllib.request.Request(url, method="GET")  # noqa: S310
-    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: E501
     with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310  # nosec B310
         destination.write_bytes(response.read())

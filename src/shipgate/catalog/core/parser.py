@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from shipgate.domain.catalog import (
+    BinaryDownloadSpec,
+    CacheDefinition,
     Catalog,
     CliOptionDefinition,
     ConfigurationDefinition,
     InstallDefinition,
     ScopeCriteria,
+    SuggestIfDefinition,
     SuiteDefinition,
     ToolDefinition,
 )
@@ -51,6 +54,9 @@ class CatalogParser:
         modes = tuple(RunMode(mode) for mode in raw.get("modes", ["check"]))
         option_order = tuple(raw.get("option_order", list(cli.keys())))
         scope = self._parse_scope(raw.get("scope") or {})
+        tags = tuple(str(tag) for tag in raw.get("tags", []) or [])
+        cache = self._parse_cache(raw.get("cache"))
+        suggest_if = self._parse_suggest_if(raw.get("suggest_if"))
         return ToolDefinition(
             id=tool_id,
             executable=raw.get("executable", tool_id),
@@ -64,6 +70,9 @@ class CatalogParser:
             modes=modes,
             option_order=option_order,
             scope=scope,
+            tags=tags,
+            cache=cache,
+            suggest_if=suggest_if,
         )
 
     def _parse_cli_options(self, raw: dict) -> dict[str, CliOptionDefinition]:
@@ -95,10 +104,39 @@ class CatalogParser:
         return InstallDefinition(
             manager=raw["manager"],
             package=raw["package"],
-            version=raw.get("version", ""),
+            version=str(raw.get("version", "") or ""),
             binary=raw.get("binary"),
             requires=tuple(raw.get("requires", []) or []),
             allow_path=bool(raw.get("allow_path", True)),
+            known_bad=tuple(str(item) for item in raw.get("known_bad", []) or []),
+            download=self._parse_download(raw.get("download")),
+        )
+
+    def _parse_download(self, raw: dict | None) -> BinaryDownloadSpec | None:
+        if not raw:
+            return None
+        return BinaryDownloadSpec(
+            repo=str(raw["repo"]),
+            asset_template=str(raw["asset_template"]),
+            binary_name=str(raw.get("binary_name") or raw.get("binary") or ""),
+            arch_map={str(key): str(value) for key, value in (raw.get("arch_map") or {}).items()},
+            os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
+        )
+
+    def _parse_cache(self, raw: dict | None) -> CacheDefinition | None:
+        if not raw:
+            return None
+        ttl = raw.get("ttl_seconds")
+        return CacheDefinition(
+            results=bool(raw.get("results", True)),
+            ttl_seconds=int(ttl) if ttl is not None else None,
+        )
+
+    def _parse_suggest_if(self, raw: dict | None) -> SuggestIfDefinition | None:
+        if not raw:
+            return None
+        return SuggestIfDefinition(
+            files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
         )
 
     def _parse_scope(self, raw: dict) -> ScopeCriteria:

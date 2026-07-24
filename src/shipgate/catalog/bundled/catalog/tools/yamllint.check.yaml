@@ -7,7 +7,7 @@ yamllint.check:
   install:
     manager: python
     package: yamllint
-    version: ">=1.30"
+    version: "1.38.0"
   cli:
     paths:
       style: positional

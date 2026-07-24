@@ -10,7 +10,7 @@ from shipgate.paths import PROJECT_MANAGED_BIN_DIR
 from shipgate.runtime.installers.binary_github import GitHubReleaseInstaller
 from shipgate.runtime.installers.binary_npm import NpmInstaller
 from shipgate.runtime.installers.binary_path import PathBinaryInstaller
-from shipgate.runtime.installers.binary_releases import BINARY_RELEASES
+from shipgate.runtime.installers.version_spec import assert_exact_pin
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import InstallDefinition
 
 __all__ = [
-    "BINARY_RELEASES",
     "BinaryInstallStrategy",
     "BinaryInstaller",
     "GitHubReleaseInstaller",
@@ -53,16 +52,21 @@ class BinaryInstaller:
         self,
         project_root: Path,
         packages: dict[str, InstallDefinition],
+        *,
+        force: bool = False,
     ) -> None:
         bin_dir = project_root / PROJECT_MANAGED_BIN_DIR
         bin_dir.mkdir(parents=True, exist_ok=True)
         for _name, install_def in sorted(packages.items()):
+            self._refuse_known_bad(install_def)
             binary_name = install_def.binary or install_def.package
             destination = bin_dir / binary_name
             if sys.platform == "win32":
                 destination = destination.with_suffix(".exe")
-            if destination.is_file():
+            if destination.is_file() and not force:
                 continue
+            if destination.is_file() and force:
+                destination.unlink()
             strategy = self._resolve_strategy(binary_name, install_def)
             strategy.install(bin_dir, binary_name, install_def, destination)
 
@@ -78,3 +82,12 @@ class BinaryInstaller:
             f"binary {binary_name!r} is not available on PATH and has no managed installer",
             hint="install the tool manually or add it to PATH",
         )
+
+    @staticmethod
+    def _refuse_known_bad(install_def: InstallDefinition) -> None:
+        pin = assert_exact_pin(install_def.version, kind="binary").lstrip("v")
+        bad = {item.strip().lstrip("v") for item in install_def.known_bad if item.strip()}
+        if pin in bad:
+            raise InstallError(
+                f"refusing to install {install_def.package}@{install_def.version}: known_bad"
+            )

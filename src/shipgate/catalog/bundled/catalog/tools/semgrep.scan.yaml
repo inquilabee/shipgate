@@ -15,7 +15,12 @@ semgrep.scan:
   install:
     manager: python
     package: semgrep
-    version: ">=1.0"
+    version: "1.170.1"
+  tags:
+    - security
+  cache:
+    results: true
+    ttl_seconds: 3600
   cli:
     paths:
       style: positional

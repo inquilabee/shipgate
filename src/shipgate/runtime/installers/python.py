@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from shipgate.core.process import run_command
 from shipgate.errors import InstallError
 from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
+from shipgate.runtime.installers.version_spec import pip_package_spec
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -22,7 +23,10 @@ class PythonInstaller:
         self,
         project_root: Path,
         packages: dict[str, InstallDefinition],
+        *,
+        force: bool = False,
     ) -> None:
+        del force  # pip install always refreshes to the requested pin
         venv = project_root / PROJECT_MANAGED_PYTHON_ENV
         if not venv.exists():
             run_command(
@@ -34,9 +38,8 @@ class PythonInstaller:
         else:
             pip = venv / "bin" / "pip"
         for package, install_def in sorted(packages.items()):
-            specs = [package]
-            if install_def.version:
-                specs[0] = f"{package}{install_def.version}"
+            self._refuse_known_bad(install_def)
+            specs = [pip_package_spec(package, install_def.version)]
             specs.extend(install_def.requires)
             for spec in specs:
                 result = run_command([str(pip), "install", spec])
@@ -44,3 +47,14 @@ class PythonInstaller:
                     raise InstallError(
                         f"failed to install {spec}: {result.stderr.strip()}",
                     )
+
+    @staticmethod
+    def _refuse_known_bad(install_def: InstallDefinition) -> None:
+        from shipgate.runtime.installers.version_spec import assert_exact_pin
+
+        pin = assert_exact_pin(install_def.version, kind="python").lstrip("v")
+        bad = {item.strip().lstrip("v") for item in install_def.known_bad if item.strip()}
+        if pin in bad:
+            raise InstallError(
+                f"refusing to install {install_def.package}@{install_def.version}: known_bad"
+            )

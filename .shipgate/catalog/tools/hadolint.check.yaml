@@ -7,8 +7,21 @@ hadolint.check:
   install:
     manager: binary
     package: hadolint
-    version: '>=2.0'
+    version: "2.14.0"
     binary: hadolint
+    allow_path: false
+    download:
+      repo: hadolint/hadolint
+      asset_template: "hadolint-{os}-{arch}"
+      binary_name: hadolint
+      os_map:
+        darwin: macos
+        linux: linux
+        windows: windows
+  suggest_if:
+    files_present:
+      - "**/Dockerfile*"
+      - "**/*.dockerfile"
   cli:
     paths:
       style: positional
@@ -16,6 +29,6 @@ hadolint.check:
     - paths
   scope:
     globs:
-      - '**/Dockerfile*'
-      - '**/*.dockerfile'
+      - "**/Dockerfile*"
+      - "**/*.dockerfile"
     delivery: files

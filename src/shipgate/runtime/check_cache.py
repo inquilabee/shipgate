@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -25,6 +26,8 @@ class CheckResultCache:
             return None
         path = self._entry_path(resolved)
         if not path.is_file():
+            return None
+        if self._is_expired(path, resolved):
             return None
         from shipgate.domain.reports import CheckReport
 
@@ -48,6 +51,8 @@ class CheckResultCache:
             *sorted(str(path) for path in resolved.options.paths),
             *resolved.extra_args,
         ]
+        if resolved.tool.install is not None and resolved.tool.install.version:
+            parts.append(f"version:{resolved.tool.install.version}")
         for config_path in resolved.options.config:
             candidate = Path(config_path)
             if not candidate.is_absolute():
@@ -58,10 +63,20 @@ class CheckResultCache:
         return f"{resolved.tool.id}-{digest[:16]}"
 
     @staticmethod
+    def _is_expired(path: Path, resolved: ResolvedRequest) -> bool:
+        cache = resolved.tool.cache
+        if cache is None or cache.ttl_seconds is None:
+            return False
+        age = time.time() - path.stat().st_mtime
+        return age > cache.ttl_seconds
+
+    @staticmethod
     def _is_cacheable(resolved: ResolvedRequest) -> bool:
         if resolved.mode == RunMode.APPLY:
             return False
         if is_gate_tool(resolved.tool):
+            return False
+        if resolved.tool.cache is not None and not resolved.tool.cache.results:
             return False
         if resolved.tool.scope.delivery == "root":
             return False

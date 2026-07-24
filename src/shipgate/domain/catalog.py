@@ -44,6 +44,15 @@ class ConfigurationDefinition:
 
 
 @dataclass(frozen=True)
+class BinaryDownloadSpec:
+    repo: str
+    asset_template: str
+    binary_name: str
+    arch_map: Mapping[str, str] = field(default_factory=dict)
+    os_map: Mapping[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class InstallDefinition:
     manager: str
     package: str
@@ -51,6 +60,19 @@ class InstallDefinition:
     binary: str | None = None
     requires: tuple[str, ...] = ()
     allow_path: bool = True
+    known_bad: tuple[str, ...] = ()
+    download: BinaryDownloadSpec | None = None
+
+
+@dataclass(frozen=True)
+class CacheDefinition:
+    results: bool = True
+    ttl_seconds: int | None = None
+
+
+@dataclass(frozen=True)
+class SuggestIfDefinition:
+    files_present: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -74,6 +96,9 @@ class ToolDefinition:
     modes: tuple[RunMode, ...] = (RunMode.CHECK,)
     option_order: tuple[str, ...] = ()
     scope: ScopeCriteria = field(default_factory=ScopeCriteria)
+    tags: tuple[str, ...] = ()
+    cache: CacheDefinition | None = None
+    suggest_if: SuggestIfDefinition | None = None
 
 
 @dataclass(frozen=True)

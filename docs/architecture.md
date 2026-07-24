@@ -78,7 +78,7 @@ A conventional repo should get a high-signal gate after `init` / `install` witho
 
 ### Decision 007: keep the product UX, metadata-driven internals
 
-Small command set (`install`, `format`, `check`), managed installs, quiet success, structured failures. Tool behavior lives in declarative Tool Definitions, not hardcoded runtime branches.
+Small command set (`install`, `update`, `format`, `check`), managed installs, quiet success, structured failures. Tool behavior lives in declarative Tool Definitions, not hardcoded runtime branches.
 
 ### Decision 008: seed the catalog from proven tools
 

@@ -71,6 +71,8 @@ class CatalogValidator:
         self._validate_tool_script(tool)
         self._validate_tool_module(tool)
         self._validate_tool_install(tool)
+        self._validate_tool_cache(tool)
+        self._validate_suggest_if(tool)
 
     def _validate_tool_cli(self, tool: ToolDefinition) -> None:
         for name, opt in tool.cli.items():
@@ -139,8 +141,68 @@ class CatalogValidator:
             )
 
     def _validate_tool_install(self, tool: ToolDefinition) -> None:
-        if tool.install is not None and tool.install.manager not in ("python", "binary"):
+        install = tool.install
+        if install is None:
+            return
+        if install.manager not in ("python", "binary"):
             raise CatalogError(f"tool {tool.id!r} has unsupported install manager")
+        self._validate_exact_pin(tool)
+        self._validate_known_bad(tool)
+        self._validate_download(tool)
+
+    def _validate_exact_pin(self, tool: ToolDefinition) -> None:
+        install = tool.install
+        if install is None:
+            return
+        version = install.version.strip()
+        if not version:
+            raise CatalogError(f"tool {tool.id!r} install.version must be an exact pin")
+        if version.startswith((">=", "<=", ">", "<", "~=", "!=")) or version == "*":
+            raise CatalogError(
+                f"tool {tool.id!r} install.version must be an exact pin, got {version!r}"
+            )
+
+    def _validate_known_bad(self, tool: ToolDefinition) -> None:
+        install = tool.install
+        if install is None:
+            return
+        pin = self._normalized_pin(install.version)
+        bad = {self._normalized_pin(item) for item in install.known_bad}
+        if pin in bad:
+            raise CatalogError(
+                f"tool {tool.id!r} install.version {install.version!r} is listed in known_bad"
+            )
+
+    def _validate_download(self, tool: ToolDefinition) -> None:
+        install = tool.install
+        if install is None or install.download is None:
+            return
+        download = install.download
+        if not download.repo.strip():
+            raise CatalogError(f"tool {tool.id!r} install.download.repo is required")
+        if not download.asset_template.strip():
+            raise CatalogError(f"tool {tool.id!r} install.download.asset_template is required")
+        if not download.binary_name.strip():
+            raise CatalogError(f"tool {tool.id!r} install.download.binary_name is required")
+
+    def _validate_tool_cache(self, tool: ToolDefinition) -> None:
+        if tool.cache is None:
+            return
+        if tool.cache.ttl_seconds is not None and tool.cache.ttl_seconds < 0:
+            raise CatalogError(f"tool {tool.id!r} cache.ttl_seconds must be >= 0")
+
+    def _validate_suggest_if(self, tool: ToolDefinition) -> None:
+        if tool.suggest_if is None:
+            return
+        if not tool.suggest_if.files_present:
+            raise CatalogError(f"tool {tool.id!r} suggest_if.files_present must not be empty")
+
+    @staticmethod
+    def _normalized_pin(version: str) -> str:
+        cleaned = version.strip()
+        if cleaned.startswith("=="):
+            cleaned = cleaned[2:].strip()
+        return cleaned.lstrip("v")
 
     def _detect_suite_cycle(self, start: str) -> None:
         visited: set[str] = set()

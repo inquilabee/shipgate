@@ -7,7 +7,7 @@ deadcode.check:
   install:
     manager: python
     package: deadcode
-    version: ">=1.0"
+    version: "2.4.1"
   cli:
     paths:
       style: positional

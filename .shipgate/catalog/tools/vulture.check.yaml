@@ -2,14 +2,14 @@ vulture.check:
   executable: vulture
   subcommand:
     - --min-confidence
-    - '80'
+    - "80"
   modes:
     - check
   normalizer: vulture
   install:
     manager: python
     package: vulture
-    version: '>=2.0'
+    version: "2.16"
   cli:
     paths:
       style: positional

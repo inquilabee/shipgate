@@ -11,6 +11,7 @@ from shipgate.paths import PROJECT_TOOLS_DIR
 from shipgate.planning.core.suites import expand_suite
 from shipgate.runtime.environment import tools_manifest_path
 from shipgate.runtime.installers.registry import get_installer
+from shipgate.runtime.lockfile import write_lockfile
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -84,17 +85,43 @@ def write_manifest(
     return manifest_path
 
 
-def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
+def write_install_lockfile(
+    project_root: Path,
+    *,
+    python_packages: dict[str, InstallDefinition],
+    binary_packages: dict[str, InstallDefinition],
+) -> Path:
+    packages = {
+        **{name: install_def.version for name, install_def in python_packages.items()},
+        **{name: install_def.version for name, install_def in binary_packages.items()},
+    }
+    lock_path = project_root / ".shipgate" / "lock.json"
+    write_lockfile(lock_path, packages)
+    return lock_path
+
+
+def install_suite(
+    project_root: Path,
+    suite_id: str,
+    catalog: Catalog,
+    *,
+    force: bool = False,
+) -> Path:
     python_packages, binary_packages = collect_install_requirements(suite_id, catalog)
     (project_root / PROJECT_TOOLS_DIR).mkdir(parents=True, exist_ok=True)
     if python_packages:
-        get_installer("python").install_packages(project_root, python_packages)
+        get_installer("python").install_packages(project_root, python_packages, force=force)
     manifest_path = write_manifest(
         project_root,
         python_packages=python_packages,
         binary_packages={},
     )
     if not binary_packages:
+        write_install_lockfile(
+            project_root,
+            python_packages=python_packages,
+            binary_packages={},
+        )
         return manifest_path
 
     binary_installer = get_installer("binary")
@@ -102,7 +129,11 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
     errors: list[str] = []
     for name, install_def in sorted(binary_packages.items()):
         try:
-            binary_installer.install_packages(project_root, {name: install_def})
+            binary_installer.install_packages(
+                project_root,
+                {name: install_def},
+                force=force,
+            )
             installed_binaries[name] = install_def
         except InstallError as exc:
             errors.append(f"{name}: {exc.message}")
@@ -113,6 +144,12 @@ def install_suite(project_root: Path, suite_id: str, catalog: Catalog) -> Path:
             python_packages={},
             binary_packages=installed_binaries,
         )
+
+    write_install_lockfile(
+        project_root,
+        python_packages=python_packages,
+        binary_packages=installed_binaries,
+    )
 
     if errors:
         summary = "; ".join(errors)

@@ -27,6 +27,17 @@ def install(
     return app.install(InstallCommand(project_root=root, suite=suite, config_path=config_path))
 
 
+def update(
+    *,
+    project_root: Path | None = None,
+    suite: str | None = None,
+    config_path: Path | None = None,
+) -> int:
+    root = project_root or Path.cwd()
+    app = ShipGateApp()
+    return app.update(InstallCommand(project_root=root, suite=suite, config_path=config_path))
+
+
 def run(
     *,
     mode: str = "check",

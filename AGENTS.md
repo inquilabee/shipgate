@@ -21,9 +21,11 @@ uv sync --group dev
 uv run shipgate init            # or: shipgate init yaml
 uv run shipgate init pyproject  # merge [tool.shipgate] into pyproject.toml
 uv run shipgate install
+uv run shipgate update          # reinstall suite tools to catalog pins
 uv run shipgate check --target .
 uv run shipgate format --target .
 uv run shipgate list suites
+uv run shipgate list tools --tag security
 uv run pytest tests/unit -q
 uv run pytest -m integration
 make install-hooks   # pre-commit

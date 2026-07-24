@@ -2,7 +2,13 @@ import pytest
 
 from shipgate.catalog.core import CatalogValidator
 from shipgate.catalog.loader import CatalogLoader
-from shipgate.domain.catalog import Catalog, CliOptionDefinition, SuiteDefinition, ToolDefinition
+from shipgate.domain.catalog import (
+    Catalog,
+    CliOptionDefinition,
+    InstallDefinition,
+    SuiteDefinition,
+    ToolDefinition,
+)
 from shipgate.domain.modes import RunMode
 from shipgate.errors import CatalogError
 
@@ -49,3 +55,46 @@ def test_missing_member_fails():
     )
     with pytest.raises(CatalogError):
         CatalogValidator.validate(catalog)
+
+
+def test_validator_rejects_range_pin():
+    catalog = Catalog(
+        tools={
+            "bad.tool": ToolDefinition(
+                id="bad.tool",
+                executable="bad",
+                modes=(RunMode.CHECK,),
+                install=InstallDefinition(manager="python", package="bad", version=">=1.0"),
+            )
+        },
+        suites={},
+    )
+    with pytest.raises(CatalogError, match="exact pin"):
+        CatalogValidator.validate(catalog)
+
+
+def test_validator_rejects_known_bad_pin():
+    catalog = Catalog(
+        tools={
+            "bad.tool": ToolDefinition(
+                id="bad.tool",
+                executable="bad",
+                modes=(RunMode.CHECK,),
+                install=InstallDefinition(
+                    manager="python",
+                    package="bad",
+                    version="1.2.3",
+                    known_bad=("1.2.3",),
+                ),
+            )
+        },
+        suites={},
+    )
+    with pytest.raises(CatalogError, match="known_bad"):
+        CatalogValidator.validate(catalog)
+
+
+def test_security_tools_are_tagged():
+    catalog = CatalogLoader.load()
+    for tool_id in ("bandit.scan", "gitleaks.scan", "semgrep.scan"):
+        assert "security" in catalog.get_tool(tool_id).tags

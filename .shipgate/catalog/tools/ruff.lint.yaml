@@ -9,7 +9,7 @@ ruff.lint:
   install:
     manager: python
     package: ruff
-    version: '>=0.6'
+    version: "0.15.22"
   cli:
     paths:
       style: positional

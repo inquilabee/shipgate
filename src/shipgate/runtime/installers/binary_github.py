@@ -15,15 +15,14 @@ from typing import TYPE_CHECKING
 
 from shipgate.errors import InstallError
 from shipgate.runtime.installers.base import download_https_file
-from shipgate.runtime.installers.binary_releases import BINARY_RELEASES
 
 if TYPE_CHECKING:
-    from shipgate.domain.catalog import InstallDefinition
+    from shipgate.domain.catalog import BinaryDownloadSpec, InstallDefinition
 
 
 class GitHubReleaseInstaller:
     def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
-        return binary_name in BINARY_RELEASES
+        return install_def.download is not None
 
     def install(
         self,
@@ -32,26 +31,30 @@ class GitHubReleaseInstaller:
         install_def: InstallDefinition,
         destination: Path,
     ) -> None:
-        version = self.normalize_version(install_def.version or "latest")
-        url, asset_name = self.build_github_release_url(binary_name, version)
+        download = install_def.download
+        if download is None:
+            raise InstallError(f"binary {binary_name!r} has no install.download metadata")
+        version = self.normalize_version(install_def.version)
+        url, asset_name = self.build_github_release_url(download, version)
         with tempfile.TemporaryDirectory() as tmp:
             archive_path = Path(tmp) / asset_name
             try:
                 download_https_file(url, archive_path)
             except OSError as exc:
                 raise InstallError(f"failed to download {binary_name}: {exc}") from exc
-            extracted = self.extract_binary(
-                archive_path,
-                BINARY_RELEASES[binary_name].binary_name,
-            )
+            extracted = self.extract_binary(archive_path, download.binary_name)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(extracted, destination)
             destination.chmod(destination.stat().st_mode | 0o100)
 
     @staticmethod
-    def release_arch(binary_name: str, arch: str) -> str:
-        release = BINARY_RELEASES[binary_name]
-        return release.arch_map.get(arch, arch)
+    def release_arch(download: BinaryDownloadSpec, arch: str) -> str:
+        return download.arch_map.get(arch, arch)
+
+    @staticmethod
+    def release_os(download: BinaryDownloadSpec) -> str:
+        system = GitHubReleaseInstaller.github_os()
+        return download.os_map.get(system, system)
 
     @staticmethod
     def github_os() -> str:
@@ -95,19 +98,21 @@ class GitHubReleaseInstaller:
     @staticmethod
     def resolve_release_version(repo: str, version: str) -> str:
         if version != "latest":
-            return version
+            return version if version.startswith("v") else f"v{version.lstrip('v')}"
         return GitHubReleaseInstaller.fetch_latest_release_tag(repo)
 
     @staticmethod
-    def build_github_release_url(binary_name: str, version: str) -> tuple[str, str]:
-        release = BINARY_RELEASES[binary_name]
-        repo = release.repo
+    def build_github_release_url(
+        download: BinaryDownloadSpec,
+        version: str,
+    ) -> tuple[str, str]:
+        repo = download.repo
         resolved_version = GitHubReleaseInstaller.resolve_release_version(repo, version)
-        asset_name = release.asset_template.format(
+        asset_name = download.asset_template.format(
             version=resolved_version.lstrip("v"),
-            os=GitHubReleaseInstaller.github_os(),
+            os=GitHubReleaseInstaller.release_os(download),
             arch=GitHubReleaseInstaller.release_arch(
-                binary_name, GitHubReleaseInstaller.github_arch()
+                download, GitHubReleaseInstaller.github_arch()
             ),
         )
         if version == "latest":
@@ -119,8 +124,12 @@ class GitHubReleaseInstaller:
     @staticmethod
     def normalize_version(version: str) -> str:
         cleaned = version.strip()
-        if cleaned.startswith(">="):
-            return "latest"
+        if not cleaned:
+            raise InstallError("binary install requires an exact version pin")
+        if cleaned.startswith((">=", "<=", ">", "<", "~=", "!=")) or cleaned == "*":
+            raise InstallError(f"binary install requires an exact version pin, got {cleaned!r}")
+        if cleaned.startswith("=="):
+            cleaned = cleaned[2:].strip()
         return cleaned
 
     @staticmethod

@@ -7,7 +7,7 @@ pydeps.graph:
   install:
     manager: python
     package: pydeps
-    version: '>=1.0'
+    version: "3.0.6"
   cli:
     paths:
       style: positional

@@ -18,6 +18,7 @@ from shipgate.gates.paths import gates_lib_path
 from shipgate.planning.core.checks import list_project_checks
 from shipgate.project.configs import diff_configs, list_resolved_configs, sync_configs
 from shipgate.project.init import init_project
+from shipgate.project.suggest import suggest_tools
 from shipgate.runtime.executor import Executor
 from shipgate.runtime.install import install_suite
 from shipgate.runtime.lockfile import write_lockfile
@@ -72,7 +73,17 @@ class ShipGateApp:
             project_root=command.project_root,
         )
         suite_id = command.suite or project.suite or "standard"
-        install_suite(command.project_root, suite_id, catalog)
+        install_suite(command.project_root, suite_id, catalog, force=False)
+        return 0
+
+    def update(self, command: InstallCommand) -> int:
+        catalog = self._catalog_for(command.project_root)
+        project = ProjectConfigLoader.load(
+            config_path=command.config_path,
+            project_root=command.project_root,
+        )
+        suite_id = command.suite or project.suite or "standard"
+        install_suite(command.project_root, suite_id, catalog, force=True)
         return 0
 
     def check(self, command: RunCommand) -> int:
@@ -106,8 +117,12 @@ class ShipGateApp:
         catalog = self._base_catalog
         return "\n".join(sorted(catalog.suites.keys())) + "\n"
 
-    def list_tools(self) -> str:
-        return "\n".join(sorted(self._base_catalog.tools.keys())) + "\n"
+    def list_tools(self, *, tag: str | None = None) -> str:
+        tools = self._base_catalog.tools
+        names = sorted(
+            tool_id for tool_id, tool in tools.items() if tag is None or tag in tool.tags
+        )
+        return "\n".join(names) + ("\n" if names else "")
 
     def list_checks(self, project_root: Path | None = None) -> str:
         if project_root is None:
@@ -140,7 +155,10 @@ class ShipGateApp:
         packages: dict[str, str] = {}
         if manifest.is_file():
             data = json.loads(manifest.read_text(encoding="utf-8"))
-            packages = {k: str(v) for k, v in data.get("packages", {}).items()}
+            packages = {
+                **{k: str(v) for k, v in data.get("packages", {}).items()},
+                **{k: str(v) for k, v in data.get("binaries", {}).items()},
+            }
         write_lockfile(project_root / ".shipgate" / "lock.json", packages)
         return 0
 
@@ -205,11 +223,15 @@ class ShipGateApp:
             mode=mode,
             project_env=project_env,
         )
+        suggestions = suggest_tools(project_root, self._catalog_for(project_root))
+        suggestion_text = ""
+        if suggestions:
+            suggestion_text = "\n".join(suggestions) + "\n"
         if configs_only:
-            return "scaffolded .shipgate configs\n"
+            return suggestion_text + "scaffolded .shipgate configs\n"
         if mode == "pyproject":
-            return f"updated {path}\n"
-        return f"created {path}\n"
+            return suggestion_text + f"updated {path}\n"
+        return suggestion_text + f"created {path}\n"
 
     def configs_sync(self, project_root: Path) -> str:
         created = sync_configs(project_root, self._catalog_for(project_root))

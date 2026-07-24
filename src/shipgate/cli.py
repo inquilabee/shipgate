@@ -49,6 +49,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("install", parents=[shared], help="Install tools for selected suite")
+    sub.add_parser(
+        "update",
+        parents=[shared],
+        help="Reinstall suite tools to catalog version pins",
+    )
     init_parser = sub.add_parser("init", help="Scaffold ShipGate project policy and layout")
     init_sub = init_parser.add_subparsers(dest="init_mode")
     init_sub.add_parser("yaml", help="Create .shipgate/shipgate.yaml (default)")
@@ -77,7 +82,8 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser = sub.add_parser("list", help="List catalog metadata")
     list_sub = list_parser.add_subparsers(dest="list_target", required=True)
     list_sub.add_parser("suites")
-    list_sub.add_parser("tools")
+    list_tools = list_sub.add_parser("tools")
+    list_tools.add_argument("--tag", help="Filter tools by catalog tag")
     list_sub.add_parser("checks")
 
     sub.add_parser("schema", help="Print canonical report JSON schema")
@@ -107,6 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
 TOP_LEVEL_COMMANDS = frozenset(
     {
         "install",
+        "update",
         "init",
         "configs",
         "format",
@@ -169,6 +176,13 @@ def dispatch_command(
         persist_project_python(project_root, project_env)
     handlers: dict[str, Callable[[], int]] = {
         "install": lambda: app.install(
+            InstallCommand(
+                project_root=project_root,
+                config_path=args.config,
+                suite=args.suite,
+            )
+        ),
+        "update": lambda: app.update(
             InstallCommand(
                 project_root=project_root,
                 config_path=args.config,
@@ -251,7 +265,7 @@ def dispatch_list(app: ShipGateApp, args: argparse.Namespace, project_root: Path
             if args.list_target == "checks":
                 sys.stdout.write(app.list_checks(project_root))
             else:
-                sys.stdout.write(app.list_tools())
+                sys.stdout.write(app.list_tools(tag=getattr(args, "tag", None)))
         return 0
     return 0
 

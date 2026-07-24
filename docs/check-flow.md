@@ -111,7 +111,10 @@ uv run shipgate list checks
 | `scope` | Which paths (or root) are passed; extensions matter most for incremental/`--changed-only` |
 | `normalizer` | Which parser turns tool output into findings |
 | `modes` | Whether the tool may run under `check` and/or `format` (`apply`) |
-| `install` | What `shipgate install` puts on PATH / in the managed env |
+| `install` | Exact version pin + optional `download` / `known_bad`; used by `shipgate install` and `shipgate update` |
+| `tags` | Metadata labels (e.g. `security`); filter with `shipgate list tools --tag` |
+| `cache` | Optional result-cache policy (`results`, `ttl_seconds`) |
+| `suggest_if` | Additive init hints when matching files exist (does not change default suites) |
 
 Project overlays under `.shipgate/catalog/tools/` can replace or `extends:` a bundled tool without editing the package.
 

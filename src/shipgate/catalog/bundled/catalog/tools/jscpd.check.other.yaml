@@ -7,7 +7,7 @@ jscpd.check.other:
   install:
     manager: binary
     package: jscpd
-    version: ">=3.0"
+    version: "5.0.12"
     binary: jscpd
   cli:
     paths:
