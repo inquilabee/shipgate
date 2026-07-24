@@ -4,9 +4,6 @@ mdformat.apply:
   modes:
     - apply
     - check
-  capabilities:
-    - Documentation
-    - Formatting
   normalizer: generic_exit
   install:
     manager: python

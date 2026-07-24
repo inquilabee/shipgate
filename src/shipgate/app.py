@@ -104,10 +104,7 @@ class ShipGateApp:
 
     def list_suites(self) -> str:
         catalog = self._base_catalog
-        lines = sorted(catalog.suites.keys())
-        if catalog.workflows:
-            lines.extend(sorted(catalog.workflows.keys()))
-        return "\n".join(sorted(set(lines))) + "\n"
+        return "\n".join(sorted(catalog.suites.keys())) + "\n"
 
     def list_tools(self) -> str:
         return "\n".join(sorted(self._base_catalog.tools.keys())) + "\n"

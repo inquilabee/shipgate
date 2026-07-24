@@ -4,8 +4,6 @@ sourcery.review:
     - review
   modes:
     - check
-  capabilities:
-    - Quality
   normalizer: generic_exit
   install:
     manager: python

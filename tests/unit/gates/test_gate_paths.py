@@ -16,7 +16,6 @@ def test_resolve_gate_script_rejects_absolute_outside_allowlist(tmp_path: Path):
         id="gate.evil",
         executable="bash",
         script=str(evil),
-        capabilities=("Gates",),
         modes=(RunMode.CHECK,),
     )
     with pytest.raises(PlanningError, match="not allowed"):

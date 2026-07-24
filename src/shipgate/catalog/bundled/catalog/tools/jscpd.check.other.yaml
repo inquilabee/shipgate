@@ -3,8 +3,6 @@ jscpd.check.other:
   subcommand: []
   modes:
     - check
-  capabilities:
-    - Quality
   normalizer: generic_exit
   install:
     manager: binary

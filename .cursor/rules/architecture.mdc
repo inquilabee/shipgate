@@ -8,7 +8,7 @@ alwaysApply: true
 Before implementing, name the layer:
 
 1. **Policy** — project config, scopes, checks (no subprocess details)
-1. **Planning** — workflows, suites, request resolution, gitignore scoping
+1. **Planning** — suites, request resolution, gitignore scoping
 1. **Adapter** — argv serialization only (`CliSerializer`)
 1. **Runtime** — executor, install, environment (no finding parsing)
 1. **Normalize** — tool output → canonical JSON only
@@ -20,7 +20,7 @@ Check mode respects `.gitignore` via `planning/gitignore.py`. Prefer gitignore o
 
 ## Catalog layout
 
-`catalog/bundled/catalog/`: `tools/*.yaml`, `suites.yaml`, `workflows.yaml`, `capabilities.yaml`. Extend via ToolDefinition + bundled config + normalizer Protocol.
+`catalog/bundled/catalog/`: `tools/*.yaml`, `suites.yaml`. Extend via ToolDefinition + bundled config + normalizer Protocol.
 
 ## CliSerializer
 

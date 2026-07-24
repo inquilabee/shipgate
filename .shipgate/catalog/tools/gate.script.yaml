@@ -4,8 +4,6 @@ gate.script:
   modes:
     - check
     - apply
-  capabilities:
-    - Gates
   normalizer: generic_exit
   cli:
     paths:

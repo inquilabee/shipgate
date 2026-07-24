@@ -3,9 +3,6 @@ gate.module-private-vars:
   script: gates/module-private-vars.sh
   modes:
     - check
-  capabilities:
-    - Gates
-    - Policy
   normalizer: gate_json
   configuration:
     bundled: configs/gates/module-private-vars.yaml

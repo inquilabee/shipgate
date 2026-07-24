@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class CatalogValidator:
     """Validate a parsed ``Catalog`` against catalog schema and referential rules.
 
-    Checks tool CLI, scope, install metadata, suite membership, workflows, and bundled assets.
+    Checks tool CLI, scope, install metadata, suite membership, and bundled assets.
     """
 
     VALID_CLI_STYLES = frozenset({"positional", "scalar", "repeated", "joined", "boolean"})
@@ -38,21 +38,9 @@ class CatalogValidator:
             self._validate_tool_id(tool_id)
             self._validate_tool(tool)
         self._validate_suite_members()
-        self._validate_workflows()
-        self._validate_capabilities()
 
     def _is_known_suite_member(self, member: str) -> bool:
         return member in self._catalog.tools or member in self._catalog.suites
-
-    def _is_known_workflow_member(self, member: str) -> bool:
-        return (
-            member in self._catalog.tools
-            or member in self._catalog.suites
-            or member in self._catalog.capabilities
-        )
-
-    def _is_known_capability_tool(self, member: str) -> bool:
-        return member in self._catalog.tools
 
     def _validate_suite_members(self) -> None:
         for suite_id, suite in self._catalog.suites.items():
@@ -67,26 +55,6 @@ class CatalogValidator:
                     )
         for suite_id in self._catalog.suites:
             self._detect_suite_cycle(suite_id)
-
-    def _validate_workflows(self) -> None:
-        for workflow_id, workflow in self._catalog.workflows.items():
-            self._validate_tool_id(workflow_id)
-            if not workflow.steps:
-                raise CatalogError(f"workflow {workflow_id!r} has no steps")
-            for step in workflow.steps:
-                for member in step.members:
-                    if not self._is_known_workflow_member(member):
-                        raise CatalogError(
-                            f"workflow {workflow_id!r} references unknown member {member!r}",
-                        )
-
-    def _validate_capabilities(self) -> None:
-        for capability, members in self._catalog.capabilities.items():
-            for member in members:
-                if not self._is_known_capability_tool(member):
-                    raise CatalogError(
-                        f"capability {capability!r} references unknown tool {member!r}",
-                    )
 
     def _validate_tool_id(self, tool_id: str) -> None:
         try:
@@ -134,7 +102,7 @@ class CatalogValidator:
             raise CatalogError(
                 f"tool {tool.id!r} with delivery 'files' requires extensions or globs",
             )
-        if "Policy" in tool.capabilities and delivery not in {"files", "dirs"}:
+        if tool.script is not None and delivery not in {"files", "dirs"}:
             raise CatalogError(
                 f"gate tool {tool.id!r} must use delivery 'files' or 'dirs'",
             )

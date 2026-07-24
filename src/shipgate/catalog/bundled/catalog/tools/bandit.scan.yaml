@@ -6,8 +6,6 @@ bandit.scan:
     - -q
   modes:
     - check
-  capabilities:
-    - Security
   normalizer: bandit
   install:
     manager: python

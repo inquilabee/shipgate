@@ -68,7 +68,6 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
         catalog=catalog,
         suite_override=command.suite,
         check_override=command.check,
-        workflow_override=command.workflow,
     )
     parallel, fail_fast = suite_execution_flags(catalog, suite_id, project)
     environment = resolve_environment(project_root, project.env)

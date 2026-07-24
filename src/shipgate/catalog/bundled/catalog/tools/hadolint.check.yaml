@@ -3,8 +3,6 @@ hadolint.check:
   subcommand: []
   modes:
     - check
-  capabilities:
-    - Docker
   normalizer: generic_exit
   install:
     manager: binary

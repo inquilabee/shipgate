@@ -5,9 +5,6 @@ gitleaks.scan:
     - --no-banner
   modes:
     - check
-  capabilities:
-    - Security
-    - Secrets
   normalizer: gitleaks
   install:
     manager: binary

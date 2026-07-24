@@ -56,8 +56,8 @@ def test_catalog_includes_bundled_policy_gates():
     ):
         tool = catalog.get_tool(gate_id)
         assert tool.normalizer == "gate_json"
-        assert "Gates" in tool.capabilities
         assert tool.script is not None
+        assert is_gate_tool(tool)
     assert "policy" in catalog.suites
     assert "gate.module-size" in catalog.suites["policy"].members
     assert "policy" in catalog.suites["full"].members

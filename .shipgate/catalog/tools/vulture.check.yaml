@@ -5,8 +5,6 @@ vulture.check:
     - '80'
   modes:
     - check
-  capabilities:
-    - Quality
   normalizer: vulture
   install:
     manager: python

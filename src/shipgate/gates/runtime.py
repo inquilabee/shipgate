@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 def is_gate_tool(tool) -> bool:
-    return "Gates" in tool.capabilities
+    return tool.script is not None
 
 
 def prepare_gate_execution(

@@ -41,7 +41,7 @@ def tool_docs_rows(catalog: Catalog, primary_root: Path) -> list[ToolDocsRow]:
         ToolDocsRow(
             id=tool_id,
             name=tool_id,
-            description=", ".join(tool.capabilities) if tool.capabilities else tool_id,
+            description=tool_id,
             documentation_url=None,
             version=resolve_version(tool, primary_root),
         )

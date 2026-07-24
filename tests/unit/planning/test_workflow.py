@@ -33,8 +33,8 @@ def test_suite_override(catalog):
     assert [item.tool_id for item in planned] == ["ruff.lint", "ty.check"]
 
 
-def test_suite_override_beats_project_workflow(catalog):
-    project = ProjectConfig(workflow="ci", suite="standard")
+def test_suite_override_beats_project_suite(catalog):
+    project = ProjectConfig(suite="standard")
     suite_id, planned = resolve_runnables(
         mode=RunMode.CHECK,
         project=project,
@@ -85,12 +85,12 @@ def test_extended_suite_includes_radon_mi_and_jscpd(catalog):
     assert "jscpd.check.other" in tools
 
 
-def test_workflow_resolves_ci(catalog):
+def test_ci_suite_resolves(catalog):
     suite_id, planned = resolve_runnables(
         mode=RunMode.CHECK,
         project=ProjectConfig(),
         catalog=catalog,
-        workflow_override="ci",
+        suite_override="ci",
     )
     assert suite_id == "ci"
     assert [item.tool_id for item in planned][:2] == ["ruff.lint", "ty.check"]

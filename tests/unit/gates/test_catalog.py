@@ -32,6 +32,7 @@ def test_merge_gate_catalog(tmp_path: Path):
     assert merged.tools["gate.sample"].executable == "bash"
     assert "local-gates" in merged.suites
     assert GateCatalogMerger.discover(tmp_path)
+    assert merged.tools["gate.sample"].script is not None
 
 
 def test_merge_updates_local_gates_when_suite_exists(tmp_path: Path):
@@ -50,8 +51,6 @@ def test_merge_updates_local_gates_when_suite_exists(tmp_path: Path):
             **base.suites,
             "local-gates": SuiteDefinition(id="local-gates", members=("gate.alpha",)),
         },
-        workflows=base.workflows,
-        capabilities=base.capabilities,
     )
     merged = GateCatalogMerger.merge(stale, tmp_path)
     assert set(merged.suites["local-gates"].members) == {"gate.alpha", "gate.beta"}

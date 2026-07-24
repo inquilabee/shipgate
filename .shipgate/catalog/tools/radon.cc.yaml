@@ -5,8 +5,6 @@ radon.cc:
     - -j
   modes:
     - check
-  capabilities:
-    - Metrics
   normalizer: radon
   install:
     manager: python

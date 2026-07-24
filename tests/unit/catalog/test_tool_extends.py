@@ -38,15 +38,14 @@ def test_child_inherits_parent_and_overrides_threshold():
 
 def test_multi_hop_inheritance():
     bundled = {
-        "a.tool": {"executable": "a", "modes": ["check"], "capabilities": ["Quality"]},
+        "a.tool": {"executable": "a", "modes": ["check"], "normalizer": "ruff"},
         "b.tool": {"extends": "a.tool", "cli": {"paths": {"style": "positional"}}},
-        "c.tool": {"extends": "b.tool", "normalizer": "ruff"},
+        "c.tool": {"extends": "b.tool", "normalizer": "bandit"},
     }
     resolved = ToolExtendsResolver.resolve(bundled)
     assert resolved["c.tool"]["executable"] == "a"
-    assert resolved["c.tool"]["capabilities"] == ["Quality"]
+    assert resolved["c.tool"]["normalizer"] == "bandit"
     assert resolved["c.tool"]["cli"]["paths"]["style"] == "positional"
-    assert resolved["c.tool"]["normalizer"] == "ruff"
 
 
 def test_project_child_extends_bundled_parent(tmp_path: Path):

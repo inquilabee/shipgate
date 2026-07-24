@@ -4,9 +4,6 @@ shfmt.apply:
   modes:
     - apply
     - check
-  capabilities:
-    - Shell
-    - Formatting
   normalizer: generic_exit
   install:
     manager: binary

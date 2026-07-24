@@ -3,8 +3,6 @@ yamllint.check:
   subcommand: []
   modes:
     - check
-  capabilities:
-    - Quality
   normalizer: generic_exit
   install:
     manager: python

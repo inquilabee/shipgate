@@ -4,8 +4,6 @@ yamlfmt.apply:
   modes:
     - apply
     - check
-  capabilities:
-    - Formatting
   normalizer: generic_exit
   install:
     manager: binary

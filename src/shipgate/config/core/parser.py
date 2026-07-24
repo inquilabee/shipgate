@@ -51,12 +51,8 @@ class ProjectConfigParser:
         suite = self._raw.get("suite", "standard")
         if suite is not None:
             suite = str(suite)
-        workflow = self._raw.get("workflow")
-        if workflow is not None:
-            workflow = str(workflow)
         return ProjectConfig(
             suite=suite,
-            workflow=workflow,
             env=env,
             target=Path(self._raw.get("target", ".")),
             error_format=error_format,

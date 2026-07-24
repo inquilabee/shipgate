@@ -76,7 +76,7 @@ class CatalogLoader:
     def _merge_raw(self, base: dict, overlay: dict) -> dict:
         """Merge project catalog overlay onto bundled raw catalog data."""
         merged = dict(base)
-        for section in ("tools", "suites", "workflows", "capabilities"):
+        for section in ("tools", "suites"):
             overlay_section = overlay.get(section)
             if not overlay_section:
                 continue
@@ -94,20 +94,19 @@ class CatalogLoader:
         tools_dir = catalog_dir / "tools"
         if tools_dir.is_dir():
             raw["tools"] = self._load_tools_dir(tools_dir)
-        for section in ("suites", "workflows", "capabilities"):
-            section_path = catalog_dir / f"{section}.yaml"
-            if section_path.is_file():
-                raw[section] = self._load_section(catalog_dir, section)
+        suites_path = catalog_dir / "suites.yaml"
+        if suites_path.is_file():
+            raw["suites"] = self._load_section(catalog_dir, "suites")
         return raw or None
 
     def _load_bundled_raw(self, bundled: object) -> dict:
         """Load split catalog from bundled/catalog/ directory."""
         bundled_root = Path(str(bundled))
         catalog_dir = bundled_root / "catalog"
-        raw: dict = {"tools": self._load_tools_dir(catalog_dir / "tools")}
-        for section in ("suites", "workflows", "capabilities"):
-            raw[section] = self._load_section(catalog_dir, section)
-        return raw
+        return {
+            "tools": self._load_tools_dir(catalog_dir / "tools"),
+            "suites": self._load_section(catalog_dir, "suites"),
+        }
 
     def _load_tools_dir(self, tools_dir: Path) -> dict:
         tools: dict = {}

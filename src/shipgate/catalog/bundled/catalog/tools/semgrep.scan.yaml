@@ -11,9 +11,6 @@ semgrep.scan:
     - p/secrets
   modes:
     - check
-  capabilities:
-    - Security
-    - Quality
   normalizer: semgrep
   install:
     manager: python

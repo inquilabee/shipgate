@@ -4,8 +4,6 @@ ty.check:
     - check
   modes:
     - check
-  capabilities:
-    - TypeChecking
   normalizer: ty
   install:
     manager: python

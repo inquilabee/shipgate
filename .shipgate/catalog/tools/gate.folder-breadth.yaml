@@ -3,9 +3,6 @@ gate.folder-breadth:
   script: gates/folder-breadth.sh
   modes:
     - check
-  capabilities:
-    - Gates
-    - Policy
   normalizer: gate_json
   configuration:
     bundled: configs/gates/folder-breadth.yaml

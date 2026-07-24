@@ -55,7 +55,7 @@ Projects declare policy and intent. They do not describe subprocess behavior, ar
 
 ### Ready by default
 
-ShipGate ships opinionated catalogs, bundled tool configurations, default suites, and default workflows.
+ShipGate ships opinionated catalogs, bundled tool configurations, and default suites.
 
 Configuration is for overriding policy, not for making the product usable for the first time.
 
@@ -75,7 +75,7 @@ ShipGate should not assume a language, build system, package manager, or reposit
 
 ### Composable
 
-Individual tools can be grouped into suites and workflows without changing how leaf tools execute.
+Individual tools can be grouped into suites without changing how leaf tools execute.
 
 ### Stable
 
@@ -211,39 +211,11 @@ checks:
 
 A check binds repository policy to a catalog entry. It does not define command flags or tool invocation.
 
-### Workflow
+### Suite
 
-A workflow defines an ordered sequence of checks or capabilities for a user intent such as `default`, `ci`, `release`, `pre-commit`, or `nightly`.
+A suite is a named group of tools (or nested suites). Suites are the only catalog grouping for selecting what to run (for example `standard`, `ci`, `full`, `format`).
 
-Example:
-
-```yaml
-workflows:
-  default:
-    - apply:
-        - formatting
-    - check:
-        - quality
-```
-
-`apply` means the runnable may modify files. `check` means it should report results without mutating the repository. Tools that cannot honor the requested mode must fail during planning.
-
-### Capability
-
-Capabilities classify checks by user intent, independent of implementation.
-
-Examples:
-
-- Formatting
-- Linting
-- Typing
-- Security
-- Secrets
-- Documentation
-- Architecture
-- Testing
-
-Capabilities are semantic. They should not describe execution details.
+CLI mode (`check` vs `format`/`apply`) chooses whether runnables report or modify files. Tools that cannot honor the requested mode must fail during planning.
 
 ### Catalog
 
@@ -253,7 +225,6 @@ It defines:
 
 - tool definitions
 - suite definitions
-- capabilities
 - supported normalized options
 - configuration discovery
 - bundled configuration
@@ -334,9 +305,6 @@ configuration:
     - pyproject.toml
     - bundled
   merge: false
-
-capabilities:
-  - Linting
 ```
 
 The Tool Definition contains metadata, not executable tool-specific branching.
@@ -485,16 +453,15 @@ User
   -> Final output
 ```
 
-### Workflow Planner
+### Suite Planner
 
-The Workflow Planner resolves workflow names into ordered work.
+The suite planner resolves suite names into ordered tool work.
 
 It owns:
 
-- workflow expansion
+- suite expansion
 - execution ordering
 - dependency validation
-- suite references from workflows
 
 ### Check Planner
 
@@ -502,7 +469,6 @@ The Check Planner resolves project checks into runnable execution units.
 
 It owns:
 
-- capability resolution
 - catalog lookup
 - check defaults
 - project overrides
@@ -722,7 +688,7 @@ shipgate ci
 shipgate quality
 ```
 
-Those commands should resolve through default workflows and suites supplied by the catalog. Projects can then override scopes, checks, suites, or configuration discovery when the defaults are not enough.
+Those commands should resolve through default suites supplied by the catalog. Projects can then override scopes, checks, suites, or configuration discovery when the defaults are not enough.
 
 ## 12. Installation model
 
@@ -792,9 +758,9 @@ Examples:
 - Command construction does not traverse repositories.
 - The executor does not normalize results.
 
-### Capabilities remain semantic
+### Suites remain the grouping model
 
-Capabilities represent user intent, such as Security, Formatting, or Typing. They do not represent command flags, execution strategies, or file traversal behavior.
+Suites group tools for user intents such as `standard`, `ci`, or `full`. They do not encode command flags, execution strategies, or file traversal behavior.
 
 ### Normalized options stay small
 
@@ -823,7 +789,7 @@ The design is coherent enough to implement a small vertical slice, but these dec
 
 - exact project configuration schema
 - exact catalog schema
-- capability-to-check resolution rules
+- suite expansion rules
 - override and merge behavior
 - suite cycle and duplicate handling
 - failure semantics for sequential and parallel execution

@@ -13,8 +13,6 @@ def test_parse_minimal_catalog():
                 }
             },
             "suites": {"standard": {"members": ["example.lint"]}},
-            "workflows": {"ci": [{"check": ["standard"]}]},
-            "capabilities": {"lint": ["example.lint"]},
         }
     )
     tool = catalog.get_tool("example.lint")
@@ -22,5 +20,3 @@ def test_parse_minimal_catalog():
     assert tool.modes == (RunMode.CHECK,)
     assert tool.scope.extensions == (".py",)
     assert catalog.suites["standard"].members == ("example.lint",)
-    assert catalog.workflows["ci"].steps[0].mode == RunMode.CHECK
-    assert catalog.capabilities["lint"] == ("example.lint",)

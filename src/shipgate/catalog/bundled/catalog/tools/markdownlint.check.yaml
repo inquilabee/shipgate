@@ -3,8 +3,6 @@ markdownlint.check:
   subcommand: []
   modes:
     - check
-  capabilities:
-    - Documentation
   normalizer: markdownlint
   install:
     manager: binary

@@ -20,7 +20,6 @@ def shared_parser() -> argparse.ArgumentParser:
     shared = argparse.ArgumentParser(add_help=False)
     shared.add_argument("--config", type=Path, help="Path to shipgate.yaml")
     shared.add_argument("--suite", help="Suite to run")
-    shared.add_argument("--workflow", help="Workflow to run")
     shared.add_argument("--check", help="Single check to run")
     shared.add_argument("--target", type=Path, help="Target path")
     shared.add_argument("--error-format", dest="error_format", help="Error output format")
@@ -272,7 +271,6 @@ def run_command(args: argparse.Namespace, project_root: Path) -> RunCommand:
         config_path=getattr(args, "config", None),
         suite=getattr(args, "suite", None),
         check=getattr(args, "check", None),
-        workflow=getattr(args, "workflow", None),
         target=getattr(args, "target", None),
         error_format=getattr(args, "error_format", None),
         extra_args=tuple(getattr(args, "extra_args", []) or []),

@@ -15,7 +15,6 @@ class RunCommand:
     config_path: Path | None = None
     suite: str | None = None
     check: str | None = None
-    workflow: str | None = None
     target: Path | None = None
     error_format: str | None = None
     extra_args: tuple[str, ...] = ()

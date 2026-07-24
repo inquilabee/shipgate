@@ -3,8 +3,6 @@ pydeps.graph:
   subcommand: []
   modes:
     - check
-  capabilities:
-    - Dependencies
   normalizer: generic_exit
   install:
     manager: python

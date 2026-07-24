@@ -12,9 +12,9 @@ def test_sync_catalog_creates_missing_files(tmp_path: Path):
     created = sync_catalog(tmp_path)
     assert (tmp_path / ".shipgate/catalog/tools/ruff.lint.yaml").is_file()
     assert (tmp_path / ".shipgate/catalog/suites.yaml").is_file()
-    assert (tmp_path / ".shipgate/catalog/workflows.yaml").is_file()
-    assert (tmp_path / ".shipgate/catalog/capabilities.yaml").is_file()
-    assert len(created) >= 4
+    assert not (tmp_path / ".shipgate/catalog/workflows.yaml").is_file()
+    assert not (tmp_path / ".shipgate/catalog/capabilities.yaml").is_file()
+    assert len(created) >= 2
 
 
 def test_sync_catalog_does_not_overwrite(tmp_path: Path):
@@ -54,8 +54,13 @@ def test_merge_catalog_raw_overlay_wins():
 
 def test_init_scaffolds_catalog(tmp_path: Path):
     init_project(tmp_path)
+    suites_path = tmp_path / ".shipgate/catalog/suites.yaml"
     assert (tmp_path / ".shipgate/catalog/tools/ruff.lint.yaml").is_file()
-    assert (tmp_path / ".shipgate/catalog/suites.yaml").is_file()
+    assert suites_path.is_file()
+    text = suites_path.read_text(encoding="utf-8")
+    assert text.startswith("suites:")
+    assert "python-quality:" in text
+    assert "full:" in text
 
 
 def test_scaffold_project_layout_includes_catalog(tmp_path: Path):

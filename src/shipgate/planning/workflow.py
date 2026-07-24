@@ -1,4 +1,4 @@
-"""Workflow planning."""
+"""Suite and check planning."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
-from shipgate.planning.capabilities import expand_capability
 from shipgate.planning.suites import expand_suite
 
 if TYPE_CHECKING:
@@ -29,20 +28,18 @@ def resolve_runnables(
     catalog: Catalog,
     suite_override: str | None = None,
     check_override: str | None = None,
-    workflow_override: str | None = None,
 ) -> tuple[str, list[PlannedCheck]]:
     """Return (run_label, planned checks) for the given mode and overrides."""
     if check_override:
         return resolve_check_override(check_override, mode, project, catalog)
-    if project.checks and not suite_override and not workflow_override:
+    if project.checks and not suite_override:
         planned = planned_from_check_names(project, catalog, mode)
         return project.suite or "custom", planned
-    return resolve_suite_or_workflow(
+    return resolve_suite(
         mode=mode,
         project=project,
         catalog=catalog,
         suite_override=suite_override,
-        workflow_override=workflow_override,
     )
 
 
@@ -67,33 +64,19 @@ def resolve_check_override(
     ]
 
 
-def resolve_suite_or_workflow(
+def resolve_suite(
     *,
     mode: RunMode,
     project: ProjectConfig,
     catalog: Catalog,
     suite_override: str | None,
-    workflow_override: str | None,
 ) -> tuple[str, list[PlannedCheck]]:
-    if workflow_override:
-        if workflow_override not in catalog.workflows:
-            raise PlanningError(
-                f"unknown workflow {workflow_override!r}",
-                hint='run "shipgate list suites" / check catalog workflows',
-            )
-        return resolve_workflow(workflow_override, catalog, project)
-
     if suite_override:
         suite_id = suite_override
-    elif project.workflow and project.workflow in catalog.workflows:
-        return resolve_workflow(project.workflow, catalog, project)
     elif mode == RunMode.APPLY:
         suite_id = "format"
     else:
         suite_id = project.suite or "standard"
-
-    if catalog.is_workflow(suite_id):
-        return resolve_workflow(suite_id, catalog, project)
 
     tool_ids = expand_suite(suite_id, catalog)
     planned = [
@@ -129,38 +112,6 @@ def planned_from_check_names(
                 )
             )
     return planned
-
-
-def resolve_workflow(
-    workflow_id: str,
-    catalog: Catalog,
-    project: ProjectConfig,
-) -> tuple[str, list[PlannedCheck]]:
-    workflow = catalog.get_workflow(workflow_id)
-    planned: list[PlannedCheck] = []
-    seen: set[tuple[str, RunMode]] = set()
-    for step in workflow.steps:
-        for member in step.members:
-            tool_ids = expand_workflow_member(member, catalog)
-            for tool_id in tool_ids:
-                key = (tool_id, step.mode)
-                if key in seen:
-                    continue
-                seen.add(key)
-                planned.append(
-                    PlannedCheck(
-                        tool_id=tool_id,
-                        mode=step.mode,
-                        scope_name=project.scope_for_check(tool_id),
-                    )
-                )
-    return workflow_id, planned
-
-
-def expand_workflow_member(member: str, catalog: Catalog) -> list[str]:
-    if member in catalog.capabilities:
-        return expand_capability(catalog, member)
-    return expand_suite(member, catalog)
 
 
 def suite_execution_flags(

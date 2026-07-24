@@ -100,7 +100,7 @@ flowchart LR
     end
 
     subgraph plan_layer["planning/"]
-        Workflow["workflow.py — suites, workflows, PlannedCheck"]
+        Workflow["workflow.py — suites, PlannedCheck"]
         Scopes["scopes.py + scope_resolver.py + gitignore.py"]
         Requests["requests.py — build_execution_request, resolve_request"]
         Incremental["incremental.py — changed-only / since"]
@@ -160,7 +160,7 @@ flowchart LR
     Norm --> Types
 ```
 
-`cli.py` parses flags into `RunCommand` and calls `ShipGateApp.check` or `.format`. `prepare_context` loads config, resolves the suite or workflow into `PlannedCheck` items, and builds the execution environment. `CheckRequestPlanner` converts each planned check into a skipped `CheckReport` or a `ResolvedRequest`; `CheckRunner` executes argv, writes raw output, and normalizes results. Finalizers persist history through `ReportStore.save_final` and format failures via `formatters/` (successes stay quiet unless `--verbose`).
+`cli.py` parses flags into `RunCommand` and calls `ShipGateApp.check` or `.format`. `prepare_context` loads config, resolves the suite into `PlannedCheck` items, and builds the execution environment. `CheckRequestPlanner` converts each planned check into a skipped `CheckReport` or a `ResolvedRequest`; `CheckRunner` executes argv, writes raw output, and normalizes results. Finalizers persist history through `ReportStore.save_final` and format failures via `formatters/` (successes stay quiet unless `--verbose`).
 
 ### Gates and policy (cross-cutting)
 
@@ -230,7 +230,7 @@ sequenceDiagram
             Plan-->>Planner: ResolvedRequest
             Planner-->>Runner: PreparedCheck with ResolvedRequest
 
-            alt gate tool (capabilities: Gates)
+            alt gate tool (tool.script set)
                 Runner->>Runner: prepare_gate_execution (bash + SHIPGATE_* env)
             else catalog tool
                 Runner->>Env: resolve_executable (managed venv / PATH)
@@ -268,7 +268,7 @@ sequenceDiagram
 ```mermaid
 flowchart TB
     YAML2["shipgate.yaml"] --> PC["ProjectConfig — domain/project.py"]
-    CatYAML["catalog tools/suites/workflows YAML"] --> TD["ToolDefinition, SuiteDefinition — domain/catalog.py"]
+    CatYAML["catalog tools/suites YAML"] --> TD["ToolDefinition, SuiteDefinition — domain/catalog.py"]
     PC --> ER["ExecutionRequest — domain/execution.py"]
     TD --> ER
     ER --> RR["ResolvedRequest"]

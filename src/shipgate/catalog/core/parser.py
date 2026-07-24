@@ -10,17 +10,14 @@ from shipgate.domain.catalog import (
     ScopeCriteria,
     SuiteDefinition,
     ToolDefinition,
-    WorkflowDefinition,
-    WorkflowStep,
 )
 from shipgate.domain.modes import RunMode
-from shipgate.errors import CatalogError
 
 
 class CatalogParser:
     """Transform merged raw catalog YAML dicts into frozen domain objects.
 
-    Maps tools, suites, workflows, and capabilities into a ``Catalog`` without I/O or validation.
+    Maps tools and suites into a ``Catalog`` without I/O or validation.
     """
 
     def __init__(self, raw: dict) -> None:
@@ -33,13 +30,9 @@ class CatalogParser:
     def _parse(self) -> Catalog:
         tools_raw = self._raw.get("tools", {}) or {}
         suites_raw = self._raw.get("suites", {}) or {}
-        workflows_raw = self._raw.get("workflows", {}) or {}
-        capabilities_raw = self._raw.get("capabilities", {}) or {}
         return Catalog(
             tools=self._parse_tools(tools_raw),
             suites=self._parse_suites(suites_raw),
-            workflows=self._parse_workflows(workflows_raw),
-            capabilities=self._parse_capabilities(capabilities_raw),
         )
 
     def _parse_tools(self, raw: dict) -> dict[str, ToolDefinition]:
@@ -49,18 +42,6 @@ class CatalogParser:
         return {
             suite_id: self._parse_suite(suite_id, suite_data)
             for suite_id, suite_data in raw.items()
-        }
-
-    def _parse_workflows(self, raw: dict) -> dict[str, WorkflowDefinition]:
-        return {
-            workflow_id: self._parse_workflow(workflow_id, workflow_data)
-            for workflow_id, workflow_data in raw.items()
-        }
-
-    def _parse_capabilities(self, raw: dict) -> dict[str, tuple[str, ...]]:
-        return {
-            str(name): tuple(str(tool_id) for tool_id in (members or []))
-            for name, members in raw.items()
         }
 
     def _parse_tool(self, tool_id: str, raw: dict) -> ToolDefinition:
@@ -77,7 +58,6 @@ class CatalogParser:
             subcommand=tuple(raw.get("subcommand", []) or []),
             cli=cli,
             configuration=configuration,
-            capabilities=tuple(raw.get("capabilities", []) or []),
             install=install,
             normalizer=raw.get("normalizer", "generic_exit"),
             modes=modes,
@@ -140,31 +120,3 @@ class CatalogParser:
             parallel=bool(raw.get("parallel", False)),
             fail_fast=bool(raw.get("fail_fast", raw.get("fail-fast", False))),
         )
-
-    def _parse_workflow(self, workflow_id: str, raw: list) -> WorkflowDefinition:
-        if not isinstance(raw, list):
-            raise CatalogError(f"workflow {workflow_id!r} must be a list of steps")
-        steps: list[WorkflowStep] = []
-        for index, step_raw in enumerate(raw):
-            if not isinstance(step_raw, dict) or len(step_raw) != 1:
-                raise CatalogError(
-                    f"workflow {workflow_id!r} step {index} must be a single-mode mapping"
-                )
-            mode_name, members_raw = next(iter(step_raw.items()))
-            try:
-                mode = RunMode(mode_name)
-            except ValueError as exc:
-                raise CatalogError(
-                    f"workflow {workflow_id!r} step {index} has invalid mode {mode_name!r}"
-                ) from exc
-            if not isinstance(members_raw, list):
-                raise CatalogError(f"workflow {workflow_id!r} step {index} members must be a list")
-            steps.append(
-                WorkflowStep(
-                    mode=mode,
-                    members=tuple(str(member) for member in members_raw),
-                )
-            )
-        if not steps:
-            raise CatalogError(f"workflow {workflow_id!r} has no steps")
-        return WorkflowDefinition(id=workflow_id, steps=tuple(steps))

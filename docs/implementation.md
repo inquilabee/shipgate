@@ -383,7 +383,6 @@ class ToolDefinition:
     subcommand: tuple[str, ...]
     cli: Mapping[str, CliOptionDefinition]
     configuration: ConfigurationDefinition
-    capabilities: tuple[str, ...]
     install: InstallDefinition | None
     normalizer: str
     modes: tuple[RunMode, ...]
@@ -561,7 +560,6 @@ tools:
     executable: ruff
     subcommand: ["check"]
     modes: ["check"]
-    capabilities: ["Linting", "Quality"]
     normalizer: ruff
     install:
       manager: python
@@ -599,7 +597,6 @@ tools:
     executable: ruff
     subcommand: ["format"]
     modes: ["apply", "check"]
-    capabilities: ["Formatting"]
     normalizer: generic_exit
     install:
       manager: python

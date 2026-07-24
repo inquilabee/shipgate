@@ -7,7 +7,7 @@ from pathlib import Path
 from shipgate.gates.paths import bundled_root_path
 from shipgate.project.config_setup import scaffold_file_if_missing
 
-CATALOG_SECTIONS = ("suites", "workflows", "capabilities")
+CATALOG_SECTIONS = ("suites",)
 
 
 def bundled_catalog_dir() -> Path:

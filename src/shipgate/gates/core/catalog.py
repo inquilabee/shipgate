@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from shipgate.domain.catalog import Catalog, SuiteDefinition, ToolDefinition
+from shipgate.domain.catalog import Catalog, ScopeCriteria, SuiteDefinition, ToolDefinition
 from shipgate.domain.modes import RunMode
 from shipgate.paths import PROJECT_GATES_DIR
 
@@ -42,10 +42,10 @@ class GateCatalogMerger:
                 script=str(gate_path.resolve()),
                 subcommand=(),
                 cli={},
-                capabilities=("Gates",),
                 normalizer="gate_json",
                 modes=(RunMode.CHECK, RunMode.APPLY),
                 option_order=(),
+                scope=ScopeCriteria(delivery="dirs"),
             )
         suites["local-gates"] = SuiteDefinition(
             id="local-gates",
@@ -56,8 +56,6 @@ class GateCatalogMerger:
         return Catalog(
             tools=tools,
             suites=suites,
-            workflows=base.workflows,
-            capabilities=base.capabilities,
         )
 
     @staticmethod

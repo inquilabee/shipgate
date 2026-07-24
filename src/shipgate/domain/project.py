@@ -28,7 +28,6 @@ class CheckBinding:
 @dataclass(frozen=True)
 class ProjectConfig:
     suite: str | None = "standard"
-    workflow: str | None = None
     env: str = "managed"
     target: Path = Path()
     error_format: str | None = None

@@ -31,7 +31,6 @@ env = "managed"
 target = "."
 changed_only = true
 error_format = "compact"
-workflow = "default"
 auto_install = true
 parallel = true
 fail_fast = true
@@ -77,7 +76,6 @@ def assert_full_pyproject_identity(config) -> None:
     assert config.env == "managed", "expected managed env"
     assert config.target == Path(), "expected default target"
     assert config.error_format == "compact", "expected compact error format"
-    assert config.workflow == "default", "expected default workflow"
     assert config.config_mode == "repo", "expected repo config mode"
     assert config.checks == (), "expected empty checks tuple"
 

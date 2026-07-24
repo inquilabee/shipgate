@@ -3,8 +3,6 @@ codespell.check:
   subcommand: []
   modes:
     - check
-  capabilities:
-    - Spelling
   normalizer: codespell
   install:
     manager: python
