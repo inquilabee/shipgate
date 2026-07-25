@@ -1,6 +1,9 @@
 # Contributing to shipgate
 
-Thanks for helping improve the orchestrator. This guide is for people changing **shipgate itself**, not for using it in an application repo. For install and everyday usage, see [README.md](README.md). Maintainer index: [AGENTS.md](AGENTS.md).
+Thanks for helping improve the orchestrator. This guide is for people changing
+**shipgate itself**, not for using it in an application repo. Quick start:
+[README.md](README.md). Usage details: [docs/usage.md](docs/usage.md).
+Maintainer index: [AGENTS.md](AGENTS.md).
 
 ## Development setup
 

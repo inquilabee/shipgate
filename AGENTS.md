@@ -9,6 +9,7 @@ ShipGate is a portable, metadata-driven quality-gate orchestrator. Projects decl
 | Agent rules | `.cursor/rules/` — always-on; override skills when they conflict |
 | Gates contract | `.cursor/rules/gates.mdc` |
 | Architecture | `docs/architecture.md` |
+| Usage (consumer) | `docs/usage.md` |
 | Check flow (tool YAML → run) | `docs/check-flow.md` |
 | Option mappings | `docs/res/config.md` |
 
