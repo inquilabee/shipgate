@@ -94,6 +94,25 @@ class ReportStore:
     def list_runs(self) -> list[dict]:
         return self._load_index()
 
+    def merge_metadata(self, run_id: str, metadata: dict) -> None:
+        """Merge keys into metadata.json and refresh the index entry for a saved run."""
+        safe_run_id = validate_run_id(run_id)
+        run_dir = self._contained_run_dir(self.runs_dir, safe_run_id)
+        meta_path = run_dir / "metadata.json"
+        meta: dict = {}
+        if meta_path.is_file():
+            meta = dict(json.loads(meta_path.read_text(encoding="utf-8")))
+        elif not (run_dir / REPORT_FILENAME).is_file():
+            raise FileNotFoundError(f"run not found: {safe_run_id}")
+        meta.update(metadata)
+        meta.setdefault("run_id", safe_run_id)
+        meta_path.parent.mkdir(parents=True, exist_ok=True)
+        meta_path.write_text(
+            dumps_indented(meta, trailing_newline=False),
+            encoding="utf-8",
+        )
+        self._update_index(meta)
+
     def load(self, run_id: str) -> RunReport:
         safe_run_id = validate_run_id(run_id)
         path = self._contained_run_dir(self.runs_dir, safe_run_id) / REPORT_FILENAME

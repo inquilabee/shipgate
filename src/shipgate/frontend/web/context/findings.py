@@ -10,7 +10,10 @@ from urllib.parse import urlencode
 from fastapi import HTTPException
 
 from shipgate.baseline import load_baseline
-from shipgate.frontend.domain.baseline import fingerprint_from_record, fingerprints_from_report
+from shipgate.frontend.domain.baseline import (
+    fingerprint_from_record,
+    fingerprints_from_report,
+)
 from shipgate.frontend.domain.finding_context import message_contexts, source_contexts
 from shipgate.frontend.domain.models import FindingCategory, FindingRecord, RunRecord
 from shipgate.paths import normalize_finding_path
@@ -38,19 +41,26 @@ class FindingsPage:
 
 
 def finding_filters(
-    severity: str | None, check_id: str | None, file_filter: str | None
+    severity: str | None,
+    check_id: str | None,
+    file_filter: str | None,
+    rule_id: str | None = None,
 ) -> dict[str, str | None]:
     return {
         "severity": severity or None,
         "check_id": check_id or None,
         "file": file_filter,
+        "rule_id": rule_id or None,
     }
 
 
-def filter_display(filters: dict[str, str | None], file_filter: str | None) -> dict[str, str]:
+def filter_display(
+    filters: dict[str, str | None], file_filter: str | None
+) -> dict[str, str]:
     return {
         "severity": filters["severity"] or "",
         "check_id": filters["check_id"] or "",
+        "rule_id": filters.get("rule_id") or "",
         "file": file_filter or "",
     }
 
@@ -95,18 +105,26 @@ def load_findings_page(
 def findings_nav_urls(
     run_id: str, query: dict[str, str], page: FindingsPage
 ) -> tuple[str | None, str | None]:
-    prev_url = findings_page_url(run_id, query, page.page - 1) if page.page > 1 else None
+    prev_url = (
+        findings_page_url(run_id, query, page.page - 1) if page.page > 1 else None
+    )
     next_url = (
-        findings_page_url(run_id, query, page.page + 1) if page.page < page.total_pages else None
+        findings_page_url(run_id, query, page.page + 1)
+        if page.page < page.total_pages
+        else None
     )
     return prev_url, next_url
 
 
-def active_query(filters: dict[str, str | None], file_filter: str | None) -> dict[str, str]:
+def active_query(
+    filters: dict[str, str | None], file_filter: str | None
+) -> dict[str, str]:
     return {k: v for k, v in filter_display(filters, file_filter).items() if v}
 
 
-def page_message_contexts(page: FindingsPage, source_ctx: dict[str, Any]) -> dict[str, Any]:
+def page_message_contexts(
+    page: FindingsPage, source_ctx: dict[str, Any]
+) -> dict[str, Any]:
     extra = [finding for finding in page.code_findings if finding.id not in source_ctx]
     return message_contexts(page.tool_failures + extra)
 
@@ -120,14 +138,20 @@ def findings_context(
     page: FindingsPage,
 ) -> dict[str, Any]:
     query = active_query(filters, file_filter)
-    project_root = Path(run.worktree_path) if run.worktree_path else request.app.state.primary_root
+    project_root = (
+        Path(run.worktree_path) if run.worktree_path else request.app.state.primary_root
+    )
     source_ctx = source_contexts(project_root, page.code_findings)
     message_ctx = page_message_contexts(page, source_ctx)
     prev_url, next_url = findings_nav_urls(run.id, query, page)
     baseline = load_baseline(request.app.state.primary_root)
     baseline_fps = fingerprints_from_report(baseline) if baseline else set()
     new_finding_ids = (
-        {f.id for f in page.code_findings if fingerprint_from_record(f) not in baseline_fps}
+        {
+            f.id
+            for f in page.code_findings
+            if fingerprint_from_record(f) not in baseline_fps
+        }
         if baseline_fps
         else set()
     )
@@ -139,6 +163,7 @@ def findings_context(
         "message_contexts": message_ctx,
         "tool_failures": page.tool_failures,
         "check_options": check_options_for_run(storage, run),
+        "rule_options": rule_options_for_run(run),
         "new_finding_ids": new_finding_ids,
         **filter_display(filters, file_filter),
         "page": page.page,
@@ -159,16 +184,19 @@ def findings_response(
     check_id: str | None,
     file: str | None,
     page: int,
+    rule_id: str | None = None,
 ) -> HTMLResponse:
     storage: SqliteStorage = request.app.state.storage
     run = storage.get_run(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail="run not found")
     file_filter = normalize_finding_path(file) if file else None
-    filters = finding_filters(severity, check_id, file_filter)
+    filters = finding_filters(severity, check_id, file_filter, rule_id)
     page_data = load_findings_page(storage, run_id, filters, page)
     context = findings_context(request, run, storage, filters, file_filter, page_data)
-    return request.app.state.templates.TemplateResponse(request, "findings.html", context)
+    return request.app.state.templates.TemplateResponse(
+        request, "findings.html", context
+    )
 
 
 def findings_page_url(run_id: str, query: dict[str, str], page: int) -> str:
@@ -183,7 +211,9 @@ def findings_page_url(run_id: str, query: dict[str, str], page: int) -> str:
 def summary_check_ids(run: RunRecord) -> set[str]:
     if not run.summary or not run.summary.by_check_id:
         return set()
-    return {check_id for check_id, count in run.summary.by_check_id.items() if count > 0}
+    return {
+        check_id for check_id, count in run.summary.by_check_id.items() if count > 0
+    }
 
 
 def check_options_for_run(storage: SqliteStorage, run: RunRecord) -> list[str]:
@@ -191,3 +221,9 @@ def check_options_for_run(storage: SqliteStorage, run: RunRecord) -> list[str]:
     for finding in storage.list_findings(run.id):
         options.add(finding.check_id)
     return sorted(options)
+
+
+def rule_options_for_run(run: RunRecord) -> list[str]:
+    if not run.summary or not run.summary.by_rule_id:
+        return []
+    return sorted(run.summary.by_rule_id.keys())

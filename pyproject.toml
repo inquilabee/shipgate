@@ -41,6 +41,7 @@ dev = [
   "uvicorn>=0.30",
   "python-multipart>=0.0.9",
   "httpx>=0.27",
+  "pytest-playwright>=0.6",
 ]
 
 [build-system]
@@ -59,7 +60,11 @@ shipgate = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["integration: tests that require external tools"]
+markers = [
+  "integration: tests that require external tools",
+  "ui: browser UI tests (Playwright; requires chromium)",
+]
+addopts = "-m 'not ui'"
 
 [tool.djlint]
 profile = "jinja"

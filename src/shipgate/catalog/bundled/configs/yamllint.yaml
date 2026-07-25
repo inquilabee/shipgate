@@ -9,3 +9,6 @@ rules:
   key-duplicates: enable
   indentation:
     spaces: 2
+  quoted-strings:
+    quote-type: any
+    required: only-when-needed

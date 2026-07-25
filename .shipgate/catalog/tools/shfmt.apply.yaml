@@ -8,12 +8,12 @@ shfmt.apply:
   install:
     manager: binary
     package: shfmt
-    version: "3.6.0"
+    version: 3.6.0
     binary: shfmt
     allow_path: false
     download:
       repo: mvdan/sh
-      asset_template: "shfmt_v{version}_{os}_{arch}"
+      asset_template: shfmt_v{version}_{os}_{arch}
       binary_name: shfmt
       arch_map:
         x86_64: amd64

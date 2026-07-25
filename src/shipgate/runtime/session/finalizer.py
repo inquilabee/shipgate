@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    from shipgate.domain.reports import RunReport
+    from shipgate.domain.reports import CheckReport, RunReport
     from shipgate.domain.run_command import RunCommand
     from shipgate.runtime.session.context import RunProgress
 
@@ -22,6 +22,8 @@ def emit_progress(
     tool_id: str,
     checks_completed: int,
     checks_total: int,
+    *,
+    completed_check: CheckReport | None = None,
 ) -> None:
     if on_progress is None:
         return
@@ -32,6 +34,7 @@ def emit_progress(
             current_check_id=tool_id,
             checks_completed=checks_completed,
             checks_total=checks_total,
+            completed_check=completed_check,
         )
     )
 

@@ -103,6 +103,7 @@ class ShipGateApp:
         on_progress=None,
         write_reports: bool = True,
         emit_failure_output: bool = True,
+        should_cancel=None,
     ) -> tuple[int, RunReport]:
         return self._run_session(command.project_root).run(
             command,
@@ -111,6 +112,7 @@ class ShipGateApp:
             on_progress=on_progress,
             write_reports=write_reports,
             emit_failure_output=emit_failure_output,
+            should_cancel=should_cancel,
         )
 
     def list_suites(self) -> str:

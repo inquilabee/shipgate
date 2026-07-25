@@ -18,6 +18,7 @@
                     <thead class="bg-stone-50 text-muted">
                         <tr>
                             <th class="px-4 py-3 font-medium">Started</th>
+                            <th class="px-4 py-3 font-medium">Duration</th>
                             <th class="px-4 py-3 font-medium">Branch</th>
                             <th class="px-4 py-3 font-medium">Suite</th>
                             <th class="px-4 py-3 font-medium">Status</th>
@@ -29,22 +30,29 @@
                         {% for run in runs %}
                             <tr class="hover:bg-stone-50">
                                 <td class="px-4 py-3 text-muted whitespace-nowrap">{{ run.started_at }}</td>
-                                <td class="px-4 py-3 font-mono text-xs">{{ run.branch }}</td>
-                                <td class="px-4 py-3 font-mono text-xs">{{ run.suite_id }}</td>
-                                <td class="px-4 py-3">
-                                    <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {% if run.status.value == 'failed' %}bg-red-100 text-red-800 {% elif run.status.value == 'succeeded' %}bg-emerald-100 text-emerald-800 {% elif run.status.value in ('queued', 'running') %}bg-sky-100 text-sky-800 {% else %}bg-stone-200 text-stone-700{% endif %}">
-                                        {{ run.status.value }}
-                                    </span>
-                                    {% if run.status.value == "failed" and run.error_message %}
-                                        <div class="mt-1 max-w-sm text-xs text-muted">{{ run.error_message }}</div>
-                                    {% endif %}
-                                </td>
-                                <td class="px-4 py-3">{{ run.summary.finding_count if run.summary else "—" }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <a class="text-brand hover:underline" href="/?run_id={{ run.id }}">Overview</a>
-                                    ·
-                                    <a class="text-brand hover:underline" href="/runs/{{ run.id }}/findings">Findings</a>
-                                </td>
+                                <td class="px-4 py-3 text-muted whitespace-nowrap">
+                                    {% if run.duration_ms is not none %}
+                                        {% if run.duration_ms < 1000 %}{{ run.duration_ms }} ms
+                                        {% elif run.duration_ms < 60000 %}{{ (run.duration_ms / 1000) | round(1) }} s
+                                    {% else %}{{ (run.duration_ms / 60000) | round(1) }} min{% endif %}
+                        {% else %}—{% endif %}
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs">{{ run.branch }}</td>
+                            <td class="px-4 py-3 font-mono text-xs">{{ run.suite_id }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold {% if run.status.value == 'failed' %}bg-red-100 text-red-800 {% elif run.status.value == 'succeeded' %}bg-emerald-100 text-emerald-800 {% elif run.status.value == 'cancelled' %}bg-amber-100 text-amber-800 {% elif run.status.value in ('queued', 'running') %}bg-sky-100 text-sky-800 {% else %}bg-stone-200 text-stone-700{% endif %}">
+                                    {{ run.status.value }}
+                                </span>
+                                {% if run.status.value == "failed" and run.error_message %}
+                                    <div class="mt-1 max-w-sm text-xs text-muted">{{ run.error_message }}</div>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3">{{ run.summary.finding_count if run.summary else "—" }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <a class="text-brand hover:underline" href="/?run_id={{ run.id }}">Overview</a>
+                                ·
+                                <a class="text-brand hover:underline" href="/runs/{{ run.id }}/findings">Findings</a>
+                            </td>
                             </tr>
                         {% endfor %}
                     </tbody>

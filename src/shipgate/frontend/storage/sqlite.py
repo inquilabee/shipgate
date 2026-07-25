@@ -108,7 +108,9 @@ class SqliteStorage:
             return None
         return mapping.row_to_run(row)
 
-    def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]:
+    def list_runs(
+        self, *, limit: int = 50, branch: str | None = None
+    ) -> list[RunRecord]:
         query = "SELECT * FROM runs"
         params: list[object] = []
         if branch is not None:
@@ -154,7 +156,9 @@ class SqliteStorage:
         return run
 
     def _persist_run(self, run: RunRecord, run_id: str) -> None:
-        summary_json = None if run.summary is None else json.dumps(run.summary.to_dict())
+        summary_json = (
+            None if run.summary is None else json.dumps(run.summary.to_dict())
+        )
         with self._connect() as conn:
             conn.execute(
                 """
@@ -222,6 +226,7 @@ class SqliteStorage:
         check_id: str | None = None,
         file: str | None = None,
         category: FindingCategory | None = None,
+        rule_id: str | None = None,
         limit: int | None = None,
         offset: int = 0,
     ) -> list[FindingRecord]:
@@ -231,6 +236,7 @@ class SqliteStorage:
             check_id=check_id,
             file=file,
             category=category,
+            rule_id=rule_id,
         )
         query += " ORDER BY file, line, id"
         if limit is not None:
@@ -248,6 +254,7 @@ class SqliteStorage:
         check_id: str | None = None,
         file: str | None = None,
         category: FindingCategory | None = None,
+        rule_id: str | None = None,
     ) -> int:
         where, params = mapping.findings_filter_clause(
             run_id,
@@ -255,23 +262,38 @@ class SqliteStorage:
             check_id=check_id,
             file=file,
             category=category,
+            rule_id=rule_id,
         )
+        # where/params come from findings_filter_clause (column allowlist), not user SQL.
+        query = f"SELECT COUNT(*) FROM findings WHERE {where}"  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
         with self._connect() as conn:
-            row = conn.execute(f"SELECT COUNT(*) FROM findings WHERE {where}", params).fetchone()  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
+            row = conn.execute(query, params).fetchone()
         return int(row[0])
+
+    def upsert_check_findings(
+        self, run_id: str, check_id: str, findings: list[FindingRecord]
+    ) -> None:
+        existing = [f for f in self.list_findings(run_id) if f.check_id != check_id]
+        self.replace_findings(run_id, existing + list(findings))
 
     def set_started_at(self, run_id: str, started_at: datetime) -> None:
         run = self.get_run(run_id)
         if run is None:
             raise KeyError(f"run not found: {run_id}")
         run.started_at = started_at
+        duration_ms = run.duration_ms
+        if run.finished_at is not None:
+            duration_ms = int((run.finished_at - started_at).total_seconds() * 1000)
+            run.duration_ms = duration_ms
         with self._connect() as conn:
             conn.execute(
-                "UPDATE runs SET started_at = ? WHERE id = ?",
-                (mapping.dt_to_iso(started_at), run_id),
+                "UPDATE runs SET started_at = ?, duration_ms = ? WHERE id = ?",
+                (mapping.dt_to_iso(started_at), duration_ms, run_id),
             )
 
-    def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None:
+    def previous_completed_run(
+        self, *, branch: str, before_run_id: str
+    ) -> RunRecord | None:
         before = self.get_run(before_run_id)
         if before is None:
             return None

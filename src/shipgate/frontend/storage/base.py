@@ -28,7 +28,9 @@ class Storage(Protocol):
 
     def get_run(self, run_id: str) -> RunRecord | None: ...
 
-    def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]: ...
+    def list_runs(
+        self, *, limit: int = 50, branch: str | None = None
+    ) -> list[RunRecord]: ...
 
     def update_run(
         self,
@@ -54,6 +56,7 @@ class Storage(Protocol):
         check_id: str | None = None,
         file: str | None = None,
         category: FindingCategory | None = None,
+        rule_id: str | None = None,
         limit: int | None = None,
         offset: int = 0,
     ) -> list[FindingRecord]: ...
@@ -66,9 +69,16 @@ class Storage(Protocol):
         check_id: str | None = None,
         file: str | None = None,
         category: FindingCategory | None = None,
+        rule_id: str | None = None,
     ) -> int: ...
 
-    def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None: ...
+    def upsert_check_findings(
+        self, run_id: str, check_id: str, findings: list[FindingRecord]
+    ) -> None: ...
+
+    def previous_completed_run(
+        self, *, branch: str, before_run_id: str
+    ) -> RunRecord | None: ...
 
     def prune_old_runs(self, keep: int = 50) -> int: ...
 

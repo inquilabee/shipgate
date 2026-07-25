@@ -73,7 +73,15 @@ class CatalogParser:
             tags=tags,
             cache=cache,
             suggest_if=suggest_if,
+            display_name=str(raw.get("display_name") or ""),
+            description=str(raw.get("description") or ""),
+            documentation_url=self.tool_documentation_url(raw),
         )
+
+    @staticmethod
+    def tool_documentation_url(raw: dict) -> str | None:
+        value = raw.get("documentation_url")
+        return str(value) if value else None
 
     @staticmethod
     def _parse_cli_options(raw: dict) -> dict[str, CliOptionDefinition]:

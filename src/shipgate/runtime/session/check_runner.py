@@ -66,6 +66,7 @@ class CheckRunner:
         context: RunContext,
         run_id: str,
         on_progress: Callable[..., None] | None,
+        should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
         checks_total = len(context.selected_tools)
         emit_progress(on_progress, "", 0, checks_total)
@@ -88,12 +89,14 @@ class CheckRunner:
                 fail_fast=context.fail_fast,
                 on_progress=on_progress,
                 checks_total=checks_total,
+                should_cancel=should_cancel,
             )
         return CheckRunner._run_sequential_checks(
             context.selected_tools,
             run_one,
             on_progress=on_progress,
             checks_total=checks_total,
+            should_cancel=should_cancel,
         )
 
     @staticmethod
@@ -103,18 +106,33 @@ class CheckRunner:
         *,
         on_progress: Callable[..., None] | None,
         checks_total: int,
+        should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
         reports: list[CheckReport] = []
         for completed, selected in enumerate(selected_tools):
+            if should_cancel is not None and should_cancel():
+                break
             emit_progress(on_progress, selected.tool_id, completed, checks_total)
             try:
                 report = run_one(selected)
             except FailFastError as exc:
                 reports.append(exc.report)
-                emit_progress(on_progress, selected.tool_id, completed + 1, checks_total)
+                emit_progress(
+                    on_progress,
+                    selected.tool_id,
+                    completed + 1,
+                    checks_total,
+                    completed_check=exc.report,
+                )
                 break
             reports.append(report)
-            emit_progress(on_progress, selected.tool_id, completed + 1, checks_total)
+            emit_progress(
+                on_progress,
+                selected.tool_id,
+                completed + 1,
+                checks_total,
+                completed_check=report,
+            )
         return reports
 
     @staticmethod
@@ -125,25 +143,46 @@ class CheckRunner:
         fail_fast: bool,
         on_progress: Callable[..., None] | None,
         checks_total: int,
+        should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
         completed = 0
         lock = threading.Lock()
+        cancelled = False
 
         def run_one_with_progress(selected: SelectedTool) -> CheckReport:
-            nonlocal completed
+            nonlocal completed, cancelled
+            if should_cancel is not None and should_cancel():
+                cancelled = True
+                raise FailFastError(
+                    CheckReport(
+                        check_id=selected.tool_id,
+                        tool_id=selected.tool_id,
+                        status="skipped",
+                        exit_code=0,
+                        findings=(),
+                    )
+                )
             report = run_one(selected)
             with lock:
                 completed += 1
-                emit_progress(on_progress, selected.tool_id, completed, checks_total)
+                emit_progress(
+                    on_progress,
+                    selected.tool_id,
+                    completed,
+                    checks_total,
+                    completed_check=report,
+                )
             return report
 
         try:
             return run_parallel(
                 list(selected_tools),
                 run_one_with_progress,
-                fail_fast=fail_fast,
+                fail_fast=fail_fast or cancelled,
             )
         except FailFastError as exc:
+            if exc.report.status == "skipped":
+                return []
             return [exc.report]
 
     def run_selected_tool(

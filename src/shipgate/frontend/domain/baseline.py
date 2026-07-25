@@ -51,6 +51,48 @@ def fingerprint_from_record(
     )
 
 
+def fixed_fingerprints(
+    baseline_fps: set[tuple[str, str, str, int | None, str]],
+    current_fps: set[tuple[str, str, str, int | None, str]],
+) -> set[tuple[str, str, str, int | None, str]]:
+    """Fingerprints present in baseline but absent from the current run."""
+    return baseline_fps - current_fps
+
+
+def fixed_finding_rows(
+    report: RunReport,
+    fixed_fps: set[tuple[str, str, str, int | None, str]],
+    *,
+    limit: int = 20,
+) -> list[dict[str, str | int | None]]:
+    """Compact rows for baseline findings that were fixed in the current run."""
+    rows: list[dict[str, str | int | None]] = []
+    for check in report.reports:
+        for finding in check.findings:
+            loc = finding.location
+            fp = finding_fingerprint(
+                check_id=finding.check_id,
+                rule_id=finding.rule_id,
+                path=loc.path if loc else None,
+                line=loc.line if loc else None,
+                message=finding.message,
+            )
+            if fp not in fixed_fps:
+                continue
+            rows.append(
+                {
+                    "check_id": finding.check_id,
+                    "rule_id": finding.rule_id,
+                    "file": loc.path if loc else None,
+                    "line": loc.line if loc else None,
+                    "message": finding.message,
+                }
+            )
+            if len(rows) >= limit:
+                return rows
+    return rows
+
+
 def severity_deltas_vs_baseline(
     current: dict[str, int],
     baseline: dict[str, int],

@@ -18,6 +18,7 @@
                         <tr>
                             <th class="px-4 py-3 font-medium">Tool</th>
                             <th class="px-4 py-3 font-medium">Name</th>
+                            <th class="px-4 py-3 font-medium">Tags</th>
                             <th class="px-4 py-3 font-medium">Description</th>
                             <th class="px-4 py-3 font-medium">Version</th>
                             <th class="px-4 py-3 font-medium">Docs</th>
@@ -28,6 +29,17 @@
                             <tr class="align-top hover:bg-stone-50">
                                 <td class="px-4 py-3 font-mono text-xs">{{ tool.id }}</td>
                                 <td class="px-4 py-3">{{ tool.name }}</td>
+                                <td class="px-4 py-3">
+                                    {% if tool.tags %}
+                                        <div class="flex flex-wrap gap-1">
+                                            {% for tag in tool.tags %}
+                                                <span class="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-muted">{{ tag }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
                                 <td class="px-4 py-3 max-w-md text-muted">{{ tool.description }}</td>
                                 <td class="px-4 py-3 font-mono text-xs">{{ tool.version }}</td>
                                 <td class="px-4 py-3">

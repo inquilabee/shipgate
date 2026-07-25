@@ -9,7 +9,7 @@ vulture.check:
   install:
     manager: python
     package: vulture
-    version: "2.16"
+    version: 2.16
   cli:
     paths:
       style: positional

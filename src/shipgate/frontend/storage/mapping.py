@@ -43,11 +43,13 @@ def findings_filter_clause(
     check_id: str | None,
     file: str | None,
     category: FindingCategory | None,
+    rule_id: str | None = None,
 ) -> tuple[str, list[object]]:
     clauses = ["run_id = ?"]
     params: list[object] = [run_id]
     append_clause(clauses, params, "severity = ?", severity)
     append_clause(clauses, params, "check_id = ?", check_id)
+    append_clause(clauses, params, "rule_id = ?", rule_id)
     if file is not None:
         normalized = normalize_finding_path(file) or file
         clauses.append("file LIKE ? ESCAPE '\\'")
@@ -63,6 +65,7 @@ def findings_filter_query(
     check_id: str | None,
     file: str | None,
     category: FindingCategory | None,
+    rule_id: str | None = None,
 ) -> tuple[str, list[object]]:
     where, params = findings_filter_clause(
         run_id,
@@ -70,6 +73,7 @@ def findings_filter_query(
         check_id=check_id,
         file=file,
         category=category,
+        rule_id=rule_id,
     )
     return (
         f"SELECT * FROM findings WHERE {where}",  # ruff:ignore[hardcoded-sql-expression]  # nosec B608

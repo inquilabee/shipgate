@@ -46,7 +46,7 @@ ignore = [
 ]
 
 [lint.mccabe]
-max-complexity = 10
+max-complexity = 8
 
 [lint.per-file-ignores]
 "tests/**" = ["assert", "subprocess-without-shell-equals-true"]

@@ -37,6 +37,7 @@ def validate_run_submit_tokens(
     if not csrf_submitted or not secrets.compare_digest(csrf_submitted, csrf_expected):
         raise PermissionError("invalid CSRF token")
     if ui_token_expected is not None and (
-        not ui_token_submitted or not secrets.compare_digest(ui_token_submitted, ui_token_expected)
+        not ui_token_submitted
+        or not secrets.compare_digest(ui_token_submitted, ui_token_expected)
     ):
         raise PermissionError("invalid UI token")

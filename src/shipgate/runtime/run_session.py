@@ -51,6 +51,7 @@ class RunSession:
         on_progress: Callable[[RunProgress], None] | None = None,
         write_reports: bool = True,
         emit_failure_output: bool = True,
+        should_cancel: Callable[[], bool] | None = None,
     ) -> tuple[int, RunReport]:
         context = prepare_context(command, mode, self._catalog)
         run_id = run_id or generate_run_id()
@@ -59,6 +60,7 @@ class RunSession:
             context=context,
             run_id=run_id,
             on_progress=on_progress,
+            should_cancel=should_cancel,
         )
         report = build_run_report(
             run_id=run_id,
@@ -79,7 +81,9 @@ class RunSession:
         from shipgate.ci import is_ci_environment, write_github_step_summary
 
         if command.ci or is_ci_environment():
-            write_github_step_summary(f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n")
+            write_github_step_summary(
+                f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n"
+            )
         return finalize_successful_run(
             command,
             context.project_root,

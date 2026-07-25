@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import cast
 
@@ -16,6 +17,7 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.frontend.domain.models import FindingCategory
 from shipgate.frontend.services.backfill import backfill_from_report_store
 from shipgate.frontend.services.orchestrator import RunOrchestrator
+from shipgate.frontend.services.report_access import store_for_run
 from shipgate.frontend.services.tool_versions import tool_docs_rows
 from shipgate.frontend.services.worktree import WorktreeManager
 from shipgate.frontend.storage.sqlite import SqliteStorage
@@ -25,15 +27,20 @@ from shipgate.frontend.web.context import (
     findings_response,
     new_run_context,
     overview_context,
+    run_to_api,
     start_new_run,
 )
+from shipgate.frontend.web.context.overview import overview_payload, trends_payload
 from shipgate.frontend.web.security import (
     new_csrf_token,
     ui_token_from_env,
     validate_run_submit_tokens,
 )
-from shipgate.paths import PROJECT_SERVER_DIR, SERVER_DB_FILENAME, normalize_finding_path
-from shipgate.runtime.report_store import ReportStore
+from shipgate.paths import (
+    PROJECT_SERVER_DIR,
+    SERVER_DB_FILENAME,
+    normalize_finding_path,
+)
 
 FRONTEND_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = FRONTEND_ROOT / "templates"
@@ -69,6 +76,7 @@ def create_app(primary_root: Path) -> FastAPI:
         {
             "github_repo_url": GITHUB_REPO_URL,
             "shipgate_version": shipgate_version,
+            "ui_test_mode": os.environ.get("SHIPGATE_UI_TEST") == "1",
         },
     )
 
@@ -111,6 +119,14 @@ def register_overview_routes(app: FastAPI) -> None:
 
 
 def register_run_routes(app: FastAPI) -> None:
+    register_run_list_routes(app)
+    register_new_run_routes(app)
+    register_cancel_routes(app)
+    register_findings_routes(app)
+    register_run_detail_routes(app)
+
+
+def register_run_list_routes(app: FastAPI) -> None:
     @app.get("/runs", response_class=HTMLResponse)
     def runs_list(request: Request) -> HTMLResponse:
         storage: SqliteStorage = request.app.state.storage
@@ -121,6 +137,8 @@ def register_run_routes(app: FastAPI) -> None:
             {"request": request, "runs": storage.list_runs(limit=50)},
         )
 
+
+def register_new_run_routes(app: FastAPI) -> None:
     @app.get("/runs/new", response_class=HTMLResponse)
     def new_run_form(request: Request, error: str | None = None) -> HTMLResponse:
         return request.app.state.templates.TemplateResponse(
@@ -134,6 +152,9 @@ def register_run_routes(app: FastAPI) -> None:
         request: Request,
         branch: str = Form(...),
         suite_id: str = Form(...),
+        check: str | None = Form(None),
+        changed_only: str | None = Form(None),
+        since: str | None = Form(None),
         csrf_token: str | None = Form(None),
         ui_token: str | None = Form(None),
         acknowledge_requirements: str | None = Form(None),
@@ -153,18 +174,65 @@ def register_run_routes(app: FastAPI) -> None:
             branch,
             suite_id,
             acknowledge_requirements,
+            check=check or None,
+            changed_only=bool(changed_only),
+            since=since or None,
         )
 
+
+def register_cancel_routes(app: FastAPI) -> None:
+    @app.post("/runs/{run_id}/cancel")
+    def cancel_run(
+        request: Request,
+        run_id: str,
+        csrf_token: str | None = Form(None),
+        ui_token: str | None = Form(None),
+    ) -> RedirectResponse:
+        try:
+            validate_run_submit_tokens(
+                csrf_expected=request.app.state.csrf_token,
+                csrf_submitted=csrf_token,
+                ui_token_expected=ui_token_from_env(),
+                ui_token_submitted=ui_token,
+            )
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        orchestrator: RunOrchestrator = request.app.state.orchestrator
+        if not orchestrator.request_cancel(run_id):
+            raise HTTPException(status_code=404, detail="run not cancellable")
+        return RedirectResponse(url=f"/?run_id={run_id}", status_code=303)
+
+
+def register_findings_routes(app: FastAPI) -> None:
     @app.get("/runs/{run_id}/findings", response_class=HTMLResponse)
     def findings_page(
         request: Request,
         run_id: str,
         severity: str | None = Query(None),
         check_id: str | None = Query(None),
+        rule_id: str | None = Query(None),
         file: str | None = Query(None),
         page: int = Query(1, ge=1),
     ) -> HTMLResponse:
-        return findings_response(request, run_id, severity, check_id, file, page)
+        return findings_response(
+            request, run_id, severity, check_id, file, page, rule_id
+        )
+
+
+def register_run_detail_routes(app: FastAPI) -> None:
+    @app.get("/runs/{run_id}/new-code", response_class=HTMLResponse)
+    def new_code_page(request: Request, run_id: str) -> HTMLResponse:
+        from shipgate.frontend.web.context.new_code import new_code_context
+
+        storage: SqliteStorage = request.app.state.storage
+        run = storage.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail=RUN_NOT_FOUND)
+        return request.app.state.templates.TemplateResponse(
+            request,
+            "new_code.html",
+            new_code_context(request, storage, run),
+        )
 
     @app.get("/partials/runs/{run_id}/progress", response_class=HTMLResponse)
     def run_progress(request: Request, run_id: str) -> HTMLResponse:
@@ -174,7 +242,12 @@ def register_run_routes(app: FastAPI) -> None:
         return request.app.state.templates.TemplateResponse(
             request,
             "partials/run_progress.html",
-            {"request": request, "run": run},
+            {
+                "request": request,
+                "run": run,
+                "csrf_token": request.app.state.csrf_token,
+                "ui_token": ui_token_from_env() or "",
+            },
         )
 
 
@@ -184,7 +257,9 @@ def register_run_log_routes(app: FastAPI) -> None:
         request: Request, run_id: str, check_id: str, stream: str = "stdout"
     ) -> PlainTextResponse:
         primary: Path = request.app.state.primary_root
-        store = ReportStore(primary)
+        storage: SqliteStorage = request.app.state.storage
+        run = storage.get_run(run_id)
+        store = store_for_run(primary, run)
         try:
             report = store.load(run_id)
         except (FileNotFoundError, json.JSONDecodeError) as exc:
@@ -192,10 +267,11 @@ def register_run_log_routes(app: FastAPI) -> None:
         check_report = next((c for c in report.reports if c.check_id == check_id), None)
         if check_report is None:
             raise HTTPException(status_code=404, detail="check not found")
-        rel_path = check_report.stderr_path if stream == "stderr" else check_report.stdout_path
+        rel_path = (
+            check_report.stderr_path if stream == "stderr" else check_report.stdout_path
+        )
         if not rel_path:
             raise HTTPException(status_code=404, detail="log not found")
-        run = request.app.state.storage.get_run(run_id)
         root = Path(run.worktree_path) if run and run.worktree_path else primary
         try:
             path = contained_file(root, rel_path)
@@ -217,19 +293,47 @@ def register_tool_routes(app: FastAPI) -> None:
 
 
 def register_api_routes(app: FastAPI) -> None:
+    register_api_run_list_routes(app)
+    register_api_run_detail_routes(app)
+    register_api_findings_routes(app)
+
+
+def register_api_run_list_routes(app: FastAPI) -> None:
     @app.get("/api/runs")
     def api_runs(request: Request) -> dict[str, list[dict]]:
-        store = ReportStore(request.app.state.primary_root)
-        return {"runs": store.list_runs()}
+        storage: SqliteStorage = request.app.state.storage
+        return {"runs": [run_to_api(run) for run in storage.list_runs(limit=50)]}
 
+    @app.get("/api/runs/trends")
+    def api_trends(
+        request: Request,
+        branch: str | None = Query(None),
+        limit: int = Query(20, ge=1, le=100),
+    ) -> dict[str, list[dict]]:
+        storage: SqliteStorage = request.app.state.storage
+        return {"runs": trends_payload(storage, branch=branch, limit=limit)}
+
+
+def register_api_run_detail_routes(app: FastAPI) -> None:
     @app.get("/api/runs/{run_id}")
     def api_run(request: Request, run_id: str) -> dict:
-        store = ReportStore(request.app.state.primary_root)
+        primary: Path = request.app.state.primary_root
+        storage: SqliteStorage = request.app.state.storage
+        run = storage.get_run(run_id)
+        store = store_for_run(primary, run)
         try:
             report = store.load(run_id)
         except (FileNotFoundError, json.JSONDecodeError) as exc:
             raise HTTPException(status_code=404, detail=RUN_NOT_FOUND) from exc
         return report.to_dict()
+
+    @app.get("/api/runs/{run_id}/overview")
+    def api_run_overview(request: Request, run_id: str) -> dict:
+        storage: SqliteStorage = request.app.state.storage
+        payload = overview_payload(storage, request.app.state.primary_root, run_id)
+        if payload is None:
+            raise HTTPException(status_code=404, detail=RUN_NOT_FOUND)
+        return payload
 
     @app.get("/api/runs/{run_id}/summary")
     def api_run_summary(request: Request, run_id: str) -> dict:
@@ -239,12 +343,15 @@ def register_api_routes(app: FastAPI) -> None:
             raise HTTPException(status_code=404, detail="summary not found")
         return run.summary.to_dict()
 
+
+def register_api_findings_routes(app: FastAPI) -> None:
     @app.get("/api/runs/{run_id}/findings")
     def api_run_findings(
         request: Request,
         run_id: str,
         severity: str | None = Query(None),
         check_id: str | None = Query(None),
+        rule_id: str | None = Query(None),
         file: str | None = Query(None),
         page: int = Query(1, ge=1),
         page_size: int = Query(50, ge=1, le=200),
@@ -253,7 +360,7 @@ def register_api_routes(app: FastAPI) -> None:
         if storage.get_run(run_id) is None:
             raise HTTPException(status_code=404, detail=RUN_NOT_FOUND)
         file_filter = normalize_finding_path(file) if file else None
-        filters = finding_filters(severity, check_id, file_filter)
+        filters = finding_filters(severity, check_id, file_filter, rule_id)
         total = storage.count_findings(run_id, category=FindingCategory.CODE, **filters)
         total_pages = max(1, (total + page_size - 1) // page_size) if total else 1
         page = min(page, total_pages)

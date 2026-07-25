@@ -3,11 +3,11 @@ jscpd.check.other:
   subcommand: []
   modes:
     - check
-  normalizer: generic_exit
+  normalizer: jscpd
   install:
     manager: binary
     package: jscpd
-    version: "5.0.12"
+    version: 5.0.12
     binary: jscpd
   cli:
     paths:

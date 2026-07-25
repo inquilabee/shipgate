@@ -10,7 +10,7 @@ bandit.scan:
   install:
     manager: python
     package: bandit
-    version: "1.9.4"
+    version: 1.9.4
   tags:
     - security
   cli:

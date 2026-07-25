@@ -49,6 +49,47 @@
                     {% endfor %}
                 </select>
             </div>
+            <div>
+                <label class="mb-1 block text-sm font-semibold" for="check">Single check (optional)</label>
+                <select id="check"
+                        name="check"
+                        class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                    <option value="">Entire suite</option>
+                    {% for suite_id, members in (suite_checks or {}).items() %}
+                        <optgroup label="{{ suite_id }}">
+                            {% for check_id in members %}
+                                <option value="{{ check_id }}"
+                                        data-suite="{{ suite_id }}"
+                                        {% if suite_id != default_suite %}disabled hidden{% endif %}>
+                                    {{ check_id }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% else %}
+                        {% for check_id in check_options | default([]) %}
+                            <option value="{{ check_id }}">{{ check_id }}</option>
+                        {% endfor %}
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-xs text-muted">Leave empty to run the whole suite. Options update when you change suite.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+                <label class="flex items-center gap-2 text-sm font-medium">
+                    <input type="checkbox"
+                           name="changed_only"
+                           value="1"
+                           class="rounded border-line">
+                    Changed files only
+                </label>
+                <div class="flex-1 min-w-[10rem]">
+                    <label class="mb-1 block text-xs font-semibold text-muted" for="since">Since (git ref)</label>
+                    <input id="since"
+                           type="text"
+                           name="since"
+                           placeholder="origin/main"
+                           class="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm">
+                </div>
+            </div>
             <div class="rounded-lg border border-teal-200 bg-brand-soft px-4 py-3 text-sm text-brand-dark">
                 <p>{{ requirements_text }}</p>
             </div>

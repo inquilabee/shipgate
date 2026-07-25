@@ -25,7 +25,9 @@ Canonical verification: `make check-commit` (see `AGENTS.md`).
 | Command | Purpose |
 | --- | --- |
 | `uv run pytest tests/unit -q` | Default deterministic suite |
+| `uv run pytest tests/frontend -q` | Report UI TestClient (no browser) |
 | `uv run pytest -m integration` | External tools, network, pip install |
+| `uv run pytest -m ui` / `make test-ui` | Playwright Chromium (opt-in; excluded from default) |
 | `make check-commit` | Format + full ShipGate suite |
 
 ## Rules

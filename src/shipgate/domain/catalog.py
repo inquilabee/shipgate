@@ -99,6 +99,9 @@ class ToolDefinition:
     tags: tuple[str, ...] = ()
     cache: CacheDefinition | None = None
     suggest_if: SuggestIfDefinition | None = None
+    display_name: str = ""
+    description: str = ""
+    documentation_url: str | None = None
 
 
 @dataclass(frozen=True)

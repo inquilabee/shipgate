@@ -37,7 +37,14 @@ def test_perform_run_installs_into_worktree(tmp_path: Path, monkeypatch):
         lambda *_args, **_kwargs: None,
     )
 
-    orch._perform_run("run-1", "feature", "standard")
+    orch._perform_run(
+        "run-1",
+        "feature",
+        "standard",
+        None,
+        changed_only=False,
+        since=None,
+    )
     assert installed == [worktree]
     storage.update_run.assert_any_call(
         "run-1",

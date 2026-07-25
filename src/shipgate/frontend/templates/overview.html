@@ -51,6 +51,23 @@
                     Quality gate: {{ gate_status }}
                 </div>
             {% endif %}
+            <div class="grid gap-4 lg:grid-cols-3"
+                 data-charts
+                 data-run-id="{{ run.id }}"
+                 data-branch="{{ run.branch }}">
+                <div class="rounded-xl border border-line bg-surface p-4">
+                    <h2 class="text-sm font-semibold text-muted">Severity</h2>
+                    <canvas id="chart-severity" height="180"></canvas>
+                </div>
+                <div class="rounded-xl border border-line bg-surface p-4">
+                    <h2 class="text-sm font-semibold text-muted">File hotspots</h2>
+                    <canvas id="chart-hotspots" height="180"></canvas>
+                </div>
+                <div class="rounded-xl border border-line bg-surface p-4">
+                    <h2 class="text-sm font-semibold text-muted">Finding trend</h2>
+                    <canvas id="chart-trend" height="180"></canvas>
+                </div>
+            </div>
             {% set sev = run.summary.by_severity if run.summary else {} %}
             {% set findings_base = "/runs/" ~ run.id ~ "/findings" %}
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -107,7 +124,9 @@
                 <p class="text-sm text-muted">
                     vs baseline — errors {% if baseline_deltas.error > 0 %}+{% endif %}{{ baseline_deltas.error }},
                     warnings {% if baseline_deltas.warning > 0 %}+{% endif %}{{ baseline_deltas.warning }}
-                    {% if baseline_new_count is not none %}· {{ baseline_new_count }} new finding(s){% endif %}
+                    {% if baseline_new_count is not none %}· {{ baseline_new_count }} new{% endif %}
+                    {% if baseline_fixed_count is not none %}· {{ baseline_fixed_count }} fixed{% endif %}
+                    {% if baseline_fixed_count %}· <a class="text-brand hover:underline" href="/runs/{{ run.id }}/new-code">New/Fixed →</a>{% endif %}
                 </p>
             {% endif %}
             <section class="space-y-3">
@@ -123,6 +142,7 @@
                                 <tr>
                                     <th class="px-4 py-3 font-medium">Check</th>
                                     <th class="px-4 py-3 font-medium">Findings</th>
+                                    <th class="px-4 py-3 font-medium">Logs</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-line">
@@ -131,6 +151,17 @@
                                         <td class="px-4 py-3"><a class="font-mono text-xs text-brand hover:underline"
    href="{{ findings_base }}?check_id={{ row.check_id | urlencode }}">{{ row.check_id }}</a></td>
                                         <td class="px-4 py-3">{{ row.count }}</td>
+                                        <td class="px-4 py-3 text-xs">
+                                            <a class="text-brand hover:underline"
+                                               target="_blank"
+                                               rel="noopener"
+                                               href="/runs/{{ run.id }}/checks/{{ row.check_id | urlencode }}/log">stdout</a>
+                                            ·
+                                            <a class="text-brand hover:underline"
+                                               target="_blank"
+                                               rel="noopener"
+                                               href="/runs/{{ run.id }}/checks/{{ row.check_id | urlencode }}/log?stream=stderr">stderr</a>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -150,6 +181,7 @@
                                     <th class="w-[12rem] px-4 py-3 font-medium">Check</th>
                                     <th class="w-[8rem] px-4 py-3 font-medium">Tool</th>
                                     <th class="px-4 py-3 font-medium">Message</th>
+                                    <th class="w-[8rem] px-4 py-3 font-medium">Logs</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-line">
@@ -160,6 +192,17 @@
                                         <td class="px-4 py-3 align-top font-mono text-xs break-all">{{ finding.tool_id }}</td>
                                         <td class="px-4 py-3 align-top max-w-0">
                                             <div class="max-h-32 overflow-y-auto whitespace-pre-wrap break-all text-sm [overflow-wrap:anywhere]">{{ finding.message }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 align-top text-xs">
+                                            <a class="text-brand hover:underline"
+                                               target="_blank"
+                                               rel="noopener"
+                                               href="/runs/{{ run.id }}/checks/{{ finding.check_id | urlencode }}/log">stdout</a>
+                                            ·
+                                            <a class="text-brand hover:underline"
+                                               target="_blank"
+                                               rel="noopener"
+                                               href="/runs/{{ run.id }}/checks/{{ finding.check_id | urlencode }}/log?stream=stderr">stderr</a>
                                         </td>
                                     </tr>
                                 {% endfor %}

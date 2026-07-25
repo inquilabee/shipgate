@@ -35,16 +35,18 @@ class ToolDocsRow:
     description: str
     documentation_url: str | None
     version: str
+    tags: tuple[str, ...] = ()
 
 
 def tool_docs_rows(catalog: Catalog, primary_root: Path) -> list[ToolDocsRow]:
     return [
         ToolDocsRow(
             id=tool_id,
-            name=tool_id,
-            description=tool_id,
-            documentation_url=None,
+            name=tool.display_name or tool_id,
+            description=tool.description or tool_id,
+            documentation_url=tool.documentation_url,
             version=resolve_version(tool, primary_root),
+            tags=tuple(tool.tags),
         )
         for tool_id, tool in sorted(catalog.tools.items())
     ]
@@ -93,7 +95,9 @@ def run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
         completed = run_command(command, timeout=TIMEOUT_S)
     except (OSError, subprocess.TimeoutExpired):
         return None
-    text = "\n".join(part.strip() for part in (completed.stdout, completed.stderr) if part.strip())
+    text = "\n".join(
+        part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
+    )
     if not text:
         return None
     return parse_version_from_output(text, binary_name)

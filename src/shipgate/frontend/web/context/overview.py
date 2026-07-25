@@ -9,6 +9,8 @@ from shipgate.baseline import load_baseline
 from shipgate.frontend.domain.baseline import (
     fingerprint_from_record,
     fingerprints_from_report,
+    fixed_finding_rows,
+    fixed_fingerprints,
     severity_deltas_vs_baseline,
 )
 from shipgate.frontend.domain.models import (
@@ -17,11 +19,15 @@ from shipgate.frontend.domain.models import (
     RunRecord,
     RunSummaryRecord,
 )
+from shipgate.frontend.web.security import ui_token_from_env
 
 if TYPE_CHECKING:
     from fastapi import Request
 
+    from shipgate.domain.reports import RunReport
     from shipgate.frontend.storage.sqlite import SqliteStorage
+
+FindingFingerprint = tuple[str, str, str, int | None, str]
 
 
 def overview_context(
@@ -30,7 +36,9 @@ def overview_context(
     run, run_missing = resolve_overview_run(storage, run_id)
     latest = storage.list_runs(limit=1)
     baseline = load_baseline(request.app.state.primary_root)
-    baseline_fps = fingerprints_from_report(baseline) if baseline else set()
+    baseline_fps: set[FindingFingerprint] = (
+        fingerprints_from_report(baseline) if baseline else set()
+    )
     context: dict[str, Any] = {
         "request": request,
         "run": run,
@@ -43,46 +51,82 @@ def overview_context(
         "by_check": [],
         "tool_failures": [],
         "gate_status": None,
+        "baseline_new_count": None,
+        "baseline_fixed_count": None,
+        "baseline_fixed_rows": [],
+        "csrf_token": request.app.state.csrf_token,
+        "ui_token": ui_token_from_env() or "",
     }
     if run is None:
         return context
     previous = storage.previous_completed_run(branch=run.branch, before_run_id=run.id)
     context["previous"] = previous
-    context["deltas"] = severity_deltas(run.summary, previous.summary if previous else None)
+    context["deltas"] = severity_deltas(
+        run.summary, previous.summary if previous else None
+    )
     attach_baseline_context(context, run, baseline)
     code_findings = storage.list_findings(run.id, category=FindingCategory.CODE)
     context["hotspots"] = file_hotspots(code_findings)
     context["by_check"] = by_check_rows(run.summary)
-    context["tool_failures"] = storage.list_findings(run.id, category=FindingCategory.TOOL)
-    context["gate_status"] = gate_status(run)
-    context["baseline_new_count"] = (
-        sum(1 for f in code_findings if fingerprint_from_record(f) not in baseline_fps)
-        if baseline_fps
-        else None
+    context["tool_failures"] = storage.list_findings(
+        run.id, category=FindingCategory.TOOL
     )
+    context["gate_status"] = gate_status(run)
+    attach_baseline_finding_counts(context, baseline, baseline_fps, code_findings)
     return context
 
 
-def attach_baseline_context(context: dict[str, Any], run: RunRecord, baseline) -> None:
-    if run.summary and baseline and baseline.reports:
-        baseline_sev: dict[str, int] = {}
-        for check in baseline.reports:
-            for finding in check.findings:
-                baseline_sev[finding.severity] = baseline_sev.get(finding.severity, 0) + 1
+def attach_baseline_context(
+    context: dict[str, Any], run: RunRecord, baseline: RunReport | None
+) -> None:
+    baseline_sev = baseline_severity_counts(baseline)
+    if run.summary and baseline_sev is not None:
         context["baseline_deltas"] = severity_deltas_vs_baseline(
             run.summary.by_severity, baseline_sev
         )
 
 
+def baseline_severity_counts(baseline: RunReport | None) -> dict[str, int] | None:
+    if baseline is None or not baseline.reports:
+        return None
+    baseline_sev: dict[str, int] = {}
+    for check in baseline.reports:
+        for finding in check.findings:
+            baseline_sev[finding.severity] = baseline_sev.get(finding.severity, 0) + 1
+    return baseline_sev
+
+
+def attach_baseline_finding_counts(
+    context: dict[str, Any],
+    baseline: RunReport | None,
+    baseline_fps: set[FindingFingerprint],
+    code_findings: list[FindingRecord],
+) -> None:
+    if not baseline_fps:
+        return
+    current_fps = {fingerprint_from_record(finding) for finding in code_findings}
+    fixed_fps = fixed_fingerprints(baseline_fps, current_fps)
+    context["baseline_new_count"] = sum(
+        1 for fingerprint in current_fps if fingerprint not in baseline_fps
+    )
+    context["baseline_fixed_count"] = len(fixed_fps)
+    if baseline is not None:
+        context["baseline_fixed_rows"] = fixed_finding_rows(baseline, fixed_fps)
+
+
 def gate_status(run: RunRecord) -> str | None:
     if run.summary is None:
         return None
-    gate_checks = {k: v for k, v in run.summary.by_check_id.items() if k.startswith("gate.")}
-    if not gate_checks:
-        return "passed" if run.status.value == "succeeded" else "failed"
-    if any(count > 0 for count in gate_checks.values()):
-        return "failed"
-    return "passed"
+    gate_statuses = {
+        check_id: status
+        for check_id, status in run.summary.by_check_status.items()
+        if check_id.startswith("gate.")
+    }
+    if gate_statuses:
+        if any(status == "failed" for status in gate_statuses.values()):
+            return "failed"
+        return "passed"
+    return "passed" if run.status.value == "succeeded" else "failed"
 
 
 def resolve_overview_run(
@@ -112,7 +156,9 @@ def severity_deltas(
     }
 
 
-def file_hotspots(findings: list[FindingRecord], *, limit: int = 10) -> list[dict[str, Any]]:
+def file_hotspots(
+    findings: list[FindingRecord], *, limit: int = 10
+) -> list[dict[str, Any]]:
     counts: Counter[str] = Counter()
     for finding in findings:
         if finding.file:
@@ -130,3 +176,75 @@ def by_check_rows(summary: RunSummaryRecord | None) -> list[dict[str, Any]]:
         )
         if count > 0
     ]
+
+
+def overview_payload(
+    storage: SqliteStorage, primary_root, run_id: str
+) -> dict[str, Any] | None:
+    """JSON-serializable overview aggregates (same math as the HTML overview)."""
+    from pathlib import Path
+
+    run = storage.get_run(run_id)
+    if run is None:
+        return None
+    baseline = load_baseline(Path(primary_root))
+    baseline_fps: set[FindingFingerprint] = (
+        fingerprints_from_report(baseline) if baseline else set()
+    )
+    previous = storage.previous_completed_run(branch=run.branch, before_run_id=run.id)
+    code_findings = storage.list_findings(run.id, category=FindingCategory.CODE)
+    payload: dict[str, Any] = {
+        "run_id": run.id,
+        "branch": run.branch,
+        "suite_id": run.suite_id,
+        "status": run.status.value,
+        "by_severity": dict(run.summary.by_severity) if run.summary else {},
+        "finding_count": run.summary.finding_count if run.summary else 0,
+        "tool_failure_count": run.summary.tool_failure_count if run.summary else 0,
+        "deltas": severity_deltas(run.summary, previous.summary if previous else None),
+        "hotspots": file_hotspots(code_findings),
+        "by_check": by_check_rows(run.summary),
+        "gate_status": gate_status(run),
+        "baseline_new_count": None,
+        "baseline_fixed_count": None,
+        "baseline_deltas": None,
+    }
+    baseline_sev = baseline_severity_counts(baseline)
+    if run.summary and baseline_sev is not None:
+        payload["baseline_deltas"] = severity_deltas_vs_baseline(
+            run.summary.by_severity, baseline_sev
+        )
+    baseline_new_count, baseline_fixed_count = baseline_finding_count_pair(
+        baseline_fps, code_findings
+    )
+    payload["baseline_new_count"] = baseline_new_count
+    payload["baseline_fixed_count"] = baseline_fixed_count
+    return payload
+
+
+def baseline_finding_count_pair(
+    baseline_fps: set[FindingFingerprint], code_findings: list[FindingRecord]
+) -> tuple[int | None, int | None]:
+    if not baseline_fps:
+        return None, None
+    current_fps = {fingerprint_from_record(finding) for finding in code_findings}
+    fixed_fps = fixed_fingerprints(baseline_fps, current_fps)
+    new_count = sum(1 for fingerprint in current_fps if fingerprint not in baseline_fps)
+    return new_count, len(fixed_fps)
+
+
+def trends_payload(
+    storage: SqliteStorage, *, branch: str | None, limit: int = 20
+) -> list[dict[str, Any]]:
+    rows = [
+        {
+            "run_id": run.id,
+            "started_at": run.started_at.isoformat(),
+            "finding_count": run.summary.finding_count if run.summary else 0,
+            "by_severity": dict(run.summary.by_severity) if run.summary else {},
+            "status": run.status.value,
+        }
+        for run in storage.list_runs(limit=limit, branch=branch)
+    ]
+    rows.reverse()
+    return rows

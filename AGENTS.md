@@ -27,12 +27,17 @@ uv run shipgate format --target .
 uv run shipgate list suites
 uv run shipgate list tools --tag security
 uv run pytest tests/unit -q
+uv run pytest tests/frontend -q          # report UI TestClient (no browser)
 uv run pytest -m integration
+uv run pytest -m ui -q                   # Playwright Chromium (opt-in; not in default suite)
+# make test-ui                           # install Chromium + run -m ui
 make install-hooks   # pre-commit
 make check-commit    # canonical dogfood gate (see below)
 make docker-test     # fresh-machine smoke (Docker; network for tool pins)
 # SHIPGATE_DOCKER_DOGFOOD=0 make docker-test  # Phase A only
 ```
+
+Default `pytest` / `make test` excludes `@pytest.mark.ui` (no browser binary required).
 
 ## Dogfooding (this repo)
 

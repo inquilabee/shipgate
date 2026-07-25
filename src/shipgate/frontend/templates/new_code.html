@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}New / Fixed · shipgate{% endblock %}
+{% block content %}
+    <div class="space-y-6">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight">New / Fixed</h1>
+            <p class="mt-1 text-sm text-muted">
+                Run <code class="font-mono text-xs">{{ run.id[:8] }}</code>
+                · <a class="text-brand hover:underline" href="/?run_id={{ run.id }}">Overview</a>
+                · <a class="text-brand hover:underline" href="/runs/{{ run.id }}/findings">Findings</a>
+            </p>
+        </div>
+        {% if not has_baseline %}
+            <p class="text-sm text-muted">No project baseline loaded. Save a baseline to see new/fixed vs baseline.</p>
+        {% else %}
+            <section class="space-y-3">
+                <h2 class="text-lg font-semibold">New vs baseline ({{ new_findings | length }})</h2>
+                {% if new_findings %}
+                    <ul class="space-y-2 text-sm">
+                        {% for finding in new_findings[:50] %}
+                            <li class="rounded-lg border border-line bg-surface px-3 py-2">
+                                <span class="font-mono text-xs">{{ finding.rule_id }}</span>
+                                {% if finding.file %}<code class="ml-2 text-xs">{{ finding.file }}{% if finding.line %}:{{ finding.line }}{% endif %}</code>{% endif %}
+                                <div class="mt-1 text-muted">{{ finding.message }}</div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-muted">No new findings vs baseline.</p>
+                {% endif %}
+            </section>
+            <section class="space-y-3">
+                <h2 class="text-lg font-semibold">Fixed vs baseline ({{ fixed_count }})</h2>
+                {% if fixed_rows %}
+                    <ul class="space-y-2 text-sm">
+                        {% for row in fixed_rows %}
+                            <li class="rounded-lg border border-line bg-surface px-3 py-2">
+                                <span class="font-mono text-xs">{{ row.rule_id }}</span>
+                                {% if row.file %}<code class="ml-2 text-xs">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code>{% endif %}
+                                <div class="mt-1 text-muted">{{ row.message }}</div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-muted">No fixed findings vs baseline.</p>
+                {% endif %}
+            </section>
+        {% endif %}
+        {% if previous %}
+            <section class="space-y-3">
+                <h2 class="text-lg font-semibold">vs previous run on {{ run.branch }}</h2>
+                <p class="text-sm text-muted">
+                    {{ vs_previous_new | length }} new · {{ vs_previous_fixed_count }} fixed
+                    since <code class="font-mono text-xs">{{ previous.id[:8] }}</code>
+                </p>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

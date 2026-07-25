@@ -9,7 +9,10 @@ from shipgate.app import RunCommand, RunProgress, ShipGateApp
 from shipgate.domain.modes import RunMode
 from shipgate.frontend.domain.models import RunRecord, RunStatus
 from shipgate.frontend.domain.requirements import is_acknowledged
-from shipgate.frontend.services.ingest import ingest_run_report
+from shipgate.frontend.services.ingest import (
+    ingest_check_into_storage,
+    ingest_run_report,
+)
 from shipgate.frontend.services.worktree import WorktreeError, WorktreeManager
 from shipgate.frontend.storage.base import MAX_RUNS, Storage
 from shipgate.runtime.install import install_suite
@@ -29,6 +32,7 @@ class RunOrchestrator:
         self._app = app or ShipGateApp()
         self._lock = threading.Lock()
         self._active_run_id: str | None = None
+        self._cancel_events: dict[str, threading.Event] = {}
         self._done = threading.Event()
         self._done.set()
         self._fail_stale_runs()
@@ -36,7 +40,15 @@ class RunOrchestrator:
     def wait(self, timeout: float | None = None) -> bool:
         return self._done.wait(timeout)
 
-    def start_run(self, branch: str, suite_id: str) -> RunRecord:
+    def start_run(
+        self,
+        branch: str,
+        suite_id: str,
+        *,
+        check: str | None = None,
+        changed_only: bool = False,
+        since: str | None = None,
+    ) -> RunRecord:
         if not is_acknowledged(self._primary_root):
             raise OrchestratorError("acknowledge requirements before starting a run")
 
@@ -45,17 +57,38 @@ class RunOrchestrator:
                 raise OrchestratorError("a run is already active")
 
             run_id = generate_run_id()
-            run = self._storage.create_run(branch=branch, suite_id=suite_id, run_id=run_id)
+            run = self._storage.create_run(
+                branch=branch, suite_id=suite_id, run_id=run_id
+            )
             self._active_run_id = run.id
+            self._cancel_events[run.id] = threading.Event()
             self._done.clear()
             thread = threading.Thread(
                 target=self._execute_run,
-                args=(run.id, branch, suite_id),
+                kwargs={
+                    "run_id": run.id,
+                    "branch": branch,
+                    "suite_id": suite_id,
+                    "check": check,
+                    "changed_only": changed_only,
+                    "since": since,
+                },
                 daemon=True,
                 name=f"shipgate-run-{run.id}",
             )
             thread.start()
             return run
+
+    def request_cancel(self, run_id: str) -> bool:
+        event = self._cancel_events.get(run_id)
+        if event is None:
+            run = self._storage.get_run(run_id)
+            if run is None or run.status not in (RunStatus.QUEUED, RunStatus.RUNNING):
+                return False
+            event = threading.Event()
+            self._cancel_events[run_id] = event
+        event.set()
+        return True
 
     def _fail_stale_runs(self) -> None:
         for run in self._storage.list_runs(limit=MAX_RUNS):
@@ -73,33 +106,69 @@ class RunOrchestrator:
                 return True
         return False
 
-    def _execute_run(self, run_id: str, branch: str, suite_id: str) -> None:
+    def _execute_run(
+        self,
+        run_id: str,
+        branch: str,
+        suite_id: str,
+        check: str | None,
+        *,
+        changed_only: bool,
+        since: str | None,
+    ) -> None:
         try:
-            self._perform_run(run_id, branch, suite_id)
+            self._perform_run(
+                run_id,
+                branch,
+                suite_id,
+                check,
+                changed_only=changed_only,
+                since=since,
+            )
         except Exception as exc:  # ruff: ignore[blind-except] — persist any run failure
             message = str(exc) or exc.__class__.__name__
             self._persist_failure(run_id, message)
         finally:
             self._finish_run(run_id)
 
-    def _perform_run(self, run_id: str, branch: str, suite_id: str) -> None:
+    def _perform_run(
+        self,
+        run_id: str,
+        branch: str,
+        suite_id: str,
+        check: str | None,
+        *,
+        changed_only: bool,
+        since: str | None,
+    ) -> None:
         worktree = self._resolve_worktree(branch)
-        self._storage.update_run(run_id, status=RunStatus.RUNNING, worktree_path=str(worktree))
-        # Install into the run root so managed tools match the checked-out tree.
+        self._storage.update_run(
+            run_id, status=RunStatus.RUNNING, worktree_path=str(worktree)
+        )
         install_suite(worktree, suite_id, self._app._catalog_for(worktree))
+
+        cancel_event = self._cancel_events.setdefault(run_id, threading.Event())
 
         def on_progress(progress: RunProgress) -> None:
             self._storage.update_run(
                 run_id,
-                current_check_id=progress.current_check_id,
+                current_check_id=progress.current_check_id or None,
                 checks_completed=progress.checks_completed,
                 checks_total=progress.checks_total,
             )
+            if progress.completed_check is not None:
+                summary = ingest_check_into_storage(
+                    self._storage, run_id, progress.completed_check, worktree
+                )
+                self._storage.update_run(run_id, summary=summary)
 
         command = RunCommand(
             project_root=worktree,
             suite=suite_id,
+            check=check,
             quiet=True,
+            changed_only=changed_only,
+            since=since,
         )
         exit_code, report = self._app.run_suite(
             command,
@@ -108,10 +177,29 @@ class RunOrchestrator:
             on_progress=on_progress,
             write_reports=True,
             emit_failure_output=False,
+            should_cancel=cancel_event.is_set,
         )
         summary = ingest_run_report(self._storage, run_id, report, worktree)
-        status = RunStatus.SUCCEEDED if exit_code == 0 else RunStatus.FAILED
-        self._storage.update_run(run_id, status=status, finished=True, summary=summary)
+        if cancel_event.is_set():
+            status = RunStatus.CANCELLED
+            self._storage.update_run(
+                run_id,
+                status=status,
+                finished=True,
+                summary=summary,
+                error_message="cancelled",
+            )
+        else:
+            status = RunStatus.SUCCEEDED if exit_code == 0 else RunStatus.FAILED
+            self._storage.update_run(
+                run_id, status=status, finished=True, summary=summary
+            )
+        try:
+            from shipgate.runtime.report_store import ReportStore
+
+            ReportStore(worktree).merge_metadata(run_id, {"branch": branch})
+        except (FileNotFoundError, OSError):
+            pass
         self._storage.prune_old_runs(keep=MAX_RUNS)
 
     def _resolve_worktree(self, branch: str) -> Path:
@@ -135,4 +223,5 @@ class RunOrchestrator:
         with self._lock:
             if self._active_run_id == run_id:
                 self._active_run_id = None
+            self._cancel_events.pop(run_id, None)
             self._done.set()

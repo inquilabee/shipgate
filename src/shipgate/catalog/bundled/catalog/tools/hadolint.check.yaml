@@ -7,12 +7,12 @@ hadolint.check:
   install:
     manager: binary
     package: hadolint
-    version: "2.14.0"
+    version: 2.14.0
     binary: hadolint
     allow_path: false
     download:
       repo: hadolint/hadolint
-      asset_template: "hadolint-{os}-{arch}"
+      asset_template: hadolint-{os}-{arch}
       binary_name: hadolint
       os_map:
         darwin: macos

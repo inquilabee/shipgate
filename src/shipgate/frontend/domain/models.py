@@ -29,6 +29,8 @@ class RunSummaryRecord:
     tool_failure_count: int = 0
     by_severity: dict[str, int] = field(default_factory=dict)
     by_check_id: dict[str, int] = field(default_factory=dict)
+    by_check_status: dict[str, str] = field(default_factory=dict)
+    by_rule_id: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return {
@@ -36,6 +38,8 @@ class RunSummaryRecord:
             "tool_failure_count": self.tool_failure_count,
             "by_severity": dict(self.by_severity),
             "by_check_id": dict(self.by_check_id),
+            "by_check_status": dict(self.by_check_status),
+            "by_rule_id": dict(self.by_rule_id),
         }
 
     @classmethod
@@ -45,6 +49,14 @@ class RunSummaryRecord:
             tool_failure_count=int(data.get("tool_failure_count", 0)),
             by_severity=dict(data.get("by_severity", {})),
             by_check_id=dict(data.get("by_check_id", {})),
+            by_check_status={
+                str(key): str(value)
+                for key, value in dict(data.get("by_check_status", {})).items()
+            },
+            by_rule_id={
+                str(key): int(value)
+                for key, value in dict(data.get("by_rule_id", {})).items()
+            },
         )
 
 

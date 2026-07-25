@@ -4,6 +4,10 @@ test:
 unit:
 	uv run pytest tests/unit -q
 
+test-ui:
+	uv run playwright install chromium
+	uv run pytest -m ui -q
+
 format:
 	uv run ruff format src tests
 
@@ -29,4 +33,4 @@ docker-test: docker-test-staging
 docker-test-staging:
 	scripts/docker-test/prepare-dogfood.sh
 
-.PHONY: check-commit docker-test docker-test-staging format install-hooks ruff test unit
+.PHONY: check-commit docker-test docker-test-staging format install-hooks ruff test test-ui unit

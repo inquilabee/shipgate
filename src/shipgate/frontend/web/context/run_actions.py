@@ -28,11 +28,17 @@ def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
     primary: Path = request.app.state.primary_root
     catalog = request.app.state.catalog
     worktrees: WorktreeManager = request.app.state.worktrees
+    suite_checks: dict[str, list[str]] = {
+        suite_id: list(suite.members) for suite_id, suite in catalog.suites.items()
+    }
+    selected_suite = default_suite(catalog, primary)
     return {
         "request": request,
         "branches": safe_branches(worktrees),
         "suites": sorted(catalog.suites.keys()),
-        "default_suite": default_suite(catalog, primary),
+        "suite_checks": suite_checks,
+        "check_options": suite_checks.get(selected_suite, []),
+        "default_suite": selected_suite,
         "needs_ack": not is_acknowledged(primary),
         "requirements_text": requirements_text(),
         "error": error,
@@ -47,6 +53,10 @@ def start_new_run(
     branch: str,
     suite_id: str,
     acknowledge_requirements: str | None,
+    *,
+    check: str | None = None,
+    changed_only: bool = False,
+    since: str | None = None,
 ) -> RedirectResponse:
     if not is_acknowledged(primary):
         if not acknowledge_requirements:
@@ -56,9 +66,17 @@ def start_new_run(
             )
         acknowledge(primary)
     try:
-        run = orchestrator.start_run(branch, suite_id)
+        run = orchestrator.start_run(
+            branch,
+            suite_id,
+            check=check,
+            changed_only=changed_only,
+            since=since,
+        )
     except OrchestratorError as exc:
-        return RedirectResponse(url=f"/runs/new?error={query_escape(str(exc))}", status_code=303)
+        return RedirectResponse(
+            url=f"/runs/new?error={query_escape(str(exc))}", status_code=303
+        )
     return RedirectResponse(url=f"/?run_id={run.id}", status_code=303)
 
 
@@ -75,7 +93,11 @@ def default_suite(catalog, primary: Path) -> str:
         project = ProjectConfigLoader.load(project_root=primary)
     except ConfigError:
         project = None
-    if project is not None and project.suite is not None and project.suite in catalog.suites:
+    if (
+        project is not None
+        and project.suite is not None
+        and project.suite in catalog.suites
+    ):
         return project.suite
     if "standard" in catalog.suites:
         return "standard"

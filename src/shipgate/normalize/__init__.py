@@ -6,6 +6,7 @@ from shipgate.core.registry import Registry
 from shipgate.normalize import (
     bandit,
     gitleaks,
+    jscpd,
     radon,
     ruff,
     semgrep,
@@ -35,6 +36,7 @@ NORMALIZER_REGISTRY = Registry(
         "vulture": VultureNormalizer(),
         "deadcode": DeadcodeNormalizer(),
         "gate_json": GateJsonNormalizer(),
+        "jscpd": jscpd.JscpdNormalizer(),
     },
     unknown_message="unknown normalizer: {name!r}",
 )

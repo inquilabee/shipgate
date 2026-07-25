@@ -3,12 +3,14 @@
   "minTokens": 50,
   "threshold": 2,
   "format": ["python"],
+  "reporters": ["console", "json"],
   "output": ".shipgate/reports/jscpd-python",
   "ignore": [
     ".shipgate/**",
     "**/.venv/**",
     "**/venv/**",
     "**/.ruff_cache/**",
-    "**/__pycache__/**"
+    "**/__pycache__/**",
+    "tests/**"
   ]
 }

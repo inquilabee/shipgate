@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from shipgate.domain.execution import ExecutionEnvironment
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig
+    from shipgate.domain.reports import CheckReport
     from shipgate.planning.workflow import SelectedTool
 
 __all__ = [
@@ -35,6 +36,7 @@ class RunProgress:
     current_check_id: str
     checks_completed: int
     checks_total: int
+    completed_check: CheckReport | None = None
 
 
 @dataclass(frozen=True)
