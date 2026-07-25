@@ -37,9 +37,7 @@ def ui_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def ui_app(ui_root: Path):
     seed_failed_run(ui_root, with_baseline=True)
     app = create_app(ui_root)
-    app.state.orchestrator = FakeOrchestrator(
-        ui_root, app.state.storage, step_delay=0.2
-    )
+    app.state.orchestrator = FakeOrchestrator(ui_root, app.state.storage, step_delay=0.2)
     return app
 
 
@@ -79,9 +77,7 @@ def live_server(ui_app) -> Iterator[str]:
 @pytest.fixture
 def cancel_live_server(cancel_ui_app) -> Iterator[str]:
     port = free_port()
-    config = uvicorn.Config(
-        cancel_ui_app, host="127.0.0.1", port=port, log_level="warning"
-    )
+    config = uvicorn.Config(cancel_ui_app, host="127.0.0.1", port=port, log_level="warning")
     server = uvicorn.Server(config)
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()

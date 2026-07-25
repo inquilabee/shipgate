@@ -4,6 +4,18 @@
 
 ## Unreleased
 
+## v0.1.2
+
+### Fixed
+
+- CLI argv normalization no longer drops arguments when `argv` is omitted.
+- jscpd threshold breaches are classified as code findings, not tool failures,
+  including repair of mis-stored UI rows on serve startup.
+
+### Changed
+
+- README quick-start now shows real check/format output and the report UI overview.
+
 ## v0.1.1
 
 ### Changed

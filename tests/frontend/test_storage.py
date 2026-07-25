@@ -40,13 +40,8 @@ def test_storage_filters_and_pagination(tmp_path: Path):
         ],
     )
     assert storage.count_findings("run-1", category=FindingCategory.CODE) == 2
-    assert (
-        storage.count_findings("run-1", severity="error", category=FindingCategory.CODE)
-        == 1
-    )
-    page = storage.list_findings(
-        "run-1", category=FindingCategory.CODE, limit=1, offset=0
-    )
+    assert storage.count_findings("run-1", severity="error", category=FindingCategory.CODE) == 1
+    page = storage.list_findings("run-1", category=FindingCategory.CODE, limit=1, offset=0)
     assert len(page) == 1
     storage.update_run(run.id, status=RunStatus.SUCCEEDED, finished=True)
     run2 = storage.create_run(branch="main", suite_id="standard", run_id="run-2")

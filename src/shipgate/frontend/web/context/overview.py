@@ -61,16 +61,12 @@ def overview_context(
         return context
     previous = storage.previous_completed_run(branch=run.branch, before_run_id=run.id)
     context["previous"] = previous
-    context["deltas"] = severity_deltas(
-        run.summary, previous.summary if previous else None
-    )
+    context["deltas"] = severity_deltas(run.summary, previous.summary if previous else None)
     attach_baseline_context(context, run, baseline)
     code_findings = storage.list_findings(run.id, category=FindingCategory.CODE)
     context["hotspots"] = file_hotspots(code_findings)
     context["by_check"] = by_check_rows(run.summary)
-    context["tool_failures"] = storage.list_findings(
-        run.id, category=FindingCategory.TOOL
-    )
+    context["tool_failures"] = storage.list_findings(run.id, category=FindingCategory.TOOL)
     context["gate_status"] = gate_status(run)
     attach_baseline_finding_counts(context, baseline, baseline_fps, code_findings)
     return context
@@ -156,9 +152,7 @@ def severity_deltas(
     }
 
 
-def file_hotspots(
-    findings: list[FindingRecord], *, limit: int = 10
-) -> list[dict[str, Any]]:
+def file_hotspots(findings: list[FindingRecord], *, limit: int = 10) -> list[dict[str, Any]]:
     counts: Counter[str] = Counter()
     for finding in findings:
         if finding.file:
@@ -178,9 +172,7 @@ def by_check_rows(summary: RunSummaryRecord | None) -> list[dict[str, Any]]:
     ]
 
 
-def overview_payload(
-    storage: SqliteStorage, primary_root, run_id: str
-) -> dict[str, Any] | None:
+def overview_payload(storage: SqliteStorage, primary_root, run_id: str) -> dict[str, Any] | None:
     """JSON-serializable overview aggregates (same math as the HTML overview)."""
     from pathlib import Path
 

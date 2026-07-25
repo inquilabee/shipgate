@@ -29,9 +29,7 @@ def test_api_run_and_log_load_from_worktree(tmp_path: Path):
     worktree.mkdir()
     (primary / ".shipgate" / "server").mkdir(parents=True)
     storage = SqliteStorage(primary / ".shipgate" / "server" / "report.db")
-    run = storage.create_run(
-        branch="feature", suite_id="standard", run_id="abc123def456"
-    )
+    run = storage.create_run(branch="feature", suite_id="standard", run_id="abc123def456")
     storage.update_run(
         run.id,
         worktree_path=str(worktree),

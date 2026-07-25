@@ -50,12 +50,10 @@ class RunSummaryRecord:
             by_severity=dict(data.get("by_severity", {})),
             by_check_id=dict(data.get("by_check_id", {})),
             by_check_status={
-                str(key): str(value)
-                for key, value in dict(data.get("by_check_status", {})).items()
+                str(key): str(value) for key, value in dict(data.get("by_check_status", {})).items()
             },
             by_rule_id={
-                str(key): int(value)
-                for key, value in dict(data.get("by_rule_id", {})).items()
+                str(key): int(value) for key, value in dict(data.get("by_rule_id", {})).items()
             },
         )
 

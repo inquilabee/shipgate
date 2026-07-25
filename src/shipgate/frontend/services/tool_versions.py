@@ -95,9 +95,7 @@ def run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
         completed = run_command(command, timeout=TIMEOUT_S)
     except (OSError, subprocess.TimeoutExpired):
         return None
-    text = "\n".join(
-        part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
-    )
+    text = "\n".join(part.strip() for part in (completed.stdout, completed.stderr) if part.strip())
     if not text:
         return None
     return parse_version_from_output(text, binary_name)

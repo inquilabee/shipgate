@@ -81,9 +81,7 @@ class RunSession:
         from shipgate.ci import is_ci_environment, write_github_step_summary
 
         if command.ci or is_ci_environment():
-            write_github_step_summary(
-                f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n"
-            )
+            write_github_step_summary(f"## ShipGate {mode.value}\n\nStatus: **{report.status}**\n")
         return finalize_successful_run(
             command,
             context.project_root,

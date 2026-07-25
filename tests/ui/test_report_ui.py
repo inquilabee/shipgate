@@ -23,9 +23,7 @@ def test_nav_smoke(page: Page, live_server: str):
 
 def test_overview_charts_stub(page: Page, live_server: str):
     page.goto(f"{live_server}/")
-    expect(page.locator("#chart-severity")).to_have_attribute(
-        "data-charted", "1", timeout=10_000
-    )
+    expect(page.locator("#chart-severity")).to_have_attribute("data-charted", "1", timeout=10_000)
     expect(page.locator("#chart-hotspots")).to_have_attribute("data-charted", "1")
     expect(page.locator("#chart-trend")).to_have_attribute("data-charted", "1")
 
@@ -102,9 +100,7 @@ def test_cancel_running_run(page: Page, cancel_live_server: str):
     cancel = page.get_by_role("button", name="Cancel")
     expect(cancel).to_be_visible(timeout=10_000)
     cancel.click()
-    expect(page.get_by_text(re.compile(r"cancelled", re.I))).to_be_visible(
-        timeout=15_000
-    )
+    expect(page.get_by_text(re.compile(r"cancelled", re.I))).to_be_visible(timeout=15_000)
 
 
 def test_new_fixed_page(page: Page, live_server: str):

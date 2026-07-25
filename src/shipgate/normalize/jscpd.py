@@ -56,9 +56,7 @@ class JscpdNormalizer(BaseNormalizer):
 
         return tool_exit_report(check_id, result)
 
-    def resolve_report_path(
-        self, request: ResolvedRequest, result: ProcessResult
-    ) -> Path | None:
+    def resolve_report_path(self, request: ResolvedRequest, result: ProcessResult) -> Path | None:
         root = request.project_root
         candidates: list[Path] = []
         for config_path in request.options.config:
@@ -71,8 +69,7 @@ class JscpdNormalizer(BaseNormalizer):
             candidates.append(root / default_rel / REPORT_NAME)
         stream_text = f"{result.stderr}\n{result.stdout}"
         candidates.extend(
-            Path(match.group(1))
-            for match in re.finditer(r"(\S+/jscpd-report\.json)", stream_text)
+            Path(match.group(1)) for match in re.finditer(r"(\S+/jscpd-report\.json)", stream_text)
         )
         for path in candidates:
             if path.is_file():
@@ -108,9 +105,7 @@ class JscpdNormalizer(BaseNormalizer):
         payload: dict[str, Any],
         result: ProcessResult,
     ) -> list[Finding]:
-        findings = [
-            self.clone_finding(check_id, item) for item in self.duplicate_items(payload)
-        ]
+        findings = [self.clone_finding(check_id, item) for item in self.duplicate_items(payload)]
         findings = [finding for finding in findings if finding is not None]
         if not findings and self.is_threshold_failure(result):
             findings.append(self.threshold_finding(check_id, result, payload=payload))
@@ -193,9 +188,7 @@ class JscpdNormalizer(BaseNormalizer):
             location=None,
         )
 
-    def threshold_message(
-        self, result: ProcessResult, payload: dict[str, Any] | None
-    ) -> str:
+    def threshold_message(self, result: ProcessResult, payload: dict[str, Any] | None) -> str:
         for stream in (result.stderr, result.stdout):
             for line in stream.splitlines():
                 if THRESHOLD_MARKER in line.lower():
@@ -203,11 +196,7 @@ class JscpdNormalizer(BaseNormalizer):
         pct = self.total_percentage(payload) if payload else None
         if pct is not None:
             return f"jscpd found too many duplicates ({pct:.1f}%) over configured threshold"
-        return (
-            result.stderr.strip()
-            or result.stdout.strip()
-            or "Duplication over threshold"
-        )
+        return result.stderr.strip() or result.stdout.strip() or "Duplication over threshold"
 
     @staticmethod
     def total_percentage(payload: dict[str, Any] | None) -> float | None:

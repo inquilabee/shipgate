@@ -23,9 +23,7 @@ if TYPE_CHECKING:
 FindingFingerprint = tuple[str, str, str, int | None, str]
 
 
-def new_code_context(
-    request: Request, storage: SqliteStorage, run: RunRecord
-) -> dict[str, Any]:
+def new_code_context(request: Request, storage: SqliteStorage, run: RunRecord) -> dict[str, Any]:
     baseline = load_baseline(request.app.state.primary_root)
     baseline_fps: set[FindingFingerprint] = (
         fingerprints_from_report(baseline) if baseline else set()
@@ -57,9 +55,7 @@ def baseline_new_findings(
     if not baseline_fps:
         return []
     return [
-        finding
-        for finding in code_findings
-        if fingerprint_from_record(finding) not in baseline_fps
+        finding for finding in code_findings if fingerprint_from_record(finding) not in baseline_fps
     ]
 
 
@@ -85,8 +81,6 @@ def previous_run_deltas(
     prev_findings = storage.list_findings(previous.id, category=FindingCategory.CODE)
     prev_fps = {fingerprint_from_record(finding) for finding in prev_findings}
     vs_previous_new = [
-        finding
-        for finding in code_findings
-        if fingerprint_from_record(finding) not in prev_fps
+        finding for finding in code_findings if fingerprint_from_record(finding) not in prev_fps
     ]
     return vs_previous_new, len(fixed_fingerprints(prev_fps, current_fps))

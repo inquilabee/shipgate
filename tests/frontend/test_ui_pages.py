@@ -89,18 +89,14 @@ def test_progress_partial_running_and_install(tmp_path: Path):
     prepare_frontend_root(tmp_path)
     client = TestClient(create_app(tmp_path))
     storage: SqliteStorage = client.app.state.storage
-    running = storage.create_run(
-        branch="main", suite_id="standard", run_id="prog-run-0001"
-    )
+    running = storage.create_run(branch="main", suite_id="standard", run_id="prog-run-0001")
     storage.update_run(
         running.id,
         status=RunStatus.RUNNING,
         checks_completed=0,
         checks_total=0,
     )
-    installing = storage.create_run(
-        branch="main", suite_id="standard", run_id="prog-run-0002"
-    )
+    installing = storage.create_run(branch="main", suite_id="standard", run_id="prog-run-0002")
     storage.update_run(
         installing.id,
         status=RunStatus.RUNNING,

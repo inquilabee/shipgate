@@ -16,6 +16,7 @@ from shipgate import __version__ as shipgate_version
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.frontend.domain.models import FindingCategory
 from shipgate.frontend.services.backfill import backfill_from_report_store
+from shipgate.frontend.services.ingest import repair_misclassified_tool_findings
 from shipgate.frontend.services.orchestrator import RunOrchestrator
 from shipgate.frontend.services.report_access import store_for_run
 from shipgate.frontend.services.tool_versions import tool_docs_rows
@@ -65,6 +66,7 @@ def create_app(primary_root: Path) -> FastAPI:
     primary = Path(primary_root).resolve()
     storage = SqliteStorage(primary / PROJECT_SERVER_DIR / SERVER_DB_FILENAME)
     backfill_from_report_store(primary, storage)
+    repair_misclassified_tool_findings(storage)
     catalog = CatalogLoader.load()
     from shipgate.app import ShipGateApp
 
@@ -138,6 +140,23 @@ def register_run_list_routes(app: FastAPI) -> None:
         )
 
 
+def require_run_submit_tokens(
+    request: Request,
+    *,
+    csrf_token: str | None,
+    ui_token: str | None,
+) -> None:
+    try:
+        validate_run_submit_tokens(
+            csrf_expected=request.app.state.csrf_token,
+            csrf_submitted=csrf_token,
+            ui_token_expected=ui_token_from_env(),
+            ui_token_submitted=ui_token,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+
 def register_new_run_routes(app: FastAPI) -> None:
     @app.get("/runs/new", response_class=HTMLResponse)
     def new_run_form(request: Request, error: str | None = None) -> HTMLResponse:
@@ -159,15 +178,7 @@ def register_new_run_routes(app: FastAPI) -> None:
         ui_token: str | None = Form(None),
         acknowledge_requirements: str | None = Form(None),
     ) -> RedirectResponse:
-        try:
-            validate_run_submit_tokens(
-                csrf_expected=request.app.state.csrf_token,
-                csrf_submitted=csrf_token,
-                ui_token_expected=ui_token_from_env(),
-                ui_token_submitted=ui_token,
-            )
-        except PermissionError as exc:
-            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        require_run_submit_tokens(request, csrf_token=csrf_token, ui_token=ui_token)
         return start_new_run(
             request.app.state.primary_root,
             request.app.state.orchestrator,
@@ -188,15 +199,7 @@ def register_cancel_routes(app: FastAPI) -> None:
         csrf_token: str | None = Form(None),
         ui_token: str | None = Form(None),
     ) -> RedirectResponse:
-        try:
-            validate_run_submit_tokens(
-                csrf_expected=request.app.state.csrf_token,
-                csrf_submitted=csrf_token,
-                ui_token_expected=ui_token_from_env(),
-                ui_token_submitted=ui_token,
-            )
-        except PermissionError as exc:
-            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        require_run_submit_tokens(request, csrf_token=csrf_token, ui_token=ui_token)
         orchestrator: RunOrchestrator = request.app.state.orchestrator
         if not orchestrator.request_cancel(run_id):
             raise HTTPException(status_code=404, detail="run not cancellable")
@@ -214,9 +217,7 @@ def register_findings_routes(app: FastAPI) -> None:
         file: str | None = Query(None),
         page: int = Query(1, ge=1),
     ) -> HTMLResponse:
-        return findings_response(
-            request, run_id, severity, check_id, file, page, rule_id
-        )
+        return findings_response(request, run_id, severity, check_id, file, page, rule_id)
 
 
 def register_run_detail_routes(app: FastAPI) -> None:
@@ -267,9 +268,7 @@ def register_run_log_routes(app: FastAPI) -> None:
         check_report = next((c for c in report.reports if c.check_id == check_id), None)
         if check_report is None:
             raise HTTPException(status_code=404, detail="check not found")
-        rel_path = (
-            check_report.stderr_path if stream == "stderr" else check_report.stdout_path
-        )
+        rel_path = check_report.stderr_path if stream == "stderr" else check_report.stdout_path
         if not rel_path:
             raise HTTPException(status_code=404, detail="log not found")
         root = Path(run.worktree_path) if run and run.worktree_path else primary

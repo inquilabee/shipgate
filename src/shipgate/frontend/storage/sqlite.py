@@ -108,9 +108,7 @@ class SqliteStorage:
             return None
         return mapping.row_to_run(row)
 
-    def list_runs(
-        self, *, limit: int = 50, branch: str | None = None
-    ) -> list[RunRecord]:
+    def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]:
         query = "SELECT * FROM runs"
         params: list[object] = []
         if branch is not None:
@@ -156,9 +154,7 @@ class SqliteStorage:
         return run
 
     def _persist_run(self, run: RunRecord, run_id: str) -> None:
-        summary_json = (
-            None if run.summary is None else json.dumps(run.summary.to_dict())
-        )
+        summary_json = None if run.summary is None else json.dumps(run.summary.to_dict())
         with self._connect() as conn:
             conn.execute(
                 """
@@ -291,9 +287,7 @@ class SqliteStorage:
                 (mapping.dt_to_iso(started_at), duration_ms, run_id),
             )
 
-    def previous_completed_run(
-        self, *, branch: str, before_run_id: str
-    ) -> RunRecord | None:
+    def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None:
         before = self.get_run(before_run_id)
         if before is None:
             return None

@@ -99,24 +99,98 @@ shipgate serve --open
 
 Browse suite runs and findings at `http://127.0.0.1:8765/`.
 
+![ShipGate report UI overview showing a failed quality gate](docs/images/report-ui-overview.png)
+
 ## Check example
 
 Report-only quality run (does not rewrite files). Success is silent; failures
-exit `1` and write under `.shipgate/reports/`.
+exit `1`, print findings, and write under `.shipgate/reports/`.
+
+**Error format is configurable.** Set `error-format` in `.shipgate/shipgate.yaml`
+(or `[tool.shipgate]`), or override per run with `--error-format`. Built-ins:
+`compact`, `text`, `log`, `json`, and `github` (PR annotations).
+
+```bash
+shipgate check --check ruff.lint --target app.py --error-format compact
+```
+
+Example failure output (`compact`):
+
+```text
+app.py:1: error: E401 Multiple imports on one line
+app.py:1: error: I001 Import block is un-sorted or un-formatted
+app.py:1: error: F401 `os` imported but unused
+app.py:1: error: F401 `sys` imported but unused
+app.py:3: error: E302 Expected 2 blank lines, found 1
+app.py:3: error: E201 Whitespace after '('
+app.py:3: error: E202 Whitespace before ')'
+app.py:4: error: E111 Indentation is not a multiple of 4
+app.py:4: error: F841 Local variable `unused` is assigned to but never used
+app.py:5: error: E111 Indentation is not a multiple of 4
+app.py:5: error: E201 Whitespace after '('
+app.py:5: error: E202 Whitespace before ')'
+app.py:6: error: E111 Indentation is not a multiple of 4
+app.py:6: error: E226 Missing whitespace around arithmetic operator
+```
+
+Same findings as `text`:
+
+```bash
+shipgate check --check ruff.lint --target app.py --error-format text
+```
+
+```text
+[ruff.lint]
+- [error] E401: Multiple imports on one line (app.py:1)
+- [error] I001: Import block is un-sorted or un-formatted (app.py:1)
+- [error] F401: `os` imported but unused (app.py:1)
+- [error] F401: `sys` imported but unused (app.py:1)
+- [error] E302: Expected 2 blank lines, found 1 (app.py:3)
+- [error] E201: Whitespace after '(' (app.py:3)
+- [error] E202: Whitespace before ')' (app.py:3)
+- [error] E111: Indentation is not a multiple of 4 (app.py:4)
+- [error] F841: Local variable `unused` is assigned to but never used (app.py:4)
+- [error] E111: Indentation is not a multiple of 4 (app.py:5)
+- [error] E201: Whitespace after '(' (app.py:5)
+- [error] E202: Whitespace before ')' (app.py:5)
+- [error] E111: Indentation is not a multiple of 4 (app.py:6)
+- [error] E226: Missing whitespace around arithmetic operator (app.py:6)
+```
 
 ```bash
 shipgate check
 shipgate check --suite security
-shipgate check --check ruff.lint --target src
+shipgate check --target src
+shipgate check --error-format github   # CI / PR annotations
 ```
 
 ## Format example
 
-Apply formatters / autofix tools from the `format` suite:
+Apply formatters / autofix tools from the `format` suite (success is silent):
 
 ```bash
-shipgate format
-shipgate format --target src
+shipgate format --target .
+```
+
+When files need formatting, a report-only format check surfaces the drift:
+
+```bash
+shipgate check --check ruff.format --target app.py --error-format compact
+```
+
+```text
+ruff.format: error: TOOL_EXIT Would reformat: app.py
+1 file would be reformatted
+```
+
+With `--display-cli`, ShipGate prints the tool command it runs:
+
+```bash
+shipgate format --check ruff.format --target . --display-cli
+```
+
+```text
+ruff.format: .shipgate/tools/python/bin/ruff format --config .shipgate/configs/ruff.toml .
 ```
 
 ## Features

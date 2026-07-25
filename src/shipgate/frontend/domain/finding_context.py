@@ -101,9 +101,7 @@ def read_snippet(
     end = min(len(file_lines), index + radius + 1)
     return FindingSourceContext(
         lines=tuple(
-            SourceLine(
-                number=lineno, text=file_lines[lineno - 1], highlighted=lineno == line
-            )
+            SourceLine(number=lineno, text=file_lines[lineno - 1], highlighted=lineno == line)
             for lineno in range(start + 1, end + 1)
         ),
     )

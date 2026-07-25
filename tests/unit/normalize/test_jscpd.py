@@ -11,9 +11,7 @@ from shipgate.normalize.jscpd import JscpdNormalizer
 from shipgate.runtime.executor import ProcessResult
 
 
-def make_request(
-    tmp_path: Path, *, tool_id: str = "jscpd.check.python"
-) -> ResolvedRequest:
+def make_request(tmp_path: Path, *, tool_id: str = "jscpd.check.python") -> ResolvedRequest:
     config = tmp_path / "jscpd.json"
     config.write_text(
         '{"output": ".shipgate/reports/jscpd-python", "reporters": ["json"]}',
@@ -98,9 +96,7 @@ def assert_threshold_report_shape(report: CheckReport) -> None:
 
 
 def assert_clone_finding(report: CheckReport) -> None:
-    clone = next(
-        finding for finding in report.findings if finding.rule_id == "duplicate"
-    )
+    clone = next(finding for finding in report.findings if finding.rule_id == "duplicate")
     assert clone.location is not None
     assert clone.location.path == "src/app.py"
     assert clone.location.line == 10

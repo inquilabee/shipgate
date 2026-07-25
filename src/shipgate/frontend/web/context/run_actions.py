@@ -74,9 +74,7 @@ def start_new_run(
             since=since,
         )
     except OrchestratorError as exc:
-        return RedirectResponse(
-            url=f"/runs/new?error={query_escape(str(exc))}", status_code=303
-        )
+        return RedirectResponse(url=f"/runs/new?error={query_escape(str(exc))}", status_code=303)
     return RedirectResponse(url=f"/?run_id={run.id}", status_code=303)
 
 
@@ -93,11 +91,7 @@ def default_suite(catalog, primary: Path) -> str:
         project = ProjectConfigLoader.load(project_root=primary)
     except ConfigError:
         project = None
-    if (
-        project is not None
-        and project.suite is not None
-        and project.suite in catalog.suites
-    ):
+    if project is not None and project.suite is not None and project.suite in catalog.suites:
         return project.suite
     if "standard" in catalog.suites:
         return "standard"

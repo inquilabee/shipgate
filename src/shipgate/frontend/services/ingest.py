@@ -27,6 +27,18 @@ TOOL_MESSAGE_MARKERS = (
     "failed to install",
     "failed to parse tool output",
 )
+# Threshold / policy breaches are code findings even when a tool exits non-zero.
+CODE_FAILURE_MARKERS = ("too many duplicates",)
+
+
+def empty_ingest_buckets() -> tuple[
+    list[FindingRecord],
+    dict[str, int],
+    dict[str, int],
+    dict[str, str],
+    dict[str, int],
+]:
+    return [], {}, {}, {}, {}
 
 
 def ingest_run_report(
@@ -35,11 +47,7 @@ def ingest_run_report(
     report: RunReport,
     project_root: Path,
 ) -> RunSummaryRecord:
-    findings: list[FindingRecord] = []
-    by_severity: dict[str, int] = {}
-    by_check_id: dict[str, int] = {}
-    by_check_status: dict[str, str] = {}
-    by_rule_id: dict[str, int] = {}
+    findings, by_severity, by_check_id, by_check_status, by_rule_id = empty_ingest_buckets()
     for check in report.reports:
         ingest_check(
             check,
@@ -63,11 +71,7 @@ def ingest_check_into_storage(
     project_root: Path,
 ) -> RunSummaryRecord:
     """Merge one completed check into SQLite (mid-run live update)."""
-    findings: list[FindingRecord] = []
-    by_severity: dict[str, int] = {}
-    by_check_id: dict[str, int] = {}
-    by_check_status: dict[str, str] = {}
-    by_rule_id: dict[str, int] = {}
+    findings, by_severity, by_check_id, by_check_status, by_rule_id = empty_ingest_buckets()
     ingest_check(
         check,
         run_id,
@@ -98,9 +102,7 @@ def ingest_check_into_storage(
     for check_id, status in by_check_status.items():
         if status in {"passed", "skipped"} and check_id not in merged_check:
             merged_check[check_id] = 0
-    return summarize(
-        all_findings, merged_sev, merged_check, merged_status, merged_rules
-    )
+    return summarize(all_findings, merged_sev, merged_check, merged_status, merged_rules)
 
 
 def ingest_check(
@@ -119,9 +121,7 @@ def ingest_check(
         return
     if check.status == "failed" and not check.findings:
         findings.append(
-            setup_error_record(
-                run_id=run_id, check_id=check.check_id, message="Check failed"
-            )
+            setup_error_record(run_id=run_id, check_id=check.check_id, message="Check failed")
         )
         by_check_id[check.check_id] = 0
         return
@@ -161,13 +161,81 @@ def summarize(
     )
 
 
-def is_tool_failure(finding: Finding) -> bool:
-    if finding.rule_id in TOOL_RULE_IDS:
-        return True
-    if finding.location is not None:
+def is_tool_failure_fields(*, rule_id: str, message: str, has_location: bool) -> bool:
+    message_l = message.lower()
+    if rule_id == "threshold" or any(marker in message_l for marker in CODE_FAILURE_MARKERS):
         return False
-    message_l = finding.message.lower()
+    if rule_id in TOOL_RULE_IDS:
+        return True
+    if has_location:
+        return False
     return any(marker in message_l for marker in TOOL_MESSAGE_MARKERS)
+
+
+def is_tool_failure(finding: Finding) -> bool:
+    return is_tool_failure_fields(
+        rule_id=finding.rule_id,
+        message=finding.message,
+        has_location=finding.location is not None,
+    )
+
+
+def is_tool_failure_record(finding: FindingRecord) -> bool:
+    return is_tool_failure_fields(
+        rule_id=finding.rule_id,
+        message=finding.message,
+        has_location=finding.file is not None,
+    )
+
+
+def repair_misclassified_tool_findings(storage: Storage) -> int:
+    """Reclassify stored threshold/policy breaches that were ingested as tool failures."""
+    from shipgate.frontend.storage.base import MAX_RUNS
+
+    repaired = 0
+    for run in storage.list_runs(limit=MAX_RUNS):
+        tool_findings = storage.list_findings(run.id, category=FindingCategory.TOOL)
+        if not tool_findings:
+            continue
+        changed = False
+        all_findings = storage.list_findings(run.id)
+        by_id = {finding.id: finding for finding in all_findings}
+        for finding in tool_findings:
+            if is_tool_failure_record(finding):
+                continue
+            finding.category = FindingCategory.CODE
+            by_id[finding.id] = finding
+            changed = True
+            repaired += 1
+        if not changed:
+            continue
+        refreshed = list(by_id.values())
+        storage.replace_findings(run.id, refreshed)
+        summary = summarize_from_records(refreshed, run.summary)
+        storage.update_run(run.id, summary=summary)
+    return repaired
+
+
+def summarize_from_records(
+    findings: list[FindingRecord],
+    previous: RunSummaryRecord | None,
+) -> RunSummaryRecord:
+    by_severity: dict[str, int] = {}
+    by_check_id: dict[str, int] = {}
+    by_rule_id: dict[str, int] = {}
+    by_check_status = dict(previous.by_check_status) if previous else {}
+    for finding in findings:
+        if finding.category != FindingCategory.CODE:
+            if finding.check_id not in by_check_id:
+                by_check_id[finding.check_id] = 0
+            continue
+        by_severity[finding.severity] = by_severity.get(finding.severity, 0) + 1
+        by_check_id[finding.check_id] = by_check_id.get(finding.check_id, 0) + 1
+        by_rule_id[finding.rule_id] = by_rule_id.get(finding.rule_id, 0) + 1
+    for check_id, status in by_check_status.items():
+        if status in {"passed", "skipped"} and check_id not in by_check_id:
+            by_check_id[check_id] = 0
+    return summarize(findings, by_severity, by_check_id, by_check_status, by_rule_id)
 
 
 def setup_error_record(*, run_id: str, check_id: str, message: str) -> FindingRecord:
@@ -234,9 +302,7 @@ def finding_to_record(
     project_root: Path,
 ) -> FindingRecord:
     location = finding.location
-    category = (
-        FindingCategory.TOOL if is_tool_failure(finding) else FindingCategory.CODE
-    )
+    category = FindingCategory.TOOL if is_tool_failure(finding) else FindingCategory.CODE
     raw_file = location.path if location else None
     docs_url, suggested_commands = docs_from_extra(finding.extra)
     return FindingRecord(

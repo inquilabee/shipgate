@@ -67,23 +67,19 @@ class ShipGateApp:
         )
 
     def install(self, command: InstallCommand) -> int:
-        catalog = self._catalog_for(command.project_root)
-        project = ProjectConfigLoader.load(
-            config_path=command.config_path,
-            project_root=command.project_root,
-        )
-        suite_id = command.suite or project.suite or "standard"
-        install_suite(command.project_root, suite_id, catalog, force=False)
-        return 0
+        return self._install_suite(command, force=False)
 
     def update(self, command: InstallCommand) -> int:
+        return self._install_suite(command, force=True)
+
+    def _install_suite(self, command: InstallCommand, *, force: bool) -> int:
         catalog = self._catalog_for(command.project_root)
         project = ProjectConfigLoader.load(
             config_path=command.config_path,
             project_root=command.project_root,
         )
         suite_id = command.suite or project.suite or "standard"
-        install_suite(command.project_root, suite_id, catalog, force=True)
+        install_suite(command.project_root, suite_id, catalog, force=force)
         return 0
 
     def check(self, command: RunCommand) -> int:

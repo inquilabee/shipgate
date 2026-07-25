@@ -85,6 +85,107 @@ def test_ingest_jscpd_threshold_as_code_not_tool_failure(tmp_path: Path):
     assert storage.list_findings("run-jscpd", category=FindingCategory.TOOL) == []
 
 
+def test_ingest_jscpd_tool_exit_threshold_message_is_code(tmp_path: Path):
+    """Legacy mis-normalized threshold exits must not land in Tools that could not run."""
+    storage = SqliteStorage(tmp_path / "report.db")
+    storage.create_run(branch="main", suite_id="full", run_id="run-jscpd-legacy")
+    finding = Finding(
+        check_id="jscpd.check.python",
+        rule_id="TOOL_EXIT",
+        severity="error",
+        message=(
+            "Using config from .shipgate/configs/jscpd.python.json\n"
+            "ERROR: jscpd found too many duplicates (2.4%) over threshold (2.0%)"
+        ),
+    )
+    assert not is_tool_failure(finding)
+    report = RunReport(
+        run_id="run-jscpd-legacy",
+        suite="full",
+        mode="check",
+        status="failed",
+        reports=(
+            CheckReport(
+                check_id="jscpd.check.python",
+                tool_id="jscpd.check.python",
+                status="failed",
+                exit_code=1,
+                findings=(finding,),
+            ),
+        ),
+    )
+    summary = ingest_run_report(storage, "run-jscpd-legacy", report, tmp_path)
+    assert summary.tool_failure_count == 0
+    assert summary.finding_count == 1
+    assert storage.list_findings("run-jscpd-legacy", category=FindingCategory.TOOL) == []
+
+
+def tool_finding_record(
+    *,
+    finding_id: str,
+    run_id: str,
+    check_id: str,
+    message: str,
+) -> FindingRecord:
+    return FindingRecord(
+        id=finding_id,
+        run_id=run_id,
+        check_id=check_id,
+        tool_id=check_id.split(".", 1)[0],
+        rule_id="TOOL_EXIT",
+        severity="error",
+        message=message,
+        category=FindingCategory.TOOL,
+    )
+
+
+def test_repair_misclassified_jscpd_threshold_tool_findings(tmp_path: Path):
+    from shipgate.frontend.domain.models import RunSummaryRecord
+    from shipgate.frontend.services.ingest import repair_misclassified_tool_findings
+
+    storage = SqliteStorage(tmp_path / "report.db")
+    storage.create_run(branch="main", suite_id="full", run_id="run-old")
+    storage.replace_findings(
+        "run-old",
+        [
+            tool_finding_record(
+                finding_id="f1",
+                run_id="run-old",
+                check_id="jscpd.check.python",
+                message=(
+                    "Using config from .shipgate/configs/jscpd.python.json\n"
+                    "ERROR: jscpd found too many duplicates (2.4%) over threshold (2.0%)"
+                ),
+            ),
+            tool_finding_record(
+                finding_id="f2",
+                run_id="run-old",
+                check_id="gitleaks.scan",
+                message="executable not found: gitleaks",
+            ),
+        ],
+    )
+    storage.update_run(
+        "run-old",
+        summary=RunSummaryRecord(
+            finding_count=0,
+            tool_failure_count=2,
+            by_check_status={"jscpd.check.python": "failed", "gitleaks.scan": "failed"},
+        ),
+    )
+    assert repair_misclassified_tool_findings(storage) == 1
+    code = storage.list_findings("run-old", category=FindingCategory.CODE)
+    tool = storage.list_findings("run-old", category=FindingCategory.TOOL)
+    assert len(code) == 1
+    assert "too many duplicates" in code[0].message
+    assert [item.check_id for item in tool] == ["gitleaks.scan"]
+    run = storage.get_run("run-old")
+    assert run is not None
+    assert run.summary is not None
+    assert run.summary.finding_count == 1
+    assert run.summary.tool_failure_count == 1
+
+
 def test_source_context_reads_snippet(tmp_path: Path):
     source = tmp_path / "src"
     source.mkdir()

@@ -53,12 +53,8 @@ ConfigOpt = Annotated[Path | None, typer.Option("--config", help="Path to shipga
 SuiteOpt = Annotated[str | None, typer.Option("--suite", help="Suite to run")]
 CheckOpt = Annotated[str | None, typer.Option("--check", help="Single check to run")]
 TargetOpt = Annotated[Path | None, typer.Option("--target", help="Target path")]
-ErrorFormatOpt = Annotated[
-    str | None, typer.Option("--error-format", help="Error output format")
-]
-ExtraArgOpt = Annotated[
-    list[str] | None, typer.Option("--extra-arg", help="Extra tool argument")
-]
+ErrorFormatOpt = Annotated[str | None, typer.Option("--error-format", help="Error output format")]
+ExtraArgOpt = Annotated[list[str] | None, typer.Option("--extra-arg", help="Extra tool argument")]
 VerboseOpt = Annotated[bool, typer.Option("--verbose", help="Verbose output")]
 QuietOpt = Annotated[bool, typer.Option("--quiet", help="Quiet success")]
 DisplayCliOpt = Annotated[
@@ -84,7 +80,7 @@ ConfigsOnlyOpt = Annotated[bool, typer.Option("--configs-only", help=CONFIGS_ONL
 
 def normalize_argv(argv: list[str] | None) -> list[str]:
     if argv is None:
-        return ["check"]
+        argv = sys.argv[1:]
     if not argv:
         return ["check"]
     if not argv[0].startswith("-") and argv[0] not in TOP_LEVEL_COMMANDS:

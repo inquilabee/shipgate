@@ -1,11 +1,9 @@
 name: CI
-
 on:
   pull_request:
   push:
     branches:
       - main
-
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -17,27 +15,21 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
-
       - name: Install system prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             git curl ca-certificates nodejs npm
-
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-
       - name: Install Python
         run: uv python install ${{ matrix.python-version }}
-
       - name: Install dependencies
         run: uv sync --group dev --python ${{ matrix.python-version }}
-
       # shipgate install (inside make check-commit) downloads managed binaries.
       # If 3.14 fails solely because Semgrep cannot install/run, split later:
       # check-commit on 3.11–3.13; unit+build on 3.14. Do not weaken dogfood thresholds.
       - name: Check commit gate
         run: make check-commit
-
       - name: Build distributions
         run: make build

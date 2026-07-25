@@ -54,9 +54,7 @@ class FakeOrchestrator:
             if self._active_run_id is not None or self._has_active_run():
                 raise OrchestratorError("a run is already active")
             run_id = generate_run_id()
-            run = self._storage.create_run(
-                branch=branch, suite_id=suite_id, run_id=run_id
-            )
+            run = self._storage.create_run(branch=branch, suite_id=suite_id, run_id=run_id)
             self._active_run_id = run.id
             self._cancel_events[run.id] = threading.Event()
             self._done.clear()
@@ -160,9 +158,7 @@ class FakeOrchestrator:
                     error_message="cancelled",
                 )
             else:
-                self._storage.update_run(
-                    run_id, status=RunStatus.SUCCEEDED, finished=True
-                )
+                self._storage.update_run(run_id, status=RunStatus.SUCCEEDED, finished=True)
         else:
             # Hold RUNNING until cancel (cancel scenario).
             while not cancel.wait(timeout=0.05):

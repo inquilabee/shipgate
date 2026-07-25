@@ -9,17 +9,11 @@ from shipgate.frontend.services.ingest import docs_from_extra, finding_to_record
 
 def test_fixed_fingerprints_are_baseline_minus_current():
     baseline = {
-        finding_fingerprint(
-            check_id="ruff.lint", rule_id="F401", path="a.py", line=1, message="x"
-        ),
-        finding_fingerprint(
-            check_id="ruff.lint", rule_id="F401", path="b.py", line=2, message="y"
-        ),
+        finding_fingerprint(check_id="ruff.lint", rule_id="F401", path="a.py", line=1, message="x"),
+        finding_fingerprint(check_id="ruff.lint", rule_id="F401", path="b.py", line=2, message="y"),
     }
     current = {
-        finding_fingerprint(
-            check_id="ruff.lint", rule_id="F401", path="a.py", line=1, message="x"
-        ),
+        finding_fingerprint(check_id="ruff.lint", rule_id="F401", path="a.py", line=1, message="x"),
     }
     fixed = fixed_fingerprints(baseline, current)
     assert len(fixed) == 1

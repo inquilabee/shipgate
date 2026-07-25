@@ -57,9 +57,9 @@ See [docs/architecture.md](docs/architecture.md) and [docs/check-flow.md](docs/c
 ## Adding a tool
 
 1. Add `src/shipgate/catalog/bundled/catalog/tools/<id>.yaml` with install metadata, CLI option mapping, normalizer, and modes.
-2. Reference the tool id from `src/shipgate/catalog/bundled/catalog/suites.yaml` when it should run in a suite.
-3. Add or extend a normalizer under `src/shipgate/normalize/` when the tool needs custom parsing.
-4. Keep planner/adapter/executor free of tool-specific `if tool_id == …` branches — catalog metadata owns argv.
+1. Reference the tool id from `src/shipgate/catalog/bundled/catalog/suites.yaml` when it should run in a suite.
+1. Add or extend a normalizer under `src/shipgate/normalize/` when the tool needs custom parsing.
+1. Keep planner/adapter/executor free of tool-specific `if tool_id == …` branches — catalog metadata owns argv.
 
 Consumers can also extend the catalog under `.shipgate/catalog/` without forking the package.
 

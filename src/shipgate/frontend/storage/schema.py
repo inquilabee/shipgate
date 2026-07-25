@@ -51,6 +51,4 @@ def init_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA_SQL)
     columns = {row[1] for row in conn.execute("PRAGMA table_info(findings)").fetchall()}
     if "category" not in columns:
-        conn.execute(
-            "ALTER TABLE findings ADD COLUMN category TEXT NOT NULL DEFAULT 'code'"
-        )
+        conn.execute("ALTER TABLE findings ADD COLUMN category TEXT NOT NULL DEFAULT 'code'")

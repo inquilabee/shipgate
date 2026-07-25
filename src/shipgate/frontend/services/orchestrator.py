@@ -57,9 +57,7 @@ class RunOrchestrator:
                 raise OrchestratorError("a run is already active")
 
             run_id = generate_run_id()
-            run = self._storage.create_run(
-                branch=branch, suite_id=suite_id, run_id=run_id
-            )
+            run = self._storage.create_run(branch=branch, suite_id=suite_id, run_id=run_id)
             self._active_run_id = run.id
             self._cancel_events[run.id] = threading.Event()
             self._done.clear()
@@ -142,9 +140,7 @@ class RunOrchestrator:
         since: str | None,
     ) -> None:
         worktree = self._resolve_worktree(branch)
-        self._storage.update_run(
-            run_id, status=RunStatus.RUNNING, worktree_path=str(worktree)
-        )
+        self._storage.update_run(run_id, status=RunStatus.RUNNING, worktree_path=str(worktree))
         install_suite(worktree, suite_id, self._app._catalog_for(worktree))
 
         cancel_event = self._cancel_events.setdefault(run_id, threading.Event())
@@ -191,9 +187,7 @@ class RunOrchestrator:
             )
         else:
             status = RunStatus.SUCCEEDED if exit_code == 0 else RunStatus.FAILED
-            self._storage.update_run(
-                run_id, status=status, finished=True, summary=summary
-            )
+            self._storage.update_run(run_id, status=status, finished=True, summary=summary)
         try:
             from shipgate.runtime.report_store import ReportStore
 
