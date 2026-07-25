@@ -23,6 +23,12 @@ check-commit:
 install-hooks:
 	uv run pre-commit install
 
+build:
+	uv build
+
+publish-check: build
+	uv run python -c "import glob, zipfile; paths=glob.glob('dist/*.whl'); assert paths, 'no wheel'; z=zipfile.ZipFile(paths[-1]); z.testzip(); print(paths[-1], 'ok')"
+
 # Fresh-machine smoke test: empty project init/install/format/check, then optional repo dogfood.
 # Requires Docker. Set SHIPGATE_DOCKER_DOGFOOD=0 to skip phase B.
 DOCKER_IMAGE := shipgate-docker-test
@@ -33,4 +39,4 @@ docker-test: docker-test-staging
 docker-test-staging:
 	scripts/docker-test/prepare-dogfood.sh
 
-.PHONY: check-commit docker-test docker-test-staging format install-hooks ruff test test-ui unit
+.PHONY: build check-commit docker-test docker-test-staging format install-hooks publish-check ruff test test-ui unit
