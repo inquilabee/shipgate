@@ -22,7 +22,6 @@ Bundled semgrep rulesets, ruff McCabe, radon grades, etc. are intentional. Fix v
 | Architecture | `docs/architecture.md` |
 | Usage (consumer) | `docs/usage.md` |
 | Check flow | `docs/check-flow.md` |
-| Option mappings | `docs/res/config.md` |
 | Agent index | `AGENTS.md` |
 | Gates | `.cursor/rules/gates.mdc` |
 

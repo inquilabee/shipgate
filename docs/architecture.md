@@ -3,7 +3,6 @@
 Repo-policy-first quality orchestration. Projects declare intent; ShipGate runs tools through catalog metadata, Execution Requests, and canonical reports.
 
 Consumer usage (suites, config, CI, tools): [`docs/usage.md`](usage.md).\
-Option flag coverage for bundled tools: [`docs/res/config.md`](res/config.md).\
 Tool YAML → `shipgate check` walkthrough: [`docs/check-flow.md`](check-flow.md).
 
 ## Vision

@@ -11,7 +11,6 @@ ShipGate is a portable, metadata-driven quality-gate orchestrator. Projects decl
 | Architecture | `docs/architecture.md` |
 | Usage (consumer) | `docs/usage.md` |
 | Check flow (tool YAML → run) | `docs/check-flow.md` |
-| Option mappings | `docs/res/config.md` |
 
 ## Commands
 

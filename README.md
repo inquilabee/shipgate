@@ -13,6 +13,15 @@ shipgate format
 shipgate check
 ```
 
+## What's in the name?
+
+**Ship** — move code out the door quickly. **Gate** — nothing merges until it
+passes the checklist.
+
+ShipGate is fast to set up and especially strong with AI agents: pair
+`shipgate` with pre-commit so every commit (human or agent) hits the same
+gates. No bad code skips the gate.
+
 ## Quick start
 
 ### 1. Activate your environment
@@ -129,7 +138,6 @@ shipgate format --target src
 | [Usage guide](docs/usage.md) | Suites, config, error formats, CI, gates, tools |
 | [Architecture](docs/architecture.md) | Layers and design decisions |
 | [Check flow](docs/check-flow.md) | Tool YAML → `shipgate check` |
-| [Option mappings](docs/res/config.md) | Bundled tool CLI flags |
 
 ## Contributing
 

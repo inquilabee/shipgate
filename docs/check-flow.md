@@ -2,7 +2,7 @@
 
 How a catalog tool YAML becomes a real subprocess when you run ShipGate.
 
-Architecture overview: `docs/architecture.md`. Option flag map: `docs/res/config.md`.
+Architecture overview: `docs/architecture.md`.
 
 ## What a tool definition is
 
