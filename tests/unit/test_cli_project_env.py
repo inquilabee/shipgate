@@ -1,7 +1,4 @@
-from argparse import Namespace
-
-from shipgate.app import ShipGateApp
-from shipgate.cli import build_parser, dispatch_command
+from shipgate.cli import main
 from shipgate.paths import PROJECT_CACHE_ENV, PROJECT_ENV_CACHE_KEY, parse_env_file
 from shipgate.project.init import init_project
 from tests.unit.support.python_env import PythonEnvFixture
@@ -12,15 +9,10 @@ def test_project_env_flag_persists_to_cache(tmp_path, monkeypatch):
     PythonEnvFixture.write_venv(custom)
     monkeypatch.chdir(tmp_path)
     init_project(tmp_path)
-    monkeypatch.setattr(ShipGateApp, "install", lambda _self, _command: 0)
+    monkeypatch.setattr("shipgate.app.ShipGateApp.install", lambda _self, _command: 0)
 
-    args = Namespace(
-        command="install",
-        config=None,
-        suite=None,
-        project_env=custom,
-    )
-    dispatch_command(ShipGateApp(), args, build_parser(), tmp_path)
+    code = main(["install", "--project-env", str(custom)])
+    assert code == 0
 
     cache = parse_env_file(tmp_path / PROJECT_CACHE_ENV)
     assert cache[PROJECT_ENV_CACHE_KEY] == "pyenv"

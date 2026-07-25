@@ -3,7 +3,11 @@ name = "shipgate"
 version = "0.1.0"
 description = "Portable quality-gate orchestrator for developer tools"
 requires-python = ">=3.11,<3.15"
-dependencies = ["PyYAML>=6.0", "pathspec>=0.12"]
+dependencies = [
+    "PyYAML>=6.0",
+    "pathspec>=0.12",
+    "typer>=0.27.0",
+]
 
 [project.optional-dependencies]
 server = [

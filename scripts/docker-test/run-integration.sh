@@ -52,7 +52,7 @@ echo "ShipGate: $(shipgate --help 2>&1 | head -1 || true)"
 echo "git: $(git --version)"
 echo "node: $(node --version 2>/dev/null || echo MISSING)"
 echo "npm: $(npm --version 2>/dev/null || echo MISSING)"
-echo "go: $(go version 2>/dev/null || echo MISSING)"
+echo "go: (not required; yamlfmt installs via GitHub release)"
 echo "Platform: $(uname -m) $(uname -s)"
 echo "Dogfood phase: ${RUN_DOGFOOD}"
 
@@ -69,7 +69,8 @@ git init -q
 git config user.email "test@shipgate.local"
 git config user.name "ShipGate Docker Test"
 
-cat >main.py <<'PY'
+mkdir -p src
+cat >src/main.py <<'PY'
 """Minimal sample project."""
 
 
@@ -92,7 +93,8 @@ cat "$POLICY_YAML"
 echo "--- .shipgate/configs (first 20) ---"
 find .shipgate/configs -type f 2>/dev/null | head -20 || true
 
-sed -i 's/^suite: standard/suite: full/' "$POLICY_YAML"
+# Force a full-tree smoke scan (init defaults enable changed-only).
+sed -i 's/^changed-only: true/changed-only: false/' "$POLICY_YAML"
 echo "--- updated shipgate.yaml ---"
 cat "$POLICY_YAML"
 
@@ -131,8 +133,8 @@ if [[ $RUN_DOGFOOD == "1" ]]; then
 	ls -la .shipgate/tools/bin/ 2>/dev/null || echo "(no bin dir)"
 
 	run_cmd "B2 shipgate format --target ." shipgate format --target .
-	run_cmd "B3 shipgate check --suite python-quality --target src/shipgate/domain" \
-		shipgate check --suite python-quality --target src/shipgate/domain
+	run_cmd "B3 shipgate check --check ruff.lint --target src/shipgate/domain" \
+		shipgate check --check ruff.lint --target src/shipgate/domain
 else
 	echo ""
 	echo "Skipping PHASE B (SHIPGATE_DOCKER_DOGFOOD=${RUN_DOGFOOD})"

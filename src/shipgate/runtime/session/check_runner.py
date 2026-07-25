@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import shlex
 import sys
+import threading
 from typing import TYPE_CHECKING, Protocol
 
 from shipgate.adapter.executable import build_tool_argv
@@ -67,6 +68,7 @@ class CheckRunner:
         on_progress: Callable[..., None] | None,
     ) -> list[CheckReport]:
         checks_total = len(context.selected_tools)
+        emit_progress(on_progress, "", 0, checks_total)
 
         def run_one(selected: SelectedTool) -> CheckReport:
             report = self.run_selected_tool(
@@ -80,27 +82,69 @@ class CheckRunner:
             return report
 
         if context.parallel:
+            return CheckRunner._run_parallel_checks(
+                context.selected_tools,
+                run_one,
+                fail_fast=context.fail_fast,
+                on_progress=on_progress,
+                checks_total=checks_total,
+            )
+        return CheckRunner._run_sequential_checks(
+            context.selected_tools,
+            run_one,
+            on_progress=on_progress,
+            checks_total=checks_total,
+        )
+
+    @staticmethod
+    def _run_sequential_checks(
+        selected_tools: tuple[SelectedTool, ...] | list[SelectedTool],
+        run_one: Callable[[SelectedTool], CheckReport],
+        *,
+        on_progress: Callable[..., None] | None,
+        checks_total: int,
+    ) -> list[CheckReport]:
+        reports: list[CheckReport] = []
+        for completed, selected in enumerate(selected_tools):
+            emit_progress(on_progress, selected.tool_id, completed, checks_total)
             try:
-                reports = run_parallel(
-                    list(context.selected_tools),
-                    run_one,
-                    fail_fast=context.fail_fast,
-                )
+                report = run_one(selected)
             except FailFastError as exc:
-                reports = [exc.report]
-        else:
-            reports = []
-            for selected in context.selected_tools:
-                try:
-                    report = run_one(selected)
-                except FailFastError as exc:
-                    reports.append(exc.report)
-                    break
-                reports.append(report)
-        for index, selected in enumerate(context.selected_tools[: len(reports)]):
-            emit_progress(on_progress, selected.tool_id, index, checks_total)
-            emit_progress(on_progress, selected.tool_id, index + 1, checks_total)
+                reports.append(exc.report)
+                emit_progress(on_progress, selected.tool_id, completed + 1, checks_total)
+                break
+            reports.append(report)
+            emit_progress(on_progress, selected.tool_id, completed + 1, checks_total)
         return reports
+
+    @staticmethod
+    def _run_parallel_checks(
+        selected_tools: tuple[SelectedTool, ...] | list[SelectedTool],
+        run_one: Callable[[SelectedTool], CheckReport],
+        *,
+        fail_fast: bool,
+        on_progress: Callable[..., None] | None,
+        checks_total: int,
+    ) -> list[CheckReport]:
+        completed = 0
+        lock = threading.Lock()
+
+        def run_one_with_progress(selected: SelectedTool) -> CheckReport:
+            nonlocal completed
+            report = run_one(selected)
+            with lock:
+                completed += 1
+                emit_progress(on_progress, selected.tool_id, completed, checks_total)
+            return report
+
+        try:
+            return run_parallel(
+                list(selected_tools),
+                run_one_with_progress,
+                fail_fast=fail_fast,
+            )
+        except FailFastError as exc:
+            return [exc.report]
 
     def run_selected_tool(
         self,
