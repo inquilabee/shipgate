@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 def looks_like_json(text: str) -> bool:
     stripped = text.strip()
-    return stripped.startswith("{") or stripped.startswith("[")
+    return stripped.startswith(("{", "["))
 
 
 def read_tool_output(request: ResolvedRequest, result: ProcessResult) -> str:

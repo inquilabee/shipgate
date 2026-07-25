@@ -19,7 +19,7 @@ def run_command(
     check: bool = False,
     capture_output: bool = True,
     text: bool = True,
-    input: str | None = None,
+    stdin_input: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run ``argv`` with list-form exec (never ``shell=True``).
 
@@ -28,7 +28,7 @@ def run_command(
     """
     if isinstance(argv, (str, bytes)):
         raise TypeError("argv must be a sequence of strings, not a string")
-    return subprocess.run(  # noqa: S603
+    return subprocess.run(  # ruff:ignore[subprocess-without-shell-equals-true]
         list(argv),
         cwd=cwd,
         env=None if env is None else dict(env),
@@ -36,6 +36,6 @@ def run_command(
         check=check,
         capture_output=capture_output,
         text=text,
-        input=input,
+        input=stdin_input,
         shell=False,
     )

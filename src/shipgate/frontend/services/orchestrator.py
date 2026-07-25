@@ -76,8 +76,9 @@ class RunOrchestrator:
     def _execute_run(self, run_id: str, branch: str, suite_id: str) -> None:
         try:
             self._perform_run(run_id, branch, suite_id)
-        except Exception as exc:
-            self._persist_failure(run_id, exc)
+        except Exception as exc:  # ruff: ignore[blind-except] — persist any run failure
+            message = str(exc) or exc.__class__.__name__
+            self._persist_failure(run_id, message)
         finally:
             self._finish_run(run_id)
 
@@ -119,8 +120,7 @@ class RunOrchestrator:
         except WorktreeError as exc:
             raise OrchestratorError(f"worktree failed: {exc}") from exc
 
-    def _persist_failure(self, run_id: str, exc: Exception) -> None:
-        message = str(exc) or exc.__class__.__name__
+    def _persist_failure(self, run_id: str, message: str) -> None:
         try:
             self._storage.update_run(
                 run_id, status=RunStatus.FAILED, error_message=message, finished=True

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from shipgate.core.process import run_command
+from shipgate.errors import InstallError
 from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
 from shipgate.runtime.environment import resolve_executable, system_environment
 
@@ -68,7 +69,7 @@ def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
             system_environment(),
             install_binary=tool.install.binary if tool.install else None,
         )
-    except Exception:
+    except InstallError:
         try:
             from shipgate.runtime.environment import managed_environment
 
@@ -77,7 +78,7 @@ def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
                 managed_environment(primary_root),
                 install_binary=tool.install.binary if tool.install else None,
             )
-        except Exception:
+        except InstallError:
             return None
     for flag in VERSION_ATTEMPTS:
         parsed = run_version_command(binary, flag, tool.executable)

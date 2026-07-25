@@ -78,7 +78,8 @@ class ProjectConfigLoader:
             pyproject_raw=pyproject_raw,
         )
 
-    def _load_yaml_raw(self, yaml_path: Path | None) -> dict[str, Any] | None:
+    @staticmethod
+    def _load_yaml_raw(yaml_path: Path | None) -> dict[str, Any] | None:
         if yaml_path is None or not yaml_path.is_file():
             return None
         loaded = load_yaml_mapping(yaml_path, error_cls=ConfigError)

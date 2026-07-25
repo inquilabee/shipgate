@@ -44,7 +44,8 @@ class CheckResultCache:
     def _entry_path(self, resolved: ResolvedRequest) -> Path:
         return self._root / f"{self._cache_key(resolved)}.json"
 
-    def _cache_key(self, resolved: ResolvedRequest) -> str:
+    @staticmethod
+    def _cache_key(resolved: ResolvedRequest) -> str:
         parts: list[str] = [
             resolved.tool.id,
             resolved.mode.value,

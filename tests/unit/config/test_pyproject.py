@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.errors import ConfigError
 from shipgate.paths import PROJECT_CACHE_ENV, SHIPGATE_YAML
@@ -9,12 +11,8 @@ from shipgate.project.init import init_project
 
 
 def assert_config_error(action, *, contains: str) -> None:
-    try:
+    with pytest.raises(ConfigError, match=contains):
         action()
-    except ConfigError as exc:
-        assert contains in exc.message, exc.message
-        return
-    raise AssertionError("expected ConfigError")
 
 
 FULL_PYPROJECT = """\
@@ -259,12 +257,9 @@ name = "demo"
 unknown = true
 """,
     )
-    try:
+    with pytest.raises(ConfigError) as exc_info:
         ProjectConfigLoader.load(project_root=tmp_path)
-    except ConfigError as exc:
-        assert exc.exit_code == 2, "expected exit code 2"
-    else:
-        raise AssertionError("expected ConfigError")
+    assert exc_info.value.exit_code == 2
 
 
 def test_invalid_pyproject_toml_fails(tmp_path: Path):

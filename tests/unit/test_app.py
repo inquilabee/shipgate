@@ -18,7 +18,8 @@ class FakeExecutor(Executor):
 
 
 class FailExecutor(Executor):
-    def run(self, argv, *, cwd, env=None):
+    def run(self, argv, *, cwd, env=None):  # ruff:ignore[no-self-use]
+        _ = env
         import json
 
         return ProcessResult(

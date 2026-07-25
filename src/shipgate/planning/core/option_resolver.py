@@ -183,8 +183,8 @@ class OptionResolver:
         )
         return resolved, merged_sources
 
+    @staticmethod
     def _default_paths(
-        self,
         options: NormalizedOptions,
         target: Path,
         sources: dict[str, str],
@@ -206,8 +206,8 @@ class OptionResolver:
             sources["output"] = "shipgate_default"
         return output, sources
 
+    @staticmethod
     def _default_format(
-        self,
         options: NormalizedOptions,
         sources: dict[str, str],
     ) -> tuple[str, dict[str, str]]:
@@ -217,8 +217,8 @@ class OptionResolver:
             sources["format"] = "shipgate_default"
         return fmt, sources
 
+    @staticmethod
     def _default_verbose(
-        self,
         options: NormalizedOptions,
         sources: dict[str, str],
     ) -> tuple[bool, dict[str, str]]:
@@ -227,8 +227,8 @@ class OptionResolver:
             sources["verbose"] = "shipgate_default"
         return verbose, sources
 
+    @staticmethod
     def _default_quiet(
-        self,
         options: NormalizedOptions,
         sources: dict[str, str],
     ) -> tuple[bool, dict[str, str]]:
@@ -237,8 +237,8 @@ class OptionResolver:
             sources["quiet"] = "shipgate_default"
         return quiet, sources
 
+    @staticmethod
     def _default_fix(
-        self,
         options: NormalizedOptions,
         mode: RunMode,
         sources: dict[str, str],
@@ -249,8 +249,8 @@ class OptionResolver:
             sources["fix"] = "shipgate_default"
         return fix, sources
 
+    @staticmethod
     def _default_check(
-        self,
         options: NormalizedOptions,
         mode: RunMode,
         sources: dict[str, str],

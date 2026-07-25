@@ -43,7 +43,7 @@ def patterns_from_env() -> tuple[str, ...]:
     return tuple(patterns)
 
 
-def ignores_from_env(project_root: Path | None = None) -> EffectiveIgnores:
+def ignores_from_env(_project_root: Path | None = None) -> EffectiveIgnores:
     return EffectiveIgnores(path_patterns=patterns_from_env())
 
 

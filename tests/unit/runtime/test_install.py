@@ -91,7 +91,7 @@ def test_install_suite_records_successful_binaries_on_partial_failure(
         del force
         if "gitleaks" in packages:
             raise InstallError("gitleaks download failed")
-        return None
+        return
 
     binary_installer.install_packages.side_effect = install_binary
     monkeypatch.setitem(INSTALLER_REGISTRY, "python", python_installer)

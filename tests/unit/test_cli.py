@@ -12,7 +12,7 @@ def test_help_exits_zero():
 def test_output_dir_flag_removed():
     parser = build_parser()
     with pytest.raises(SystemExit):
-        parser.parse_args(["check", "--output-dir", "/tmp/out"])  # noqa: S108
+        parser.parse_args(["check", "--output-dir", "/tmp/out"])  # ruff:ignore[hardcoded-temp-file]
 
 
 def test_list_suites(capsys):

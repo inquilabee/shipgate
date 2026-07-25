@@ -62,7 +62,7 @@ class FolderBreadthGate(PolicyGate):
         self._allowlist: set[str] = set()
         self._ignores: EffectiveIgnores | None = None
 
-    def configure_parser(self, parser: argparse.ArgumentParser) -> None:
+    def configure_parser(self, parser: argparse.ArgumentParser) -> None:  # ruff:ignore[no-self-use]
         parser.add_argument("--strict", action="store_true", default=None)
         parser.add_argument("--advisory", action="store_true", default=False)
 
@@ -91,11 +91,13 @@ class FolderBreadthGate(PolicyGate):
         return self._findings_from_report(self._report)
 
     def report_extra(self, findings: Sequence[PolicyFinding]) -> Mapping[str, object] | None:
+        _ = findings
         if self._report is None:
             return None
         return self._report.report_metadata()
 
     def fail_label(self, finding: PolicyFinding) -> str:
+        _ = finding
         return self.gate_id
 
     def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:
@@ -116,8 +118,9 @@ class FolderBreadthGate(PolicyGate):
             report_path=args.report,
         )
 
+    @staticmethod
     def _settings_from_config(
-        self, config: dict[str, Any]
+        config: dict[str, Any],
     ) -> tuple[int, tuple[str, ...], tuple[str, ...], bool]:
         max_allowed = int(config.get("max_allowed", 12))
         scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
@@ -229,9 +232,11 @@ class FolderBreadthGate(PolicyGate):
         if not base.is_dir():
             return []
         directories = [base]
-        for path in sorted(base.rglob("*")):
-            if path.is_dir() and path.name not in SKIP_DIR_NAMES:
-                directories.append(path)
+        directories.extend(
+            path
+            for path in sorted(base.rglob("*"))
+            if path.is_dir() and path.name not in SKIP_DIR_NAMES
+        )
         return directories
 
     def _count_direct_files(self, directory: Path) -> int:
@@ -247,18 +252,17 @@ class FolderBreadthGate(PolicyGate):
 
     @staticmethod
     def _findings_from_report(report: FolderBreadthReport) -> list[PolicyFinding]:
-        findings: list[PolicyFinding] = []
-        for violation in report.violations:
-            findings.append(
-                PolicyFinding(
-                    rule_id="folder-breadth",
-                    message=(
-                        f"{violation.path} has {violation.count} sibling files "
-                        f"(max {violation.max_allowed})"
-                    ),
-                    location=FindingLocation(file=violation.path),
-                )
+        findings: list[PolicyFinding] = [
+            PolicyFinding(
+                rule_id="folder-breadth",
+                message=(
+                    f"{violation.path} has {violation.count} sibling files "
+                    f"(max {violation.max_allowed})"
+                ),
+                location=FindingLocation(file=violation.path),
             )
+            for violation in report.violations
+        ]
         return findings
 
 

@@ -72,7 +72,7 @@ def findings_filter_query(
         category=category,
     )
     return (
-        f"SELECT * FROM findings WHERE {where}",  # noqa: S608  # nosec B608
+        f"SELECT * FROM findings WHERE {where}",  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
         params,
     )
 

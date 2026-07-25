@@ -134,11 +134,12 @@ class ShipGateApp:
         checks = list_project_checks(project, catalog)
         return "\n".join(checks) + ("\n" if checks else "")
 
-    def schema(self) -> str:
+    @staticmethod
+    def schema() -> str:
         return json.dumps(report_json_schema(), indent=2) + "\n"
 
+    @staticmethod
     def serve(
-        self,
         project_root: Path,
         host: str = "127.0.0.1",
         port: int = 8765,
@@ -150,7 +151,8 @@ class ShipGateApp:
         serve(project_root, host=host, port=port, open_browser=open_browser)
         return 0
 
-    def lock(self, project_root: Path) -> int:
+    @staticmethod
+    def lock(project_root: Path) -> int:
         manifest = project_root / ".shipgate" / "tools" / "manifest.json"
         packages: dict[str, str] = {}
         if manifest.is_file():
@@ -180,7 +182,8 @@ class ShipGateApp:
         save_baseline(command.project_root, baseline_report)
         return 0
 
-    def baseline_show(self, project_root: Path) -> str:
+    @staticmethod
+    def baseline_show(project_root: Path) -> str:
         baseline = load_baseline(project_root)
         if baseline is None:
             return "no baseline\n"
@@ -202,11 +205,13 @@ class ShipGateApp:
             worst = max(worst, code)
         return worst
 
-    def gates_init(self, project_root: Path, name: str) -> str:
+    @staticmethod
+    def gates_init(project_root: Path, name: str) -> str:
         path = init_gate(project_root, name)
         return f"created gate: {path}\n"
 
-    def gates_lib_path(self) -> str:
+    @staticmethod
+    def gates_lib_path() -> str:
         return f"{gates_lib_path()}\n"
 
     def init(

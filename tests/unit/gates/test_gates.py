@@ -160,8 +160,10 @@ def test_prepare_gate_execution_sets_env(tmp_path: Path, monkeypatch):
 def assert_module_gate_argv(argv: tuple[str, ...], env: dict[str, str], root: Path) -> None:
     assert argv[0] == env["SHIPGATE_PYTHON"] or argv[0].endswith("python")
     assert argv[1:3] == ("-m", "shipgate.policy.module_size")
-    assert "--root" in argv and str(root) in argv
-    assert "--config" in argv and "--report" in argv
+    assert "--root" in argv
+    assert str(root) in argv
+    assert "--config" in argv
+    assert "--report" in argv
 
 
 def assert_module_gate_env(env: dict[str, str], root: Path) -> None:

@@ -14,16 +14,17 @@ if TYPE_CHECKING:
 
 
 class PathBinaryInstaller:
-    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
+    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:  # ruff:ignore[no-self-use]
         return install_def.allow_path and shutil.which(binary_name) is not None
 
-    def install(
+    def install(  # ruff:ignore[no-self-use]
         self,
         bin_dir: Path,
         binary_name: str,
         install_def: InstallDefinition,
         destination: Path,
     ) -> None:
+        _ = bin_dir, install_def
         existing = shutil.which(binary_name)
         if existing is None:
             raise InstallError(f"binary {binary_name!r} is not available on PATH")

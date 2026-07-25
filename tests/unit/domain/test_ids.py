@@ -12,15 +12,15 @@ def test_accepts_python_quality():
 
 
 def test_rejects_empty():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must not be empty"):
         validate_id("")
 
 
 def test_rejects_path_separator():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="invalid id"):
         validate_id("../tool")
 
 
 def test_rejects_uppercase():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="invalid id"):
         validate_id("Ruff Lint")

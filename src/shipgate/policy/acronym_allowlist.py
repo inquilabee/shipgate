@@ -108,8 +108,13 @@ class AcronymAllowlistGate(PolicyGate):
         without_fences = FENCED_CODE_BLOCK_RE.sub("", text)
         return INLINE_CODE_RE.sub("", without_fences)
 
-    def resolve_allowlist(self, root: Path, config: Mapping[str, Any]) -> set[str]:
+    def resolve_allowlist(  # ruff:ignore[no-self-use]
+        self,
+        root: Path,
+        config: Mapping[str, Any],
+    ) -> set[str]:
         # Token allowlists are loaded inside collect_findings.
+        _ = root, config
         return set()
 
     def collect_findings(
@@ -120,6 +125,7 @@ class AcronymAllowlistGate(PolicyGate):
         allowlist: set[str],
         ignores: EffectiveIgnores | None,
     ) -> Sequence[PolicyFinding]:
+        _ = allowlist
         scan_roots, allowlist_path = self._settings_from_config(dict(config))
         self._root = root
         self._scan_roots = scan_roots
@@ -127,10 +133,11 @@ class AcronymAllowlistGate(PolicyGate):
         self._allowlisted = self._load_allowlist(self._require_allowlist_path(allowlist_path))
         return self._findings_from_violations(self._scan_paths())
 
-    def fail_label(self, finding: PolicyFinding) -> str:
+    def fail_label(self, finding: PolicyFinding) -> str:  # ruff:ignore[no-self-use]
+        _ = finding
         return "acronym"
 
-    def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:
+    def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:  # ruff:ignore[no-self-use]
         if not findings:
             return 0
         for finding in findings:
@@ -141,7 +148,8 @@ class AcronymAllowlistGate(PolicyGate):
             print(f"FAIL acronym: {where}{finding.message}", file=sys.stderr)
         return 1
 
-    def _settings_from_config(self, config: dict[str, Any]) -> tuple[tuple[str, ...], Path | None]:
+    @staticmethod
+    def _settings_from_config(config: dict[str, Any]) -> tuple[tuple[str, ...], Path | None]:
         scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
         allowlist_file = config.get("allowlist_file")
         allowlist_path = Path(str(allowlist_file)) if allowlist_file else None
@@ -158,7 +166,8 @@ class AcronymAllowlistGate(PolicyGate):
             return self._root / allowlist_path
         return allowlist_path
 
-    def _load_allowlist(self, path: Path) -> set[str]:
+    @staticmethod
+    def _load_allowlist(path: Path) -> set[str]:
         if not path.is_file():
             return set()
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -205,8 +214,10 @@ class AcronymAllowlistGate(PolicyGate):
         prose = self.strip_markdown_code(text)
         violations: list[AcronymViolation] = []
         for line_no, line in enumerate(prose.splitlines(), start=1):
-            for token in self._find_violations_in_line(line):
-                violations.append(AcronymViolation(path=path, line=line_no, token=token))
+            violations.extend(
+                AcronymViolation(path=path, line=line_no, token=token)
+                for token in self._find_violations_in_line(line)
+            )
         return violations
 
     def _find_violations_in_line(self, line: str) -> list[str]:

@@ -11,7 +11,7 @@ class SemgrepNormalizer(JsonItemsNormalizer):
     invalid_message = "semgrep output must be a JSON object"
     decode_error = "invalid semgrep JSON output"
 
-    def item_to_finding(self, item: dict, check_id: str) -> Finding:
+    def item_to_finding(self, item: dict, check_id: str) -> Finding:  # ruff:ignore[no-self-use]
         start = item.get("start") or {}
         extra = item.get("extra") or {}
         location = FindingLocation(

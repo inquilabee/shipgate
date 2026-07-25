@@ -49,7 +49,7 @@ def test_run_command_forwards_kwargs(tmp_path: Path) -> None:
             check=True,
             capture_output=False,
             text=False,
-            input="stdin",
+            stdin_input="stdin",
         )
     mock_run.assert_called_once_with(
         ["git", "status"],

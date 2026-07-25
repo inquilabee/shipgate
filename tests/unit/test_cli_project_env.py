@@ -12,7 +12,7 @@ def test_project_env_flag_persists_to_cache(tmp_path, monkeypatch):
     PythonEnvFixture.write_venv(custom)
     monkeypatch.chdir(tmp_path)
     init_project(tmp_path)
-    monkeypatch.setattr(ShipGateApp, "install", lambda self, command: 0)
+    monkeypatch.setattr(ShipGateApp, "install", lambda _self, _command: 0)
 
     args = Namespace(
         command="install",

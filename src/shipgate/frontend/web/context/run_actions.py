@@ -9,6 +9,7 @@ from urllib.parse import quote
 from fastapi.responses import RedirectResponse
 
 from shipgate.config.loader import ProjectConfigLoader
+from shipgate.errors import ConfigError
 from shipgate.frontend.domain.requirements import acknowledge, is_acknowledged
 from shipgate.frontend.services.orchestrator import OrchestratorError
 from shipgate.frontend.services.worktree import WorktreeError
@@ -72,7 +73,7 @@ def default_suite(catalog, primary: Path) -> str:
     project = None
     try:
         project = ProjectConfigLoader.load(project_root=primary)
-    except Exception:
+    except ConfigError:
         project = None
     if project is not None and project.suite is not None and project.suite in catalog.suites:
         return project.suite

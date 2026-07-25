@@ -126,8 +126,8 @@ class CheckResolver:
         )
         return PreparedRun(request=resolved)
 
+    @staticmethod
     def _options_for_mode(
-        self,
         selected: SelectedTool,
         tool: ToolDefinition,
         *,

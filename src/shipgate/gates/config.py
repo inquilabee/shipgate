@@ -23,12 +23,11 @@ def load_bundled_gate_config(tool: ToolDefinition) -> dict[str, Any]:
     bundled = bundled_root_path() / tool.configuration.bundled
     if not bundled.is_file():
         return {}
-    data = load_yaml_mapping(
+    return load_yaml_mapping(
         bundled,
         error_cls=ValueError,
         invalid_message=f"Gate config must be a mapping: {bundled}",
     )
-    return data
 
 
 def apply_project_allowlist(
@@ -98,7 +97,7 @@ def gate_env_from_config(config: dict[str, Any], project_root: Path) -> dict[str
 def resolve_gate_config_path(
     tool: ToolDefinition,
     project_root: Path,
-    project: ProjectConfig | None,
+    _project: ProjectConfig | None,
     config_paths: tuple[Path, ...],
 ) -> Path | None:
     for candidate in config_paths:

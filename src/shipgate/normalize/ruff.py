@@ -15,5 +15,5 @@ class RuffNormalizer(JsonItemsNormalizer):
     invalid_message = "ruff output must be a JSON array"
     decode_error = "invalid ruff JSON output"
 
-    def item_to_finding(self, item: dict[str, Any], check_id: str) -> Finding:
+    def item_to_finding(self, item: dict[str, Any], check_id: str) -> Finding:  # ruff:ignore[no-self-use]
         return ruff_like_finding(item, check_id)

@@ -11,7 +11,7 @@ class GitleaksNormalizer(JsonItemsNormalizer):
     invalid_message = "gitleaks output must be a JSON array"
     decode_error = "invalid gitleaks JSON output"
 
-    def item_to_finding(self, item: dict, check_id: str) -> Finding:
+    def item_to_finding(self, item: dict, check_id: str) -> Finding:  # ruff:ignore[no-self-use]
         return Finding(
             check_id=check_id,
             rule_id=str(item.get("RuleID") or item.get("ruleID") or "GITLEAKS"),

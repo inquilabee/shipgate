@@ -80,6 +80,7 @@ class ModuleSizeGate(PolicyGate):
         return findings
 
     def fail_label(self, finding: PolicyFinding) -> str:
+        _ = finding
         return self.gate_id
 
 

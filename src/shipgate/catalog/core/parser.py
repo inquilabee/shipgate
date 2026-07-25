@@ -75,7 +75,8 @@ class CatalogParser:
             suggest_if=suggest_if,
         )
 
-    def _parse_cli_options(self, raw: dict) -> dict[str, CliOptionDefinition]:
+    @staticmethod
+    def _parse_cli_options(raw: dict) -> dict[str, CliOptionDefinition]:
         return {
             name: CliOptionDefinition(
                 flag=option.get("flag"),
@@ -89,13 +90,14 @@ class CatalogParser:
             for name, option in raw.items()
         }
 
-    def _parse_configuration(self, raw: dict) -> ConfigurationDefinition:
+    @staticmethod
+    def _parse_configuration(raw: dict) -> ConfigurationDefinition:
         return ConfigurationDefinition(
             bundled=raw.get("bundled"),
             discover=tuple(raw.get("discover", []) or []),
             pyproject_section=raw.get("pyproject_section"),
             precedence=tuple(raw.get("precedence", ["cli", "repo", "bundled"])),
-            merge=bool(raw.get("merge", False)),
+            merge=bool(raw.get("merge")),
         )
 
     def _parse_install(self, raw: dict | None) -> InstallDefinition | None:
@@ -112,7 +114,8 @@ class CatalogParser:
             download=self._parse_download(raw.get("download")),
         )
 
-    def _parse_download(self, raw: dict | None) -> BinaryDownloadSpec | None:
+    @staticmethod
+    def _parse_download(raw: dict | None) -> BinaryDownloadSpec | None:
         if not raw:
             return None
         return BinaryDownloadSpec(
@@ -123,7 +126,8 @@ class CatalogParser:
             os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
         )
 
-    def _parse_cache(self, raw: dict | None) -> CacheDefinition | None:
+    @staticmethod
+    def _parse_cache(raw: dict | None) -> CacheDefinition | None:
         if not raw:
             return None
         ttl = raw.get("ttl_seconds")
@@ -132,7 +136,8 @@ class CatalogParser:
             ttl_seconds=int(ttl) if ttl is not None else None,
         )
 
-    def _parse_suggest_if(self, raw: dict | None) -> SuggestIfDefinition | None:
+    @staticmethod
+    def _parse_suggest_if(raw: dict | None) -> SuggestIfDefinition | None:
         if not raw:
             return None
         return SuggestIfDefinition(
@@ -147,16 +152,18 @@ class CatalogParser:
         delivery = str(raw.get("delivery", "root"))
         return ScopeCriteria(extensions=extensions, globs=globs, delivery=delivery)
 
-    def _normalize_extension(self, value: object) -> str:
+    @staticmethod
+    def _normalize_extension(value: object) -> str:
         text = str(value).strip()
         if not text:
             return text
         return text if text.startswith(".") else f".{text}"
 
-    def _parse_suite(self, suite_id: str, raw: dict) -> SuiteDefinition:
+    @staticmethod
+    def _parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:
         return SuiteDefinition(
             id=suite_id,
             members=tuple(raw.get("members", []) or []),
-            parallel=bool(raw.get("parallel", False)),
+            parallel=bool(raw.get("parallel")),
             fail_fast=bool(raw.get("fail_fast", raw.get("fail-fast", False))),
         )

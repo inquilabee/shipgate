@@ -43,9 +43,11 @@ def iter_python_files(root: Path, scan_roots: tuple[str, ...]) -> list[str]:
         base = root / scan_root
         if not base.is_dir():
             continue
-        for path in sorted(base.rglob("*.py")):
-            if path.is_file():
-                files.append(path.relative_to(root).as_posix())
+        files.extend(
+            path.relative_to(root).as_posix()
+            for path in sorted(base.rglob("*.py"))
+            if path.is_file()
+        )
     return files
 
 

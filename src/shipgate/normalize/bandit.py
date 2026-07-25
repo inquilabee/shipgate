@@ -11,7 +11,7 @@ class BanditNormalizer(JsonItemsNormalizer):
     invalid_message = "bandit output must be a JSON object"
     allow_empty_on_success = True
 
-    def item_to_finding(self, item: dict, check_id: str) -> Finding:
+    def item_to_finding(self, item: dict, check_id: str) -> Finding:  # ruff:ignore[no-self-use]
         return Finding(
             check_id=check_id,
             rule_id=str(item.get("test_id") or "BANDIT"),

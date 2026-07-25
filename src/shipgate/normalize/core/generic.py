@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class GenericExitNormalizer(BaseNormalizer):
-    def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport:
+    def normalize(self, request: ResolvedRequest, result: ProcessResult) -> CheckReport:  # ruff:ignore[no-self-use]
         check_id = request.tool.id
         if result.exit_code == 0:
             return CheckReport(

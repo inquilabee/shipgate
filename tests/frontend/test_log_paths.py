@@ -11,7 +11,7 @@ def test_resolved_log_path_rejects_traversal(tmp_path: Path):
     root.mkdir()
     secret = tmp_path / "secret.txt"
     secret.write_text("nope", encoding="utf-8")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="path escapes root"):
         contained_file(root, "../secret.txt")
 
 
@@ -24,5 +24,5 @@ def test_contained_file_returns_existing_file(tmp_path: Path):
 
 
 def test_serve_warns_on_non_loopback_host(capsys):
-    warn_if_non_loopback("0.0.0.0")  # noqa: S104
-    assert "0.0.0.0" in capsys.readouterr().err  # noqa: S104
+    warn_if_non_loopback("0.0.0.0")  # ruff:ignore[hardcoded-bind-all-interfaces]
+    assert "0.0.0.0" in capsys.readouterr().err  # ruff:ignore[hardcoded-bind-all-interfaces]

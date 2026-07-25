@@ -45,20 +45,28 @@ class PolicyGate(ABC):
     ) -> Sequence[PolicyFinding]:
         """Return findings for the current project tree."""
 
-    def report_extra(self, findings: Sequence[PolicyFinding]) -> Mapping[str, object] | None:
+    def report_extra(  # ruff:ignore[no-self-use]
+        self,
+        findings: Sequence[PolicyFinding],
+    ) -> Mapping[str, object] | None:
+        _ = findings
         return None
 
-    def fail_label(self, finding: PolicyFinding) -> str:
+    def fail_label(self, finding: PolicyFinding) -> str:  # ruff:ignore[no-self-use]
         return finding.rule_id
 
-    def configure_parser(self, parser: argparse.ArgumentParser) -> None:
+    def configure_parser(self, parser: argparse.ArgumentParser) -> None:  # ruff:ignore[no-self-use]
         """Hook for gate-specific CLI flags."""
         _ = parser
 
-    def resolve_allowlist(self, root: Path, config: Mapping[str, Any]) -> set[str]:
+    def resolve_allowlist(  # ruff:ignore[no-self-use]
+        self,
+        root: Path,
+        config: Mapping[str, Any],
+    ) -> set[str]:
         return load_allowlist_paths(resolve_config_allowlist(root, dict(config)))
 
-    def iter_scoped_python_files(
+    def iter_scoped_python_files(  # ruff:ignore[no-self-use]
         self,
         root: Path,
         config: Mapping[str, Any],

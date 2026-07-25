@@ -73,7 +73,8 @@ class CatalogLoader:
             raise CatalogError("catalog must be a mapping")
         return raw
 
-    def _merge_raw(self, base: dict, overlay: dict) -> dict:
+    @staticmethod
+    def _merge_raw(base: dict, overlay: dict) -> dict:
         """Merge project catalog overlay onto bundled raw catalog data."""
         merged = dict(base)
         for section in ("tools", "suites"):
@@ -117,7 +118,8 @@ class CatalogLoader:
             tools[tool_id] = tool_data
         return tools
 
-    def _load_tool_file(self, tool_path: Path) -> tuple[str, dict]:
+    @staticmethod
+    def _load_tool_file(tool_path: Path) -> tuple[str, dict]:
         tool_raw = load_yaml_mapping(
             tool_path,
             error_cls=CatalogError,
@@ -132,7 +134,8 @@ class CatalogLoader:
             )
         return expected_id, tool_raw[expected_id]
 
-    def _load_section(self, catalog_dir: Path, section: str) -> dict:
+    @staticmethod
+    def _load_section(catalog_dir: Path, section: str) -> dict:
         section_path = catalog_dir / f"{section}.yaml"
         section_raw = load_yaml_mapping(
             section_path,

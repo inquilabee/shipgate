@@ -45,12 +45,12 @@ def test_joined():
 
 def test_boolean_true():
     opt = CliOptionDefinition(flag="--check", style="boolean")
-    assert serialize_option(opt, True) == ["--check"]
+    assert serialize_option(opt, value=True) == ["--check"]
 
 
 def test_boolean_false():
     opt = CliOptionDefinition(flag="--check", style="boolean")
-    assert serialize_option(opt, False) == []
+    assert serialize_option(opt, value=False) == []
 
 
 def test_positional():

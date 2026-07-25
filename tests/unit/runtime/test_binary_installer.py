@@ -40,7 +40,9 @@ def test_release_arch_mapping(tool_id, arch, expected):
     "shipgate.runtime.installers.binary_github.GitHubReleaseInstaller.github_arch",
     return_value="x86_64",
 )
-def test_gitleaks_release_url_uses_x64_arch(_mock_arch, _mock_os):
+def test_gitleaks_release_url_uses_x64_arch(mock_github_arch, mock_github_os):
+    assert mock_github_arch.return_value == "x86_64"
+    assert mock_github_os.return_value == "linux"
     url, asset_name = GitHubReleaseInstaller.build_github_release_url(
         tool_download("gitleaks.scan"),
         "v8.18.2",
@@ -57,7 +59,9 @@ def test_gitleaks_release_url_uses_x64_arch(_mock_arch, _mock_os):
     "shipgate.runtime.installers.binary_github.GitHubReleaseInstaller.github_arch",
     return_value="x86_64",
 )
-def test_shfmt_release_url_uses_amd64_arch(_mock_arch, _mock_os):
+def test_shfmt_release_url_uses_amd64_arch(mock_github_arch, mock_github_os):
+    assert mock_github_arch.return_value == "x86_64"
+    assert mock_github_os.return_value == "linux"
     url, asset_name = GitHubReleaseInstaller.build_github_release_url(
         tool_download("shfmt.apply"),
         "v3.8.0",
@@ -78,7 +82,14 @@ def test_shfmt_release_url_uses_amd64_arch(_mock_arch, _mock_os):
     "shipgate.runtime.installers.binary_github.GitHubReleaseInstaller.github_arch",
     return_value="x86_64",
 )
-def test_gitleaks_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_latest):
+def test_gitleaks_latest_release_url_resolves_tag(
+    mock_github_arch,
+    mock_github_os,
+    mock_fetch_latest,
+):
+    assert mock_github_arch.return_value == "x86_64"
+    assert mock_github_os.return_value == "linux"
+    assert mock_fetch_latest.return_value == "v8.30.1"
     url, asset_name = GitHubReleaseInstaller.build_github_release_url(
         tool_download("gitleaks.scan"),
         "latest",
@@ -99,7 +110,14 @@ def test_gitleaks_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_la
     "shipgate.runtime.installers.binary_github.GitHubReleaseInstaller.github_arch",
     return_value="x86_64",
 )
-def test_shfmt_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_latest):
+def test_shfmt_latest_release_url_resolves_tag(
+    mock_github_arch,
+    mock_github_os,
+    mock_fetch_latest,
+):
+    assert mock_github_arch.return_value == "x86_64"
+    assert mock_github_os.return_value == "linux"
+    assert mock_fetch_latest.return_value == "v3.13.1"
     _url, asset_name = GitHubReleaseInstaller.build_github_release_url(
         tool_download("shfmt.apply"),
         "latest",
@@ -115,7 +133,9 @@ def test_shfmt_latest_release_url_resolves_tag(_mock_arch, _mock_os, _mock_lates
     "shipgate.runtime.installers.binary_github.GitHubReleaseInstaller.github_arch",
     return_value="x86_64",
 )
-def test_shellcheck_release_url_keeps_x86_64_arch(_mock_arch, _mock_os):
+def test_shellcheck_release_url_keeps_x86_64_arch(mock_github_arch, mock_github_os):
+    assert mock_github_arch.return_value == "x86_64"
+    assert mock_github_os.return_value == "linux"
     _url, asset_name = GitHubReleaseInstaller.build_github_release_url(
         tool_download("shellcheck.check"),
         "v0.10.0",
@@ -131,7 +151,9 @@ def test_shellcheck_release_url_keeps_x86_64_arch(_mock_arch, _mock_os):
     "shipgate.runtime.installers.binary_github.GitHubReleaseInstaller.github_arch",
     return_value="x86_64",
 )
-def test_hadolint_release_url(_mock_arch, _mock_os):
+def test_hadolint_release_url(mock_github_arch, mock_github_os):
+    assert mock_github_arch.return_value == "x86_64"
+    assert mock_github_os.return_value == "linux"
     url, asset_name = GitHubReleaseInstaller.build_github_release_url(
         tool_download("hadolint.check"),
         "2.14.0",

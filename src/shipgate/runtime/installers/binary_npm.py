@@ -18,10 +18,11 @@ if TYPE_CHECKING:
 
 
 class NpmInstaller:
-    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
+    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:  # ruff:ignore[no-self-use]
+        _ = binary_name
         return install_def.manager == "binary" and install_def.download is None
 
-    def install(
+    def install(  # ruff:ignore[no-self-use]
         self,
         bin_dir: Path,
         binary_name: str,

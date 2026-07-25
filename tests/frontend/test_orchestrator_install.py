@@ -24,7 +24,7 @@ def test_perform_run_installs_into_worktree(tmp_path: Path, monkeypatch):
     orch = RunOrchestrator(primary, storage, app=app)
     monkeypatch.setattr(orch, "_resolve_worktree", lambda _branch: worktree)
 
-    def fake_install(root, suite_id, catalog):
+    def fake_install(root, _suite_id, _catalog):
         installed.append(Path(root))
         return root / "manifest.json"
 

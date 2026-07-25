@@ -24,7 +24,7 @@ def test_validate_run_submit_tokens_requires_ui_token_when_set():
         validate_run_submit_tokens(
             csrf_expected="abc",
             csrf_submitted="abc",
-            ui_token_expected="expected",  # noqa: S106
+            ui_token_expected="expected",  # ruff:ignore[hardcoded-password-func-arg]
             ui_token_submitted=None,
         )
 

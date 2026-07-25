@@ -56,7 +56,8 @@ class CatalogValidator:
         for suite_id in self._catalog.suites:
             self._detect_suite_cycle(suite_id)
 
-    def _validate_tool_id(self, tool_id: str) -> None:
+    @staticmethod
+    def _validate_tool_id(tool_id: str) -> None:
         try:
             validate_id(tool_id, kind="tool id")
         except ValueError as exc:
@@ -85,11 +86,13 @@ class CatalogValidator:
                     f"tool {tool.id!r} option {name!r} has unsupported aggregate {opt.aggregate!r}"
                 )
 
-    def _validate_tool_normalizer(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_tool_normalizer(tool: ToolDefinition) -> None:
         if tool.normalizer not in VALID_NORMALIZERS:
             raise CatalogError(f"tool {tool.id!r} has unknown normalizer {tool.normalizer!r}")
 
-    def _validate_tool_modes(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_tool_modes(tool: ToolDefinition) -> None:
         for mode in tool.modes:
             if not isinstance(mode, RunMode):
                 raise CatalogError(f"tool {tool.id!r} has invalid mode {mode!r}")
@@ -130,7 +133,8 @@ class CatalogValidator:
         if not script_path.is_file():
             raise CatalogError(f"tool {tool.id!r} missing bundled script: {script_path}")
 
-    def _validate_tool_module(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_tool_module(tool: ToolDefinition) -> None:
         if not tool.module:
             return
         if not isinstance(tool.module, str) or not tool.module.strip():
@@ -150,7 +154,8 @@ class CatalogValidator:
         self._validate_known_bad(tool)
         self._validate_download(tool)
 
-    def _validate_exact_pin(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_exact_pin(tool: ToolDefinition) -> None:
         install = tool.install
         if install is None:
             return
@@ -173,7 +178,8 @@ class CatalogValidator:
                 f"tool {tool.id!r} install.version {install.version!r} is listed in known_bad"
             )
 
-    def _validate_download(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_download(tool: ToolDefinition) -> None:
         install = tool.install
         if install is None or install.download is None:
             return
@@ -185,13 +191,15 @@ class CatalogValidator:
         if not download.binary_name.strip():
             raise CatalogError(f"tool {tool.id!r} install.download.binary_name is required")
 
-    def _validate_tool_cache(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_tool_cache(tool: ToolDefinition) -> None:
         if tool.cache is None:
             return
         if tool.cache.ttl_seconds is not None and tool.cache.ttl_seconds < 0:
             raise CatalogError(f"tool {tool.id!r} cache.ttl_seconds must be >= 0")
 
-    def _validate_suggest_if(self, tool: ToolDefinition) -> None:
+    @staticmethod
+    def _validate_suggest_if(tool: ToolDefinition) -> None:
         if tool.suggest_if is None:
             return
         if not tool.suggest_if.files_present:

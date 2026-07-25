@@ -44,7 +44,7 @@ def download_https_file(url: str, destination: Path) -> None:
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != "https" or parsed.netloc != "github.com":
         raise InstallError(f"refusing untrusted download URL: {url}")
-    request = urllib.request.Request(url, method="GET")  # noqa: S310
-    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: E501
-    with urllib.request.urlopen(request, timeout=120) as response:  # noqa: S310  # nosec B310
+    request = urllib.request.Request(url, method="GET")  # ruff:ignore[suspicious-url-open-usage]
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # ruff:ignore[commented-out-code]
+    with urllib.request.urlopen(request, timeout=120) as response:  # ruff:ignore[suspicious-url-open-usage]  # nosec B310
         destination.write_bytes(response.read())

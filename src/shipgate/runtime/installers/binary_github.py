@@ -21,7 +21,8 @@ if TYPE_CHECKING:
 
 
 class GitHubReleaseInstaller:
-    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:
+    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:  # ruff:ignore[no-self-use]
+        _ = binary_name
         return install_def.download is not None
 
     def install(
@@ -31,6 +32,7 @@ class GitHubReleaseInstaller:
         install_def: InstallDefinition,
         destination: Path,
     ) -> None:
+        _ = bin_dir
         download = install_def.download
         if download is None:
             raise InstallError(f"binary {binary_name!r} has no install.download metadata")
@@ -79,14 +81,14 @@ class GitHubReleaseInstaller:
     @staticmethod
     def fetch_latest_release_tag(repo: str) -> str:
         url = f"https://api.github.com/repos/{repo}/releases/latest"
-        request = urllib.request.Request(  # noqa: S310
+        request = urllib.request.Request(
             url,
             method="GET",
             headers={"Accept": "application/vnd.github+json"},
         )
         try:
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # noqa: E501
-            with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310  # nosec B310
+            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # ruff:ignore[line-too-long,commented-out-code]
+            with urllib.request.urlopen(request, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]  # nosec B310
                 data = json.loads(response.read())
         except OSError as exc:
             raise InstallError(f"failed to resolve latest release for {repo}: {exc}") from exc
@@ -165,7 +167,7 @@ class GitHubReleaseInstaller:
     @staticmethod
     def extract_binary(archive_path: Path, binary_name: str) -> Path:
         suffixes = "".join(archive_path.suffixes)
-        if suffixes.endswith(".tar.gz") or suffixes.endswith(".tar.xz"):
+        if suffixes.endswith((".tar.gz", ".tar.xz")):
             return GitHubReleaseInstaller.extract_from_tar(
                 archive_path, binary_name, gz=suffixes.endswith(".tar.gz")
             )
