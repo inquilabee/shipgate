@@ -23,7 +23,7 @@ p95_threshold = 7
 # Letter rank is per-file. Median / p95 gate typical and high-end MI.
 threshold = "B"
 median_mode = "threshold"
-median_threshold = 55.5
+median_threshold = 55.8
 p95_mode = "threshold"
 p95_threshold = 100
 

@@ -19,7 +19,7 @@ checks:
     # Letter rank is per-file. Median / p95 gate typical and high-end MI.
     threshold: B
     median-mode: threshold
-    median-threshold: 55.5
+    median-threshold: 55.8
     p95-mode: threshold
     p95-threshold: 100
   jscpd.check.python:

@@ -10,14 +10,14 @@ from shipgate.domain.reports import CheckReport
 from shipgate.normalize.radon import RadonNormalizer
 from shipgate.paths import (
     PROJECT_CACHE_ENV,
-    RADON_CC_AVG_CACHE_KEY,
-    RADON_CC_MAX_CACHE_KEY,
-    RADON_CC_MEDIAN_CACHE_KEY,
-    RADON_CC_P95_CACHE_KEY,
-    RADON_MI_AVG_CACHE_KEY,
-    RADON_MI_MEDIAN_CACHE_KEY,
-    RADON_MI_MIN_CACHE_KEY,
-    RADON_MI_P95_CACHE_KEY,
+    RADON_CC_AVG_CACHE_ENV,
+    RADON_CC_MAX_CACHE_ENV,
+    RADON_CC_MEDIAN_CACHE_ENV,
+    RADON_CC_P95_CACHE_ENV,
+    RADON_MI_AVG_CACHE_ENV,
+    RADON_MI_MEDIAN_CACHE_ENV,
+    RADON_MI_MIN_CACHE_ENV,
+    RADON_MI_P95_CACHE_ENV,
     parse_env_file,
 )
 from shipgate.runtime.executor import ProcessResult
@@ -132,10 +132,10 @@ def test_radon_mi_metrics_values(tmp_path: Path):
 def test_radon_mi_metric_cache_keys(tmp_path: Path):
     payload = '{"a.py": {"rank": "A", "mi": 80.0}, "b.py": {"rank": "A", "mi": 20.0}}'
     report = normalize_payload(tmp_path, "radon.mi", ("mi", "-j"), payload)
-    assert report.extra["metric_average_cache_key"] == RADON_MI_AVG_CACHE_KEY
-    assert report.extra["metric_median_cache_key"] == RADON_MI_MEDIAN_CACHE_KEY
-    assert report.extra["metric_extreme_cache_key"] == RADON_MI_MIN_CACHE_KEY
-    assert report.extra["metric_p95_cache_key"] == RADON_MI_P95_CACHE_KEY
+    assert report.extra["metric_average_cache_key"] == RADON_MI_AVG_CACHE_ENV
+    assert report.extra["metric_median_cache_key"] == RADON_MI_MEDIAN_CACHE_ENV
+    assert report.extra["metric_extreme_cache_key"] == RADON_MI_MIN_CACHE_ENV
+    assert report.extra["metric_p95_cache_key"] == RADON_MI_P95_CACHE_ENV
 
 
 def test_radon_mi_average_threshold_fails(tmp_path: Path):
@@ -245,10 +245,10 @@ def test_radon_cc_metric_cache_keys(tmp_path: Path):
         "]}"
     )
     report = normalize_payload(tmp_path, "radon.cc", ("cc", "-j"), payload)
-    assert report.extra["metric_average_cache_key"] == RADON_CC_AVG_CACHE_KEY
-    assert report.extra["metric_median_cache_key"] == RADON_CC_MEDIAN_CACHE_KEY
-    assert report.extra["metric_extreme_cache_key"] == RADON_CC_MAX_CACHE_KEY
-    assert report.extra["metric_p95_cache_key"] == RADON_CC_P95_CACHE_KEY
+    assert report.extra["metric_average_cache_key"] == RADON_CC_AVG_CACHE_ENV
+    assert report.extra["metric_median_cache_key"] == RADON_CC_MEDIAN_CACHE_ENV
+    assert report.extra["metric_extreme_cache_key"] == RADON_CC_MAX_CACHE_ENV
+    assert report.extra["metric_p95_cache_key"] == RADON_CC_P95_CACHE_ENV
 
 
 def test_radon_cc_maximum_threshold_fails(tmp_path: Path):
@@ -315,22 +315,22 @@ def test_progressive_seeds_missing_baseline(tmp_path: Path):
             "metric_extreme": 24.16,
             "metric_extreme_kind": "minimum",
             "metric_worse_when": "lower",
-            "metric_average_cache_key": RADON_MI_AVG_CACHE_KEY,
-            "metric_extreme_cache_key": RADON_MI_MIN_CACHE_KEY,
+            "metric_average_cache_key": RADON_MI_AVG_CACHE_ENV,
+            "metric_extreme_cache_key": RADON_MI_MIN_CACHE_ENV,
         },
     )
     out = apply_progressive_average(request, report)
     assert out.status == "passed"
     values = parse_env_file(tmp_path / PROJECT_CACHE_ENV)
-    assert values[RADON_MI_AVG_CACHE_KEY] == "63.6200"
-    assert values[RADON_MI_MIN_CACHE_KEY] == "24.1600"
+    assert values[RADON_MI_AVG_CACHE_ENV] == "63.6200"
+    assert values[RADON_MI_MIN_CACHE_ENV] == "24.1600"
 
 
 def test_progressive_fails_on_regression_and_skips_update(tmp_path: Path):
     env_path = tmp_path / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True)
     env_path.write_text(
-        f"{RADON_MI_AVG_CACHE_KEY}=70.0000\n{RADON_MI_MIN_CACHE_KEY}=30.0000\n",
+        f"{RADON_MI_AVG_CACHE_ENV}=70.0000\n{RADON_MI_MIN_CACHE_ENV}=30.0000\n",
         encoding="utf-8",
     )
     request = resolved(
@@ -349,8 +349,8 @@ def test_progressive_fails_on_regression_and_skips_update(tmp_path: Path):
             "metric_extreme": 24.16,
             "metric_extreme_kind": "minimum",
             "metric_worse_when": "lower",
-            "metric_average_cache_key": RADON_MI_AVG_CACHE_KEY,
-            "metric_extreme_cache_key": RADON_MI_MIN_CACHE_KEY,
+            "metric_average_cache_key": RADON_MI_AVG_CACHE_ENV,
+            "metric_extreme_cache_key": RADON_MI_MIN_CACHE_ENV,
         },
     )
     out = apply_progressive_average(request, report)
@@ -360,15 +360,15 @@ def test_progressive_fails_on_regression_and_skips_update(tmp_path: Path):
         "minimum-progressive",
     }
     values = parse_env_file(env_path)
-    assert values[RADON_MI_AVG_CACHE_KEY] == "70.0000"
-    assert values[RADON_MI_MIN_CACHE_KEY] == "30.0000"
+    assert values[RADON_MI_AVG_CACHE_ENV] == "70.0000"
+    assert values[RADON_MI_MIN_CACHE_ENV] == "30.0000"
 
 
 def test_progressive_updates_only_non_regressed_metric(tmp_path: Path):
     env_path = tmp_path / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True)
     env_path.write_text(
-        f"{RADON_CC_AVG_CACHE_KEY}=5.0000\n{RADON_CC_MAX_CACHE_KEY}=8.0000\n",
+        f"{RADON_CC_AVG_CACHE_ENV}=5.0000\n{RADON_CC_MAX_CACHE_ENV}=8.0000\n",
         encoding="utf-8",
     )
     request = resolved(
@@ -387,8 +387,8 @@ def test_progressive_updates_only_non_regressed_metric(tmp_path: Path):
             "metric_extreme": 12.0,
             "metric_extreme_kind": "maximum",
             "metric_worse_when": "higher",
-            "metric_average_cache_key": RADON_CC_AVG_CACHE_KEY,
-            "metric_extreme_cache_key": RADON_CC_MAX_CACHE_KEY,
+            "metric_average_cache_key": RADON_CC_AVG_CACHE_ENV,
+            "metric_extreme_cache_key": RADON_CC_MAX_CACHE_ENV,
         },
     )
     out = apply_progressive_average(request, report)
@@ -396,15 +396,15 @@ def test_progressive_updates_only_non_regressed_metric(tmp_path: Path):
     assert len(out.findings) == 1
     assert out.findings[0].rule_id == "maximum-progressive"
     values = parse_env_file(env_path)
-    assert values[RADON_CC_AVG_CACHE_KEY] == "4.5000"
-    assert values[RADON_CC_MAX_CACHE_KEY] == "8.0000"
+    assert values[RADON_CC_AVG_CACHE_ENV] == "4.5000"
+    assert values[RADON_CC_MAX_CACHE_ENV] == "8.0000"
 
 
 def test_progressive_median_and_p95(tmp_path: Path):
     env_path = tmp_path / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True)
     env_path.write_text(
-        f"{RADON_MI_MEDIAN_CACHE_KEY}=60.0000\n{RADON_MI_P95_CACHE_KEY}=90.0000\n",
+        f"{RADON_MI_MEDIAN_CACHE_ENV}=60.0000\n{RADON_MI_P95_CACHE_ENV}=90.0000\n",
         encoding="utf-8",
     )
     request = resolved(
@@ -422,8 +422,8 @@ def test_progressive_median_and_p95(tmp_path: Path):
             "metric_median": 56.87,
             "metric_p95": 88.0,
             "metric_worse_when": "lower",
-            "metric_median_cache_key": RADON_MI_MEDIAN_CACHE_KEY,
-            "metric_p95_cache_key": RADON_MI_P95_CACHE_KEY,
+            "metric_median_cache_key": RADON_MI_MEDIAN_CACHE_ENV,
+            "metric_p95_cache_key": RADON_MI_P95_CACHE_ENV,
         },
     )
     out = apply_progressive_average(request, report)
@@ -433,5 +433,5 @@ def test_progressive_median_and_p95(tmp_path: Path):
         "p95-progressive",
     }
     values = parse_env_file(env_path)
-    assert values[RADON_MI_MEDIAN_CACHE_KEY] == "60.0000"
-    assert values[RADON_MI_P95_CACHE_KEY] == "90.0000"
+    assert values[RADON_MI_MEDIAN_CACHE_ENV] == "60.0000"
+    assert values[RADON_MI_P95_CACHE_ENV] == "90.0000"

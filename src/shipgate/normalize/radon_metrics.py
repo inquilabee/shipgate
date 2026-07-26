@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, ClassVar
 
 from shipgate.domain.reports import Finding
 from shipgate.paths import (
-    RADON_CC_AVG_CACHE_KEY,
-    RADON_CC_MAX_CACHE_KEY,
-    RADON_CC_MEDIAN_CACHE_KEY,
-    RADON_CC_P95_CACHE_KEY,
-    RADON_MI_AVG_CACHE_KEY,
-    RADON_MI_MEDIAN_CACHE_KEY,
-    RADON_MI_MIN_CACHE_KEY,
-    RADON_MI_P95_CACHE_KEY,
+    RADON_CC_AVG_CACHE_ENV,
+    RADON_CC_MAX_CACHE_ENV,
+    RADON_CC_MEDIAN_CACHE_ENV,
+    RADON_CC_P95_CACHE_ENV,
+    RADON_MI_AVG_CACHE_ENV,
+    RADON_MI_MEDIAN_CACHE_ENV,
+    RADON_MI_MIN_CACHE_ENV,
+    RADON_MI_P95_CACHE_ENV,
 )
 
 if TYPE_CHECKING:
@@ -32,10 +32,10 @@ class RadonMetrics:
             cls.cc_complexity_values(payload),
             worse_when="higher",
             extreme_kind="maximum",
-            average_cache_key=RADON_CC_AVG_CACHE_KEY,
-            median_cache_key=RADON_CC_MEDIAN_CACHE_KEY,
-            extreme_cache_key=RADON_CC_MAX_CACHE_KEY,
-            p95_cache_key=RADON_CC_P95_CACHE_KEY,
+            average_cache_key=RADON_CC_AVG_CACHE_ENV,
+            median_cache_key=RADON_CC_MEDIAN_CACHE_ENV,
+            extreme_cache_key=RADON_CC_MAX_CACHE_ENV,
+            p95_cache_key=RADON_CC_P95_CACHE_ENV,
         )
 
     @classmethod
@@ -44,10 +44,10 @@ class RadonMetrics:
             cls.mi_values(payload),
             worse_when="lower",
             extreme_kind="minimum",
-            average_cache_key=RADON_MI_AVG_CACHE_KEY,
-            median_cache_key=RADON_MI_MEDIAN_CACHE_KEY,
-            extreme_cache_key=RADON_MI_MIN_CACHE_KEY,
-            p95_cache_key=RADON_MI_P95_CACHE_KEY,
+            average_cache_key=RADON_MI_AVG_CACHE_ENV,
+            median_cache_key=RADON_MI_MEDIAN_CACHE_ENV,
+            extreme_cache_key=RADON_MI_MIN_CACHE_ENV,
+            p95_cache_key=RADON_MI_P95_CACHE_ENV,
         )
 
     @classmethod
