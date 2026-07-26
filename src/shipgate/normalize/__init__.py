@@ -5,8 +5,10 @@ from __future__ import annotations
 from shipgate.core.registry import Registry
 from shipgate.normalize import (
     bandit,
+    deptry,
     gitleaks,
     jscpd,
+    pip_audit,
     radon,
     ruff,
     semgrep,
@@ -37,6 +39,8 @@ NORMALIZER_REGISTRY = Registry(
         "deadcode": DeadcodeNormalizer(),
         "gate_json": GateJsonNormalizer(),
         "jscpd": jscpd.JscpdNormalizer(),
+        "pip_audit": pip_audit.PipAuditNormalizer(),
+        "deptry": deptry.DeptryNormalizer(),
     },
     unknown_message="unknown normalizer: {name!r}",
 )

@@ -30,7 +30,7 @@ repos:
         always_run: true
       - id: shipgate-check
         name: shipgate check
-        entry: uv run shipgate check --target .
+        entry: env PYTHONPATH=src uv run shipgate check --target .
         language: system
         pass_filenames: false
         always_run: true

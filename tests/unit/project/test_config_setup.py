@@ -7,6 +7,7 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import SHIPGATE_YAML
 from shipgate.project.config_setup import (
+    detect_root_package,
     project_config_relpath,
     scaffold_bundled_configs,
 )
@@ -33,6 +34,28 @@ def test_project_config_relpath_for_gate():
     )
 
 
+def test_project_config_relpath_for_import_linter():
+    catalog = CatalogLoader.load()
+    tool = catalog.get_tool("import-linter.check")
+    assert project_config_relpath(tool) == Path(".shipgate/configs/importlinter.ini")
+    assert tool.configuration.bundled == "configs/importlinter.ini"
+
+
+def test_detect_root_package_from_src_layout(tmp_path: Path):
+    pkg = tmp_path / "src" / "acme"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    assert detect_root_package(tmp_path) == "acme"
+
+
+def test_detect_root_package_from_pyproject_name(tmp_path: Path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "cool-pkg"\nversion = "0.1.0"\n',
+        encoding="utf-8",
+    )
+    assert detect_root_package(tmp_path) == "cool_pkg"
+
+
 def test_scaffold_bundled_configs_creates_files(tmp_path: Path):
     catalog = CatalogLoader.load()
     created = scaffold_bundled_configs(tmp_path, catalog)
@@ -41,6 +64,35 @@ def test_scaffold_bundled_configs_creates_files(tmp_path: Path):
         "gate config missing"
     )
     assert len(created) >= 2, "expected scaffolded files"
+
+
+def test_scaffold_import_linter_substitutes_root_package(tmp_path: Path):
+    pkg = tmp_path / "src" / "widgets"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    scaffold_bundled_configs(tmp_path, catalog)
+    content = (tmp_path / ".shipgate/configs/importlinter.ini").read_text(encoding="utf-8")
+    assert "root_package = widgets" in content
+    assert "__ROOT_PACKAGE__" not in content
+    assert "containers =\n    widgets" in content
+    assert "(domain)" in content
+    assert "widgets.domain" not in content
+
+
+def test_scaffold_merges_deptry_into_pyproject(tmp_path: Path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nversion = "0.1.0"\n',
+        encoding="utf-8",
+    )
+    pkg = tmp_path / "src" / "demo"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    scaffold_bundled_configs(tmp_path, catalog)
+    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.deptry]" in content
+    assert 'known_first_party = ["demo"]' in content
 
 
 def test_scaffold_bundled_configs_does_not_overwrite(tmp_path: Path):
@@ -57,6 +109,9 @@ def test_init_scaffolds_configs(tmp_path: Path):
     init_project(tmp_path)
     assert (tmp_path / ".shipgate/configs/ruff.toml").is_file(), "ruff config missing"
     assert (tmp_path / ".shipgate/configs/ty.toml").is_file(), "ty config missing"
+    assert (tmp_path / ".shipgate/configs/importlinter.ini").is_file(), (
+        "import-linter config missing"
+    )
     assert (tmp_path / ".shipgate/configs/gates/gate.acronym-allowlist.yaml").is_file(), (
         "gate config missing"
     )
@@ -81,3 +136,12 @@ def test_resolve_prefers_shipgate_config(tmp_path: Path):
     tool = catalog.get_tool("ruff.lint")
     paths = resolve_config_paths(tool, project, tmp_path)
     assert paths == (tmp_path / ".shipgate/configs/ruff.toml",), "project config not preferred"
+
+
+def test_resolve_import_linter_prefers_shipgate_config(tmp_path: Path):
+    catalog = CatalogLoader.load()
+    scaffold_project_layout(tmp_path)
+    project = ProjectConfigLoader.load(project_root=tmp_path)
+    tool = catalog.get_tool("import-linter.check")
+    paths = resolve_config_paths(tool, project, tmp_path)
+    assert paths == (tmp_path / ".shipgate/configs/importlinter.ini",)

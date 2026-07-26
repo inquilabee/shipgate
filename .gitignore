@@ -12,10 +12,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-.shipgate/
 .cursor/rules/you.mdc
 
-.shipgate/
 .trunk/
 
 todo.md

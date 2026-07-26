@@ -1,0 +1,6 @@
+[tool.deptry]
+# First-party packages (not reported as missing third-party deps).
+# known_first_party = ["your_package"]
+
+# [tool.deptry.per_rule_ignores]
+# DEP002 = ["optional-extra-package"]

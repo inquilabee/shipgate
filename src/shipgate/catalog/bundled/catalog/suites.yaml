@@ -19,6 +19,7 @@ suites:
       - bandit.scan
       - gitleaks.scan
       - semgrep.scan
+      - pip-audit.audit
     parallel: true
     fail_fast: false
   extended:
@@ -33,6 +34,7 @@ suites:
       - jscpd.check.other
       - markdownlint.check
       - yamllint.check
+      - deptry.check
     parallel: true
     fail_fast: false
   standard:
@@ -70,6 +72,7 @@ suites:
       - gate.test-only-symbols
       - gate.repeated-strings
       - gate.class-local-functions
+      - import-linter.check
     parallel: true
     fail_fast: true
   docker:

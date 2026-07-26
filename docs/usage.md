@@ -19,6 +19,9 @@ Override with `--suite` only for one-offs.
 Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`
 (see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
 `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
+That includes an `importlinter.ini` starter (root package auto-detected) and a
+`[tool.deptry]` section in `pyproject.toml` when missing. Customize contracts and
+`known_first_party` for your layout; pip-audit needs no project config file.
 
 ```yaml
 # .shipgate/shipgate.yaml
@@ -75,13 +78,13 @@ This repository’s own dogfood hooks are richer (see `.pre-commit-config.yaml` 
 | --- | --- |
 | `python-quality` | Core Python lint + type check (`ruff.lint`, `ty.check`) |
 | `format` | Formatter/autofix tools that write files |
-| `security` | Bandit, Gitleaks, Semgrep |
-| `extended` | Broader lint/metrics (codespell, radon, jscpd, …) |
+| `security` | Bandit, Gitleaks, Semgrep, pip-audit |
+| `extended` | Broader lint/metrics (codespell, radon, jscpd, deptry, …) |
 | `standard` | `python-quality` baseline |
 | `full` | `standard` + `security` + `extended` + `policy` |
 | `docs` | Markdown/YAML doc checks |
 | `shell` | ShellCheck + shfmt |
-| `policy` | Bundled in-process policy gates |
+| `policy` | Bundled in-process policy gates + import-linter |
 | `docker` | Hadolint |
 | `ci` | `standard` + `security` + `policy` |
 | `nightly` / `release` | Full coverage wrappers |
@@ -174,11 +177,14 @@ Set `error-format: github` in project policy for PR annotations.
 | [Bandit](https://bandit.readthedocs.io/) | Security issue scanner for Python |
 | [codespell](https://github.com/codespell-project/codespell) | Common misspellings in text and code |
 | [deadcode](https://github.com/alanedwardes/deadcode) | Unused Python code via static analysis |
+| [deptry](https://deptry.com/) | Missing / unused / misplaced declared dependencies |
 | [Gitleaks](https://github.com/gitleaks/gitleaks) | Secret scanning for git repositories |
 | [Hadolint](https://github.com/hadolint/hadolint) | Dockerfile linter |
+| [import-linter](https://import-linter.readthedocs.io/) | Layer and forbidden-import contracts |
 | [JSCPD](https://docs.jscpd.io/) | Copy/paste / duplication detector |
 | [markdownlint](https://github.com/DavidAnson/markdownlint) | Markdown style linter |
 | [mdformat](https://github.com/executablebooks/mdformat) | Markdown formatter |
+| [pip-audit](https://github.com/pypa/pip-audit) | Dependency CVE / vulnerability audit |
 | [pydeps](https://github.com/thebjorn/pydeps) | Python dependency graphs |
 | Policy gates | Bundled in-process / project-local policy checks |
 | [Radon](https://radon.readthedocs.io/) | Cyclomatic complexity and maintainability metrics |

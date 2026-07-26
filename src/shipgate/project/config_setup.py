@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from shipgate.core.toml_io import load_toml_mapping
 from shipgate.gates.paths import bundled_root_path
 from shipgate.paths import (
     POLICY_CACHE_KEY,
@@ -15,6 +17,8 @@ from shipgate.paths import (
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition
+
+ROOT_PACKAGE_PLACEHOLDER = "__ROOT_PACKAGE__"
 
 
 def project_config_relpath(tool: ToolDefinition) -> Path | None:
@@ -42,11 +46,62 @@ def bundled_template_path(tool: ToolDefinition) -> Path:
     return bundled_root_path() / tool.configuration.bundled
 
 
+def detect_root_package(project_root: Path) -> str:
+    """Best-effort top-level import package name for scaffolded contracts."""
+    return RootPackageDetector.detect(project_root)
+
+
+class RootPackageDetector:
+    @staticmethod
+    def detect(project_root: Path) -> str:
+        from_src = RootPackageDetector.from_src_layout(project_root)
+        if from_src is not None:
+            return from_src
+        from_pyproject = RootPackageDetector.from_pyproject(project_root)
+        if from_pyproject is not None:
+            return from_pyproject
+        return re.sub(r"[^A-Za-z0-9_]", "_", project_root.name.replace("-", "_"))
+
+    @staticmethod
+    def from_src_layout(project_root: Path) -> str | None:
+        src = project_root / "src"
+        if not src.is_dir():
+            return None
+        packages = sorted(
+            path.name
+            for path in src.iterdir()
+            if path.is_dir() and not path.name.startswith(".") and (path / "__init__.py").is_file()
+        )
+        return packages[0] if packages else None
+
+    @staticmethod
+    def from_pyproject(project_root: Path) -> str | None:
+        pyproject = project_root / "pyproject.toml"
+        if not pyproject.is_file():
+            return None
+        try:
+            raw = load_toml_mapping(pyproject, error_cls=ValueError)
+        except ValueError:
+            return None
+        project = raw.get("project")
+        if not isinstance(project, dict):
+            return None
+        name = project.get("name")
+        if isinstance(name, str) and name.strip():
+            return name.strip().replace("-", "_")
+        return None
+
+
+def render_root_package_template(text: str, root_package: str) -> str:
+    return text.replace(ROOT_PACKAGE_PLACEHOLDER, root_package)
+
+
 def scaffold_file_if_missing(
     project_root: Path,
     relative_path: Path,
     *,
     bundled_template: Path,
+    root_package: str | None = None,
 ) -> Path | None:
     """Copy a bundled template when the project target path is missing."""
     target = project_root / relative_path
@@ -55,8 +110,11 @@ def scaffold_file_if_missing(
     if not bundled_template.is_file():
         msg = f"bundled config template not found: {bundled_template}"
         raise FileNotFoundError(msg)
+    content = bundled_template.read_text(encoding="utf-8")
+    if root_package is not None and ROOT_PACKAGE_PLACEHOLDER in content:
+        content = render_root_package_template(content, root_package)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(bundled_template.read_text(encoding="utf-8"), encoding="utf-8")
+    target.write_text(content, encoding="utf-8")
     return target
 
 
@@ -94,6 +152,38 @@ def read_pyproject_shipgate_template() -> str:
     return bundled.read_text(encoding="utf-8")
 
 
+def bundled_deptry_pyproject_template() -> Path:
+    return bundled_root_path() / "setup" / "deptry-pyproject.toml"
+
+
+def read_deptry_pyproject_template() -> str:
+    bundled = bundled_deptry_pyproject_template()
+    if not bundled.is_file():
+        msg = f"bundled deptry pyproject template not found: {bundled}"
+        raise FileNotFoundError(msg)
+    return bundled.read_text(encoding="utf-8")
+
+
+def ensure_deptry_pyproject_section(project_root: Path) -> Path | None:
+    """Append a starter [tool.deptry] section when pyproject.toml lacks one."""
+    pyproject = project_root / "pyproject.toml"
+    if not pyproject.is_file():
+        return None
+    content = pyproject.read_text(encoding="utf-8")
+    if "[tool.deptry]" in content:
+        return None
+    if content and not content.endswith("\n"):
+        content += "\n"
+    root_package = detect_root_package(project_root)
+    section = read_deptry_pyproject_template()
+    section = section.replace(
+        '# known_first_party = ["your_package"]',
+        f'known_first_party = ["{root_package}"]',
+    )
+    pyproject.write_text(content + "\n" + section, encoding="utf-8")
+    return pyproject
+
+
 def bundled_shipgate_yaml_template() -> Path:
     return bundled_root_path() / "setup" / "shipgate.yaml"
 
@@ -111,6 +201,7 @@ def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]
     root = project_root.resolve()
     created: list[Path] = []
     seen: set[Path] = set()
+    root_package = detect_root_package(root)
     for tool in catalog.tools.values():
         rel = project_config_relpath(tool)
         if rel is None or rel in seen:
@@ -120,7 +211,11 @@ def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]
             root,
             rel,
             bundled_template=bundled_template_path(tool),
+            root_package=root_package,
         )
         if result is not None:
             created.append(result)
+    deptry = ensure_deptry_pyproject_section(root)
+    if deptry is not None:
+        created.append(deptry)
     return created

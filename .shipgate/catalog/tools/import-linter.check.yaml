@@ -1,0 +1,47 @@
+# Enforces layer and forbidden-import contracts (architecture / policy).
+# `shipgate init` scaffolds configs/importlinter.ini with optional starter layers
+# and substitutes the detected root package name. Customize contracts for your
+# architecture. The package under test must be importable (src-layout:
+# PYTHONPATH=src, or install the package editable into the tool env).
+import-linter.check:
+  executable: lint-imports
+  display_name: import-linter
+  description: Enforce Python import contracts between modules and layers
+  documentation_url: https://import-linter.readthedocs.io/
+  subcommand: []
+  modes:
+    - check
+  normalizer: generic_exit
+  install:
+    manager: python
+    package: import-linter
+    version: 2.13
+  tags:
+    - policy
+    - architecture
+  cli:
+    config:
+      flag: --config
+      style: scalar
+  configuration:
+    bundled: configs/importlinter.ini
+    discover:
+      - .shipgate/configs/importlinter.ini
+      - .importlinter
+      - setup.cfg
+      - pyproject.toml
+    pyproject_section: tool.importlinter
+    precedence:
+      - cli
+      - repo
+      - bundled
+    merge: false
+  option_order:
+    - config
+  scope:
+    extensions:
+      - .py
+    delivery: root
+  suggest_if:
+    files_present:
+      - "**/pyproject.toml"

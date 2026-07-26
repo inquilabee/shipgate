@@ -77,6 +77,14 @@ dev = [
   "pytest-playwright>=0.6",
 ]
 
+# FastAPI server extras are required at runtime for templates/forms but are not
+# imported by name (Jinja2Templates / multipart parsing), so DEP002 ignores them.
+[tool.deptry]
+known_first_party = ["shipgate"]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["jinja2", "python-multipart"]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

@@ -53,7 +53,7 @@ Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/q
 
 **`shipgate init` scaffolds:** `.shipgate/shipgate.yaml` (yaml mode) or `[tool.shipgate]` in `pyproject.toml` (pyproject mode), `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, `.shipgate/.gitignore`, `.shipgate/cache/.env` (`SHIPGATE_ROOT`, `SHIPGATE_POLICY`). Example pyproject policy: `.shipgate/pyproject.toml.example`.
 
-**Canonical gate (`make check-commit`):** `uv sync --group dev` → `shipgate install` → `shipgate format --target .` → `shipgate check --target .`
+**Canonical gate (`make check-commit`):** `uv sync --group dev` → `shipgate install` → `shipgate format --target .` → `PYTHONPATH=src shipgate check --target .` (PYTHONPATH is required for src-layout import-linter).
 
 **`env: managed`:** creates `.shipgate/tools/python/` venv; `init` writes `.shipgate/.gitignore` (ignores `cache/`, `reports/`, `tools/`, etc.)
 

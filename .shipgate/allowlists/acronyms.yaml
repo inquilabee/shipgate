@@ -8,3 +8,5 @@ AI: artificial intelligence
 MIT: Massachusetts Institute of Technology (software license short name)
 LICENSE: repository license filename
 CONTRIBUTING: contributing guide filename
+CVE: Common Vulnerabilities and Exposures
+PYTHONPATH: Python module search path environment variable

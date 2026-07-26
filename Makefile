@@ -18,7 +18,8 @@ check-commit:
 	uv sync --group dev
 	uv run shipgate install
 	uv run shipgate format --target .
-	uv run shipgate check --target .
+	# src-layout: import-linter needs the package on PYTHONPATH in the managed tool env
+	PYTHONPATH=src uv run shipgate check --target .
 
 install-hooks:
 	uv run pre-commit install
