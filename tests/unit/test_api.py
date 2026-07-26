@@ -37,4 +37,4 @@ def test_public_api_run(tmp_path: Path):
 
 
 def test_version_exported():
-    assert __version__ == "0.1.2"
+    assert __version__ == "0.1.3"

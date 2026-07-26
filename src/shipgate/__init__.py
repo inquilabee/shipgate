@@ -2,7 +2,7 @@
 
 from shipgate.api import install, load_catalog, run
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 __all__ = [
     "__version__",

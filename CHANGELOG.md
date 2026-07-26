@@ -4,6 +4,23 @@
 
 ## Unreleased
 
+## v0.1.3
+
+### Added
+
+- Bundled catalog tools: `pip-audit.audit`, `deptry.check`, and
+  `import-linter.check` (wired into `security` / `extended` / `policy`, and thus
+  `full`). `shipgate init` scaffolds import-linter contracts and a deptry
+  pyproject starter.
+- Optional Radon distribution gates for cyclomatic complexity and maintainability
+  index: `average`, `median`, `minimum` / `maximum`, and `p95`, each with
+  `threshold` or `progressive` mode. See `docs/usage.md`.
+
+### Changed
+
+- Dogfood Radon maintainability-index median floor raised to 55.8; Gitleaks
+  allowlist covers ShipGate radon baseline env names.
+
 ## v0.1.2
 
 ### Fixed
