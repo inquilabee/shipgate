@@ -42,6 +42,77 @@ Path delivery respects `.gitignore`. Failures write canonical JSON under
 `.shipgate/reports/`; `error-format` controls stderr only. Success is silent
 (exit `0`).
 
+### Radon metric gates
+
+Letter-rank `threshold` still gates each block (cyclomatic complexity) or file
+(maintainability index). Optional numeric gates cover distribution summaries
+computed from Radon JSON:
+
+| Metric | Meaning | Prefer for gating? |
+| --- | --- | --- |
+| `average` | Arithmetic mean | Useful, but skewed by outliers |
+| `median` | 50th percentile | Preferred central tendency (robust) |
+| `minimum` / `maximum` | Worst single value | Strict; one outlier fails the gate |
+| `p95` | 95th percentile (inclusive linear interp.) | Preferred tail vs raw min/max |
+
+**Direction:** Maintainability index is worse when lower → floors for average, median,
+minimum, and p95. Cyclomatic complexity is worse when higher → ceilings for average,
+median, maximum, and p95.
+
+Prefer **median** over average when you care about typical code, and **p95** over
+min/max when you want a hard tail bound without letting a single file/block fail
+the whole suite.
+
+| Tool | Typical keys | Worse when |
+| --- | --- | --- |
+| `radon.mi` | `median-*`, `p95-*` (also `average-*`, `minimum-*`) | lower (floors) |
+| `radon.cc` | `median-*`, `p95-*` (also `average-*`, `maximum-*`) | higher (ceilings) |
+
+Modes:
+
+- `threshold` — absolute floor/ceiling; fails when the measured metric crosses it.
+- `progressive` — must not regress vs the last saved value in
+  `.shipgate/cache/.env`. First progressive run seeds the baseline and passes.
+
+ShipGate’s own dogfood uses **strict `threshold`** (median + p95), not
+progressive.
+
+Env keys (progressive only): `SHIPGATE_RADON_MI_AVG`, `SHIPGATE_RADON_MI_MEDIAN`,
+`SHIPGATE_RADON_MI_MIN`, `SHIPGATE_RADON_MI_P95`, `SHIPGATE_RADON_CC_AVG`,
+`SHIPGATE_RADON_CC_MEDIAN`, `SHIPGATE_RADON_CC_MAX`, `SHIPGATE_RADON_CC_P95`.
+
+```yaml
+checks:
+  radon.mi:
+    threshold: B
+    median-mode: threshold
+    median-threshold: 55.5
+    p95-mode: threshold
+    p95-threshold: 100
+  radon.cc:
+    threshold: B
+    median-mode: threshold
+    median-threshold: 3
+    p95-mode: threshold
+    p95-threshold: 7
+```
+
+Consumers may still use progressive or average/min/max:
+
+```yaml
+checks:
+  radon.mi:
+    threshold: B
+    average-mode: progressive
+    minimum-mode: threshold
+    minimum-threshold: 20
+  radon.cc:
+    threshold: B
+    average-mode: threshold
+    average-threshold: 5
+    maximum-mode: progressive
+```
+
 Python support: **3.11–3.14**. Prefer **3.13** when running suites that include
 Semgrep (Semgrep does not support 3.14 yet).
 

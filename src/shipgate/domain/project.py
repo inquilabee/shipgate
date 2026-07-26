@@ -23,6 +23,16 @@ class CheckBinding:
     runnable: str
     scope: str | None = None
     threshold: str | None = None
+    average_mode: str | None = None
+    average_threshold: float | None = None
+    median_mode: str | None = None
+    median_threshold: float | None = None
+    minimum_mode: str | None = None
+    minimum_threshold: float | None = None
+    maximum_mode: str | None = None
+    maximum_threshold: float | None = None
+    p95_mode: str | None = None
+    p95_threshold: float | None = None
 
 
 @dataclass(frozen=True)
@@ -42,14 +52,16 @@ class ProjectConfig:
     since: str | None = None
     allowlists: Mapping[str, str] | None = None
 
-    def scope_for_check(self, runnable: str) -> str | None:
+    def binding_for_check(self, runnable: str) -> CheckBinding | None:
         for binding in self.check_bindings:
             if binding.runnable == runnable:
-                return binding.scope
+                return binding
         return None
 
+    def scope_for_check(self, runnable: str) -> str | None:
+        binding = self.binding_for_check(runnable)
+        return binding.scope if binding is not None else None
+
     def threshold_for_check(self, runnable: str) -> str | None:
-        for binding in self.check_bindings:
-            if binding.runnable == runnable:
-                return binding.threshold
-        return None
+        binding = self.binding_for_check(runnable)
+        return binding.threshold if binding is not None else None

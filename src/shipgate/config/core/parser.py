@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from shipgate.config.schema import (
     ALLOWED_CONFIG_MODES,
@@ -93,25 +93,123 @@ class ProjectConfigParser:
         if isinstance(checks_raw, dict):
             bindings: list[CheckBinding] = []
             for runnable, value in checks_raw.items():
-                runnable_id = str(runnable)
-                scope_name = None
-                threshold = None
-                if isinstance(value, dict):
-                    scope_name = value.get("scope")
-                    if scope_name is not None:
-                        scope_name = str(scope_name)
-                    threshold_raw = value.get("threshold")
-                    if threshold_raw is not None:
-                        threshold = str(threshold_raw)
-                bindings.append(
-                    CheckBinding(
-                        runnable=runnable_id,
-                        scope=scope_name,
-                        threshold=threshold,
-                    )
-                )
+                bindings.append(self._parse_check_binding(str(runnable), value))
             return (), tuple(bindings)
         raise ConfigError("checks must be a list or mapping", path=str(self._path))
+
+    def _parse_check_binding(self, runnable_id: str, value: object) -> CheckBinding:
+        scope_name = None
+        threshold = None
+        average_mode = None
+        average_threshold = None
+        median_mode = None
+        median_threshold = None
+        minimum_mode = None
+        minimum_threshold = None
+        maximum_mode = None
+        maximum_threshold = None
+        p95_mode = None
+        p95_threshold = None
+        if isinstance(value, dict):
+            binding: dict[str, Any] = cast("dict[str, Any]", value)
+            scope_name = binding.get("scope")
+            if scope_name is not None:
+                scope_name = str(scope_name)
+            threshold_raw = binding.get("threshold")
+            if threshold_raw is not None:
+                threshold = str(threshold_raw)
+            average_mode, average_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="average",
+            )
+            median_mode, median_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="median",
+            )
+            minimum_mode, minimum_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="minimum",
+            )
+            maximum_mode, maximum_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="maximum",
+            )
+            p95_mode, p95_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="p95",
+            )
+        return CheckBinding(
+            runnable=runnable_id,
+            scope=scope_name,
+            threshold=threshold,
+            average_mode=average_mode,
+            average_threshold=average_threshold,
+            median_mode=median_mode,
+            median_threshold=median_threshold,
+            minimum_mode=minimum_mode,
+            minimum_threshold=minimum_threshold,
+            maximum_mode=maximum_mode,
+            maximum_threshold=maximum_threshold,
+            p95_mode=p95_mode,
+            p95_threshold=p95_threshold,
+        )
+
+    def _parse_metric_gate(
+        self,
+        runnable_id: str,
+        value: dict[str, Any],
+        *,
+        field: str,
+    ) -> tuple[str | None, float | None]:
+        mode = self._parse_metric_mode(runnable_id, value, field=field)
+        bound = self._parse_metric_threshold(runnable_id, value, field=field)
+        if mode == "threshold" and bound is None:
+            raise ConfigError(
+                f"checks.{runnable_id}: {field}-mode threshold requires {field}-threshold",
+                path=str(self._path),
+            )
+        return mode, bound
+
+    def _parse_metric_mode(
+        self,
+        runnable_id: str,
+        value: dict[str, Any],
+        *,
+        field: str,
+    ) -> str | None:
+        raw = value.get(f"{field}-mode", value.get(f"{field}_mode"))
+        if raw is None:
+            return None
+        mode = str(raw).strip().lower()
+        if mode not in {"threshold", "progressive"}:
+            raise ConfigError(
+                f"checks.{runnable_id}: invalid {field}-mode {raw!r}",
+                path=str(self._path),
+            )
+        return mode
+
+    def _parse_metric_threshold(
+        self,
+        runnable_id: str,
+        value: dict[str, Any],
+        *,
+        field: str,
+    ) -> float | None:
+        raw = value.get(f"{field}-threshold", value.get(f"{field}_threshold"))
+        if raw is None:
+            return None
+        try:
+            return float(raw)
+        except (TypeError, ValueError) as exc:
+            raise ConfigError(
+                f"checks.{runnable_id}: {field}-threshold must be a number",
+                path=str(self._path),
+            ) from exc
 
     def _parse_config_mode(self) -> str:
         configs = self._raw.get("configs", {}) or {}

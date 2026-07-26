@@ -1,9 +1,11 @@
 from pathlib import Path
 
+import pytest
+
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.domain.project import ProjectConfig
+from shipgate.domain.project import CheckBinding, ProjectConfig
 from shipgate.planning.core.option_resolver import OptionResolver
 
 
@@ -43,3 +45,33 @@ def test_option_resolver_defaults_fix_in_apply_mode(tmp_path: Path):
     )
     assert merged.fix is True
     assert sources["fix"] == "shipgate_default"
+
+
+def test_option_resolver_injects_radon_metric_bindings(tmp_path: Path):
+    catalog = CatalogLoader.load()
+    tool = catalog.get_tool("radon.mi")
+    binding = CheckBinding(
+        runnable="radon.mi",
+        threshold="B",
+        median_mode="threshold",
+        median_threshold=55.0,
+        p95_mode="threshold",
+        p95_threshold=80.0,
+    )
+    merged, sources = OptionResolver(
+        ProjectConfig(check_bindings=(binding,)),
+        tmp_path,
+        tool,
+    ).resolve(
+        NormalizedOptions(),
+        mode=RunMode.CHECK,
+        check_id=tool.id,
+        target=tmp_path,
+    )
+    assert merged.threshold == "B"
+    assert merged.extra["median_mode"] == "threshold"
+    assert merged.extra["median_threshold"] == pytest.approx(55.0)
+    assert merged.extra["p95_mode"] == "threshold"
+    assert merged.extra["p95_threshold"] == pytest.approx(80.0)
+    assert sources["median_mode"] == "project"
+    assert sources["p95_mode"] == "project"

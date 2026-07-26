@@ -9,9 +9,19 @@ checks:
   semgrep.scan:
     scope: semgrep
   radon.cc:
+    # Letter rank is per-block. Median / p95 gate typical and tail complexity.
     threshold: B
+    median-mode: threshold
+    median-threshold: 3
+    p95-mode: threshold
+    p95-threshold: 7
   radon.mi:
+    # Letter rank is per-file. Median / p95 gate typical and high-end MI.
     threshold: B
+    median-mode: threshold
+    median-threshold: 55.5
+    p95-mode: threshold
+    p95-threshold: 100
   jscpd.check.python:
     threshold: "2"
   jscpd.check.other:

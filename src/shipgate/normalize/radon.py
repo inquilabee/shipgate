@@ -1,15 +1,18 @@
-"""Radon JSON normalizer with configurable maximum allowed grade."""
+"""Radon JSON normalizer with letter-rank and optional metric gates."""
 
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
 from shipgate.normalize.core import BaseNormalizer, tool_exit_report
+from shipgate.normalize.radon_metrics import RadonMetrics
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.runtime.executor import ProcessResult
 
@@ -49,10 +52,24 @@ class RadonNormalizer(BaseNormalizer):
         max_value = self.RANK_ORDER.get(
             str(max_rank).upper(), self.RANK_ORDER[self.DEFAULT_MAX_COMPLEXITY_RANK]
         )
-        if "mi" in request.tool.subcommand:
+        is_mi = "mi" in request.tool.subcommand
+        if is_mi:
             findings = self.mi_findings(check_id, payload, max_value)
+            metrics = RadonMetrics.mi_metrics(payload)
+            metric_label = "maintainability index"
         else:
             findings = self.cc_findings(check_id, payload, max_value)
+            metrics = RadonMetrics.cc_metrics(payload)
+            metric_label = "cyclomatic complexity"
+
+        findings.extend(
+            RadonMetrics.absolute_threshold_findings(
+                check_id,
+                metrics,
+                request.options.extra,
+                metric_label=metric_label,
+            )
+        )
 
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(
@@ -61,10 +78,16 @@ class RadonNormalizer(BaseNormalizer):
             status=status,
             exit_code=result.exit_code,
             findings=tuple(findings),
+            extra=metrics,
         )
 
     @classmethod
-    def cc_findings(cls, check_id: str, payload: dict[str, Any], max_value: int) -> list[Finding]:
+    def cc_findings(
+        cls,
+        check_id: str,
+        payload: Mapping[str, object],
+        max_value: int,
+    ) -> list[Finding]:
         findings: list[Finding] = []
         for file_path, blocks in payload.items():
             if not isinstance(blocks, list):
@@ -77,6 +100,7 @@ class RadonNormalizer(BaseNormalizer):
                     continue
                 block_type = block.get("type", "block")
                 name = block.get("name", "")
+                lineno = block.get("lineno")
                 findings.append(
                     Finding(
                         check_id=check_id,
@@ -85,14 +109,19 @@ class RadonNormalizer(BaseNormalizer):
                         message=f"{block_type} {name} complexity rank {rank}",
                         location=FindingLocation(
                             path=str(file_path),
-                            line=block.get("lineno"),
+                            line=lineno if isinstance(lineno, int) else None,
                         ),
                     )
                 )
         return findings
 
     @classmethod
-    def mi_findings(cls, check_id: str, payload: dict[str, Any], max_value: int) -> list[Finding]:
+    def mi_findings(
+        cls,
+        check_id: str,
+        payload: Mapping[str, object],
+        max_value: int,
+    ) -> list[Finding]:
         findings: list[Finding] = []
         for file_path, item in payload.items():
             if not isinstance(item, dict):
@@ -110,3 +139,8 @@ class RadonNormalizer(BaseNormalizer):
                 )
             )
         return findings
+
+    # Re-export metric helpers so existing tests keep a stable import surface.
+    percentile = staticmethod(RadonMetrics.percentile)
+    cc_complexity_values = staticmethod(RadonMetrics.cc_complexity_values)
+    mi_values = staticmethod(RadonMetrics.mi_values)

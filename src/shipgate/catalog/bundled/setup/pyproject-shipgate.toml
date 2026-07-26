@@ -12,10 +12,20 @@ mode = "auto"
 scope = "semgrep"
 
 [tool.shipgate.checks."radon.cc"]
+# Letter rank is per-block. Median / p95 gate typical and tail complexity.
 threshold = "B"
+median_mode = "threshold"
+median_threshold = 3
+p95_mode = "threshold"
+p95_threshold = 7
 
 [tool.shipgate.checks."radon.mi"]
+# Letter rank is per-file. Median / p95 gate typical and high-end MI.
 threshold = "B"
+median_mode = "threshold"
+median_threshold = 55.5
+p95_mode = "threshold"
+p95_threshold = 100
 
 [tool.shipgate.checks."jscpd.check.python"]
 threshold = "2"

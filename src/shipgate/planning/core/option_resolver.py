@@ -68,6 +68,7 @@ class OptionResolver:
             sources["config"] = "cli"
 
         threshold = self._resolve_threshold(cli_options, sources)
+        extra = self._resolve_metric_options(cli_options, sources)
 
         merged = NormalizedOptions(
             paths=paths or cli_options.paths,
@@ -85,7 +86,7 @@ class OptionResolver:
             python=cli_options.python,
             stdin=cli_options.stdin,
             exit_behavior=cli_options.exit_behavior,
-            extra=dict(cli_options.extra),
+            extra=extra,
         )
         return merged, sources
 
@@ -144,6 +145,35 @@ class OptionResolver:
             if threshold is not None:
                 sources["threshold"] = "tool_default"
         return threshold
+
+    def _resolve_metric_options(
+        self,
+        cli_options: NormalizedOptions,
+        sources: dict[str, str],
+    ) -> dict[str, object]:
+        extra = dict(cli_options.extra)
+        binding = self.project.binding_for_check(self.tool.id)
+        if binding is None:
+            return extra
+        for name in (
+            "average_mode",
+            "average_threshold",
+            "median_mode",
+            "median_threshold",
+            "minimum_mode",
+            "minimum_threshold",
+            "maximum_mode",
+            "maximum_threshold",
+            "p95_mode",
+            "p95_threshold",
+        ):
+            if name in extra:
+                continue
+            value = getattr(binding, name)
+            if value is not None:
+                extra[name] = value
+                sources[name] = "project"
+        return extra
 
     def _apply_defaults(
         self,

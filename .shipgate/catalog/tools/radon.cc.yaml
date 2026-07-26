@@ -18,4 +18,4 @@ radon.cc:
   scope:
     extensions:
       - .py
-    delivery: root
+    delivery: dirs

@@ -14,6 +14,7 @@ from shipgate.normalize import get_normalizer
 from shipgate.runtime.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
 from shipgate.runtime.parallel import run_parallel
+from shipgate.runtime.progressive_average import apply_progressive_average
 from shipgate.runtime.reports import write_raw_output
 from shipgate.runtime.session.check_resolver import prepare_run
 from shipgate.runtime.session.finalizer import emit_progress
@@ -269,6 +270,7 @@ class CheckRunner:
             stderr_path=str(stderr_path.relative_to(resolved.project_root)),
             extra=check_report.extra,
         )
+        report = apply_progressive_average(resolved, report)
         cache.store(resolved, report)
         return report
 
