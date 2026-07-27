@@ -76,7 +76,12 @@ def test_batch_07_detects_fixture(
     expected: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    hits = rule.detect(source, "sample.py")
+    path = (
+        "tests/test_sample.py"
+        if rule_id in {"no-conditionals-in-tests", "no-loop-in-tests"}
+        else "sample.py"
+    )
+    hits = rule.detect(source, path)
     if rule_id in {"use", "method", "low-code-quality"}:
         assert hits == []
         return

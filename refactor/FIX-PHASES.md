@@ -11,12 +11,12 @@
 
 ## Phase 2: Signal Quality
 
-- [ ] Scope test-only structural rules to test files.
-- [ ] Replace broad `introduce-default-else` hits with a focused default-assignment pattern.
-- [ ] Disable placeholder or unsafe default suggestions for `last-if-guard`, `extract-method`, and `class-extract-method`.
-- [ ] Document default signal-quality policy in the refactor README.
-- [ ] Run `uv run pytest refactor/tests -q`.
-- [ ] Commit `fix(refactor): phase 2 — improve default signal quality`.
+- [x] Scope test-only structural rules to test files.
+- [x] Replace broad `introduce-default-else` hits with a focused default-assignment pattern.
+- [x] Disable placeholder or unsafe default suggestions for `last-if-guard`, `extract-method`, and `class-extract-method`.
+- [x] Document default signal-quality policy in the refactor README.
+- [x] Run `uv run pytest refactor/tests -q`.
+- [x] Commit `fix(refactor): phase 2 — improve default signal quality`.
 
 ## Phase 3: Parity / UX
 

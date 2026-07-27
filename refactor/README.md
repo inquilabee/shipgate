@@ -53,6 +53,14 @@ class MyRule:
 Reuse the same `match_*` / `build_*` helpers from `detect` inside the transformer so
 apply rewrites every matching node in the file.
 
+## Default check signal
+
+`check` should emit reviewer-grade suggestions by default. Broad structural rules must
+prove their scope before reporting hits: test-only rules only run on test paths,
+default-else suggestions require a concrete default-assignment pattern, and placeholder
+extract-method rules stay silent until they can propose complete edits instead of calls
+to synthetic helpers.
+
 #### Native rules eligible for `fix` (`safe_apply=True`)
 
 | Rule ID | Summary |

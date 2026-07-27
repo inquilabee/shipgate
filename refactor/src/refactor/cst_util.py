@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from pathlib import PurePath
 from typing import TypeAlias, cast
 
 import libcst as cst
@@ -106,6 +107,12 @@ def parse_integer_literal(value: str) -> int | None:
         return int(value.replace("_", ""), 0)
     except ValueError:
         return None
+
+
+def is_test_path(path: str) -> bool:
+    parsed = PurePath(path)
+    name = parsed.name
+    return "tests" in parsed.parts or name.startswith("test_") or name.endswith("_test.py")
 
 
 def make_hit(

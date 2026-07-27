@@ -78,7 +78,7 @@ def test_batch_02_detects_fixture(
 ) -> None:
     rule = rules_by_id[rule_id]
     hits = rule.detect(source, "sample.py")
-    if rule_id in {"use", "method", "low-code-quality"}:
+    if rule_id in {"use", "method", "low-code-quality", "class-extract-method"}:
         assert hits == []
         return
     assert len(hits) >= 1

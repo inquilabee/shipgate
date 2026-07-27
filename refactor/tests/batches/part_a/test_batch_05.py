@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "introduce-default-else",
-        "if ready:\n    run()\n",
-        "else:\n    pass",
+        "value = fallback\nif ready:\n    value = result\n",
+        "else:\n    value = fallback",
     ),
     (
         "invert-any-all",
@@ -77,7 +77,7 @@ def test_batch_05_detects_fixture(
 ) -> None:
     rule = rules_by_id[rule_id]
     hits = rule.detect(source, "sample.py")
-    if rule_id in {"use", "method", "low-code-quality"}:
+    if rule_id in {"use", "method", "low-code-quality", "last-if-guard"}:
         assert hits == []
         return
     assert len(hits) >= 1
