@@ -4,7 +4,7 @@
   note: null
 - id: aug-assign
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: avoid-builtin-shadow
   kind: comment
@@ -96,7 +96,7 @@
   note: null
 - id: dict-literal
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: do-not-use-bare-except
   kind: suggestion
@@ -292,7 +292,7 @@
   note: docs page missing; id from wiki slug
 - id: min-max-identity
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: missing-dict-items
   kind: refactor
@@ -420,7 +420,7 @@
   note: null
 - id: remove-redundant-pass
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-path-exists
   kind: refactor
@@ -588,7 +588,7 @@
   note: null
 - id: tuple-literal
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: unwrap-iterable-construction
   kind: refactor
@@ -656,7 +656,7 @@
   note: null
 - id: use-len
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-named-expression
   kind: refactor
