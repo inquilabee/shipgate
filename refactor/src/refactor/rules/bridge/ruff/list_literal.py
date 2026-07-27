@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery list-literal delegates to Ruff C408."""
+"""Inventory stub: list-literal delegates to Ruff C408."""
 
 from __future__ import annotations
 

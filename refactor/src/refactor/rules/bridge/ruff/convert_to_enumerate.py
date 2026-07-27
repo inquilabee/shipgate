@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery convert-to-enumerate delegates to Ruff SIM113."""
+"""Inventory stub: convert-to-enumerate delegates to Ruff SIM113."""
 
 from __future__ import annotations
 

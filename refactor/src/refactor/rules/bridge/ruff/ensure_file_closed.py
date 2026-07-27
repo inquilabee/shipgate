@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery ensure-file-closed delegates to Ruff SIM115."""
+"""Inventory stub: ensure-file-closed delegates to Ruff SIM115."""
 
 from __future__ import annotations
 

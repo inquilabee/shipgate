@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery assign-if-exp delegates to Ruff SIM108."""
+"""Inventory stub: assign-if-exp delegates to Ruff SIM108."""
 
 from __future__ import annotations
 

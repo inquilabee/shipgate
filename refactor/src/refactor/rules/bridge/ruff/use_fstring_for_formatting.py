@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery use-fstring-for-formatting delegates to Ruff UP031."""
+"""Inventory stub: use-fstring-for-formatting delegates to Ruff UP031."""
 
 from __future__ import annotations
 

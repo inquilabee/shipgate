@@ -1,4 +1,4 @@
-"""Load the Sourcery rule ID inventory shipped with the refactor package."""
+"""Load the rule ID inventory shipped with the refactor package."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-DEFAULT_INVENTORY_PATH = Path(__file__).resolve().parents[2] / "inventory" / "sourcery_ids.yaml"
+DEFAULT_INVENTORY_PATH = Path(__file__).resolve().parents[2] / "inventory" / "rule_ids.yaml"
 
 
 @dataclass(frozen=True)

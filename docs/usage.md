@@ -311,7 +311,6 @@ Set `error-format: github` in project policy for PR annotations.
 | [Semgrep](https://semgrep.dev/) | Pattern-based security and quality analysis |
 | [ShellCheck](https://www.shellcheck.net/) | Static analysis for shell scripts |
 | [shfmt](https://github.com/mvdan/sh) | Shell script formatter |
-| [Sourcery](https://sourcery.ai/) | Automated Python review / refactor suggestions |
 | [ty](https://docs.astral.sh/ty/) | Astral static type checker for Python |
 | [Vulture](https://github.com/jendrikseipp/vulture) | Dead Python code with high confidence |
 | [yamlfmt](https://github.com/google/yamlfmt) | YAML formatter |

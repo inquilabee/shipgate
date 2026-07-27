@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery do-not-use-bare-except delegates to Ruff E722."""
+"""Inventory stub: do-not-use-bare-except delegates to Ruff E722."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Shared pattern-backed native rules for Sourcery parity."""
+"""Shared pattern-backed native refactor rules."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery de-morgan delegates to Ruff SIM220."""
+"""Inventory stub: de-morgan delegates to Ruff SIM220."""
 
 from __future__ import annotations
 

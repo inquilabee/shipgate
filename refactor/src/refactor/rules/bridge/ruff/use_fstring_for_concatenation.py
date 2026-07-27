@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery use-fstring-for-concatenation delegates to Ruff UP032."""
+"""Inventory stub: use-fstring-for-concatenation delegates to Ruff UP032."""
 
 from __future__ import annotations
 

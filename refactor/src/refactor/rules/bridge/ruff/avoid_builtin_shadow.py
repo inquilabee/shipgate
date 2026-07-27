@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery avoid-builtin-shadow delegates to Ruff A001."""
+"""Inventory stub: avoid-builtin-shadow delegates to Ruff A001."""
 
 from __future__ import annotations
 

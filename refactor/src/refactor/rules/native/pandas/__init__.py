@@ -1,4 +1,4 @@
-"""Native Sourcery parity rules."""
+"""Native refactor rules."""
 
 from __future__ import annotations
 

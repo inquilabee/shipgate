@@ -1,4 +1,4 @@
-"""Inventory stub: Sourcery path-read delegates to Ruff PTH123."""
+"""Inventory stub: path-read delegates to Ruff PTH123."""
 
 from __future__ import annotations
 
