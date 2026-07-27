@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 from refactor.cli import main
 from refactor.protocol import Hit, Location, RuleKind
 from refactor.registry import RULES
+from refactor.rules.native.redundancy.lift_return_into_if import LiftReturnIntoIfRule
+from refactor.rules.native.redundancy.reintroduce_else import ReintroduceElseRule
+from refactor.rules.native.strings.remove_redundant_continue import RemoveRedundantContinueRule
 from refactor.runner import apply_safe_rule, check_paths, fix_paths, iter_python_files
 
 if TYPE_CHECKING:
@@ -37,6 +40,30 @@ def test_check_paths_populates_hit_location(tmp_path: Path) -> None:
     hit = next(h for h in check_paths([tmp_path]) if h.rule_id == "default-get")
     assert hit.location.line == 2
     assert hit.location.column is not None
+
+
+def test_body_sequence_rules_populate_hit_locations() -> None:
+    reintroduce_hit = ReintroduceElseRule().detect(
+        "def f(failed):\n    if failed:\n        return None\n    recover()\n",
+        "sample.py",
+    )[0]
+    lift_hit = LiftReturnIntoIfRule().detect(
+        "def f(failed):\n    if failed:\n        return None\n    return recover()\n",
+        "sample.py",
+    )[0]
+    assert reintroduce_hit.location.line == 2
+    assert reintroduce_hit.location.column == 4
+    assert lift_hit.location.line == 2
+    assert lift_hit.location.column == 4
+
+
+def test_body_cleanup_rules_populate_hit_locations() -> None:
+    hit = RemoveRedundantContinueRule().detect(
+        "for item in items:\n    process(item)\n    continue\n",
+        "sample.py",
+    )[0]
+    assert hit.location.line == 3
+    assert hit.location.column == 4
 
 
 def test_iter_python_files_skips_gitignored_and_tool_dirs(tmp_path: Path) -> None:

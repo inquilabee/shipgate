@@ -8,7 +8,6 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
-    ModuleAndIndentedBlockCollector,
     body_cleanup_hit,
     detect_with_visitor,
     expr_replacement_hit,
@@ -316,28 +315,38 @@ class BodyCleanupRule(SuggestOnlyExprRule):
     def finder_type(cls) -> type[HitCollector]:
         rule = cls
 
-        class Finder(ModuleAndIndentedBlockCollector):
+        class Finder(HitCollector):
             def __init__(self, *, path: str) -> None:
-                super().__init__(path=path, checker=self.check_body)
+                super().__init__(path=path)
 
-            @staticmethod
+            def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+                self.check_body(node.body)
+                return True
+
+            def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.IndentedBlock,
+            ) -> bool:
+                self.check_body(node.body)
+                return True
+
             def check_body(
+                self,
                 body: Sequence[cst.BaseStatement],
-                hits: list[Hit],
-                path: str,
             ) -> None:
                 match = rule.match_body(body)
                 if match is None:
                     return
                 stmt, cleaned = match
-                hits.append(
+                self.record_hit(
                     body_cleanup_hit(
                         rule_id=rule.rule_id,
                         message=rule.message,
-                        path=path,
+                        path=self.path,
                         stmt=stmt,
                         cleaned_body=cleaned,
-                    )
+                    ),
+                    stmt,
                 )
 
         Finder.__name__ = f"{cls.__name__}Finder"

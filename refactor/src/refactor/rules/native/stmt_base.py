@@ -8,7 +8,6 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
-    ModuleAndIndentedBlockCollector,
     single_small_stmt,
     small_stmt_replacement_hit,
     stmt_replacement_hit,
@@ -169,28 +168,40 @@ class BodySequenceRewriteRule(StatementRewriteRule):
     def finder_type(cls) -> type[HitCollector]:
         rule = cls
 
-        class Finder(ModuleAndIndentedBlockCollector):
+        class Finder(HitCollector):
             def __init__(self, *, path: str) -> None:
-                super().__init__(path=path, checker=self.check_body)
+                super().__init__(path=path)
 
-            @staticmethod
+            def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+                self.check_body(node.body)
+                return True
+
+            def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.IndentedBlock,
+            ) -> bool:
+                self.check_body(node.body)
+                return True
+
             def check_body(
+                self,
                 body: Sequence[cst.BaseStatement],
-                hits: list[Hit],
-                path: str,
             ) -> None:
                 match = rule.match_body(body)
                 if match is None:
                     return
                 before, after = match
-                hits.append(
+                if not before:
+                    return
+                self.record_hit(
                     stmts_replacement_hit(
                         rule_id=rule.rule_id,
                         message=rule.message,
-                        path=path,
+                        path=self.path,
                         before_stmts=before,
                         after_stmts=cast("Sequence[BodyStatement]", after),
                     ),
+                    before[0],
                 )
 
         Finder.__name__ = f"{cls.__name__}Finder"

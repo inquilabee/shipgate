@@ -10,12 +10,12 @@
 
 ## Phase 5: Locations / Body Rules
 
-- [ ] Route `BodySequenceRewriteRule` hits through location-aware recording.
-- [ ] Route `BodyCleanupRule` hits through location-aware recording.
-- [ ] Add regression coverage for non-null locations on representative body-sequence and cleanup rules.
-- [ ] Run `uv run pytest refactor/tests -q`.
-- [ ] Run `timeout 30 env PYTHONPATH=refactor/src uv run python -m refactor check refactor/tests/test_protocol.py`.
-- [ ] Commit `fix(refactor): phase 5 — body-sequence hit locations`.
+- [x] Route `BodySequenceRewriteRule` hits through location-aware recording.
+- [x] Route `BodyCleanupRule` hits through location-aware recording.
+- [x] Add regression coverage for non-null locations on representative body-sequence and cleanup rules.
+- [x] Run `uv run pytest refactor/tests -q`.
+- [x] Run `timeout 30 env PYTHONPATH=refactor/src uv run python -m refactor check refactor/tests/test_protocol.py`.
+- [x] Commit `fix(refactor): phase 5 — body-sequence hit locations`.
 
 ## Phase 6: Performance / Bounded Check
 
