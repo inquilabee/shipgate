@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pathspec
 
+from refactor.detector import check_rules, detect_file
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -94,12 +95,11 @@ def check_paths(
     *,
     rules: Sequence[RefactorRule] | None = None,
 ) -> list[Hit]:
-    selected = tuple(rules) if rules is not None else RULES
+    selected = check_rules(rules)
     hits: list[Hit] = []
     for file_path in iter_python_files(paths):
         source = file_path.read_text(encoding="utf-8")
-        for rule in selected:
-            hits.extend(rule.detect(source, str(file_path)))
+        hits.extend(detect_file(source, str(file_path), selected))
     return hits
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import replace
+from functools import lru_cache
 from pathlib import PurePath
 from typing import TypeAlias, cast
 
@@ -52,10 +53,15 @@ def detect_with_visitor(
     path: str,
     visitor_cls: type[HitCollector],
 ) -> list[Hit]:
-    module = cst.parse_module(source)
+    module = parse_module_cached(source)
     finder = visitor_cls(path=path)
     MetadataWrapper(module, unsafe_skip_copy=True).visit(finder)
     return finder.hits
+
+
+@lru_cache(maxsize=32)
+def parse_module_cached(source: str) -> cst.Module:
+    return cst.parse_module(source)
 
 
 def noop_apply(source: str, hits: Sequence[Hit]) -> str | None:

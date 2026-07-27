@@ -9,7 +9,7 @@ from refactor.registry import RULES
 from refactor.rules.native.redundancy.lift_return_into_if import LiftReturnIntoIfRule
 from refactor.rules.native.redundancy.reintroduce_else import ReintroduceElseRule
 from refactor.rules.native.strings.remove_redundant_continue import RemoveRedundantContinueRule
-from refactor.runner import apply_safe_rule, check_paths, fix_paths, iter_python_files
+from refactor.runner import apply_safe_rule, check_paths, check_rules, fix_paths, iter_python_files
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -40,6 +40,12 @@ def test_check_paths_populates_hit_location(tmp_path: Path) -> None:
     hit = next(h for h in check_paths([tmp_path]) if h.rule_id == "default-get")
     assert hit.location.line == 2
     assert hit.location.column is not None
+
+
+def test_default_check_rules_skip_inactive_bridges() -> None:
+    assert any(getattr(rule, "delegates_to", None) is not None for rule in RULES)
+    assert all(getattr(rule, "delegates_to", None) is None for rule in check_rules())
+    assert check_rules(RULES) == RULES
 
 
 def test_body_sequence_rules_populate_hit_locations() -> None:

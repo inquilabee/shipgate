@@ -19,9 +19,9 @@
 
 ## Phase 6: Performance / Bounded Check
 
-- [ ] Reduce default check work enough for bounded `src/shipgate` smoke use.
-- [ ] Add focused regression or smoke coverage for the performance path.
-- [ ] Run `uv run pytest refactor/tests -q`.
-- [ ] Run `timeout 30 env PYTHONPATH=refactor/src uv run python -m refactor check refactor/tests/test_protocol.py`.
-- [ ] Try `timeout 60 env PYTHONPATH=refactor/src uv run python -m refactor check src/shipgate`.
-- [ ] Commit `fix(refactor): phase 6 — check performance budget`.
+- [x] Reduce default check work enough for bounded `src/shipgate` smoke use.
+- [x] Add focused regression or smoke coverage for the performance path.
+- [x] Run `uv run pytest refactor/tests -q`.
+- [x] Run `timeout 30 env PYTHONPATH=refactor/src uv run python -m refactor check refactor/tests/test_protocol.py`.
+- [x] Try `timeout 60 env PYTHONPATH=refactor/src uv run python -m refactor check src/shipgate`.
+- [x] Commit `fix(refactor): phase 6 — check performance budget`.
