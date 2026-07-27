@@ -16,7 +16,7 @@
   note: null
 - id: bin-op-identity
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: boolean-if-exp-identity
   kind: refactor
@@ -44,7 +44,7 @@
   note: null
 - id: collection-into-set
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: collection-to-bool
   kind: refactor
@@ -79,8 +79,8 @@
   status: native
   note: null
 - id: default-mutable-arg
-  kind: refactor
-  status: todo
+  kind: suggestion
+  status: native
   note: null
 - id: del-comprehension
   kind: refactor
@@ -136,7 +136,7 @@
   note: null
 - id: for-index-replacement
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: for-index-underscore
   kind: refactor
@@ -452,7 +452,7 @@
   note: null
 - id: remove-unreachable-code
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-unused-enumerate
   kind: refactor
@@ -688,5 +688,5 @@
   note: null
 - id: yield-from
   kind: refactor
-  status: todo
+  status: native
   note: null
