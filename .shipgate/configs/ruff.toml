@@ -1,6 +1,6 @@
 line-length = 100
 target-version = "py311"
-src = ["src", "tests", "refactor/src", "refactor/tests"]
+src = ["src", "tests"]
 exclude = [".shipgate", ".venv", "venv", "build", "reports", "__pycache__"]
 
 [lint]
@@ -50,4 +50,4 @@ max-complexity = 8
 
 [lint.per-file-ignores]
 "tests/**" = ["assert", "subprocess-without-shell-equals-true"]
-"refactor/tests/**" = ["assert", "subprocess-without-shell-equals-true"]
+"tests/refactor/**" = ["assert", "subprocess-without-shell-equals-true"]

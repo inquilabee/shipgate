@@ -81,17 +81,18 @@ dev = [
 # FastAPI server extras are required at runtime for templates/forms but are not
 # imported by name (Jinja2Templates / multipart parsing), so DEP002 ignores them.
 [tool.deptry]
-known_first_party = ["shipgate"]
+known_first_party = ["refactor", "shipgate"]
 
 [tool.deptry.per_rule_ignores]
 DEP002 = ["jinja2", "python-multipart"]
+DEP004 = ["libcst"]
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = ["src", "refactor/src"]
+where = ["src"]
 
 [tool.setuptools.package-data]
 shipgate = [
@@ -101,8 +102,8 @@ shipgate = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "refactor/tests"]
-pythonpath = ["src", "refactor/src", "."]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
 markers = [
   "integration: tests that require external tools",
   "ui: browser UI tests (Playwright; requires chromium)",

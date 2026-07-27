@@ -1,6 +1,6 @@
 # ty type checker defaults (ty.toml format — not [tool.ty]).
 [environment]
-extra-paths = ["src", "refactor/src"]
+extra-paths = ["src"]
 
 [src]
 exclude = [".shipgate", ".venv", "venv", "build", "reports"]
