@@ -16,14 +16,12 @@ checks:
     p95-mode: threshold
     p95-threshold: 7
   radon.mi:
-    # Letter rank is per-file. Median + left-tail floors; progressive min ratchets.
+    # Letter rank is per-file. Distribution floors are progressive (portable init);
+    # pin absolute median/p5/p10 via calibrate when ready.
     threshold: B
-    median-mode: threshold
-    median-threshold: 55.8
-    p5-mode: threshold
-    p5-threshold: 28
-    p10-mode: threshold
-    p10-threshold: 32
+    median-mode: progressive
+    p5-mode: progressive
+    p10-mode: progressive
     minimum-mode: progressive
   jscpd.check.python:
     threshold: "2"

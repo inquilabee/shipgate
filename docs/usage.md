@@ -87,9 +87,12 @@ Modes:
 - `progressive` — must not regress vs the last saved value in
   `.shipgate/cache/.env`. First progressive run seeds the baseline and passes.
 
-ShipGate’s own dogfood uses **strict `threshold`** for median plus left-tail MI
-floors (`p5` / `p10`), with progressive `minimum` to ratchet the worst file, not
-an inverted MI `p95≥100` floor.
+Bundled `shipgate init` scaffolds **progressive** MI distribution floors (seed on
+first run, fail on regression) plus letter rank `B`. That stays portable across
+repos; pin absolute floors with `shipgate radon calibrate` when you want dogfood-
+style strictness. ShipGate’s own `.shipgate/shipgate.yaml` uses absolute median /
+`p5` / `p10` thresholds and progressive `minimum` — not an inverted MI `p95≥100`
+floor.
 
 Env keys (progressive only): `SHIPGATE_RADON_MI_AVG`, `SHIPGATE_RADON_MI_MEDIAN`,
 `SHIPGATE_RADON_MI_MIN`, `SHIPGATE_RADON_MI_P5`, `SHIPGATE_RADON_MI_P10`,
@@ -98,6 +101,24 @@ Env keys (progressive only): `SHIPGATE_RADON_MI_AVG`, `SHIPGATE_RADON_MI_MEDIAN`
 `SHIPGATE_RADON_CC_P95`.
 
 ```yaml
+# Bundled init (portable): progressive MI floors
+checks:
+  radon.mi:
+    threshold: B
+    median-mode: progressive
+    p5-mode: progressive
+    p10-mode: progressive
+    minimum-mode: progressive
+  radon.cc:
+    threshold: B
+    median-mode: threshold
+    median-threshold: 3
+    p95-mode: threshold
+    p95-threshold: 7
+```
+
+```yaml
+# Absolute MI floors after calibrate (ShipGate dogfood style)
 checks:
   radon.mi:
     threshold: B
@@ -108,12 +129,6 @@ checks:
     p10-mode: threshold
     p10-threshold: 32
     minimum-mode: progressive
-  radon.cc:
-    threshold: B
-    median-mode: threshold
-    median-threshold: 3
-    p95-mode: threshold
-    p95-threshold: 7
 ```
 
 #### Calibrate suggested thresholds
