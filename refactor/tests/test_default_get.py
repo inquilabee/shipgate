@@ -1,4 +1,4 @@
-from refactor.rules.native.default_get import DefaultGetRule
+from refactor.rules.native.builtins.default_get import DefaultGetRule
 
 BEFORE = """\
 def pick(d: dict[str, int], key: str) -> int:
