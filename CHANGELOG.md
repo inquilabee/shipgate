@@ -20,7 +20,10 @@
 - `shipgate init` writes a minimal `pyproject.toml` when none exists so packaging
   tools have project metadata.
 - Import-linter contracts are scaffolded only when an importable `src/<pkg>/`
-  package exists (no more dirname-based fake `root_package`).
+  package exists (no more dirname-based fake `root_package`). Flat-layout
+  packages are skipped until under `src/`.
+- Deptry `known_first_party` is set only for an importable src package (not the
+  pyproject project name alone).
 - Deptry and related tools keep directory-root delivery under changed-only
   (`paths.aggregate: root`).
 
@@ -28,6 +31,12 @@
 
 - Fresh-project `shipgate check --suite full` no longer TOOL_EXITs on
   import-linter / deptry / pip-audit when the tree has only loose `src/*.py`.
+
+### Notes
+
+- Pre-0.1.4 inits may still have a broken `.shipgate/configs/importlinter.ini`
+  with a dirname `root_package`. Delete it and run `shipgate configs sync` once
+  you have `src/<pkg>/__init__.py`.
 
 ## v0.1.3
 

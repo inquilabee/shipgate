@@ -28,7 +28,7 @@ build:
 	uv build
 
 publish-check: build
-	uv run python -c "import glob, zipfile; paths=glob.glob('dist/*.whl'); assert paths, 'no wheel'; z=zipfile.ZipFile(paths[-1]); z.testzip(); print(paths[-1], 'ok')"
+	uv run python -c "import glob, zipfile, re; paths=sorted(glob.glob('dist/*.whl'), key=lambda p: [int(x) if x.isdigit() else x for x in re.findall(r'[0-9]+|[^0-9]+', p)]); assert paths, 'no wheel'; z=zipfile.ZipFile(paths[-1]); z.testzip(); print(paths[-1], 'ok')"
 
 # Fresh-machine smoke test: empty project init/install/format/check, then optional repo dogfood.
 # Requires Docker. Set SHIPGATE_DOCKER_DOGFOOD=0 to skip phase B.

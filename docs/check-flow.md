@@ -115,6 +115,7 @@ uv run shipgate list checks
 | `tags` | Metadata labels (e.g. `security`); filter with `shipgate list tools --tag` |
 | `cache` | Optional result-cache policy (`results`, `ttl_seconds`) |
 | `suggest_if` | Additive init hints when matching files exist (does not change default suites) |
+| `require_if` | Skip the check (exit 0, skipped status) unless matching files exist; e.g. `files_present: ["pyproject.toml"]` or `src/*/__init__.py` for import-linter |
 
 Project overlays under `.shipgate/catalog/tools/` can replace or `extends:` a bundled tool without editing the package.
 

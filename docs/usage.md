@@ -19,9 +19,14 @@ Override with `--suite` only for one-offs.
 Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`
 (see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
 `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
-That includes an `importlinter.ini` starter (root package auto-detected) and a
-`[tool.deptry]` section in `pyproject.toml` when missing. Customize contracts and
-`known_first_party` for your layout; pip-audit needs no project config file.
+That includes an `importlinter.ini` starter when an importable `src/<pkg>/`
+package exists (src-layout only; flat-layout packages are skipped until laid out
+under `src/`) and a `[tool.deptry]` section in `pyproject.toml` when missing.
+`known_first_party` is filled only for a real importable package — otherwise the
+commented placeholder stays. Customize contracts for your layout; pip-audit needs
+no project config file. If an older init left a broken `importlinter.ini`
+(`root_package` set to the directory name), delete it and re-run
+`shipgate configs sync` after you have a real package.
 
 ```yaml
 # .shipgate/shipgate.yaml

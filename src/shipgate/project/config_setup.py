@@ -6,7 +6,6 @@ import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from shipgate.core.toml_io import load_toml_mapping
 from shipgate.gates.paths import bundled_root_path
 from shipgate.paths import (
     POLICY_CACHE_KEY,
@@ -54,25 +53,14 @@ def bundled_template_path(tool: ToolDefinition) -> Path:
     return bundled_root_path() / tool.configuration.bundled
 
 
-def detect_root_package(project_root: Path) -> str | None:
-    """Best-effort package name for scaffolding hints (src layout, then pyproject)."""
-    return RootPackageDetector(project_root).detect()
-
-
 def detect_importable_root_package(project_root: Path) -> str | None:
-    """Importable src-layout package name for import-linter contracts."""
+    """Importable src-layout package name for import-linter / deptry scaffolding."""
     return RootPackageDetector(project_root).from_src_layout()
 
 
 class RootPackageDetector:
     def __init__(self, project_root: Path) -> None:
         self.root = project_root.resolve()
-
-    def detect(self) -> str | None:
-        from_src = self.from_src_layout()
-        if from_src is not None:
-            return from_src
-        return self.from_pyproject()
 
     def from_src_layout(self) -> str | None:
         src = self.root / "src"
@@ -84,22 +72,6 @@ class RootPackageDetector:
             if path.is_dir() and not path.name.startswith(".") and (path / "__init__.py").is_file()
         )
         return packages[0] if packages else None
-
-    def from_pyproject(self) -> str | None:
-        pyproject = self.root / PYPROJECT_TOML
-        if not pyproject.is_file():
-            return None
-        try:
-            raw = load_toml_mapping(pyproject, error_cls=ValueError)
-        except ValueError:
-            return None
-        project = raw.get("project")
-        if not isinstance(project, dict):
-            return None
-        name = project.get("name")
-        if isinstance(name, str) and name.strip():
-            return name.strip().replace("-", "_")
-        return None
 
 
 def render_root_package_template(text: str, root_package: str) -> str:
@@ -204,7 +176,7 @@ def ensure_deptry_pyproject_section(project_root: Path) -> Path | None:
     if content and not content.endswith("\n"):
         content += "\n"
     section = read_deptry_pyproject_template()
-    root_package = detect_root_package(project_root)
+    root_package = detect_importable_root_package(project_root)
     if root_package is not None:
         section = section.replace(
             '# known_first_party = ["your_package"]',

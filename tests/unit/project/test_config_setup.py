@@ -8,7 +8,7 @@ from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import SHIPGATE_YAML
 from shipgate.project.config_setup import (
     detect_importable_root_package,
-    detect_root_package,
+    ensure_minimal_pyproject,
     project_config_relpath,
     scaffold_bundled_configs,
 )
@@ -42,25 +42,16 @@ def test_project_config_relpath_for_import_linter():
     assert tool.configuration.bundled == "configs/importlinter.ini"
 
 
-def test_detect_root_package_from_src_layout(tmp_path: Path):
+def test_detect_importable_root_package_from_src_layout(tmp_path: Path):
     pkg = tmp_path / "src" / "acme"
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
-    assert detect_root_package(tmp_path) == "acme"
+    assert detect_importable_root_package(tmp_path) == "acme"
 
 
-def test_detect_root_package_from_pyproject_name(tmp_path: Path):
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "cool-pkg"\nversion = "0.1.0"\n',
-        encoding="utf-8",
-    )
-    assert detect_root_package(tmp_path) == "cool_pkg"
-
-
-def test_detect_root_package_returns_none_without_package(tmp_path: Path):
+def test_detect_importable_returns_none_without_package(tmp_path: Path):
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "main.py").write_text("x = 1\n", encoding="utf-8")
-    assert detect_root_package(tmp_path) is None
     assert detect_importable_root_package(tmp_path) is None
 
 
@@ -69,7 +60,6 @@ def test_detect_importable_ignores_pyproject_only_name(tmp_path: Path):
         '[project]\nname = "cool-pkg"\nversion = "0.1.0"\n',
         encoding="utf-8",
     )
-    assert detect_root_package(tmp_path) == "cool_pkg"
     assert detect_importable_root_package(tmp_path) is None
 
 
@@ -128,6 +118,22 @@ def test_scaffold_deptry_leaves_known_first_party_comment_without_package(tmp_pa
     content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert "[tool.deptry]" in content
     assert '# known_first_party = ["your_package"]' in content
+
+
+def test_scaffold_deptry_ignores_pyproject_name_without_package(tmp_path: Path):
+    """Fresh yaml-init trees get a name but no package — do not invent known_first_party."""
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "main.py").write_text("print('hi')\n", encoding="utf-8")
+    ensure_minimal_pyproject(tmp_path)
+    catalog = CatalogLoader.load()
+    scaffold_bundled_configs(tmp_path, catalog)
+    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.deptry]" in content
+    assert '# known_first_party = ["your_package"]' in content
+    uncommented = [
+        line for line in content.splitlines() if line.strip().startswith("known_first_party")
+    ]
+    assert uncommented == []
 
 
 def test_scaffold_bundled_configs_does_not_overwrite(tmp_path: Path):
