@@ -179,6 +179,16 @@ def is_empty_call(node: cst.Call, name: str) -> bool:
     return isinstance(node.func, cst.Name) and node.func.value == name and not node.args
 
 
+def unwrap_str_call(expr: cst.BaseExpression) -> cst.BaseExpression | None:
+    if not isinstance(expr, cst.Call):
+        return None
+    if not isinstance(expr.func, cst.Name) or expr.func.value != "str":
+        return None
+    if len(expr.args) != 1 or expr.args[0].keyword is not None:
+        return None
+    return expr.args[0].value
+
+
 def match_named_for(
     stmt: cst.BaseStatement,
 ) -> tuple[cst.For, cst.BaseExpression] | None:

@@ -20,9 +20,13 @@ from refactor.rules.native.builtins.default_get import DefaultGetRule
 from refactor.rules.native.builtins.default_mutable_arg import DefaultMutableArgRule
 from refactor.rules.native.builtins.identity_comprehension import IdentityComprehensionRule
 from refactor.rules.native.builtins.min_max_identity import MinMaxIdentityRule
+from refactor.rules.native.builtins.remove_str_from_fstring import RemoveStrFromFstringRule
+from refactor.rules.native.builtins.remove_str_from_print import RemoveStrFromPrintRule
 from refactor.rules.native.builtins.use_len import UseLenRule
 from refactor.rules.native.syntax.aug_assign import AugAssignRule
 from refactor.rules.native.syntax.bin_op_identity import BinOpIdentityRule
+from refactor.rules.native.syntax.binary.simplify_division import SimplifyDivisionRule
+from refactor.rules.native.syntax.binary.square_identity import SquareIdentityRule
 from refactor.rules.native.syntax.boolean_if_exp_identity import BooleanIfExpIdentityRule
 from refactor.rules.native.syntax.collection_into_set import CollectionIntoSetRule
 from refactor.rules.native.syntax.control.for_index_replacement import (
@@ -32,16 +36,28 @@ from refactor.rules.native.syntax.control.inline_immediately_returned_variable i
     InlineImmediatelyReturnedVariableRule,
 )
 from refactor.rules.native.syntax.control.merge_nested_ifs import MergeNestedIfsRule
+from refactor.rules.native.syntax.control.remove_assert_true import RemoveAssertTrueRule
 from refactor.rules.native.syntax.control.remove_unreachable_code import (
     RemoveUnreachableCodeRule,
 )
 from refactor.rules.native.syntax.control.use_next import UseNextRule
 from refactor.rules.native.syntax.control.yield_from import YieldFromRule
 from refactor.rules.native.syntax.dict_literal import DictLiteralRule
+from refactor.rules.native.syntax.fstring.remove_redundant_fstring import RemoveRedundantFstringRule
 from refactor.rules.native.syntax.none_compare import NoneCompareRule
+from refactor.rules.native.syntax.range.remove_unit_step_from_range import (
+    RemoveUnitStepFromRangeRule,
+)
+from refactor.rules.native.syntax.range.remove_zero_from_range import RemoveZeroFromRangeRule
 from refactor.rules.native.syntax.remove_redundant_pass import RemoveRedundantPassRule
 from refactor.rules.native.syntax.simplify_boolean_comparison import (
     SimplifyBooleanComparisonRule,
+)
+from refactor.rules.native.syntax.subscript.remove_redundant_slice_index import (
+    RemoveRedundantSliceIndexRule,
+)
+from refactor.rules.native.syntax.subscript.simplify_negative_index import (
+    SimplifyNegativeIndexRule,
 )
 from refactor.rules.native.syntax.tuple_literal import TupleLiteralRule
 
@@ -69,6 +85,16 @@ RULES: tuple[RefactorRule, ...] = (
     RemoveUnreachableCodeRule(),
     YieldFromRule(),
     BinOpIdentityRule(),
+    RemoveZeroFromRangeRule(),
+    RemoveUnitStepFromRangeRule(),
+    RemoveRedundantSliceIndexRule(),
+    SimplifyNegativeIndexRule(),
+    SquareIdentityRule(),
+    SimplifyDivisionRule(),
+    RemoveStrFromPrintRule(),
+    RemoveStrFromFstringRule(),
+    RemoveRedundantFstringRule(),
+    RemoveAssertTrueRule(),
     ListLiteralBridge(),
     AvoidBuiltinShadowBridge(),
     DoNotUseBareExceptBridge(),

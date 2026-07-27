@@ -348,7 +348,7 @@
   note: null
 - id: remove-assert-true
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-dict-items
   kind: refactor
@@ -412,7 +412,7 @@
   note: null
 - id: remove-redundant-fstring
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-if
   kind: refactor
@@ -428,19 +428,19 @@
   note: null
 - id: remove-redundant-slice-index
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-str-from-fstring
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-str-from-print
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-unit-step-from-range
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-unnecessary-cast
   kind: refactor
@@ -460,7 +460,7 @@
   note: null
 - id: remove-zero-from-range
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: replace-apply-with-method-call
   kind: refactor
@@ -504,7 +504,7 @@
   note: null
 - id: simplify-division
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-empty-collection-comparison
   kind: refactor
@@ -524,7 +524,7 @@
   note: null
 - id: simplify-negative-index
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-numeric-comparison
   kind: refactor
@@ -552,7 +552,7 @@
   note: null
 - id: square-identity
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: str-prefix-suffix
   kind: refactor
