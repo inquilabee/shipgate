@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from refactor.inventory import load_inventory
 from refactor.registry import RULES
 from refactor.runner import check_paths, fix_paths, hits_to_jsonable
 
@@ -34,10 +35,15 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 
 def cmd_list() -> int:
+    status_by_id = {entry.id: entry.status for entry in load_inventory()}
     for rule in RULES:
+        inventory_status = status_by_id.get(rule.rule_id, "unknown")
         delegates = getattr(rule, "delegates_to", None)
         suffix = f" delegates_to={delegates}" if delegates else ""
-        print(f"{rule.rule_id}\t{rule.kind.value}\tsafe_apply={rule.safe_apply}{suffix}")
+        print(
+            f"{rule.rule_id}\t{rule.kind.value}\t"
+            f"inventory={inventory_status}\tsafe_apply={rule.safe_apply}{suffix}"
+        )
     return 0
 
 

@@ -14,6 +14,12 @@ uv run python -m refactor check path/to/file.py
 uv run python -m refactor fix path/to/file.py
 ```
 
+## Inventory
+
+Sourcery rule IDs and parity status live in `refactor/inventory/sourcery_ids.yaml`.
+Load them with `refactor.inventory.load_inventory()` (used by inventory tests and
+future parity tracking).
+
 ## Add a rule
 
 1. Create `refactor/src/refactor/rules/native/your_rule.py` (or `rules/bridge/`).
