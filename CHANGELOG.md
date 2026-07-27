@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## v0.1.5
+
 ### Added
 
 - Radon `p5` / `p10` metric gates (MI floors / CC ceilings), matching `p95`.
@@ -14,8 +16,9 @@
 
 ### Changed
 
-- Dogfood / bundled radon.mi defaults: left-tail `p5`/`p10` floors plus progressive
-  `minimum` instead of an inverted MI `p95≥100` floor.
+- Bundled `shipgate init` radon.mi distribution floors are **progressive** (portable);
+  dogfood keeps absolute median / `p5` / `p10` plus progressive `minimum`, and drops
+  the inverted MI `p95≥100` floor.
 - Split layout role/collapse helpers out of `LayoutEngine` to improve maintainability.
 
 ## v0.1.4
