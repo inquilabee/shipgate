@@ -74,6 +74,8 @@ def apply_safe_rule(rule: RefactorRule, source: str, file_path: Path) -> str:
     rewritten = rule.apply(source, hits)
     if rewritten is None:
         return source
+    if rule.detect(rewritten, str(file_path)):
+        return source
     return rewritten
 
 
