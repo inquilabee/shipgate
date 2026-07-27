@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition
 
 ROOT_PACKAGE_PLACEHOLDER = "__ROOT_PACKAGE__"
+PYPROJECT_TOML = "pyproject.toml"
 
 
 def project_config_relpath(tool: ToolDefinition) -> Path | None:
@@ -53,23 +54,25 @@ def bundled_template_path(tool: ToolDefinition) -> Path:
     return bundled_root_path() / tool.configuration.bundled
 
 
-def detect_root_package(project_root: Path) -> str:
-    """Best-effort top-level import package name for scaffolded contracts."""
+def detect_root_package(project_root: Path) -> str | None:
+    """Best-effort package name for scaffolding hints (src layout, then pyproject)."""
     return RootPackageDetector(project_root).detect()
+
+
+def detect_importable_root_package(project_root: Path) -> str | None:
+    """Importable src-layout package name for import-linter contracts."""
+    return RootPackageDetector(project_root).from_src_layout()
 
 
 class RootPackageDetector:
     def __init__(self, project_root: Path) -> None:
         self.root = project_root.resolve()
 
-    def detect(self) -> str:
+    def detect(self) -> str | None:
         from_src = self.from_src_layout()
         if from_src is not None:
             return from_src
-        from_pyproject = self.from_pyproject()
-        if from_pyproject is not None:
-            return from_pyproject
-        return re.sub(r"[^A-Za-z0-9_]", "_", self.root.name.replace("-", "_"))
+        return self.from_pyproject()
 
     def from_src_layout(self) -> str | None:
         src = self.root / "src"
@@ -83,7 +86,7 @@ class RootPackageDetector:
         return packages[0] if packages else None
 
     def from_pyproject(self) -> str | None:
-        pyproject = self.root / "pyproject.toml"
+        pyproject = self.root / PYPROJECT_TOML
         if not pyproject.is_file():
             return None
         try:
@@ -118,11 +121,27 @@ def scaffold_file_if_missing(
         msg = f"bundled config template not found: {bundled_template}"
         raise FileNotFoundError(msg)
     content = bundled_template.read_text(encoding="utf-8")
-    if root_package is not None and ROOT_PACKAGE_PLACEHOLDER in content:
+    if ROOT_PACKAGE_PLACEHOLDER in content:
+        if root_package is None:
+            # Do not write a broken import-linter (or similar) contract.
+            return None
         content = render_root_package_template(content, root_package)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
     return target
+
+
+def ensure_minimal_pyproject(project_root: Path) -> Path | None:
+    """Create a starter pyproject.toml so packaging tools have project metadata."""
+    pyproject = project_root / PYPROJECT_TOML
+    if pyproject.is_file():
+        return None
+    name = re.sub(r"[^A-Za-z0-9._-]", "-", project_root.name).strip("-._") or "project"
+    pyproject.write_text(
+        f'[project]\nname = "{name}"\nversion = "0.1.0"\n',
+        encoding="utf-8",
+    )
+    return pyproject
 
 
 def scaffold_shipgate_gitignore(project_root: Path) -> Path | None:
@@ -176,7 +195,7 @@ def read_deptry_pyproject_template() -> str:
 
 def ensure_deptry_pyproject_section(project_root: Path) -> Path | None:
     """Append a starter [tool.deptry] section when pyproject.toml lacks one."""
-    pyproject = project_root / "pyproject.toml"
+    pyproject = project_root / PYPROJECT_TOML
     if not pyproject.is_file():
         return None
     content = pyproject.read_text(encoding="utf-8")
@@ -184,12 +203,13 @@ def ensure_deptry_pyproject_section(project_root: Path) -> Path | None:
         return None
     if content and not content.endswith("\n"):
         content += "\n"
-    root_package = detect_root_package(project_root)
     section = read_deptry_pyproject_template()
-    section = section.replace(
-        '# known_first_party = ["your_package"]',
-        f'known_first_party = ["{root_package}"]',
-    )
+    root_package = detect_root_package(project_root)
+    if root_package is not None:
+        section = section.replace(
+            '# known_first_party = ["your_package"]',
+            f'known_first_party = ["{root_package}"]',
+        )
     pyproject.write_text(content + "\n" + section, encoding="utf-8")
     return pyproject
 
@@ -214,7 +234,8 @@ def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]
     root = project_root.resolve()
     created: list[Path] = []
     seen: set[Path] = set()
-    root_package = detect_root_package(root)
+    # Only substitute import-linter placeholders when a real src package exists.
+    importable_package = detect_importable_root_package(root)
     for tool in catalog.tools.values():
         rel = project_config_relpath(tool)
         if rel is None or rel in seen:
@@ -224,7 +245,7 @@ def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]
             root,
             rel,
             bundled_template=bundled_template_path(tool),
-            root_package=root_package,
+            root_package=importable_package,
         )
         if result is not None:
             created.append(result)

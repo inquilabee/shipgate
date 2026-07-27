@@ -4,6 +4,31 @@
 
 ## Unreleased
 
+## v0.1.4
+
+### Added
+
+- Layout-aware `shipgate init` scopes: detects `python-src`, `python-test-src`,
+  and `docs` from the project tree (pytest `testpaths` / markers preferred).
+- Policy gate `gate.staticmethod-soup`: fails classes whose methods are only
+  `@staticmethod` (pushes real instance methods or module functions).
+- Catalog `require_if.files_present`: checks skip cleanly when prerequisites are
+  missing (used by import-linter, deptry, and pip-audit on fresh trees).
+
+### Changed
+
+- `shipgate init` writes a minimal `pyproject.toml` when none exists so packaging
+  tools have project metadata.
+- Import-linter contracts are scaffolded only when an importable `src/<pkg>/`
+  package exists (no more dirname-based fake `root_package`).
+- Deptry and related tools keep directory-root delivery under changed-only
+  (`paths.aggregate: root`).
+
+### Fixed
+
+- Fresh-project `shipgate check --suite full` no longer TOOL_EXITs on
+  import-linter / deptry / pip-audit when the tree has only loose `src/*.py`.
+
 ## v0.1.3
 
 ### Added

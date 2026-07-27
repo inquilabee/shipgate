@@ -16,6 +16,7 @@ from shipgate.paths import (
 )
 from shipgate.project.catalog import sync_catalog
 from shipgate.project.config_setup import (
+    ensure_minimal_pyproject,
     read_pyproject_shipgate_template,
     read_shipgate_yaml_template,
     scaffold_bundled_configs,
@@ -92,6 +93,8 @@ class ProjectInitializer:
             raise ShipGateError(f"shipgate.yaml already exists: {config_path}")
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(read_shipgate_yaml_template(self.root), encoding="utf-8")
+        # Packaging tools (deptry, pip-audit) need project metadata.
+        ensure_minimal_pyproject(self.root)
         scaffold_project_layout(self.root, policy="yaml", project_env=self.project_env)
         return config_path
 

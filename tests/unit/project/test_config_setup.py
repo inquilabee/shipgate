@@ -7,6 +7,7 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import SHIPGATE_YAML
 from shipgate.project.config_setup import (
+    detect_importable_root_package,
     detect_root_package,
     project_config_relpath,
     scaffold_bundled_configs,
@@ -56,6 +57,22 @@ def test_detect_root_package_from_pyproject_name(tmp_path: Path):
     assert detect_root_package(tmp_path) == "cool_pkg"
 
 
+def test_detect_root_package_returns_none_without_package(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "main.py").write_text("x = 1\n", encoding="utf-8")
+    assert detect_root_package(tmp_path) is None
+    assert detect_importable_root_package(tmp_path) is None
+
+
+def test_detect_importable_ignores_pyproject_only_name(tmp_path: Path):
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "cool-pkg"\nversion = "0.1.0"\n',
+        encoding="utf-8",
+    )
+    assert detect_root_package(tmp_path) == "cool_pkg"
+    assert detect_importable_root_package(tmp_path) is None
+
+
 def test_scaffold_bundled_configs_creates_files(tmp_path: Path):
     catalog = CatalogLoader.load()
     created = scaffold_bundled_configs(tmp_path, catalog)
@@ -64,6 +81,12 @@ def test_scaffold_bundled_configs_creates_files(tmp_path: Path):
         "gate config missing"
     )
     assert len(created) >= 2, "expected scaffolded files"
+
+
+def test_scaffold_skips_import_linter_without_package(tmp_path: Path):
+    catalog = CatalogLoader.load()
+    scaffold_bundled_configs(tmp_path, catalog)
+    assert not (tmp_path / ".shipgate/configs/importlinter.ini").is_file()
 
 
 def test_scaffold_import_linter_substitutes_root_package(tmp_path: Path):
@@ -95,6 +118,18 @@ def test_scaffold_merges_deptry_into_pyproject(tmp_path: Path):
     assert 'known_first_party = ["demo"]' in content
 
 
+def test_scaffold_deptry_leaves_known_first_party_comment_without_package(tmp_path: Path):
+    (tmp_path / "pyproject.toml").write_text(
+        'requires-python = ">=3.11"\n',
+        encoding="utf-8",
+    )
+    catalog = CatalogLoader.load()
+    scaffold_bundled_configs(tmp_path, catalog)
+    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.deptry]" in content
+    assert '# known_first_party = ["your_package"]' in content
+
+
 def test_scaffold_bundled_configs_does_not_overwrite(tmp_path: Path):
     catalog = CatalogLoader.load()
     path = tmp_path / ".shipgate/configs/ruff.toml"
@@ -109,12 +144,23 @@ def test_init_scaffolds_configs(tmp_path: Path):
     init_project(tmp_path)
     assert (tmp_path / ".shipgate/configs/ruff.toml").is_file(), "ruff config missing"
     assert (tmp_path / ".shipgate/configs/ty.toml").is_file(), "ty config missing"
-    assert (tmp_path / ".shipgate/configs/importlinter.ini").is_file(), (
-        "import-linter config missing"
+    assert not (tmp_path / ".shipgate/configs/importlinter.ini").is_file(), (
+        "import-linter should not scaffold without a package"
     )
+    assert (tmp_path / "pyproject.toml").is_file(), "yaml init should create minimal pyproject"
     assert (tmp_path / ".shipgate/configs/gates/gate.acronym-allowlist.yaml").is_file(), (
         "gate config missing"
     )
+
+
+def test_init_scaffolds_import_linter_with_package(tmp_path: Path):
+    pkg = tmp_path / "src" / "demo"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    init_project(tmp_path)
+    assert (tmp_path / ".shipgate/configs/importlinter.ini").is_file()
+    content = (tmp_path / ".shipgate/configs/importlinter.ini").read_text(encoding="utf-8")
+    assert "root_package = demo" in content
 
 
 def test_init_shipgate_yaml_enables_changed_only(tmp_path: Path):
@@ -139,6 +185,9 @@ def test_resolve_prefers_shipgate_config(tmp_path: Path):
 
 
 def test_resolve_import_linter_prefers_shipgate_config(tmp_path: Path):
+    pkg = tmp_path / "src" / "demo"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
     catalog = CatalogLoader.load()
     scaffold_project_layout(tmp_path)
     project = ProjectConfigLoader.load(project_root=tmp_path)

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from shipgate.core.files_present import any_files_present
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -24,13 +26,10 @@ class InitToolSuggestions:
         for tool_id, tool in sorted(self.catalog.tools.items()):
             if tool.suggest_if is None or not tool.suggest_if.files_present:
                 continue
-            if not self.matches_files_present(tool.suggest_if.files_present):
+            if not any_files_present(self.root, tool.suggest_if.files_present):
                 continue
             lines.append(self.suggestion_line(tool_id))
         return lines
-
-    def matches_files_present(self, patterns: tuple[str, ...]) -> bool:
-        return any(any(self.root.glob(pattern)) for pattern in patterns)
 
     def suggestion_line(self, tool_id: str) -> str:
         _ = self

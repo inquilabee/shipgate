@@ -9,6 +9,7 @@ from shipgate.domain.catalog import (
     CliOptionDefinition,
     ConfigurationDefinition,
     InstallDefinition,
+    RequireIfDefinition,
     ScopeCriteria,
     SuggestIfDefinition,
     SuiteDefinition,
@@ -57,6 +58,7 @@ class CatalogParser:
         tags = tuple(str(tag) for tag in raw.get("tags", []) or [])
         cache = self._parse_cache(raw.get("cache"))
         suggest_if = self._parse_suggest_if(raw.get("suggest_if"))
+        require_if = self._parse_require_if(raw.get("require_if"))
         return ToolDefinition(
             id=tool_id,
             executable=raw.get("executable", tool_id),
@@ -73,6 +75,7 @@ class CatalogParser:
             tags=tags,
             cache=cache,
             suggest_if=suggest_if,
+            require_if=require_if,
             display_name=str(raw.get("display_name") or ""),
             description=str(raw.get("description") or ""),
             documentation_url=self.tool_documentation_url(raw),
@@ -149,6 +152,14 @@ class CatalogParser:
         if not raw:
             return None
         return SuggestIfDefinition(
+            files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
+        )
+
+    @staticmethod
+    def _parse_require_if(raw: dict | None) -> RequireIfDefinition | None:
+        if not raw:
+            return None
+        return RequireIfDefinition(
             files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
         )
 

@@ -202,7 +202,8 @@ class CheckRunner:
         )
         if prepared.report is not None:
             if command.display_cli:
-                sys.stderr.write(f"{selected.tool_id}: (skipped: no matching files in scope)\n")
+                reason = prepared.report.extra.get("skipped", "skipped")
+                sys.stderr.write(f"{selected.tool_id}: (skipped: {reason})\n")
             return prepared.report
         if prepared.request is None:
             raise RuntimeError(

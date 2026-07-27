@@ -74,6 +74,7 @@ class CatalogValidator:
         self._validate_tool_install(tool)
         self._validate_tool_cache(tool)
         self._validate_suggest_if(tool)
+        self._validate_require_if(tool)
 
     def _validate_tool_cli(self, tool: ToolDefinition) -> None:
         for name, opt in tool.cli.items():
@@ -204,6 +205,13 @@ class CatalogValidator:
             return
         if not tool.suggest_if.files_present:
             raise CatalogError(f"tool {tool.id!r} suggest_if.files_present must not be empty")
+
+    @staticmethod
+    def _validate_require_if(tool: ToolDefinition) -> None:
+        if tool.require_if is None:
+            return
+        if not tool.require_if.files_present:
+            raise CatalogError(f"tool {tool.id!r} require_if.files_present must not be empty")
 
     @staticmethod
     def _normalized_pin(version: str) -> str:

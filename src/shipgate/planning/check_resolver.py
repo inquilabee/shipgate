@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from shipgate.adapter.config_resolve import resolve_config_paths
+from shipgate.core.files_present import any_files_present
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport
@@ -65,6 +66,11 @@ class CheckResolver:
         if self.scope_session.is_incremental_clean():
             return self._skipped(selected.tool_id)
 
+        tool = self.catalog.get_tool(selected.tool_id)
+        require_skip = self._require_if_skip_reason(tool)
+        if require_skip is not None:
+            return self._skipped(selected.tool_id, reason=require_skip)
+
         scope = resolve_scope(
             self.project_root,
             self.project,
@@ -72,7 +78,6 @@ class CheckResolver:
             scope_name=selected.scope_name,
             resolver=self._scope_resolver,
         )
-        tool = self.catalog.get_tool(selected.tool_id)
         paths = scope_paths_for_tool(
             scope,
             tool,
@@ -125,6 +130,13 @@ class CheckResolver:
             project=self.project,
         )
         return PreparedRun(request=resolved)
+
+    def _require_if_skip_reason(self, tool: ToolDefinition) -> str | None:
+        if tool.require_if is None or not tool.require_if.files_present:
+            return None
+        if any_files_present(self.project_root, tool.require_if.files_present):
+            return None
+        return "required files not present"
 
     @staticmethod
     def _options_for_mode(
@@ -190,13 +202,17 @@ class CheckResolver:
         return replace(options, extra=extra)
 
     @staticmethod
-    def _skipped(tool_id: str) -> PreparedRun:
+    def _skipped(
+        tool_id: str,
+        *,
+        reason: str = "no matching files in scope",
+    ) -> PreparedRun:
         return PreparedRun(
             report=CheckReport(
                 check_id=tool_id,
                 tool_id=tool_id,
                 status="skipped",
                 exit_code=0,
-                extra={"skipped": "no matching files in scope"},
+                extra={"skipped": reason},
             )
         )

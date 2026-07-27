@@ -76,6 +76,13 @@ class SuggestIfDefinition:
 
 
 @dataclass(frozen=True)
+class RequireIfDefinition:
+    """Skip the tool at check time unless at least one pattern matches."""
+
+    files_present: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class ScopeCriteria:
     extensions: tuple[str, ...] = ()
     globs: tuple[str, ...] = ()
@@ -99,6 +106,7 @@ class ToolDefinition:
     tags: tuple[str, ...] = ()
     cache: CacheDefinition | None = None
     suggest_if: SuggestIfDefinition | None = None
+    require_if: RequireIfDefinition | None = None
     display_name: str = ""
     description: str = ""
     documentation_url: str | None = None

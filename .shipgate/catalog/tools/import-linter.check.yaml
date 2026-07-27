@@ -1,8 +1,9 @@
 # Enforces layer and forbidden-import contracts (architecture / policy).
 # `shipgate init` scaffolds configs/importlinter.ini with optional starter layers
-# and substitutes the detected root package name. Customize contracts for your
-# architecture. The package under test must be importable (src-layout:
-# PYTHONPATH=src, or install the package editable into the tool env).
+# only when an importable src-layout package exists (`src/<pkg>/__init__.py`).
+# Customize contracts for your architecture. The package under test must be
+# importable (src-layout: PYTHONPATH=src, or install the package editable).
+# Skipped when no src-layout package is present (require_if).
 import-linter.check:
   executable: lint-imports
   display_name: import-linter
@@ -42,6 +43,9 @@ import-linter.check:
     extensions:
       - .py
     delivery: root
+  require_if:
+    files_present:
+      - "src/*/__init__.py"
   suggest_if:
     files_present:
-      - "**/pyproject.toml"
+      - "src/*/__init__.py"

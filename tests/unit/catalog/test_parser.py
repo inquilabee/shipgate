@@ -56,6 +56,15 @@ def test_parse_tool_tags_cache_suggest():
     assert tool.suggest_if.files_present == ("**/Dockerfile",)
 
 
+def test_parse_tool_require_if():
+    raw = demo_tool_raw()
+    raw["require_if"] = {"files_present": ["pyproject.toml"]}
+    catalog = CatalogParser.parse({"tools": {"demo.tool": raw}, "suites": {}})
+    tool = catalog.get_tool("demo.tool")
+    assert tool.require_if is not None
+    assert tool.require_if.files_present == ("pyproject.toml",)
+
+
 def test_parse_install_download_and_known_bad():
     catalog = CatalogParser.parse({"tools": {"demo.tool": demo_tool_raw()}, "suites": {}})
     tool = catalog.get_tool("demo.tool")

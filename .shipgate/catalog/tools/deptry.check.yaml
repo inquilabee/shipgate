@@ -2,7 +2,8 @@
 # Reads project metadata from pyproject.toml and scans imports under ROOT.
 # deptry --config must be the project's pyproject.toml (dependency metadata
 # lives there). Do not point --config at a fragment file. `shipgate init`
-# merges a starter [tool.deptry] section into pyproject.toml when missing.
+# creates a minimal pyproject.toml when missing and merges a starter
+# [tool.deptry] section. Skipped when pyproject.toml is absent (require_if).
 # For src-layout packages, prefer scoping paths to the source root (e.g. src).
 deptry.check:
   executable: deptry
@@ -42,3 +43,6 @@ deptry.check:
     extensions:
       - .py
     delivery: root
+  require_if:
+    files_present:
+      - pyproject.toml

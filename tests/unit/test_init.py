@@ -81,6 +81,7 @@ def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):
     assert config_path.is_file(), "canonical shipgate.yaml missing"
     assert_default_yaml_policy(config_path.read_text(encoding="utf-8"))
     assert_init_layout(tmp_path)
+    assert (tmp_path / "pyproject.toml").is_file(), "yaml init should create minimal pyproject"
     cache = (tmp_path / PROJECT_CACHE_ENV).read_text(encoding="utf-8")
     assert "SHIPGATE_POLICY=yaml" in cache, "yaml policy not cached"
 
