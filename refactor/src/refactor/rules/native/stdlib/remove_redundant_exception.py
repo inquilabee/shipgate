@@ -5,7 +5,7 @@ from __future__ import annotations
 import libcst as cst
 
 from refactor.cst_util import is_none_name
-from refactor.rules.native.expr_base import SimpleStatementLineRewriteRule
+from refactor.rules.native.stmt_base import SimpleStatementLineRewriteRule
 
 
 class RemoveRedundantExceptionRule(SimpleStatementLineRewriteRule):

@@ -12,23 +12,23 @@ if TYPE_CHECKING:
 CASES = (
     (
         "merge-list-appends-into-extend",
-        'items = ["merge_list_appends_into_extend"]\n',
-        "Review collection pattern for merge-list-appends-into-extend",
+        "items.append(first)\nitems.append(second)\n",
+        "items.extend([first, second])",
     ),
     (
         "merge-list-extend",
-        'items = ["merge_list_extend"]\n',
-        "Review collection pattern for merge-list-extend",
+        "items.extend([first])\nitems.extend([second])\n",
+        "items.extend([first, second])",
     ),
     (
         "merge-repeated-ifs",
-        "if merge_repeated_ifs:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for merge-repeated-ifs",
+        "if ready:\n    prepare()\nif ready:\n    finish()\n",
+        "finish()",
     ),
     (
         "merge-set-add",
-        'items = ["merge_set_add"]\n',
-        "Review collection pattern for merge-set-add",
+        "items.add(first)\nitems.add(second)\n",
+        "items.update({first, second})",
     ),
     (
         "method",

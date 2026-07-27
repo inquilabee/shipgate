@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
-from refactor.rules.native.expr_base import ForRewriteRule
+from refactor.rules.native.stmt_base import ForRewriteRule
 
 
 class RemoveUnusedEnumerateRule(ForRewriteRule):

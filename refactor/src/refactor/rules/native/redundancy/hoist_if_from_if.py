@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
-from refactor.rules.native.expr_base import IfRewriteRule, merge_nested_if
+from refactor.rules.native.stmt_base import IfRewriteRule, merge_nested_if
 
 
 class HoistIfFromIfRule(IfRewriteRule):

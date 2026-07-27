@@ -138,6 +138,23 @@ def body_cleanup_hit(
     )
 
 
+def stmts_replacement_hit(
+    *,
+    rule_id: str,
+    message: str,
+    path: str,
+    before_stmts: Sequence[cst.BaseStatement],
+    after_stmts: Sequence[BodyStatement],
+) -> Hit:
+    return make_hit(
+        rule_id=rule_id,
+        message=message,
+        path=path,
+        before=code_for_stmts(*before_stmts),
+        after=code_for_stmts(*after_stmts),
+    )
+
+
 def stmt_replacement_hit(
     *,
     rule_id: str,

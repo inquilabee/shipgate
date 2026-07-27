@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 CASES = (
     (
         "for-append-to-extend",
-        "for for_append_to_extend in items:\n    continue\n",
-        "Review loop pattern for for-append-to-extend",
+        "for item in items:\n    result.append(item)\n",
+        "result.extend(items)",
     ),
     (
         "for-index-underscore",
-        "for for_index_underscore in items:\n    continue\n",
-        "Review loop pattern for for-index-underscore",
+        "for index, _ in enumerate(items):\n    consume(index)\n",
+        "for index in range(len(items))",
     ),
     (
         "guard",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "inline-immediately-yielded-variable",
-        "inline_immediately_yielded_variable = 1\n",
-        "Review Sourcery pattern for inline-immediately-yielded-variable",
+        "value = build()\nyield value\n",
+        "yield build()",
     ),
 )
 

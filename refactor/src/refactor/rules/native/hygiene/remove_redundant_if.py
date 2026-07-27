@@ -5,7 +5,7 @@ from __future__ import annotations
 import libcst as cst
 
 from refactor.cst_util import is_false, is_true, single_small_stmt
-from refactor.rules.native.expr_base import IfRewriteRule
+from refactor.rules.native.stmt_base import IfRewriteRule
 
 
 class RemoveRedundantIfRule(IfRewriteRule):

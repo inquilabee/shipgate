@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "merge-dict-assign",
-        'data = {"merge_dict_assign": 1}\n',
-        "Review dictionary pattern for merge-dict-assign",
+        'data["a"] = 1\ndata["b"] = 2\n',
+        'data.update({"a": 1, "b": 2})',
     ),
     (
         "merge-duplicate-blocks",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "merge-list-append",
-        'items = ["merge_list_append"]\n',
-        "Review collection pattern for merge-list-append",
+        "items.append(first)\nitems.append(second)\n",
+        "items.extend([first, second])",
     ),
 )
 

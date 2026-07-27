@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "use-dict-items",
-        'data = {"use_dict_items": 1}\n',
-        "Review dictionary pattern for use-dict-items",
+        "for key in data:\n    value = data[key]\n    consume(value)\n",
+        "for key, value in data.items()",
     ),
     (
         "use-dictionary-union",

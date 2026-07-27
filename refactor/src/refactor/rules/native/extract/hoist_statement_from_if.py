@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from refactor.rules.native.expr_base import IfRewriteRule
+from refactor.rules.native.stmt_base import IfRewriteRule
 
 if TYPE_CHECKING:
     from refactor.cst_util import BodyStatement

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
-from refactor.rules.native.expr_base import (
+from refactor.rules.native.stmt_base import (
     SimpleStatementLineRewriteRule,
     dict_update_to_union_stmt,
 )

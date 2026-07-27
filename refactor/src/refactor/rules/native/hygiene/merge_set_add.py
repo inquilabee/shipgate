@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING
+
+import libcst as cst
+
+from refactor.rules.native.stmt_base import BodySequenceRewriteRule, set_adds_to_update
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
-class MergeSetAddRule(PatternNativeRule):
+class MergeSetAddRule(BodySequenceRewriteRule):
     rule_id = "merge-set-add"
-    kind_value = "refactor"
     summary = "Merge set add"
-    needle = "merge_set_add"
-    replacement = "Review collection pattern for merge-set-add"
+    message = "Merge adjacent set adds into update"
+
+    @classmethod
+    def match_body(
+        cls,
+        body: Sequence[cst.BaseStatement],
+    ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+        return set_adds_to_update(body)

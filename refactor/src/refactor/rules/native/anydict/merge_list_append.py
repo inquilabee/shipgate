@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING
+
+import libcst as cst
+
+from refactor.rules.native.stmt_base import BodySequenceRewriteRule, list_appends_to_extend
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
-class MergeListAppendRule(PatternNativeRule):
+class MergeListAppendRule(BodySequenceRewriteRule):
     rule_id = "merge-list-append"
-    kind_value = "refactor"
     summary = "Merge list append"
-    needle = "merge_list_append"
-    replacement = "Review collection pattern for merge-list-append"
+    message = "Merge adjacent list appends into extend"
+
+    @classmethod
+    def match_body(
+        cls,
+        body: Sequence[cst.BaseStatement],
+    ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+        return list_appends_to_extend(body)

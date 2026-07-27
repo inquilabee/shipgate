@@ -13,15 +13,12 @@ from refactor.cst_util import (
     detect_with_visitor,
     expr_replacement_hit,
     noop_apply,
-    small_stmt_replacement_hit,
-    stmt_replacement_hit,
 )
 from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from refactor.cst_util import BodyStatement
     from refactor.protocol import Hit
 
 
@@ -78,135 +75,6 @@ def rewrite_finder_type(
 
     finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
     return cast("type[HitCollector]", finder)
-
-
-class StatementRewriteRule:
-    """Base: suggest replacement for matching statements, never auto-apply."""
-
-    rule_id: str
-    summary: str
-    message: str
-    kind = RuleKind.REFACTOR
-    safe_apply = False
-
-    def detect(self, source: str, path: str) -> list[Hit]:
-        return detect_with_visitor(source, path, self.finder_type())
-
-    def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
-
-    @classmethod
-    def match_stmt(
-        cls,
-        node: cst.CSTNode,
-    ) -> cst.BaseStatement | Sequence[cst.BaseStatement] | None:
-        raise NotImplementedError
-
-    @classmethod
-    def finder_type(cls) -> type[HitCollector]:
-        raise NotImplementedError
-
-    @classmethod
-    def hit_for(
-        cls,
-        node: cst.CSTNode,
-        replacement: cst.BaseStatement | Sequence[cst.BaseStatement],
-        path: str,
-    ) -> Hit:
-        return stmt_replacement_hit(
-            rule_id=cls.rule_id,
-            message=cls.message,
-            path=path,
-            before_stmt=cast("cst.BaseStatement", node),
-            after_stmt=cast("BodyStatement | Sequence[BodyStatement]", replacement),
-        )
-
-
-def stmt_finder_type(
-    rule: type[StatementRewriteRule],
-    visit_name: str,
-) -> type[HitCollector]:
-    def visit(self: HitCollector, node: cst.CSTNode) -> bool:
-        replacement = rule.match_stmt(node)
-        if replacement is None:
-            return True
-        self.hits.append(rule.hit_for(node, replacement, self.path))
-        return True
-
-    finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
-    return cast("type[HitCollector]", finder)
-
-
-class IfRewriteRule(StatementRewriteRule):
-    """Rewrite matching ``cst.If`` statements."""
-
-    @classmethod
-    def finder_type(cls) -> type[HitCollector]:
-        return stmt_finder_type(cls, "visit_If")
-
-
-class ForRewriteRule(StatementRewriteRule):
-    """Rewrite matching ``cst.For`` statements."""
-
-    @classmethod
-    def finder_type(cls) -> type[HitCollector]:
-        return stmt_finder_type(cls, "visit_For")
-
-
-class WhileRewriteRule(StatementRewriteRule):
-    """Rewrite matching ``cst.While`` statements."""
-
-    @classmethod
-    def finder_type(cls) -> type[HitCollector]:
-        return stmt_finder_type(cls, "visit_While")
-
-
-class TryRewriteRule(StatementRewriteRule):
-    """Rewrite matching ``cst.Try`` statements."""
-
-    @classmethod
-    def finder_type(cls) -> type[HitCollector]:
-        return stmt_finder_type(cls, "visit_Try")
-
-
-class SimpleStatementLineRewriteRule(StatementRewriteRule):
-    """Rewrite matching single-small-statement lines."""
-
-    @classmethod
-    def match_small_stmt(cls, node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
-        raise NotImplementedError
-
-    @classmethod
-    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
-        if not isinstance(node, cst.SimpleStatementLine) or len(node.body) != 1:
-            return None
-        replacement = cls.match_small_stmt(node.body[0])
-        return None if replacement is None else node.with_changes(body=[replacement])
-
-    @classmethod
-    def hit_for(
-        cls,
-        node: cst.CSTNode,
-        replacement: cst.BaseStatement | Sequence[cst.BaseStatement],
-        path: str,
-    ) -> Hit:
-        if isinstance(node, cst.SimpleStatementLine) and isinstance(
-            replacement,
-            cst.SimpleStatementLine,
-        ):
-            return small_stmt_replacement_hit(
-                rule_id=cls.rule_id,
-                message=cls.message,
-                path=path,
-                before_stmt=node.body[0],
-                after_stmt=replacement.body[0],
-            )
-        return super().hit_for(node, replacement, path)
-
-    @classmethod
-    def finder_type(cls) -> type[HitCollector]:
-        return stmt_finder_type(cls, "visit_SimpleStatementLine")
 
 
 class CallRewriteRule(SuggestOnlyExprRule):
@@ -402,38 +270,6 @@ def isinstance_call(
     if len(node.args) != 2 or any(arg.keyword is not None for arg in node.args):
         return None
     return node.args[0].value, node.args[1].value
-
-
-def merge_nested_if(node: cst.CSTNode) -> cst.BaseStatement | None:
-    if not isinstance(node, cst.If) or node.orelse is not None:
-        return None
-    if not isinstance(node.body, cst.IndentedBlock) or len(node.body.body) != 1:
-        return None
-    inner = node.body.body[0]
-    if not isinstance(inner, cst.If):
-        return None
-    return node.with_changes(
-        test=cst.BooleanOperation(left=node.test, operator=cst.And(), right=inner.test),
-        body=inner.body,
-        orelse=inner.orelse,
-    )
-
-
-def dict_update_to_union_stmt(node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
-    if not isinstance(node, cst.Expr) or not isinstance(node.value, cst.Call):
-        return None
-    call = node.value
-    if len(call.args) != 1 or call.args[0].keyword is not None:
-        return None
-    if not isinstance(call.func, cst.Attribute) or call.func.attr.value != "update":
-        return None
-    if not isinstance(call.func.value, cst.Name | cst.Attribute | cst.Subscript):
-        return None
-    return cst.AugAssign(
-        target=cast("cst.BaseAssignTargetExpression", call.func.value),
-        operator=cst.BitOrAssign(),
-        value=call.args[0].value,
-    )
 
 
 class SubscriptRewriteRule(SuggestOnlyExprRule):

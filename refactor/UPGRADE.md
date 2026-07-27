@@ -167,3 +167,21 @@ Upgrade ten call, loop, small-statement, and try stubs to suggest-only libcst ma
 - `use-contextlib-suppress`: `TryRewriteRule` detects try/except-pass blocks.
 
 All phase 8 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 9
+
+Upgrade ten adjacent-statement and loop stubs to suggest-only libcst matchers with shared
+body-sequence detection.
+
+- `merge-list-append`: `BodySequenceRewriteRule` detects adjacent `.append(...)` calls.
+- `merge-list-appends-into-extend`: reuses the adjacent append matcher.
+- `merge-list-extend`: `BodySequenceRewriteRule` detects adjacent literal `.extend(...)`.
+- `merge-set-add`: `BodySequenceRewriteRule` detects adjacent `.add(...)` calls.
+- `merge-dict-assign`: `BodySequenceRewriteRule` detects adjacent dictionary item assigns.
+- `inline-immediately-yielded-variable`: detects assignment followed by `yield name`.
+- `merge-repeated-ifs`: detects adjacent if statements with identical tests.
+- `for-append-to-extend`: `ForRewriteRule` detects append-only loops.
+- `for-index-underscore`: `ForRewriteRule` detects unused enumerate values.
+- `use-dict-items`: `ForRewriteRule` detects loops that immediately look up `mapping[key]`.
+
+All phase 9 rules remain `safe_apply=False` pending explicit round-trip apply tests.
