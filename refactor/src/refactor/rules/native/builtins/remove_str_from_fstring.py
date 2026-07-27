@@ -14,7 +14,9 @@ class RemoveStrFromFstringRule(FormattedStringRewriteRule):
     message = "Remove redundant str() in f-string"
 
     @classmethod
-    def match(cls, node: cst.FormattedString) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.FormattedString):
+            return None
         if len(node.parts) != 1:
             return None
         part = node.parts[0]

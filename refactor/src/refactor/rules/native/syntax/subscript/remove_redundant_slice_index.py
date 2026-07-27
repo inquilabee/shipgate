@@ -14,7 +14,9 @@ class RemoveRedundantSliceIndexRule(SubscriptRewriteRule):
     message = "Remove redundant slice index"
 
     @classmethod
-    def match(cls, node: cst.Subscript) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Subscript):
+            return None
         if len(node.slice) != 1:
             return None
         element = node.slice[0]

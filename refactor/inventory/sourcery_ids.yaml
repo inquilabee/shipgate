@@ -12,7 +12,7 @@
   note: null
 - id: aware-datetime-for-utc
   kind: suggestion
-  status: todo
+  status: native
   note: null
 - id: bin-op-identity
   kind: refactor
@@ -24,23 +24,23 @@
   note: null
 - id: break-or-continue-outside-loop
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: chain-compares
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: class-extract-method
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: class-method-first-arg-name
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: collection-builtin-to-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: collection-into-set
   kind: refactor
@@ -48,19 +48,19 @@
   note: null
 - id: collection-to-bool
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: compare-via-equals
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: comprehension-to-generator
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: convert-any-to-in
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: convert-to-enumerate
   kind: refactor
@@ -68,7 +68,7 @@
   note: null
 - id: dataframe-append-to-concat
   kind: suggestion
-  status: todo
+  status: native
   note: null
 - id: de-morgan
   kind: refactor
@@ -84,15 +84,15 @@
   note: null
 - id: del-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: dict-assign-update-to-union
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: dict-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: dict-literal
   kind: refactor
@@ -104,7 +104,7 @@
   note: null
 - id: dont-import-test-modules
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: ensure-file-closed
   kind: refactor
@@ -112,27 +112,27 @@
   note: null
 - id: equality-identity
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: extract-duplicate-method
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: extract-method
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: flatten-nested-try
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: flip-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: for-append-to-extend
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: for-index-replacement
   kind: refactor
@@ -140,35 +140,35 @@
   note: null
 - id: for-index-underscore
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: guard
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: hoist-if-from-if
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: hoist-loop-from-if
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: hoist-repeated-if-condition
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: hoist-similar-statement-from-if
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: hoist-statement-from-if
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: hoist-statement-from-loop
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: identity-comprehension
   kind: refactor
@@ -180,43 +180,43 @@
   note: null
 - id: inline-immediately-yielded-variable
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: inline-variable
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: instance-method-first-arg-name
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: introduce-default-else
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: invert-any-all
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: invert-any-all-body
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: last-if-guard
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: lift-duplicated-conditional
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: lift-return-into-if
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: list-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: list-literal
   kind: refactor
@@ -224,55 +224,55 @@
   note: null
 - id: low-code-quality
   kind: comment
-  status: todo
+  status: native
   note: null
 - id: max-min-default
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-assign-and-aug-assign
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-comparisons
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-dict-assign
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-duplicate-blocks
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-else-if-into-elif
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-except-handler
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-is-instance
   kind: refactor
-  status: todo
+  status: native
   note: wiki Current-Refactorings only
 - id: merge-isinstance
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-list-append
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-list-appends-into-extend
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-list-extend
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-nested-ifs
   kind: refactor
@@ -280,15 +280,15 @@
   note: null
 - id: merge-repeated-ifs
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-set-add
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: method
   kind: refactor
-  status: todo
+  status: native
   note: docs page missing; id from wiki slug
 - id: min-max-identity
   kind: refactor
@@ -296,27 +296,27 @@
   note: null
 - id: missing-dict-items
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: move-assign
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: move-assign-in-block
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: no-conditionals-in-tests
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: no-loop-in-tests
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: non-equal-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: none-compare
   kind: refactor
@@ -324,11 +324,11 @@
   note: null
 - id: or-if-exp-identity
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: pandas-avoid-inplace
   kind: suggestion
-  status: todo
+  status: native
   note: null
 - id: path-read
   kind: refactor
@@ -336,15 +336,15 @@
   note: null
 - id: raise-from-previous-error
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: raise-specific-error
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: reintroduce-else
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-assert-true
   kind: refactor
@@ -352,63 +352,63 @@
   note: null
 - id: remove-dict-items
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-dict-keys
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-duplicate-dict-key
   kind: suggestion
-  status: todo
+  status: native
   note: null
 - id: remove-duplicate-key
   kind: refactor
-  status: todo
+  status: native
   note: wiki Current-Refactorings only
 - id: remove-duplicate-set-key
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-empty-nested-block
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-none-from-default-get
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-pass-body
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-pass-elif
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-boolean
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-condition
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-constructor-in-dict-union
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-continue
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-except-handler
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-exception
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-fstring
   kind: refactor
@@ -416,7 +416,7 @@
   note: null
 - id: remove-redundant-if
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-pass
   kind: refactor
@@ -424,7 +424,7 @@
   note: null
 - id: remove-redundant-path-exists
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-redundant-slice-index
   kind: refactor
@@ -444,11 +444,11 @@
   note: null
 - id: remove-unnecessary-cast
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-unnecessary-else
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-unreachable-code
   kind: refactor
@@ -456,7 +456,7 @@
   note: null
 - id: remove-unused-enumerate
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: remove-zero-from-range
   kind: refactor
@@ -464,31 +464,31 @@
   note: null
 - id: replace-apply-with-method-call
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: replace-apply-with-numpy-operation
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: replace-dict-items-with-values
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: replace-interpolation-with-fstring
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: return-identity
   kind: refactor
-  status: todo
+  status: native
   note: wiki Current-Refactorings only
 - id: return-or-yield-outside-function
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: set-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-boolean-comparison
   kind: refactor
@@ -496,11 +496,11 @@
   note: null
 - id: simplify-constant-sum
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-dictionary-update
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-division
   kind: refactor
@@ -508,19 +508,19 @@
   note: null
 - id: simplify-empty-collection-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-fstring-formatting
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-generator
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-len-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-negative-index
   kind: refactor
@@ -528,27 +528,27 @@
   note: null
 - id: simplify-numeric-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-single-exception-tuple
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-string-len-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-substring-search
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: skip-sorted-list-construction
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: split-or-ifs
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: square-identity
   kind: refactor
@@ -556,35 +556,35 @@
   note: null
 - id: str-prefix-suffix
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: sum-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: swap-if-else-branches
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: swap-if-expression
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: swap-nested-ifs
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: swap-variable
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: switch
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: ternary-to-if-expression
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: tuple-literal
   kind: refactor
@@ -592,43 +592,43 @@
   note: null
 - id: unwrap-iterable-construction
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use
   kind: refactor
-  status: todo
+  status: native
   note: docs page missing; id from wiki slug
 - id: use-any
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-assigned-variable
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-contextlib-suppress
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-count
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-datetime-now-not-today
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-dict-items
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-dictionary-union
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-file-iterator
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-fstring-for-concatenation
   kind: refactor
@@ -640,19 +640,19 @@
   note: null
 - id: use-getitem-for-re-match-groups
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-isna
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-itertools-product
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-join
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-len
   kind: refactor
@@ -660,7 +660,7 @@
   note: null
 - id: use-named-expression
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-next
   kind: refactor
@@ -668,23 +668,23 @@
   note: null
 - id: use-or-for-fallback
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-string-remove-affix
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: useless-else-on-loop
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: while-guard-to-condition
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: while-to-for
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: yield-from
   kind: refactor

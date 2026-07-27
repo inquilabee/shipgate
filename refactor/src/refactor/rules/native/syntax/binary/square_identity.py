@@ -13,7 +13,9 @@ class SquareIdentityRule(BinaryOpRewriteRule):
     message = "Use exponentiation for squaring"
 
     @classmethod
-    def match(cls, node: cst.BinaryOperation) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.BinaryOperation):
+            return None
         if not isinstance(node.operator, cst.Multiply):
             return None
         if not isinstance(node.left, cst.Name) or not isinstance(node.right, cst.Name):

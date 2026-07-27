@@ -13,7 +13,9 @@ class SimplifyNegativeIndexRule(SubscriptRewriteRule):
     message = "Use negative index instead of len() arithmetic"
 
     @classmethod
-    def match(cls, node: cst.Subscript) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Subscript):
+            return None
         if not isinstance(node.value, cst.Name):
             return None
         if len(node.slice) != 1:

@@ -13,7 +13,9 @@ class RemoveRedundantFstringRule(FormattedStringRewriteRule):
     message = "Remove redundant f-string prefix"
 
     @classmethod
-    def match(cls, node: cst.FormattedString) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.FormattedString):
+            return None
         if not node.parts:
             return None
         text = ""

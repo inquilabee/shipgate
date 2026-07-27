@@ -14,7 +14,9 @@ class RemoveStrFromPrintRule(CallRewriteRule):
     message = "Remove redundant str() in print()"
 
     @classmethod
-    def match(cls, node: cst.Call) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call):
+            return None
         if not isinstance(node.func, cst.Name) or node.func.value != "print":
             return None
         if len(node.args) != 1 or node.args[0].keyword is not None:

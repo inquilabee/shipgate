@@ -64,7 +64,7 @@ class CallRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.Call`` nodes."""
 
     @classmethod
-    def match(cls, node: cst.Call) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
         raise NotImplementedError
 
     @classmethod
@@ -91,7 +91,7 @@ class BinaryOpRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.BinaryOperation`` nodes."""
 
     @classmethod
-    def match(cls, node: cst.BinaryOperation) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
         raise NotImplementedError
 
     @classmethod
@@ -118,7 +118,7 @@ class SubscriptRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.Subscript`` nodes."""
 
     @classmethod
-    def match(cls, node: cst.Subscript) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
         raise NotImplementedError
 
     @classmethod
@@ -145,7 +145,7 @@ class FormattedStringRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.FormattedString`` nodes."""
 
     @classmethod
-    def match(cls, node: cst.FormattedString) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
         raise NotImplementedError
 
     @classmethod

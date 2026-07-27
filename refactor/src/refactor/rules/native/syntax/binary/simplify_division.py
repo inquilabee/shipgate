@@ -13,7 +13,9 @@ class SimplifyDivisionRule(BinaryOpRewriteRule):
     message = "Remove division by one"
 
     @classmethod
-    def match(cls, node: cst.BinaryOperation) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.BinaryOperation):
+            return None
         if not isinstance(node.operator, (cst.Divide, cst.FloorDivide)):
             return None
         if not isinstance(node.right, cst.Integer) or node.right.value != "1":

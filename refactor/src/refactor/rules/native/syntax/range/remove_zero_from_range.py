@@ -13,7 +13,9 @@ class RemoveZeroFromRangeRule(CallRewriteRule):
     message = "Remove redundant zero start from range()"
 
     @classmethod
-    def match(cls, node: cst.Call) -> cst.BaseExpression | None:
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call):
+            return None
         if not isinstance(node.func, cst.Name) or node.func.value != "range":
             return None
         if len(node.args) != 2:
