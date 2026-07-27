@@ -14,6 +14,13 @@ from shipgate.paths import (
     PROJECT_ROOT_CACHE_KEY,
     update_project_cache_env,
 )
+from shipgate.project.layout import detect_layout
+from shipgate.project.scope_defaults import (
+    render_scopes_toml,
+    render_scopes_yaml,
+    replace_pyproject_scopes,
+    replace_yaml_scopes,
+)
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog, ToolDefinition
@@ -48,23 +55,24 @@ def bundled_template_path(tool: ToolDefinition) -> Path:
 
 def detect_root_package(project_root: Path) -> str:
     """Best-effort top-level import package name for scaffolded contracts."""
-    return RootPackageDetector.detect(project_root)
+    return RootPackageDetector(project_root).detect()
 
 
 class RootPackageDetector:
-    @staticmethod
-    def detect(project_root: Path) -> str:
-        from_src = RootPackageDetector.from_src_layout(project_root)
+    def __init__(self, project_root: Path) -> None:
+        self.root = project_root.resolve()
+
+    def detect(self) -> str:
+        from_src = self.from_src_layout()
         if from_src is not None:
             return from_src
-        from_pyproject = RootPackageDetector.from_pyproject(project_root)
+        from_pyproject = self.from_pyproject()
         if from_pyproject is not None:
             return from_pyproject
-        return re.sub(r"[^A-Za-z0-9_]", "_", project_root.name.replace("-", "_"))
+        return re.sub(r"[^A-Za-z0-9_]", "_", self.root.name.replace("-", "_"))
 
-    @staticmethod
-    def from_src_layout(project_root: Path) -> str | None:
-        src = project_root / "src"
+    def from_src_layout(self) -> str | None:
+        src = self.root / "src"
         if not src.is_dir():
             return None
         packages = sorted(
@@ -74,9 +82,8 @@ class RootPackageDetector:
         )
         return packages[0] if packages else None
 
-    @staticmethod
-    def from_pyproject(project_root: Path) -> str | None:
-        pyproject = project_root / "pyproject.toml"
+    def from_pyproject(self) -> str | None:
+        pyproject = self.root / "pyproject.toml"
         if not pyproject.is_file():
             return None
         try:
@@ -144,12 +151,15 @@ def bundled_pyproject_shipgate_template() -> Path:
     return bundled_root_path() / "setup" / "pyproject-shipgate.toml"
 
 
-def read_pyproject_shipgate_template() -> str:
+def read_pyproject_shipgate_template(project_root: Path | None = None) -> str:
     bundled = bundled_pyproject_shipgate_template()
     if not bundled.is_file():
         msg = f"bundled pyproject shipgate template not found: {bundled}"
         raise FileNotFoundError(msg)
-    return bundled.read_text(encoding="utf-8")
+    text = bundled.read_text(encoding="utf-8")
+    if project_root is None:
+        return text
+    return replace_pyproject_scopes(text, render_scopes_toml(detect_layout(project_root)))
 
 
 def bundled_deptry_pyproject_template() -> Path:
@@ -188,12 +198,15 @@ def bundled_shipgate_yaml_template() -> Path:
     return bundled_root_path() / "setup" / "shipgate.yaml"
 
 
-def read_shipgate_yaml_template() -> str:
+def read_shipgate_yaml_template(project_root: Path | None = None) -> str:
     bundled = bundled_shipgate_yaml_template()
     if not bundled.is_file():
         msg = f"bundled shipgate.yaml template not found: {bundled}"
         raise FileNotFoundError(msg)
-    return bundled.read_text(encoding="utf-8")
+    text = bundled.read_text(encoding="utf-8")
+    if project_root is None:
+        return text
+    return replace_yaml_scopes(text, render_scopes_yaml(detect_layout(project_root)))
 
 
 def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]:

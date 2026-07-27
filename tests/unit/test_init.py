@@ -26,6 +26,7 @@ def assert_init_allowlists(sg) -> None:
         "test-only-symbols.yaml",
         "repeated-strings.yaml",
         "class-local-functions.yaml",
+        "staticmethod-soup.yaml",
     ):
         assert (allowlists / name).is_file(), f"{name} allowlist missing"
 
@@ -40,6 +41,36 @@ def assert_default_yaml_policy(content: str) -> None:
         "bundled init must not embed shipgate-specific semgrep excludes"
     )
     assert "allowlists:" in content, "allowlists section missing"
+
+
+def test_init_yaml_writes_layout_scopes(tmp_path, monkeypatch):
+    (tmp_path / "src" / "demo").mkdir(parents=True)
+    (tmp_path / "src" / "demo" / "__init__.py").write_text("", encoding="utf-8")
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_demo.py").write_text(
+        "def test_ok():\n    assert True\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    assert main(["init"]) == 0
+    content = (tmp_path / SHIPGATE_YAML).read_text(encoding="utf-8")
+    assert "python-src:" in content
+    assert "target: src" in content
+    assert "python-test-src:" in content
+    assert "target: tests" in content
+    assert "semgrep:" in content
+
+
+def test_init_pyproject_writes_layout_scopes(tmp_path, monkeypatch):
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'demo'\n", encoding="utf-8")
+    (tmp_path / "src" / "demo").mkdir(parents=True)
+    (tmp_path / "src" / "demo" / "__init__.py").write_text("", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert main(["init", "pyproject"]) == 0
+    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.shipgate.scopes.python-src]" in content
+    assert 'target = "src"' in content
+    assert "src/shipgate/frontend/templates/" not in content
 
 
 def test_init_creates_shipgate_yaml(tmp_path, monkeypatch):

@@ -11,28 +11,29 @@ if TYPE_CHECKING:
 
 
 def suggest_tools(project_root: Path, catalog: Catalog) -> list[str]:
-    return InitToolSuggestions.collect(project_root, catalog)
+    return InitToolSuggestions(project_root, catalog).collect()
 
 
 class InitToolSuggestions:
-    @staticmethod
-    def collect(project_root: Path, catalog: Catalog) -> list[str]:
-        root = project_root.resolve()
+    def __init__(self, project_root: Path, catalog: Catalog) -> None:
+        self.root = project_root.resolve()
+        self.catalog = catalog
+
+    def collect(self) -> list[str]:
         lines: list[str] = []
-        for tool_id, tool in sorted(catalog.tools.items()):
+        for tool_id, tool in sorted(self.catalog.tools.items()):
             if tool.suggest_if is None or not tool.suggest_if.files_present:
                 continue
-            if not InitToolSuggestions.matches_files_present(root, tool.suggest_if.files_present):
+            if not self.matches_files_present(tool.suggest_if.files_present):
                 continue
-            lines.append(InitToolSuggestions.suggestion_line(tool_id))
+            lines.append(self.suggestion_line(tool_id))
         return lines
 
-    @staticmethod
-    def matches_files_present(project_root: Path, patterns: tuple[str, ...]) -> bool:
-        return any(any(project_root.glob(pattern)) for pattern in patterns)
+    def matches_files_present(self, patterns: tuple[str, ...]) -> bool:
+        return any(any(self.root.glob(pattern)) for pattern in patterns)
 
-    @staticmethod
-    def suggestion_line(tool_id: str) -> str:
+    def suggestion_line(self, tool_id: str) -> str:
+        _ = self
         suite_hint = ""
         if tool_id == "hadolint.check":
             suite_hint = " (suite: docker)"

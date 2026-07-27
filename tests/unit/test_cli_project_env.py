@@ -6,7 +6,7 @@ from tests.unit.support.python_env import PythonEnvFixture
 
 def test_project_env_flag_persists_to_cache(tmp_path, monkeypatch):
     custom = tmp_path / "pyenv"
-    PythonEnvFixture.write_venv(custom)
+    PythonEnvFixture(custom).write()
     monkeypatch.chdir(tmp_path)
     init_project(tmp_path)
     monkeypatch.setattr("shipgate.app.ShipGateApp.install", lambda _self, _command: 0)

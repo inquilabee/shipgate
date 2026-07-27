@@ -21,7 +21,10 @@ deptry.check:
     - packaging
   cli:
     paths:
+      # deptry ROOT must be a directory (iterdir for local modules). Never pass
+      # changed-only file paths; widen multi-path lists to project root.
       style: positional
+      aggregate: root
     output:
       flag: -o
       style: scalar

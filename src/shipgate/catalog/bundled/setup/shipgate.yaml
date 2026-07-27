@@ -37,3 +37,4 @@ allowlists:
   gate.test-only-symbols: .shipgate/allowlists/test-only-symbols.yaml
   gate.repeated-strings: .shipgate/allowlists/repeated-strings.yaml
   gate.class-local-functions: .shipgate/allowlists/class-local-functions.yaml
+  gate.staticmethod-soup: .shipgate/allowlists/staticmethod-soup.yaml

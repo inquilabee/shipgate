@@ -77,24 +77,26 @@ def init_project(
         scaffold_project_layout(root, policy=mode, project_env=project_env)
         return None
     if mode == "pyproject":
-        return ProjectInitializer.init_pyproject_policy(root, project_env=project_env)
-    return ProjectInitializer.init_yaml_policy(root, project_env=project_env)
+        return ProjectInitializer(root, project_env=project_env).init_pyproject_policy()
+    return ProjectInitializer(root, project_env=project_env).init_yaml_policy()
 
 
 class ProjectInitializer:
-    @staticmethod
-    def init_yaml_policy(root: Path, *, project_env: Path | None = None) -> Path:
-        config_path = root / SHIPGATE_YAML
+    def __init__(self, root: Path, *, project_env: Path | None = None) -> None:
+        self.root = root
+        self.project_env = project_env
+
+    def init_yaml_policy(self) -> Path:
+        config_path = self.root / SHIPGATE_YAML
         if config_path.is_file():
             raise ShipGateError(f"shipgate.yaml already exists: {config_path}")
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_path.write_text(read_shipgate_yaml_template(), encoding="utf-8")
-        scaffold_project_layout(root, policy="yaml", project_env=project_env)
+        config_path.write_text(read_shipgate_yaml_template(self.root), encoding="utf-8")
+        scaffold_project_layout(self.root, policy="yaml", project_env=self.project_env)
         return config_path
 
-    @staticmethod
-    def init_pyproject_policy(root: Path, *, project_env: Path | None = None) -> Path:
-        pyproject_path = root / "pyproject.toml"
+    def init_pyproject_policy(self) -> Path:
+        pyproject_path = self.root / "pyproject.toml"
         if not pyproject_path.is_file():
             pyproject_path.write_text(
                 '[project]\nname = "project"\nversion = "0.1.0"\n',
@@ -105,7 +107,7 @@ class ProjectInitializer:
             raise ShipGateError(f"[tool.shipgate] already exists in {pyproject_path}")
         if content and not content.endswith("\n"):
             content += "\n"
-        content += read_pyproject_shipgate_template()
+        content += read_pyproject_shipgate_template(self.root)
         pyproject_path.write_text(content, encoding="utf-8")
-        scaffold_project_layout(root, policy="pyproject", project_env=project_env)
+        scaffold_project_layout(self.root, policy="pyproject", project_env=self.project_env)
         return pyproject_path

@@ -36,6 +36,7 @@ SETUPS: dict[str, Callable[[Path], None]] = {
         "gate.test-only-symbols",
         "gate.repeated-strings",
         "gate.class-local-functions",
+        "gate.staticmethod-soup",
     )
 }
 

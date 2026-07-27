@@ -112,8 +112,29 @@ def argv_paths_for_incremental(
     if criteria.delivery == "dirs":
         absolute_files = tuple(project_root / rel for rel in rel_files)
         return minimize_covering_dirs(absolute_files, project_root)
+    return argv_paths_for_root_delivery(
+        rel_files,
+        tool=tool,
+        mode=mode,
+        project_root=project_root,
+        fallback=fallback,
+    )
 
-    accepts_paths = "paths" in tool.cli or (mode == RunMode.APPLY and criteria.delivery == "root")
+
+def argv_paths_for_root_delivery(
+    rel_files: tuple[Path, ...],
+    *,
+    tool: ToolDefinition,
+    mode: RunMode,
+    project_root: Path,
+    fallback: tuple[Path, ...],
+) -> tuple[Path, ...]:
+    paths_opt = tool.cli.get("paths")
+    if paths_opt is not None and paths_opt.aggregate == "root":
+        # Tools like deptry/gitleaks need a directory ROOT, not file paths.
+        return fallback
+
+    accepts_paths = "paths" in tool.cli or (mode == RunMode.APPLY and tool.scope.delivery == "root")
     if not accepts_paths:
         return fallback
 

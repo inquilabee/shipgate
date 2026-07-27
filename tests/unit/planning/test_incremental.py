@@ -98,3 +98,26 @@ def test_tool_paths_after_incremental_root_delivery_uses_changed_files(tmp_path)
         changed_only=True,
     )
     assert paths == (Path("src/b.py"),)
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+def test_aggregate_root_keeps_planned_paths_under_changed_only(tmp_path):
+    catalog = CatalogLoader.load()
+    tool = catalog.get_tool("deptry.check")
+    source = tmp_path / "src"
+    source.mkdir()
+    file_a = source / "a.py"
+    file_a.write_text("x = 1\n", encoding="utf-8")
+    git_init_commit(tmp_path)
+    file_a.write_text("x = 2\n", encoding="utf-8")
+    scope = Scope(target=source, respect_gitignore=True)
+    paths = tool_paths_after_incremental(
+        (Path("src"),),
+        tool=tool,
+        scope=scope,
+        project_root=tmp_path,
+        mode=RunMode.CHECK,
+        since=None,
+        changed_only=True,
+    )
+    assert paths == (Path("src"),)

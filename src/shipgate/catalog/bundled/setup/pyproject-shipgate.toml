@@ -35,7 +35,6 @@ threshold = "5"
 
 [tool.shipgate.scopes.semgrep]
 target = "."
-exclude = ["src/shipgate/frontend/templates/"]
 
 [tool.shipgate.allowlists]
 "gate.acronym-allowlist" = ".shipgate/allowlists/acronyms.yaml"
@@ -45,3 +44,4 @@ exclude = ["src/shipgate/frontend/templates/"]
 "gate.test-only-symbols" = ".shipgate/allowlists/test-only-symbols.yaml"
 "gate.repeated-strings" = ".shipgate/allowlists/repeated-strings.yaml"
 "gate.class-local-functions" = ".shipgate/allowlists/class-local-functions.yaml"
+"gate.staticmethod-soup" = ".shipgate/allowlists/staticmethod-soup.yaml"

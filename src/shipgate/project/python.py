@@ -23,94 +23,84 @@ if TYPE_CHECKING:
 class ProjectPythonResolver:
     PROJECT_VENV_NAMES = (".venv", "venv")
 
-    @staticmethod
-    def discover(
+    def __init__(
+        self,
         project_root: Path,
         *,
         process_environ: Mapping[str, str] | None = None,
-    ) -> Path | None:
-        root = project_root.resolve()
-        managed_root = (root / PROJECT_MANAGED_PYTHON_ENV).resolve()
-        for name in ProjectPythonResolver.PROJECT_VENV_NAMES:
-            candidate = root / name
-            if ProjectPythonResolver._is_python_env(candidate):
-                return ProjectPythonResolver._cache_path(root, candidate)
-        virtual_env = (process_environ or os.environ).get("VIRTUAL_ENV")
+    ) -> None:
+        self.root = project_root.resolve()
+        self.process_environ = process_environ or os.environ
+        self.managed_root = (self.root / PROJECT_MANAGED_PYTHON_ENV).resolve()
+
+    def discover(self) -> Path | None:
+        for name in self.PROJECT_VENV_NAMES:
+            candidate = self.root / name
+            if self.is_python_env(candidate):
+                return self.cache_path(candidate)
+        virtual_env = self.process_environ.get("VIRTUAL_ENV")
         if virtual_env:
             env_path = Path(virtual_env).resolve()
-            if ProjectPythonResolver._is_python_env(
-                env_path
-            ) and not ProjectPythonResolver._is_under(env_path, managed_root):
-                return ProjectPythonResolver._cache_path(root, env_path)
+            if self.is_python_env(env_path) and not self.is_under(env_path):
+                return self.cache_path(env_path)
         return None
 
-    @staticmethod
-    def resolve(
-        project_root: Path,
-        *,
-        process_environ: Mapping[str, str] | None = None,
-    ) -> Path | None:
-        cached = ProjectPythonResolver.read_cached_project_python(project_root)
+    def resolve(self) -> Path | None:
+        cached = self.read_cached_project_python()
         if cached is not None:
             return cached
-        discovered = ProjectPythonResolver.discover(
-            project_root,
-            process_environ=process_environ,
-        )
+        discovered = self.discover()
         if discovered is not None:
-            persist_project_python(project_root, discovered)
+            persist_project_python(self.root, discovered)
         return discovered
 
-    @staticmethod
-    def read_cached_project_python(project_root: Path) -> Path | None:
-        env_path = project_root / PROJECT_CACHE_ENV
+    def read_cached_project_python(self) -> Path | None:
+        env_path = self.root / PROJECT_CACHE_ENV
         if not env_path.is_file():
             return None
         raw = parse_env_file(env_path).get(PROJECT_ENV_CACHE_KEY)
         if not raw:
             return None
-        return resolve_cached_project_python(project_root, raw)
+        return resolve_cached_project_python(self.root, raw)
 
-    @staticmethod
-    def _is_python_env(path: Path) -> bool:
+    def is_python_env(self, path: Path) -> bool:
+        _ = self
         if not path.is_dir():
             return False
         if sys.platform == "win32":
             return (path / "Scripts" / "python.exe").is_file()
         return (path / "bin" / "python").is_file()
 
-    @staticmethod
-    def _is_under(path: Path, parent: Path) -> bool:
+    def is_under(self, path: Path) -> bool:
         try:
-            path.relative_to(parent)
+            path.relative_to(self.managed_root)
         except ValueError:
             return False
         return True
 
-    @staticmethod
-    def _cache_path(project_root: Path, env_path: Path) -> Path:
+    def cache_path(self, env_path: Path) -> Path:
         resolved = env_path.resolve()
         try:
-            return resolved.relative_to(project_root.resolve())
+            return resolved.relative_to(self.root)
         except ValueError:
             return resolved
 
 
 def read_cached_project_python(project_root: Path) -> Path | None:
-    return ProjectPythonResolver.read_cached_project_python(project_root)
+    return ProjectPythonResolver(project_root).read_cached_project_python()
 
 
 def resolve_cached_project_python(project_root: Path, raw: str) -> Path | None:
+    resolver = ProjectPythonResolver(project_root)
     candidate = Path(raw)
     if not candidate.is_absolute():
         candidate = project_root / candidate
     resolved = candidate.resolve()
-    managed_root = (project_root / PROJECT_MANAGED_PYTHON_ENV).resolve()
-    if ProjectPythonResolver._is_under(resolved, managed_root):
+    if resolver.is_under(resolved):
         return None
-    if not ProjectPythonResolver._is_python_env(resolved):
+    if not resolver.is_python_env(resolved):
         return None
-    return ProjectPythonResolver._cache_path(project_root, resolved)
+    return resolver.cache_path(resolved)
 
 
 def validate_project_python(project_root: Path, raw: Path) -> Path:
@@ -131,7 +121,7 @@ def persist_project_python(project_root: Path, env_path: Path) -> Path:
 
 
 def discover_and_persist_project_python(project_root: Path) -> Path | None:
-    discovered = ProjectPythonResolver.discover(project_root)
+    discovered = ProjectPythonResolver(project_root).discover()
     if discovered is None:
         return None
     return persist_project_python(project_root, discovered)
@@ -142,7 +132,7 @@ def discover_project_python(
     *,
     process_environ: Mapping[str, str] | None = None,
 ) -> Path | None:
-    return ProjectPythonResolver.resolve(
+    return ProjectPythonResolver(
         project_root,
         process_environ=process_environ,
-    )
+    ).resolve()

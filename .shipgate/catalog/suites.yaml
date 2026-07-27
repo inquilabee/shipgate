@@ -72,6 +72,7 @@ suites:
       - gate.test-only-symbols
       - gate.repeated-strings
       - gate.class-local-functions
+      - gate.staticmethod-soup
       - import-linter.check
     parallel: true
     fail_fast: true

@@ -18,6 +18,7 @@ def test_setup_bundled_gates_scaffolds_allowlists(tmp_path: Path):
     assert (allowlists / "test-only-symbols.yaml").is_file()
     assert (allowlists / "repeated-strings.yaml").is_file()
     assert (allowlists / "class-local-functions.yaml").is_file()
+    assert (allowlists / "staticmethod-soup.yaml").is_file()
 
 
 def test_gate_setup_does_not_overwrite_existing_allowlist(tmp_path: Path):
