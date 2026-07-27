@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "chain-compares",
-        'if left == "chain_compares":\n    pass\n',
-        "Review comparison pattern for chain-compares",
+        "if low <= value and value <= high:\n    pass\n",
+        "low <= value <= high",
     ),
     (
         "class-extract-method",
@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "collection-to-bool",
-        'items = ["collection_to_bool"]\n',
-        "Review collection pattern for collection-to-bool",
+        "ready = len(items)\n",
+        "bool(items)",
     ),
     (
         "compare-via-equals",

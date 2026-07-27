@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "use-getitem-for-re-match-groups",
-        "for use_getitem_for_re_match_groups in items:\n    continue\n",
-        "Review loop pattern for use-getitem-for-re-match-groups",
+        "value = match.group(1)\n",
+        "match[1]",
     ),
     (
         "use-isna",

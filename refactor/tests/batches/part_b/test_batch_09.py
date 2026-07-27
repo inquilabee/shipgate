@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "remove-none-from-default-get",
-        "remove_none_from_default_get = 1\n",
-        "Review Sourcery pattern for remove-none-from-default-get",
+        "value = data.get(key, None)\n",
+        "data.get(key)",
     ),
     (
         "remove-pass-body",
@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "remove-redundant-boolean",
-        "remove_redundant_boolean = 1\n",
-        "Review Sourcery pattern for remove-redundant-boolean",
+        "if bool(ready):\n    pass\n",
+        "ready",
     ),
     (
         "remove-redundant-condition",

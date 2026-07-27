@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "or-if-exp-identity",
-        "if or_if_exp_identity:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for or-if-exp-identity",
+        "result = value if value else fallback\n",
+        "value or fallback",
     ),
     (
         "pandas-avoid-inplace",

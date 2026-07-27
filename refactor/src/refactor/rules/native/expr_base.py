@@ -167,6 +167,33 @@ class UnaryOpRewriteRule(SuggestOnlyExprRule):
         return Finder
 
 
+class IfExpRewriteRule(SuggestOnlyExprRule):
+    """Rewrite matching ``cst.IfExp`` nodes."""
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def visit_IfExp(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.IfExp,
+            ) -> bool:
+                replacement = rule.match(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.hit_for(node, replacement, self.path))
+                return True
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
 class ComparisonRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.Comparison`` nodes."""
 

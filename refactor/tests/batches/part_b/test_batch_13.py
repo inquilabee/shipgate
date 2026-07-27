@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "use-datetime-now-not-today",
-        "use_datetime_now_not_today = 1\n",
-        "Review Sourcery pattern for use-datetime-now-not-today",
+        "stamp = datetime.today()\n",
+        "datetime.now()",
     ),
 )
 

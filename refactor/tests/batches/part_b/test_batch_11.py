@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "simplify-len-comparison",
-        "if simplify_len_comparison:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for simplify-len-comparison",
+        "if len(items) > 0:\n    pass\n",
+        "items",
     ),
     (
         "simplify-numeric-comparison",

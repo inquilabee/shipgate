@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "equality-identity",
-        'if left == "equality_identity":\n    pass\n',
-        "Review comparison pattern for equality-identity",
+        "if status is 'ready':\n    pass\n",
+        "status == 'ready'",
     ),
     (
         "extract-duplicate-method",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "flip-comparison",
-        'if left == "flip_comparison":\n    pass\n',
-        "Review comparison pattern for flip-comparison",
+        "if 10 > count:\n    pass\n",
+        "count < 10",
     ),
 )
 
