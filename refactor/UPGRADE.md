@@ -204,3 +204,22 @@ matchers.
 - `swap-variable`: `BodySequenceRewriteRule` detects temp-variable swaps.
 
 All phase 10 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 11
+
+Upgrade ten exception, guard-clause, loop-hoist, and nested-loop stubs to suggest-only
+libcst matchers.
+
+- `raise-from-previous-error`: `TryRewriteRule` adds `from <caught error>`.
+- `merge-except-handler`: `TryRewriteRule` merges handlers with identical bodies.
+- `use-itertools-product`: `ForRewriteRule` detects simple nested loops.
+- `introduce-default-else`: `IfRewriteRule` adds an explicit pass-only default branch.
+- `lift-return-into-if`: `BodySequenceRewriteRule` moves a following return into `else`.
+- `reintroduce-else`: `BodySequenceRewriteRule` moves following code into `else` after a
+  terminal if body.
+- `guard`: `IfRewriteRule` turns terminal `else` branches into guard clauses.
+- `last-if-guard`: `BodySequenceRewriteRule` guards a following fallback statement.
+- `hoist-loop-from-if`: `IfRewriteRule` hoists a loop out of an if body.
+- `hoist-statement-from-loop`: `ForRewriteRule` hoists a trailing loop statement.
+
+All phase 11 rules remain `safe_apply=False` pending explicit round-trip apply tests.

@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "raise-from-previous-error",
-        'raise RuntimeError("raise_from_previous_error")\n',
-        "Review exception pattern for raise-from-previous-error",
+        'try:\n    risky()\nexcept ValueError as error:\n    raise RuntimeError("failed")\n',
+        'raise RuntimeError("failed") from error',
     ),
     (
         "raise-specific-error",
@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "reintroduce-else",
-        "if reintroduce_else:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for reintroduce-else",
+        "if failed:\n    return None\nrecover()\n",
+        "else:\n    recover()",
     ),
     (
         "remove-dict-items",

@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "guard",
-        "if guard:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for guard",
+        "if ready:\n    run()\nelse:\n    return fallback\n",
+        "if not ready",
     ),
     (
         "hoist-if-from-if",
@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "hoist-loop-from-if",
-        "if hoist_loop_from_if:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for hoist-loop-from-if",
+        "if ready:\n    for item in items:\n        process(item)\n",
+        "for item in items",
     ),
     (
         "hoist-repeated-if-condition",
@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "hoist-statement-from-loop",
-        "for hoist_statement_from_loop in items:\n    continue\n",
-        "Review loop pattern for hoist-statement-from-loop",
+        "for item in items:\n    process(item)\n    finish()\n",
+        "finish()",
     ),
     (
         "inline-immediately-yielded-variable",

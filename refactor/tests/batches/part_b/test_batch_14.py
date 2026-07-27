@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "use-itertools-product",
-        "use_itertools_product = 1\n",
-        "Review Sourcery pattern for use-itertools-product",
+        "for left in lefts:\n    for right in rights:\n        consume(left, right)\n",
+        "itertools.product(lefts, rights)",
     ),
     (
         "use-join",

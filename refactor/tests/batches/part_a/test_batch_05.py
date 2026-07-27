@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "introduce-default-else",
-        "if introduce_default_else:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for introduce-default-else",
+        "if ready:\n    run()\n",
+        "else:\n    pass",
     ),
     (
         "invert-any-all",
@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "last-if-guard",
-        "if last_if_guard:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for last-if-guard",
+        "if ready:\n    run()\nreturn fallback\n",
+        "if not ready",
     ),
     (
         "lift-duplicated-conditional",
@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "lift-return-into-if",
-        "if lift_return_into_if:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for lift-return-into-if",
+        "if ready:\n    return result\nreturn fallback\n",
+        "else:\n    return fallback",
     ),
     (
         "list-comprehension",

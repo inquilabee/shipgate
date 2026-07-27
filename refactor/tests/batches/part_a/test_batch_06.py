@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "merge-except-handler",
-        'raise RuntimeError("merge_except_handler")\n',
-        "Review exception pattern for merge-except-handler",
+        "try:\n    risky()\nexcept ValueError:\n    recover()\nexcept TypeError:\n    recover()\n",
+        "except ValueError, TypeError",
     ),
     (
         "merge-is-instance",

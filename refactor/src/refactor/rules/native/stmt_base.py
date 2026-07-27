@@ -265,6 +265,24 @@ def merge_nested_if(node: cst.CSTNode) -> cst.BaseStatement | None:
     )
 
 
+def negated_expr(expr: cst.BaseExpression) -> cst.BaseExpression:
+    if isinstance(expr, cst.UnaryOperation) and isinstance(expr.operator, cst.Not):
+        return expr.expression
+    return cst.UnaryOperation(operator=cst.Not(), expression=expr)
+
+
+def single_terminal_stmt(block: cst.IndentedBlock) -> cst.BaseSmallStatement | None:
+    if len(block.body) != 1:
+        return None
+    line = block.body[0]
+    if not isinstance(line, cst.SimpleStatementLine) or len(line.body) != 1:
+        return None
+    stmt = line.body[0]
+    if isinstance(stmt, cst.Return | cst.Raise | cst.Break | cst.Continue):
+        return stmt
+    return None
+
+
 def dict_update_to_union_stmt(node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
     if not isinstance(node, cst.Expr) or not isinstance(node.value, cst.Call):
         return None

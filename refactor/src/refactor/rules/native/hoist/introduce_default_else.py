@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.stmt_base import IfRewriteRule
 
 
-class IntroduceDefaultElseRule(PatternNativeRule):
+class IntroduceDefaultElseRule(IfRewriteRule):
     rule_id = "introduce-default-else"
-    kind_value = "refactor"
     summary = "Introduce default else"
-    needle = "introduce_default_else"
-    replacement = "Review conditional pattern for introduce-default-else"
+    message = "Add an explicit default else branch"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        if not isinstance(node, cst.If) or node.orelse is not None:
+            return None
+        return node.with_changes(
+            orelse=cst.Else(
+                body=cst.IndentedBlock(body=[cst.SimpleStatementLine(body=[cst.Pass()])]),
+            ),
+        )

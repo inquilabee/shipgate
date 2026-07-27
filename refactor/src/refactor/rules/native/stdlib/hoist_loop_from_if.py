@@ -2,12 +2,29 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.stmt_base import IfRewriteRule
 
 
-class HoistLoopFromIfRule(PatternNativeRule):
+class HoistLoopFromIfRule(IfRewriteRule):
     rule_id = "hoist-loop-from-if"
-    kind_value = "refactor"
     summary = "Hoist loop from if"
-    needle = "hoist_loop_from_if"
-    replacement = "Review conditional pattern for hoist-loop-from-if"
+    message = "Hoist a loop out of an if body"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        if not isinstance(node, cst.If) or node.orelse is not None:
+            return None
+        if not isinstance(node.body, cst.IndentedBlock) or len(node.body.body) != 1:
+            return None
+        loop = node.body.body[0]
+        if not isinstance(loop, cst.For | cst.While):
+            return None
+        if not isinstance(loop.body, cst.IndentedBlock):
+            return None
+        return loop.with_changes(
+            body=loop.body.with_changes(
+                body=[cst.If(test=node.test, body=loop.body)],
+            ),
+        )
