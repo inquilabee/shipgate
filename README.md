@@ -210,6 +210,7 @@ ruff.format: .shipgate/tools/python/bin/ruff format --config .shipgate/configs/r
 | Doc | Contents |
 | --- | --- |
 | [Usage guide](docs/usage.md) | Suites, config, error formats, CI, gates, tools |
+| [Radon metric gates](docs/usage.md#radon-metric-gates) | MI/CC thresholds, p5/p10/p95, calibrate |
 | [Architecture](docs/architecture.md) | Layers and design decisions |
 | [Check flow](docs/check-flow.md) | Tool YAML → `shipgate check` |
 

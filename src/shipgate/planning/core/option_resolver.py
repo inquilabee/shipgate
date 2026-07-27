@@ -164,6 +164,10 @@ class OptionResolver:
             "minimum_threshold",
             "maximum_mode",
             "maximum_threshold",
+            "p5_mode",
+            "p5_threshold",
+            "p10_mode",
+            "p10_threshold",
             "p95_mode",
             "p95_threshold",
         ):

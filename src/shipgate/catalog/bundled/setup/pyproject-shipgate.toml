@@ -20,12 +20,15 @@ p95_mode = "threshold"
 p95_threshold = 7
 
 [tool.shipgate.checks."radon.mi"]
-# Letter rank is per-file. Median / p95 gate typical and high-end MI.
+# Letter rank is per-file. Median + left-tail floors; progressive min ratchets.
 threshold = "B"
 median_mode = "threshold"
 median_threshold = 55.8
-p95_mode = "threshold"
-p95_threshold = 100
+p5_mode = "threshold"
+p5_threshold = 28
+p10_mode = "threshold"
+p10_threshold = 32
+minimum_mode = "progressive"
 
 [tool.shipgate.checks."jscpd.check.python"]
 threshold = "2"

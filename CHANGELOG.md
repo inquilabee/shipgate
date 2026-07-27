@@ -4,6 +4,20 @@
 
 ## Unreleased
 
+### Added
+
+- Radon `p5` / `p10` metric gates (MI floors / CC ceilings), matching `p95`.
+- On radon MI/CC metric-gate failure, emit distribution summary and worst-offender
+  findings (canonical JSON; formatters stay tool-agnostic).
+- `shipgate radon calibrate {mi|cc}` suggests median / p5 / p10 / p95 / min/max
+  thresholds and a YAML binding snippet from a live scan or `--json-file`.
+
+### Changed
+
+- Dogfood / bundled radon.mi defaults: left-tail `p5`/`p10` floors plus progressive
+  `minimum` instead of an inverted MI `p95≥100` floor.
+- Split layout role/collapse helpers out of `LayoutEngine` to improve maintainability.
+
 ## v0.1.4
 
 ### Added

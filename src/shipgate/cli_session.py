@@ -205,6 +205,29 @@ class CliSession:
     def gates_lib_path(self) -> None:
         self.write_text(self.app.gates_lib_path())
 
+    def radon_calibrate(
+        self,
+        *,
+        kind: str,
+        paths: tuple[Path, ...] = (),
+        json_path: Path | None = None,
+        top: int = 15,
+        yaml_snippet: bool = False,
+    ) -> None:
+        try:
+            text = self.app.radon_calibrate(
+                self.project_root(),
+                kind=kind,
+                paths=paths,
+                json_path=json_path,
+                top=top,
+                yaml_snippet=yaml_snippet,
+            )
+        except ShipGateError as exc:
+            self.write_error(exc)
+            raise typer.Exit(exc.exit_code) from None
+        self.write_text(text)
+
     def install_like(
         self,
         *,

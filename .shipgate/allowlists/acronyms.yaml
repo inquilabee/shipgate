@@ -10,3 +10,5 @@ LICENSE: repository license filename
 CONTRIBUTING: contributing guide filename
 CVE: Common Vulnerabilities and Exposures
 PYTHONPATH: Python module search path environment variable
+MI: maintainability index (Radon)
+CC: cyclomatic complexity (Radon)

@@ -31,6 +31,10 @@ class CheckBinding:
     minimum_threshold: float | None = None
     maximum_mode: str | None = None
     maximum_threshold: float | None = None
+    p5_mode: str | None = None
+    p5_threshold: float | None = None
+    p10_mode: str | None = None
+    p10_threshold: float | None = None
     p95_mode: str | None = None
     p95_threshold: float | None = None
 

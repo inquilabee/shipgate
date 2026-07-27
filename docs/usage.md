@@ -58,20 +58,28 @@ computed from Radon JSON:
 | `average` | Arithmetic mean | Useful, but skewed by outliers |
 | `median` | 50th percentile | Preferred central tendency (robust) |
 | `minimum` / `maximum` | Worst single value | Strict; one outlier fails the gate |
-| `p95` | 95th percentile (inclusive linear interp.) | Preferred tail vs raw min/max |
+| `p5` / `p10` | Left-tail percentiles | Preferred low-end floors for MI |
+| `p95` | 95th percentile (inclusive linear interp.) | Preferred high-end tail for CC |
 
-**Direction:** Maintainability index is worse when lower → floors for average, median,
-minimum, and p95. Cyclomatic complexity is worse when higher → ceilings for average,
-median, maximum, and p95.
+**Direction:** Maintainability index is worse when lower → floors for average,
+median, minimum, `p5`, `p10`, and `p95`. Cyclomatic complexity is worse when
+higher → ceilings for average, median, maximum, `p5`, `p10`, and `p95`.
 
-Prefer **median** over average when you care about typical code, and **p95** over
-min/max when you want a hard tail bound without letting a single file/block fail
-the whole suite.
+Prefer **median** over average when you care about typical code. For MI, prefer
+**`p5` / `p10` / `minimum` floors** to control the bad left tail; a high MI
+`p95` floor (for example `100`) mostly measures how many near-perfect files you
+have, not how bad the worst files are. For CC, prefer **`p95`** over raw
+`maximum` when you want a hard high-end bound without letting a single block
+fail the whole suite.
+
+When a metric gate fails, ShipGate emits canonical findings with the distribution
+summary (`n`, median, mean) and the worst offenders (lowest MI files / highest CC
+blocks) so humans and agents can fix without re-running ad-hoc radon scripts.
 
 | Tool | Typical keys | Worse when |
 | --- | --- | --- |
-| `radon.mi` | `median-*`, `p95-*` (also `average-*`, `minimum-*`) | lower (floors) |
-| `radon.cc` | `median-*`, `p95-*` (also `average-*`, `maximum-*`) | higher (ceilings) |
+| `radon.mi` | `median-*`, `p5-*`, `p10-*` (also `average-*`, `minimum-*`, `p95-*`) | lower (floors) |
+| `radon.cc` | `median-*`, `p95-*` (also `average-*`, `maximum-*`, `p5-*`, `p10-*`) | higher (ceilings) |
 
 Modes:
 
@@ -79,21 +87,27 @@ Modes:
 - `progressive` — must not regress vs the last saved value in
   `.shipgate/cache/.env`. First progressive run seeds the baseline and passes.
 
-ShipGate’s own dogfood uses **strict `threshold`** (median + p95), not
-progressive.
+ShipGate’s own dogfood uses **strict `threshold`** for median plus left-tail MI
+floors (`p5` / `p10`), with progressive `minimum` to ratchet the worst file, not
+an inverted MI `p95≥100` floor.
 
 Env keys (progressive only): `SHIPGATE_RADON_MI_AVG`, `SHIPGATE_RADON_MI_MEDIAN`,
-`SHIPGATE_RADON_MI_MIN`, `SHIPGATE_RADON_MI_P95`, `SHIPGATE_RADON_CC_AVG`,
-`SHIPGATE_RADON_CC_MEDIAN`, `SHIPGATE_RADON_CC_MAX`, `SHIPGATE_RADON_CC_P95`.
+`SHIPGATE_RADON_MI_MIN`, `SHIPGATE_RADON_MI_P5`, `SHIPGATE_RADON_MI_P10`,
+`SHIPGATE_RADON_MI_P95`, `SHIPGATE_RADON_CC_AVG`, `SHIPGATE_RADON_CC_MEDIAN`,
+`SHIPGATE_RADON_CC_MAX`, `SHIPGATE_RADON_CC_P5`, `SHIPGATE_RADON_CC_P10`,
+`SHIPGATE_RADON_CC_P95`.
 
 ```yaml
 checks:
   radon.mi:
     threshold: B
     median-mode: threshold
-    median-threshold: 55.5
-    p95-mode: threshold
-    p95-threshold: 100
+    median-threshold: 55.8
+    p5-mode: threshold
+    p5-threshold: 28
+    p10-mode: threshold
+    p10-threshold: 32
+    minimum-mode: progressive
   radon.cc:
     threshold: B
     median-mode: threshold
@@ -101,6 +115,20 @@ checks:
     p95-mode: threshold
     p95-threshold: 7
 ```
+
+#### Calibrate suggested thresholds
+
+```bash
+shipgate radon calibrate mi --path src --path tests
+shipgate radon calibrate cc --path src --yaml
+shipgate radon calibrate mi --json-file /tmp/radon-mi.json
+```
+
+`shipgate radon calibrate` prints the live distribution (`n`, mean/median/min/max,
+`p5`/`p10`/`p95`), the worst offenders, and a YAML binding snippet with
+passable suggested floors (MI) or ceilings (CC). Use `--yaml` for the snippet
+only. Prefer `--json-file` in tests or offline; otherwise radon runs from the
+managed tool env when present.
 
 Consumers may still use progressive or average/min/max:
 

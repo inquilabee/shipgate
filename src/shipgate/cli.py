@@ -26,6 +26,7 @@ TOP_LEVEL_COMMANDS = frozenset(
         "baseline",
         "batch",
         "gates",
+        "radon",
     }
 )
 
@@ -42,12 +43,14 @@ configs_app = typer.Typer(help="Project tool config management")
 list_app = typer.Typer(help="List catalog metadata")
 baseline_app = typer.Typer(help="Baseline management")
 gates_app = typer.Typer(help="Local gates")
+radon_app = typer.Typer(help="Radon metric helpers")
 
 app.add_typer(init_app, name="init")
 app.add_typer(configs_app, name="configs")
 app.add_typer(list_app, name="list")
 app.add_typer(baseline_app, name="baseline")
 app.add_typer(gates_app, name="gates")
+app.add_typer(radon_app, name="radon")
 
 ConfigOpt = Annotated[Path | None, typer.Option("--config", help="Path to shipgate.yaml")]
 SuiteOpt = Annotated[str | None, typer.Option("--suite", help="Suite to run")]
@@ -275,6 +278,33 @@ def gates_init(name: Annotated[str, typer.Argument()] = "gate") -> None:
 @gates_app.command("lib-path")
 def gates_lib_path() -> None:
     session().gates_lib_path()
+
+
+@radon_app.command("calibrate")
+def radon_calibrate(
+    kind: Annotated[str, typer.Argument(help="Metric kind: mi or cc")],
+    *,
+    path: Annotated[
+        list[Path] | None,
+        typer.Option("--path", help="Path for radon scan (repeatable; default .)"),
+    ] = None,
+    json_file: Annotated[
+        Path | None,
+        typer.Option("--json-file", help="Use existing radon JSON instead of running radon"),
+    ] = None,
+    top: Annotated[int, typer.Option("--top", help="Worst offenders to list")] = 15,
+    yaml_snippet: Annotated[
+        bool,
+        typer.Option("--yaml", help="Print only the suggested YAML binding snippet"),
+    ] = False,
+) -> None:
+    session().radon_calibrate(
+        kind=kind,
+        paths=tuple(path or []),
+        json_path=json_file,
+        top=top,
+        yaml_snippet=yaml_snippet,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

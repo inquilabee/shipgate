@@ -24,6 +24,10 @@ def test_parse_radon_mi_modes(tmp_path: Path):
                 "average-mode": "progressive",
                 "median-mode": "threshold",
                 "median-threshold": 55,
+                "p5-mode": "threshold",
+                "p5-threshold": 25,
+                "p10-mode": "threshold",
+                "p10-threshold": 30,
                 "p95-mode": "threshold",
                 "p95-threshold": 80,
             },
@@ -34,7 +38,9 @@ def test_parse_radon_mi_modes(tmp_path: Path):
         "threshold",
         "threshold",
     )
+    assert (mi.p5_mode, mi.p10_mode) == ("threshold", "threshold")
     assert (mi.median_threshold, mi.p95_threshold) == (pytest.approx(55.0), pytest.approx(80.0))
+    assert (mi.p5_threshold, mi.p10_threshold) == (pytest.approx(25.0), pytest.approx(30.0))
 
 
 def test_parse_radon_mi_minimum_threshold(tmp_path: Path):

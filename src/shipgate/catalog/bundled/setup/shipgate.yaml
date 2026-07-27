@@ -16,12 +16,15 @@ checks:
     p95-mode: threshold
     p95-threshold: 7
   radon.mi:
-    # Letter rank is per-file. Median / p95 gate typical and high-end MI.
+    # Letter rank is per-file. Median + left-tail floors; progressive min ratchets.
     threshold: B
     median-mode: threshold
     median-threshold: 55.8
-    p95-mode: threshold
-    p95-threshold: 100
+    p5-mode: threshold
+    p5-threshold: 28
+    p10-mode: threshold
+    p10-threshold: 32
+    minimum-mode: progressive
   jscpd.check.python:
     threshold: "2"
   jscpd.check.other:

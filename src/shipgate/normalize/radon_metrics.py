@@ -10,10 +10,14 @@ from shipgate.paths import (
     RADON_CC_AVG_CACHE_ENV,
     RADON_CC_MAX_CACHE_ENV,
     RADON_CC_MEDIAN_CACHE_ENV,
+    RADON_CC_P5_CACHE_ENV,
+    RADON_CC_P10_CACHE_ENV,
     RADON_CC_P95_CACHE_ENV,
     RADON_MI_AVG_CACHE_ENV,
     RADON_MI_MEDIAN_CACHE_ENV,
     RADON_MI_MIN_CACHE_ENV,
+    RADON_MI_P5_CACHE_ENV,
+    RADON_MI_P10_CACHE_ENV,
     RADON_MI_P95_CACHE_ENV,
 )
 
@@ -35,6 +39,8 @@ class RadonMetrics:
             average_cache_key=RADON_CC_AVG_CACHE_ENV,
             median_cache_key=RADON_CC_MEDIAN_CACHE_ENV,
             extreme_cache_key=RADON_CC_MAX_CACHE_ENV,
+            p5_cache_key=RADON_CC_P5_CACHE_ENV,
+            p10_cache_key=RADON_CC_P10_CACHE_ENV,
             p95_cache_key=RADON_CC_P95_CACHE_ENV,
         )
 
@@ -47,6 +53,8 @@ class RadonMetrics:
             average_cache_key=RADON_MI_AVG_CACHE_ENV,
             median_cache_key=RADON_MI_MEDIAN_CACHE_ENV,
             extreme_cache_key=RADON_MI_MIN_CACHE_ENV,
+            p5_cache_key=RADON_MI_P5_CACHE_ENV,
+            p10_cache_key=RADON_MI_P10_CACHE_ENV,
             p95_cache_key=RADON_MI_P95_CACHE_ENV,
         )
 
@@ -60,6 +68,8 @@ class RadonMetrics:
         average_cache_key: str,
         median_cache_key: str,
         extreme_cache_key: str,
+        p5_cache_key: str,
+        p10_cache_key: str,
         p95_cache_key: str,
     ) -> dict[str, object]:
         if not values:
@@ -68,18 +78,24 @@ class RadonMetrics:
         median = round(statistics.median(values), cls.METRIC_PRECISION)
         extreme_raw = min(values) if extreme_kind == "minimum" else max(values)
         extreme = round(extreme_raw, cls.METRIC_PRECISION)
+        p5 = round(cls.percentile(values, 5.0), cls.METRIC_PRECISION)
+        p10 = round(cls.percentile(values, 10.0), cls.METRIC_PRECISION)
         p95 = round(cls.percentile(values, 95.0), cls.METRIC_PRECISION)
         return {
             "metric_average": average,
             "metric_median": median,
             "metric_extreme": extreme,
             "metric_extreme_kind": extreme_kind,
+            "metric_p5": p5,
+            "metric_p10": p10,
             "metric_p95": p95,
             "metric_count": len(values),
             "metric_worse_when": worse_when,
             "metric_average_cache_key": average_cache_key,
             "metric_median_cache_key": median_cache_key,
             "metric_extreme_cache_key": extreme_cache_key,
+            "metric_p5_cache_key": p5_cache_key,
+            "metric_p10_cache_key": p10_cache_key,
             "metric_p95_cache_key": p95_cache_key,
         }
 
@@ -150,6 +166,20 @@ class RadonMetrics:
                 "metric_median",
                 "median_mode",
                 "median_threshold",
+            ),
+            (
+                "p5-threshold",
+                f"P5 {metric_label}",
+                "metric_p5",
+                "p5_mode",
+                "p5_threshold",
+            ),
+            (
+                "p10-threshold",
+                f"P10 {metric_label}",
+                "metric_p10",
+                "p10_mode",
+                "p10_threshold",
             ),
             (
                 "p95-threshold",

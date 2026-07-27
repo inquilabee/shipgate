@@ -108,6 +108,10 @@ class ProjectConfigParser:
         minimum_threshold = None
         maximum_mode = None
         maximum_threshold = None
+        p5_mode = None
+        p5_threshold = None
+        p10_mode = None
+        p10_threshold = None
         p95_mode = None
         p95_threshold = None
         if isinstance(value, dict):
@@ -138,6 +142,16 @@ class ProjectConfigParser:
                 binding,
                 field="maximum",
             )
+            p5_mode, p5_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="p5",
+            )
+            p10_mode, p10_threshold = self._parse_metric_gate(
+                runnable_id,
+                binding,
+                field="p10",
+            )
             p95_mode, p95_threshold = self._parse_metric_gate(
                 runnable_id,
                 binding,
@@ -155,6 +169,10 @@ class ProjectConfigParser:
             minimum_threshold=minimum_threshold,
             maximum_mode=maximum_mode,
             maximum_threshold=maximum_threshold,
+            p5_mode=p5_mode,
+            p5_threshold=p5_threshold,
+            p10_mode=p10_mode,
+            p10_threshold=p10_threshold,
             p95_mode=p95_mode,
             p95_threshold=p95_threshold,
         )

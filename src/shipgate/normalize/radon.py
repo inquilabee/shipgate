@@ -9,6 +9,7 @@ from shipgate.domain.reports import CheckReport, Finding, FindingLocation
 from shipgate.errors import NormalizationError
 from shipgate.normalize.core import BaseNormalizer, tool_exit_report
 from shipgate.normalize.radon_metrics import RadonMetrics
+from shipgate.normalize.radon_offenders import RadonOffenders
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -62,14 +63,23 @@ class RadonNormalizer(BaseNormalizer):
             metrics = RadonMetrics.cc_metrics(payload)
             metric_label = "cyclomatic complexity"
 
-        findings.extend(
-            RadonMetrics.absolute_threshold_findings(
-                check_id,
-                metrics,
-                request.options.extra,
-                metric_label=metric_label,
-            )
+        metric_findings = RadonMetrics.absolute_threshold_findings(
+            check_id,
+            metrics,
+            request.options.extra,
+            metric_label=metric_label,
         )
+        findings.extend(metric_findings)
+        if metric_findings:
+            findings.extend(
+                RadonOffenders.distribution_failure_findings(
+                    check_id,
+                    payload,
+                    metrics,
+                    metric_label=metric_label,
+                    is_mi=is_mi,
+                )
+            )
 
         status = "failed" if findings or result.exit_code != 0 else "passed"
         return CheckReport(

@@ -133,6 +133,27 @@ class ShipGateApp:
         return "\n".join(checks) + ("\n" if checks else "")
 
     @staticmethod
+    def radon_calibrate(
+        project_root: Path,
+        *,
+        kind: str,
+        paths: tuple[Path, ...] = (),
+        json_path: Path | None = None,
+        top: int = 15,
+        yaml_snippet: bool = False,
+    ) -> str:
+        from shipgate.project.radon_calibrate import calibrate_radon
+
+        return calibrate_radon(
+            project_root,
+            kind=kind,
+            paths=paths,
+            json_path=json_path,
+            top=top,
+            yaml_snippet=yaml_snippet,
+        )
+
+    @staticmethod
     def schema() -> str:
         return json.dumps(report_json_schema(), indent=2) + "\n"
 
