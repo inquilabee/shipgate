@@ -55,21 +55,45 @@ class LayoutScanner:
             ini = self.root / name
             if not ini.is_file():
                 continue
-            section = False
-            for line in ini.read_text(encoding="utf-8", errors="replace").splitlines():
-                stripped = line.strip()
-                if stripped.startswith("[") and stripped.endswith("]"):
-                    section = stripped.lower() in PYTEST_SECTIONS
-                    continue
-                if not section or "=" not in stripped:
-                    continue
-                key, _, value = stripped.partition("=")
-                key, value = key.strip().lower(), value.strip()
-                if key == "testpaths" and not testpaths:
-                    testpaths[:] = value.split()
-                elif key == "python_files" and not python_files:
-                    python_files[:] = value.split()
+            self.read_pytest_ini_file(ini, testpaths, python_files)
         return testpaths, python_files
+
+    def read_pytest_ini_file(
+        self,
+        ini: Path,
+        testpaths: list[str],
+        python_files: list[str],
+    ) -> None:
+        _ = self
+        section = False
+        for line in ini.read_text(encoding="utf-8", errors="replace").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("[") and stripped.endswith("]"):
+                section = stripped.lower() in PYTEST_SECTIONS
+                continue
+            self.apply_pytest_ini_line(
+                stripped,
+                section=section,
+                testpaths=testpaths,
+                python_files=python_files,
+            )
+
+    @staticmethod
+    def apply_pytest_ini_line(
+        stripped: str,
+        *,
+        section: bool,
+        testpaths: list[str],
+        python_files: list[str],
+    ) -> None:
+        if not section or "=" not in stripped:
+            return
+        key, _, value = stripped.partition("=")
+        key, value = key.strip().lower(), value.strip()
+        if key == "testpaths" and not testpaths:
+            testpaths[:] = value.split()
+        elif key == "python_files" and not python_files:
+            python_files[:] = value.split()
 
     def as_str_list(self, raw: object) -> list[str]:
         _ = self

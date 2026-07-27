@@ -14,13 +14,25 @@ from shipgate.planning.utils.incremental import (
 )
 
 GIT = shutil.which("git")
+GIT_LEAK_PREFIXES = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+)
 GIT_ENV = {
-    **__import__("os").environ,
-    "GIT_AUTHOR_NAME": "t",
-    "GIT_COMMITTER_NAME": "t",
-    "GIT_AUTHOR_EMAIL": "t@example.com",
-    "GIT_COMMITTER_EMAIL": "t@example.com",
+    key: value
+    for key, value in __import__("os").environ.items()
+    if not key.startswith(GIT_LEAK_PREFIXES) and key != "GIT_PREFIX"
 }
+GIT_ENV.update(
+    {
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.com",
+        "GIT_COMMITTER_EMAIL": "t@example.com",
+    }
+)
 
 
 def git_init_commit(tmp_path):

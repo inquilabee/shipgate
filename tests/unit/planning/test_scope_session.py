@@ -8,13 +8,25 @@ from shipgate.planning.core.scope_resolver import ScopeResolver
 from shipgate.planning.utils.incremental import RunScopeSession
 
 GIT = shutil.which("git")
+GIT_LEAK_PREFIXES = (
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_INDEX_FILE",
+    "GIT_OBJECT_DIRECTORY",
+)
 GIT_ENV = {
-    **__import__("os").environ,
-    "GIT_AUTHOR_NAME": "t",
-    "GIT_COMMITTER_NAME": "t",
-    "GIT_AUTHOR_EMAIL": "t@example.com",
-    "GIT_COMMITTER_EMAIL": "t@example.com",
+    key: value
+    for key, value in __import__("os").environ.items()
+    if not key.startswith(GIT_LEAK_PREFIXES) and key != "GIT_PREFIX"
 }
+GIT_ENV.update(
+    {
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@example.com",
+        "GIT_COMMITTER_EMAIL": "t@example.com",
+    }
+)
 
 
 def git_init_commit(tmp_path: Path) -> None:
@@ -53,10 +65,20 @@ def test_scope_session_caches_expand_scope(tmp_path: Path):
     target = tmp_path / "src"
     resolver = ScopeResolver(tmp_path, scope_session=session)
     first = resolver._expand_scope(
-        target, extensions=(".py",), include=(), exclude=(), globs=(), respect_gitignore=True
+        target,
+        extensions=(".py",),
+        include=(),
+        exclude=(),
+        globs=(),
+        respect_gitignore=True,
     )
     second = resolver._expand_scope(
-        target, extensions=(".py",), include=(), exclude=(), globs=(), respect_gitignore=True
+        target,
+        extensions=(".py",),
+        include=(),
+        exclude=(),
+        globs=(),
+        respect_gitignore=True,
     )
     assert first == second
     assert len(session.expand_cache) == 1

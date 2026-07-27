@@ -45,7 +45,7 @@ import-linter.check:
     delivery: root
   require_if:
     files_present:
-      - "src/*/__init__.py"
+      - src/*/__init__.py
   suggest_if:
     files_present:
-      - "src/*/__init__.py"
+      - src/*/__init__.py
