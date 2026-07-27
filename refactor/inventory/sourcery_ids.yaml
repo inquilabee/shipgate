@@ -1,6 +1,6 @@
 - id: assign-if-exp
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: aug-assign
   kind: refactor
@@ -8,7 +8,7 @@
   note: null
 - id: avoid-builtin-shadow
   kind: comment
-  status: todo
+  status: bridge
   note: null
 - id: aware-datetime-for-utc
   kind: suggestion
@@ -64,7 +64,7 @@
   note: null
 - id: convert-to-enumerate
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: dataframe-append-to-concat
   kind: suggestion
@@ -72,7 +72,7 @@
   note: null
 - id: de-morgan
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: default-get
   kind: refactor
@@ -100,7 +100,7 @@
   note: null
 - id: do-not-use-bare-except
   kind: suggestion
-  status: todo
+  status: bridge
   note: null
 - id: dont-import-test-modules
   kind: refactor
@@ -108,7 +108,7 @@
   note: null
 - id: ensure-file-closed
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: equality-identity
   kind: refactor
@@ -332,7 +332,7 @@
   note: null
 - id: path-read
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: raise-from-previous-error
   kind: refactor
@@ -632,11 +632,11 @@
   note: null
 - id: use-fstring-for-concatenation
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: use-fstring-for-formatting
   kind: refactor
-  status: todo
+  status: bridge
   note: null
 - id: use-getitem-for-re-match-groups
   kind: refactor

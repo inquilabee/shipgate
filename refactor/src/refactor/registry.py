@@ -4,7 +4,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from refactor.rules.bridge.ruff.assign_if_exp import AssignIfExpBridge
+from refactor.rules.bridge.ruff.avoid_builtin_shadow import AvoidBuiltinShadowBridge
+from refactor.rules.bridge.ruff.convert_to_enumerate import ConvertToEnumerateBridge
+from refactor.rules.bridge.ruff.de_morgan import DeMorganBridge
+from refactor.rules.bridge.ruff.do_not_use_bare_except import DoNotUseBareExceptBridge
+from refactor.rules.bridge.ruff.ensure_file_closed import EnsureFileClosedBridge
 from refactor.rules.bridge.ruff.list_literal import ListLiteralBridge
+from refactor.rules.bridge.ruff.path_read import PathReadBridge
+from refactor.rules.bridge.ruff.use_fstring_for_concatenation import (
+    UseFstringForConcatenationBridge,
+)
+from refactor.rules.bridge.ruff.use_fstring_for_formatting import UseFstringForFormattingBridge
 from refactor.rules.native.builtins.default_get import DefaultGetRule
 from refactor.rules.native.builtins.default_mutable_arg import DefaultMutableArgRule
 from refactor.rules.native.builtins.identity_comprehension import IdentityComprehensionRule
@@ -59,4 +70,13 @@ RULES: tuple[RefactorRule, ...] = (
     YieldFromRule(),
     BinOpIdentityRule(),
     ListLiteralBridge(),
+    AvoidBuiltinShadowBridge(),
+    DoNotUseBareExceptBridge(),
+    UseFstringForConcatenationBridge(),
+    UseFstringForFormattingBridge(),
+    PathReadBridge(),
+    AssignIfExpBridge(),
+    ConvertToEnumerateBridge(),
+    DeMorganBridge(),
+    EnsureFileClosedBridge(),
 )
