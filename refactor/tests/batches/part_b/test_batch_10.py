@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "remove-unnecessary-cast",
-        "remove_unnecessary_cast = 1\n",
-        "Review Sourcery pattern for remove-unnecessary-cast",
+        "value = cast(int, raw)\n",
+        "raw",
     ),
     (
         "remove-unnecessary-else",

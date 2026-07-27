@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "remove-duplicate-set-key",
-        'data = {"remove_duplicate_set_key": 1}\n',
-        "Review dictionary pattern for remove-duplicate-set-key",
+        'items = {"a", "b", "a"}\n',
+        '{"a", "b"}',
     ),
     (
         "remove-empty-nested-block",
@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "remove-redundant-constructor-in-dict-union",
-        'data = {"remove_redundant_constructor_in_dict_union": 1}\n',
-        "Review dictionary pattern for remove-redundant-constructor-in-dict-union",
+        "data = dict(left) | dict(right)\n",
+        "left | right",
     ),
     (
         "remove-redundant-continue",

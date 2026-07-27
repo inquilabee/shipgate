@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "str-prefix-suffix",
-        'value = "str_prefix_suffix"\n',
-        "Review string pattern for str-prefix-suffix",
+        'if name[:3] == "pre":\n    pass\n',
+        'name.startswith("pre")',
     ),
     (
         "sum-comprehension",

@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import CallRewriteRule
 
 
-class RemoveDictKeysRule(PatternNativeRule):
+class RemoveDictKeysRule(CallRewriteRule):
     rule_id = "remove-dict-keys"
-    kind_value = "refactor"
     summary = "Remove dict keys"
-    needle = "remove_dict_keys"
-    replacement = "Review dictionary pattern for remove-dict-keys"
+    message = "Use the dictionary directly instead of calling keys()"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call):
+            return None
+        if node.args:
+            return None
+        if not isinstance(node.func, cst.Attribute) or node.func.attr.value != "keys":
+            return None
+        return node.func.value

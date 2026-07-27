@@ -33,7 +33,6 @@ class SuggestOnlyExprRule:
     safe_apply = False
 
     def detect(self, source: str, path: str) -> list[Hit]:
-        _ = self
         return detect_with_visitor(source, path, self.finder_type())
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
@@ -102,6 +101,141 @@ class BinaryOpRewriteRule(SuggestOnlyExprRule):
             def visit_BinaryOperation(  # ruff:ignore[invalid-function-name]
                 self,
                 node: cst.BinaryOperation,
+            ) -> bool:
+                replacement = rule.match(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.hit_for(node, replacement, self.path))
+                return True
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
+class BooleanOpRewriteRule(SuggestOnlyExprRule):
+    """Rewrite matching ``cst.BooleanOperation`` nodes."""
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def visit_BooleanOperation(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.BooleanOperation,
+            ) -> bool:
+                replacement = rule.match(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.hit_for(node, replacement, self.path))
+                return True
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
+class UnaryOpRewriteRule(SuggestOnlyExprRule):
+    """Rewrite matching ``cst.UnaryOperation`` nodes."""
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def visit_UnaryOperation(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.UnaryOperation,
+            ) -> bool:
+                replacement = rule.match(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.hit_for(node, replacement, self.path))
+                return True
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
+class ComparisonRewriteRule(SuggestOnlyExprRule):
+    """Rewrite matching ``cst.Comparison`` nodes."""
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def visit_Comparison(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.Comparison,
+            ) -> bool:
+                replacement = rule.match(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.hit_for(node, replacement, self.path))
+                return True
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
+class DictRewriteRule(SuggestOnlyExprRule):
+    """Rewrite matching ``cst.Dict`` literal nodes."""
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def visit_Dict(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.Dict,
+            ) -> bool:
+                replacement = rule.match(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.hit_for(node, replacement, self.path))
+                return True
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
+class SetRewriteRule(SuggestOnlyExprRule):
+    """Rewrite matching ``cst.Set`` literal nodes."""
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def visit_Set(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.Set,
             ) -> bool:
                 replacement = rule.match(node)
                 if replacement is None:

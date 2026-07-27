@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "simplify-constant-sum",
-        "if simplify_constant_sum:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for simplify-constant-sum",
+        "total = 2 + 3\n",
+        "5",
     ),
     (
         "simplify-dictionary-update",
@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "simplify-empty-collection-comparison",
-        'items = ["simplify_empty_collection_comparison"]\n',
-        "Review collection pattern for simplify-empty-collection-comparison",
+        "if items == []:\n    pass\n",
+        "not items",
     ),
     (
         "simplify-fstring-formatting",

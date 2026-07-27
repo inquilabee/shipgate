@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "merge-comparisons",
-        'if left == "merge_comparisons":\n    pass\n',
-        "Review comparison pattern for merge-comparisons",
+        "if low < value and value < high:\n    pass\n",
+        "low < value < high",
     ),
     (
         "merge-dict-assign",

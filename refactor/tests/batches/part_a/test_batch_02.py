@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "compare-via-equals",
-        'if left == "compare_via_equals":\n    pass\n',
-        "Review comparison pattern for compare-via-equals",
+        "if left.__eq__(right):\n    pass\n",
+        "left == right",
     ),
     (
         "comprehension-to-generator",

@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "non-equal-comparison",
-        'if left == "non_equal_comparison":\n    pass\n',
-        "Review comparison pattern for non-equal-comparison",
+        "if not (left == right):\n    pass\n",
+        "left != right",
     ),
     (
         "or-if-exp-identity",
@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "remove-dict-keys",
-        'data = {"remove_dict_keys": 1}\n',
-        "Review dictionary pattern for remove-dict-keys",
+        "if key in data.keys():\n    pass\n",
+        "data",
     ),
     (
         "remove-duplicate-dict-key",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "remove-duplicate-key",
-        'data = {"remove_duplicate_key": 1}\n',
-        "Review dictionary pattern for remove-duplicate-key",
+        'data = {"a": 1, "a": 2}\n',
+        '"a": 2',
     ),
 )
 
