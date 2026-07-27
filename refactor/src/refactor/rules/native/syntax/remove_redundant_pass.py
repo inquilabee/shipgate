@@ -74,6 +74,8 @@ class RemoveRedundantPassRule:
                 if saw_real_stmt:
                     hits.append(RemoveRedundantPassRule.hit_for(stmt, body, path))
                 continue
+            if RemoveRedundantPassRule.is_docstring_stmt(stmt):
+                continue
             saw_real_stmt = True
 
     @staticmethod
@@ -83,6 +85,15 @@ class RemoveRedundantPassRule:
         if len(stmt.body) != 1:
             return False
         return isinstance(stmt.body[0], cst.Pass)
+
+    @staticmethod
+    def is_docstring_stmt(stmt: cst.BaseStatement) -> bool:
+        if not isinstance(stmt, cst.SimpleStatementLine) or len(stmt.body) != 1:
+            return False
+        expr = stmt.body[0]
+        if not isinstance(expr, cst.Expr):
+            return False
+        return isinstance(expr.value, cst.SimpleString)
 
     @staticmethod
     def hit_for(
@@ -110,6 +121,7 @@ class RemoveRedundantPassRule:
                     continue
                 cleaned.append(cast("BodyStatement", stmt))
                 continue
-            saw_real_stmt = True
+            if not RemoveRedundantPassRule.is_docstring_stmt(stmt):
+                saw_real_stmt = True
             cleaned.append(cast("BodyStatement", stmt))
         return cleaned

@@ -1,4 +1,4 @@
-"""Replace ``len(x) == 0`` with ``not x`` for names and attributes."""
+"""Replace ``len(x) == 0`` with ``not x`` for simple names."""
 
 from __future__ import annotations
 
@@ -73,7 +73,8 @@ class UseLenRule:
         if not node.left.args:
             return None
         subject = node.left.args[0].value
-        if not isinstance(subject, (cst.Name, cst.Attribute)):
+        # Names only — attribute chains (e.g. reader.pages) are often API-specific.
+        if not isinstance(subject, cst.Name):
             return None
         return subject
 
