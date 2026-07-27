@@ -29,7 +29,8 @@ def test_fix_paths_rewrites_safe_rules(tmp_path: Path) -> None:
     changed = fix_paths([tmp_path])
     assert src in changed
     assert src.read_text(encoding="utf-8") == AFTER
-    assert check_paths([tmp_path]) == []
+    hits = check_paths([tmp_path])
+    assert not any(hit.rule_id == "default-get" for hit in hits)
 
 
 def test_cli_list_includes_default_get(capsys) -> None:

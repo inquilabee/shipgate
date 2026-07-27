@@ -20,7 +20,7 @@
   note: null
 - id: boolean-if-exp-identity
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: break-or-continue-outside-loop
   kind: refactor
@@ -172,11 +172,11 @@
   note: null
 - id: identity-comprehension
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: inline-immediately-returned-variable
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: inline-immediately-yielded-variable
   kind: refactor
@@ -276,7 +276,7 @@
   note: null
 - id: merge-nested-ifs
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: merge-repeated-ifs
   kind: refactor
@@ -320,7 +320,7 @@
   note: null
 - id: none-compare
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: or-if-exp-identity
   kind: refactor
@@ -492,7 +492,7 @@
   note: null
 - id: simplify-boolean-comparison
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: simplify-constant-sum
   kind: refactor
@@ -664,7 +664,7 @@
   note: null
 - id: use-next
   kind: refactor
-  status: todo
+  status: native
   note: null
 - id: use-or-for-fallback
   kind: refactor
