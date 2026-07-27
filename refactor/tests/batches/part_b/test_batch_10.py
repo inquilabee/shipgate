@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "remove-redundant-path-exists",
-        "remove_redundant_path_exists = 1\n",
-        "Review Sourcery pattern for remove-redundant-path-exists",
+        "if path.exists():\n    path.unlink()\n",
+        "path.unlink(missing_ok=True)",
     ),
     (
         "remove-unnecessary-cast",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "replace-interpolation-with-fstring",
-        'value = "replace_interpolation_with_fstring"\n',
-        "Review string pattern for replace-interpolation-with-fstring",
+        'value = "%s" % name\n',
+        'f"{name}"',
     ),
 )
 

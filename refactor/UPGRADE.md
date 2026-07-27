@@ -185,3 +185,22 @@ body-sequence detection.
 - `use-dict-items`: `ForRewriteRule` detects loops that immediately look up `mapping[key]`.
 
 All phase 9 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 10
+
+Upgrade ten syntax, try, scope, and method-signature stubs to suggest-only libcst
+matchers.
+
+- `replace-interpolation-with-fstring`: `BinaryOpRewriteRule` detects simple `%s`
+  interpolation.
+- `split-or-ifs`: `IfRewriteRule` splits `if a or b` into two if statements.
+- `flatten-nested-try`: `TryRewriteRule` flattens nested try-only bodies.
+- `remove-redundant-except-handler`: `TryRewriteRule` removes re-raise-only handlers.
+- `remove-redundant-path-exists`: `IfRewriteRule` detects `exists()` before `unlink()`.
+- `break-or-continue-outside-loop`: scoped visitor detects loop control outside loops.
+- `return-or-yield-outside-function`: scoped visitor detects return/yield outside functions.
+- `instance-method-first-arg-name`: class-function visitor suggests `self`.
+- `class-method-first-arg-name`: class-function visitor suggests `cls`.
+- `swap-variable`: `BodySequenceRewriteRule` detects temp-variable swaps.
+
+All phase 10 rules remain `safe_apply=False` pending explicit round-trip apply tests.

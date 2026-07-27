@@ -52,8 +52,10 @@ CASES = (
     ),
     (
         "flatten-nested-try",
-        'raise RuntimeError("flatten_nested_try")\n',
-        "Review exception pattern for flatten-nested-try",
+        "try:\n    try:\n        risky()\n"
+        "    except ValueError:\n        recover()\n"
+        "except OSError:\n    reset()\n",
+        "except OSError",
     ),
     (
         "flip-comparison",

@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from refactor.rules.native.stmt_base import ClassFunctionFirstArgRule
 
 
-class InstanceMethodFirstArgNameRule(PatternNativeRule):
+class InstanceMethodFirstArgNameRule(ClassFunctionFirstArgRule):
     rule_id = "instance-method-first-arg-name"
-    kind_value = "refactor"
     summary = "Instance method first arg name"
-    needle = "instance_method_first_arg_name"
-    replacement = "Review method extraction pattern for instance-method-first-arg-name"
+    message = "Name instance method first argument self"
+    expected_arg_name = "self"

@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "break-or-continue-outside-loop",
-        "for break_or_continue_outside_loop in items:\n    continue\n",
-        "Review loop pattern for break-or-continue-outside-loop",
+        "break\n",
+        "",
     ),
     (
         "chain-compares",
@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "class-method-first-arg-name",
-        "class Example:\n    def class_method_first_arg_name(self):\n        return 1\n",
-        "Review method extraction pattern for class-method-first-arg-name",
+        "class Example:\n    @classmethod\n    def build(self):\n        return self()\n",
+        "def build(cls)",
     ),
     (
         "collection-builtin-to-comprehension",

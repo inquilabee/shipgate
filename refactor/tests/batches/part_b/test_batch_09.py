@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "remove-redundant-except-handler",
-        'raise RuntimeError("remove_redundant_except_handler")\n',
-        "Review exception pattern for remove-redundant-except-handler",
+        "try:\n    risky()\nexcept ValueError:\n    raise\n",
+        "risky()",
     ),
 )
 

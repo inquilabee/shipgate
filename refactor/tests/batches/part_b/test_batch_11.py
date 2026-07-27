@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "return-or-yield-outside-function",
-        "return_or_yield_outside_function = 1\n",
-        "Review Sourcery pattern for return-or-yield-outside-function",
+        "return value\n",
+        "",
     ),
     (
         "set-comprehension",

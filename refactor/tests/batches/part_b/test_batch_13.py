@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "swap-variable",
-        "swap_variable = 1\n",
-        "Review Sourcery pattern for swap-variable",
+        "temp = left\nleft = right\nright = temp\n",
+        "left, right = right, left",
     ),
     (
         "switch",

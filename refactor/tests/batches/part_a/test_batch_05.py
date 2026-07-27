@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "instance-method-first-arg-name",
-        "class Example:\n    def instance_method_first_arg_name(self):\n        return 1\n",
-        "Review method extraction pattern for instance-method-first-arg-name",
+        "class Example:\n    def run(this):\n        return this.value\n",
+        "def run(self)",
     ),
     (
         "introduce-default-else",

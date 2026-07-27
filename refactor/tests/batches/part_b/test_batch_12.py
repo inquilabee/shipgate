@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "split-or-ifs",
-        "if split_or_ifs:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for split-or-ifs",
+        "if left or right:\n    run()\n",
+        "if right",
     ),
     (
         "str-prefix-suffix",

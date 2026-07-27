@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import BinaryOpRewriteRule
 
 
-class ReplaceInterpolationWithFstringRule(PatternNativeRule):
+class ReplaceInterpolationWithFstringRule(BinaryOpRewriteRule):
     rule_id = "replace-interpolation-with-fstring"
-    kind_value = "refactor"
     summary = "Replace interpolation with fstring"
-    needle = "replace_interpolation_with_fstring"
-    replacement = "Review string pattern for replace-interpolation-with-fstring"
+    message = "Use an f-string instead of percent interpolation"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.BinaryOperation) or not isinstance(node.operator, cst.Modulo):
+            return None
+        if not isinstance(node.left, cst.SimpleString) or node.left.evaluated_value != "%s":
+            return None
+        return cst.FormattedString(
+            parts=[cst.FormattedStringExpression(expression=node.right)],
+        )

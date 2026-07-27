@@ -9,13 +9,11 @@ import libcst as cst
 from refactor.cst_util import (
     HitCollector,
     ModuleAndIndentedBlockCollector,
-    detect_with_visitor,
-    noop_apply,
     small_stmt_replacement_hit,
     stmt_replacement_hit,
     stmts_replacement_hit,
 )
-from refactor.protocol import RuleKind
+from refactor.rules.native.expr_base import SuggestOnlyExprRule
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -24,21 +22,8 @@ if TYPE_CHECKING:
     from refactor.protocol import Hit
 
 
-class StatementRewriteRule:
+class StatementRewriteRule(SuggestOnlyExprRule):
     """Base: suggest replacement for matching statements, never auto-apply."""
-
-    rule_id: str
-    summary: str
-    message: str
-    kind = RuleKind.REFACTOR
-    safe_apply = False
-
-    def detect(self, source: str, path: str) -> list[Hit]:
-        return detect_with_visitor(source, path, self.finder_type())
-
-    def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
 
     @classmethod
     def match_stmt(
@@ -52,7 +37,7 @@ class StatementRewriteRule:
         raise NotImplementedError
 
     @classmethod
-    def hit_for(
+    def stmt_hit_for(
         cls,
         node: cst.CSTNode,
         replacement: cst.BaseStatement | Sequence[cst.BaseStatement],
@@ -75,7 +60,7 @@ def stmt_finder_type(
         replacement = rule.match_stmt(node)
         if replacement is None:
             return True
-        self.hits.append(rule.hit_for(node, replacement, self.path))
+        self.hits.append(rule.stmt_hit_for(node, replacement, self.path))
         return True
 
     finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
@@ -129,7 +114,7 @@ class SimpleStatementLineRewriteRule(StatementRewriteRule):
         return None if replacement is None else node.with_changes(body=[replacement])
 
     @classmethod
-    def hit_for(
+    def stmt_hit_for(
         cls,
         node: cst.CSTNode,
         replacement: cst.BaseStatement | Sequence[cst.BaseStatement],
@@ -146,7 +131,7 @@ class SimpleStatementLineRewriteRule(StatementRewriteRule):
                 before_stmt=node.body[0],
                 after_stmt=replacement.body[0],
             )
-        return super().hit_for(node, replacement, path)
+        return super().stmt_hit_for(node, replacement, path)
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
@@ -190,6 +175,75 @@ class BodySequenceRewriteRule(StatementRewriteRule):
                         after_stmts=cast("Sequence[BodyStatement]", after),
                     ),
                 )
+
+        Finder.__name__ = f"{cls.__name__}Finder"
+        Finder.__qualname__ = Finder.__name__
+        return Finder
+
+
+class ClassFunctionFirstArgRule(StatementRewriteRule):
+    """Suggest renaming a method's first parameter inside classes."""
+
+    expected_arg_name: str
+    required_decorator: str | None = None
+    forbidden_decorators = frozenset({"staticmethod", "classmethod"})
+
+    @classmethod
+    def match_function(cls, node: cst.FunctionDef) -> cst.FunctionDef | None:
+        decorators = {cls.decorator_name(decorator) for decorator in node.decorators}
+        if cls.required_decorator is not None and cls.required_decorator not in decorators:
+            return None
+        if cls.required_decorator is None and decorators & cls.forbidden_decorators:
+            return None
+        if not node.params.params:
+            return None
+        first_param = node.params.params[0]
+        if first_param.name.value == cls.expected_arg_name:
+            return None
+        return node.with_changes(
+            params=node.params.with_changes(
+                params=[
+                    first_param.with_changes(name=cst.Name(cls.expected_arg_name)),
+                    *node.params.params[1:],
+                ],
+            ),
+        )
+
+    @staticmethod
+    def decorator_name(decorator: cst.Decorator) -> str | None:
+        expression = decorator.decorator
+        if isinstance(expression, cst.Name):
+            return expression.value
+        if isinstance(expression, cst.Attribute):
+            return expression.attr.value
+        return None
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        rule = cls
+
+        class Finder(HitCollector):
+            def __init__(self, *, path: str) -> None:
+                super().__init__(path=path)
+                self.class_depth = 0
+
+            def visit_ClassDef(self, node: cst.ClassDef) -> bool:  # ruff:ignore[invalid-function-name]
+                _ = node
+                self.class_depth += 1
+                return True
+
+            def leave_ClassDef(self, original_node: cst.ClassDef) -> None:  # ruff:ignore[invalid-function-name]
+                _ = original_node
+                self.class_depth -= 1
+
+            def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:  # ruff:ignore[invalid-function-name]
+                if self.class_depth == 0:
+                    return True
+                replacement = rule.match_function(node)
+                if replacement is None:
+                    return True
+                self.hits.append(rule.stmt_hit_for(node, replacement, self.path))
+                return True
 
         Finder.__name__ = f"{cls.__name__}Finder"
         Finder.__qualname__ = Finder.__name__
