@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "dict-assign-update-to-union",
-        'data = {"dict_assign_update_to_union": 1}\n',
-        "Review dictionary pattern for dict-assign-update-to-union",
+        "data.update(other)\n",
+        "data |= other",
     ),
     (
         "dict-comprehension",

@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "use-contextlib-suppress",
-        "use_contextlib_suppress = 1\n",
-        "Review Sourcery pattern for use-contextlib-suppress",
+        "try:\n    risky()\nexcept ValueError:\n    pass\n",
+        "with suppress(ValueError):",
     ),
     (
         "use-count",

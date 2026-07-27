@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "simplify-dictionary-update",
-        'data = {"simplify_dictionary_update": 1}\n',
-        "Review dictionary pattern for simplify-dictionary-update",
+        "data.update(other)\n",
+        "data |= other",
     ),
     (
         "simplify-empty-collection-comparison",

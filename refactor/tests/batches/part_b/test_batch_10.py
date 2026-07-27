@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "remove-redundant-exception",
-        'raise RuntimeError("remove_redundant_exception")\n',
-        "Review exception pattern for remove-redundant-exception",
+        'raise RuntimeError("problem") from None\n',
+        'raise RuntimeError("problem")',
     ),
     (
         "remove-redundant-if",
@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "remove-unused-enumerate",
-        "remove_unused_enumerate = 1\n",
-        "Review Sourcery pattern for remove-unused-enumerate",
+        "for _, item in enumerate(items):\n    process(item)\n",
+        "for item in items",
     ),
     (
         "replace-apply-with-method-call",
@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "replace-dict-items-with-values",
-        'data = {"replace_dict_items_with_values": 1}\n',
-        "Review dictionary pattern for replace-dict-items-with-values",
+        "for _, value in data.items():\n    consume(value)\n",
+        "for value in data.values()",
     ),
     (
         "replace-interpolation-with-fstring",

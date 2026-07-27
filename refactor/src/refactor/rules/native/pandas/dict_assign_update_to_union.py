@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import (
+    SimpleStatementLineRewriteRule,
+    dict_update_to_union_stmt,
+)
 
 
-class DictAssignUpdateToUnionRule(PatternNativeRule):
+class DictAssignUpdateToUnionRule(SimpleStatementLineRewriteRule):
     rule_id = "dict-assign-update-to-union"
-    kind_value = "refactor"
     summary = "Dict assign update to union"
-    needle = "dict_assign_update_to_union"
-    replacement = "Review dictionary pattern for dict-assign-update-to-union"
+    message = "Use dictionary union assignment instead of update"
+
+    @classmethod
+    def match_small_stmt(cls, node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
+        return dict_update_to_union_stmt(node)

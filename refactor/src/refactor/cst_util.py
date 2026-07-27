@@ -160,6 +160,23 @@ def stmt_replacement_hit(
     )
 
 
+def small_stmt_replacement_hit(
+    *,
+    rule_id: str,
+    message: str,
+    path: str,
+    before_stmt: cst.BaseSmallStatement,
+    after_stmt: cst.BaseSmallStatement,
+) -> Hit:
+    return make_hit(
+        rule_id=rule_id,
+        message=message,
+        path=path,
+        before=code_for_small_stmt(before_stmt),
+        after=code_for_small_stmt(after_stmt),
+    )
+
+
 def expr_replacement_hit(
     *,
     rule_id: str,

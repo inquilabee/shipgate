@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "raise-specific-error",
-        'raise RuntimeError("raise_specific_error")\n',
-        "Review exception pattern for raise-specific-error",
+        'raise Exception("problem")\n',
+        'RuntimeError("problem")',
     ),
     (
         "reintroduce-else",

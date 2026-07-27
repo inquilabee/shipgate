@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "merge-assign-and-aug-assign",
-        "merge_assign_and_aug_assign = 1\n",
-        "Review Sourcery pattern for merge-assign-and-aug-assign",
+        "count = count + step\n",
+        "count += step",
     ),
     (
         "merge-comparisons",

@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "use-dictionary-union",
-        'data = {"use_dictionary_union": 1}\n',
-        "Review dictionary pattern for use-dictionary-union",
+        "merged = dict(left, **right)\n",
+        "left | right",
     ),
     (
         "use-file-iterator",

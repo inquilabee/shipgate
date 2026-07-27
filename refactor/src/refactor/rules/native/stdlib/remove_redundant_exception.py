@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.cst_util import is_none_name
+from refactor.rules.native.expr_base import SimpleStatementLineRewriteRule
 
 
-class RemoveRedundantExceptionRule(PatternNativeRule):
+class RemoveRedundantExceptionRule(SimpleStatementLineRewriteRule):
     rule_id = "remove-redundant-exception"
-    kind_value = "refactor"
     summary = "Remove redundant exception"
-    needle = "remove_redundant_exception"
-    replacement = "Review exception pattern for remove-redundant-exception"
+    message = "Remove redundant explicit exception cause"
+
+    @classmethod
+    def match_small_stmt(cls, node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
+        if not isinstance(node, cst.Raise):
+            return None
+        if node.cause is None or not is_none_name(node.cause.item):
+            return None
+        return node.with_changes(cause=None)

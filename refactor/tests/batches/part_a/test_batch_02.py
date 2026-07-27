@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "aware-datetime-for-utc",
-        "for aware_datetime_for_utc in items:\n    continue\n",
-        "Review loop pattern for aware-datetime-for-utc",
+        "stamp = datetime.utcnow()\n",
+        "datetime.now(UTC)",
     ),
     (
         "break-or-continue-outside-loop",

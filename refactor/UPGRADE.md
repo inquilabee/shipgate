@@ -150,3 +150,20 @@ statement replacement helpers.
 - `hoist-statement-from-if`: `IfRewriteRule` detects identical trailing branch statements.
 
 All phase 7 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 8
+
+Upgrade ten call, loop, small-statement, and try stubs to suggest-only libcst matchers.
+
+- `aware-datetime-for-utc`: `CallRewriteRule` detects `datetime.utcnow()`.
+- `remove-unused-enumerate`: `ForRewriteRule` detects unused enumerate indexes.
+- `replace-dict-items-with-values`: `ForRewriteRule` detects unused keys from `.items()`.
+- `merge-assign-and-aug-assign`: `SimpleStatementLineRewriteRule` detects self-updates.
+- `dict-assign-update-to-union`: shared small-statement matcher detects `.update(...)`.
+- `simplify-dictionary-update`: reuses the dictionary union assignment matcher.
+- `use-dictionary-union`: `CallRewriteRule` detects `dict(left, **right)`.
+- `raise-specific-error`: `SimpleStatementLineRewriteRule` detects `raise Exception`.
+- `remove-redundant-exception`: `SimpleStatementLineRewriteRule` detects `raise ... from None`.
+- `use-contextlib-suppress`: `TryRewriteRule` detects try/except-pass blocks.
+
+All phase 8 rules remain `safe_apply=False` pending explicit round-trip apply tests.

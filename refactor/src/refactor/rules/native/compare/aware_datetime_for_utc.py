@@ -2,12 +2,27 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import CallRewriteRule
 
 
-class AwareDatetimeForUtcRule(PatternNativeRule):
+class AwareDatetimeForUtcRule(CallRewriteRule):
     rule_id = "aware-datetime-for-utc"
-    kind_value = "suggestion"
     summary = "Aware datetime for utc"
-    needle = "aware_datetime_for_utc"
-    replacement = "Review loop pattern for aware-datetime-for-utc"
+    message = "Use an aware UTC datetime"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call) or node.args:
+            return None
+        if not isinstance(node.func, cst.Attribute):
+            return None
+        if not isinstance(node.func.value, cst.Name) or node.func.value.value != "datetime":
+            return None
+        if node.func.attr.value != "utcnow":
+            return None
+        return node.with_changes(
+            func=node.func.with_changes(attr=cst.Name("now")),
+            args=[cst.Arg(value=cst.Name("UTC"))],
+        )

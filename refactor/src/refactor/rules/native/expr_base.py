@@ -13,6 +13,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     expr_replacement_hit,
     noop_apply,
+    small_stmt_replacement_hit,
     stmt_replacement_hit,
 )
 from refactor.protocol import RuleKind
@@ -159,6 +160,53 @@ class WhileRewriteRule(StatementRewriteRule):
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
         return stmt_finder_type(cls, "visit_While")
+
+
+class TryRewriteRule(StatementRewriteRule):
+    """Rewrite matching ``cst.Try`` statements."""
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        return stmt_finder_type(cls, "visit_Try")
+
+
+class SimpleStatementLineRewriteRule(StatementRewriteRule):
+    """Rewrite matching single-small-statement lines."""
+
+    @classmethod
+    def match_small_stmt(cls, node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
+        raise NotImplementedError
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        if not isinstance(node, cst.SimpleStatementLine) or len(node.body) != 1:
+            return None
+        replacement = cls.match_small_stmt(node.body[0])
+        return None if replacement is None else node.with_changes(body=[replacement])
+
+    @classmethod
+    def hit_for(
+        cls,
+        node: cst.CSTNode,
+        replacement: cst.BaseStatement | Sequence[cst.BaseStatement],
+        path: str,
+    ) -> Hit:
+        if isinstance(node, cst.SimpleStatementLine) and isinstance(
+            replacement,
+            cst.SimpleStatementLine,
+        ):
+            return small_stmt_replacement_hit(
+                rule_id=cls.rule_id,
+                message=cls.message,
+                path=path,
+                before_stmt=node.body[0],
+                after_stmt=replacement.body[0],
+            )
+        return super().hit_for(node, replacement, path)
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        return stmt_finder_type(cls, "visit_SimpleStatementLine")
 
 
 class CallRewriteRule(SuggestOnlyExprRule):
@@ -368,6 +416,23 @@ def merge_nested_if(node: cst.CSTNode) -> cst.BaseStatement | None:
         test=cst.BooleanOperation(left=node.test, operator=cst.And(), right=inner.test),
         body=inner.body,
         orelse=inner.orelse,
+    )
+
+
+def dict_update_to_union_stmt(node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
+    if not isinstance(node, cst.Expr) or not isinstance(node.value, cst.Call):
+        return None
+    call = node.value
+    if len(call.args) != 1 or call.args[0].keyword is not None:
+        return None
+    if not isinstance(call.func, cst.Attribute) or call.func.attr.value != "update":
+        return None
+    if not isinstance(call.func.value, cst.Name | cst.Attribute | cst.Subscript):
+        return None
+    return cst.AugAssign(
+        target=cast("cst.BaseAssignTargetExpression", call.func.value),
+        operator=cst.BitOrAssign(),
+        value=call.args[0].value,
     )
 
 
