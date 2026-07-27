@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from dataclasses import replace
 from pathlib import PurePath
 from typing import TypeAlias, cast
 
 import libcst as cst
+from libcst.metadata import MetadataWrapper, PositionProvider
 
 from refactor.protocol import Hit, Location, Suggestion
 
@@ -21,9 +23,28 @@ BodyChecker = Callable[
 class HitCollector(cst.CSTVisitor):
     """Visitor that accumulates refactor hits for a source file."""
 
+    METADATA_DEPENDENCIES = (PositionProvider,)
+
     def __init__(self, *, path: str) -> None:
         self.path = path
         self.hits: list[Hit] = []
+
+    def record_hit(self, hit: Hit, node: cst.CSTNode) -> None:
+        self.hits.append(self.with_location(hit, node))
+
+    def with_location(self, hit: Hit, node: cst.CSTNode) -> Hit:
+        try:
+            position = self.get_metadata(PositionProvider, node)
+        except KeyError:
+            return hit
+        return replace(
+            hit,
+            location=Location(
+                path=hit.location.path,
+                line=position.start.line,
+                column=position.start.column,
+            ),
+        )
 
 
 def detect_with_visitor(
@@ -33,7 +54,7 @@ def detect_with_visitor(
 ) -> list[Hit]:
     module = cst.parse_module(source)
     finder = visitor_cls(path=path)
-    module.visit(finder)
+    MetadataWrapper(module, unsafe_skip_copy=True).visit(finder)
     return finder.hits
 
 

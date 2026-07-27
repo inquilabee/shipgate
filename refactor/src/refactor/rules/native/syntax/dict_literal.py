@@ -50,7 +50,7 @@ class DictLiteralRule:
         def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]
             if not is_empty_call(node, "dict"):
                 return True
-            self.hits.append(DictLiteralRule.hit_for(node, self.path))
+            self.record_hit(DictLiteralRule.hit_for(node, self.path), node)
             return True
 
     @staticmethod

@@ -2,15 +2,34 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+import pathspec
 
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
 
     from refactor.protocol import Hit, RefactorRule
+
+IGNORED_DIR_NAMES = frozenset(
+    {
+        "__pycache__",
+        ".git",
+        ".hg",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".shipgate",
+        ".tox",
+        ".venv",
+        "node_modules",
+        "venv",
+    }
+)
 
 
 def iter_python_files(paths: Sequence[Path]) -> list[Path]:
@@ -26,9 +45,48 @@ def collect_python(path: Path) -> list[Path]:
         return [resolved]
     if not resolved.is_dir():
         return []
-    return sorted(
-        candidate for candidate in resolved.rglob("*.py") if "__pycache__" not in candidate.parts
+    ignore_spec = load_gitignore(resolved)
+    files: list[Path] = []
+    for current_root, dirnames, filenames in os.walk(resolved):
+        current_path = Path(current_root)
+        dirnames[:] = [
+            dirname
+            for dirname in sorted(dirnames)
+            if not should_ignore_path(current_path / dirname, resolved, ignore_spec, is_dir=True)
+        ]
+        for filename in sorted(filenames):
+            candidate = current_path / filename
+            if candidate.suffix != ".py":
+                continue
+            if should_ignore_path(candidate, resolved, ignore_spec, is_dir=False):
+                continue
+            files.append(candidate.resolve())
+    return files
+
+
+def load_gitignore(root: Path) -> pathspec.PathSpec:
+    ignore_path = root / ".gitignore"
+    if not ignore_path.is_file():
+        return pathspec.PathSpec.from_lines("gitignore", [])
+    return pathspec.PathSpec.from_lines(
+        "gitignore",
+        ignore_path.read_text(encoding="utf-8").splitlines(),
     )
+
+
+def should_ignore_path(
+    path: Path,
+    root: Path,
+    ignore_spec: pathspec.PathSpec,
+    *,
+    is_dir: bool,
+) -> bool:
+    if path.name in IGNORED_DIR_NAMES:
+        return True
+    relative = path.relative_to(root).as_posix()
+    if is_dir:
+        relative = f"{relative}/"
+    return ignore_spec.match_file(relative)
 
 
 def check_paths(

@@ -39,7 +39,7 @@ def cmd_list() -> int:
     for rule in RULES:
         inventory_status = status_by_id.get(rule.rule_id, "unknown")
         delegates = getattr(rule, "delegates_to", None)
-        suffix = f" delegates_to={delegates}" if delegates else ""
+        suffix = f" bridge=inactive delegates_to={delegates}" if delegates else ""
         print(
             f"{rule.rule_id}\t{rule.kind.value}\t"
             f"inventory={inventory_status}\tsafe_apply={rule.safe_apply}{suffix}"

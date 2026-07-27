@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from refactor.cli import main
 from refactor.protocol import Hit, Location, RuleKind
 from refactor.registry import RULES
-from refactor.runner import apply_safe_rule, check_paths, fix_paths
+from refactor.runner import apply_safe_rule, check_paths, fix_paths, iter_python_files
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -29,6 +29,33 @@ def test_check_paths_finds_default_get(tmp_path: Path) -> None:
     src.write_text(BEFORE, encoding="utf-8")
     hits = check_paths([tmp_path])
     assert any(h.rule_id == "default-get" for h in hits)
+
+
+def test_check_paths_populates_hit_location(tmp_path: Path) -> None:
+    src = tmp_path / "sample.py"
+    src.write_text(BEFORE, encoding="utf-8")
+    hit = next(h for h in check_paths([tmp_path]) if h.rule_id == "default-get")
+    assert hit.location.line == 2
+    assert hit.location.column is not None
+
+
+def test_iter_python_files_skips_gitignored_and_tool_dirs(tmp_path: Path) -> None:
+    (tmp_path / ".gitignore").write_text("ignored.py\nignored_dir/\n", encoding="utf-8")
+    visible = tmp_path / "visible.py"
+    ignored_file = tmp_path / "ignored.py"
+    ignored_dir = tmp_path / "ignored_dir"
+    venv_dir = tmp_path / ".venv"
+    shipgate_tools_dir = tmp_path / ".shipgate" / "tools"
+    ignored_dir.mkdir()
+    venv_dir.mkdir()
+    shipgate_tools_dir.mkdir(parents=True)
+    visible.write_text("x = 1\n", encoding="utf-8")
+    ignored_file.write_text("x = 1\n", encoding="utf-8")
+    (ignored_dir / "nested.py").write_text("x = 1\n", encoding="utf-8")
+    (venv_dir / "site.py").write_text("x = 1\n", encoding="utf-8")
+    (shipgate_tools_dir / "tool.py").write_text("x = 1\n", encoding="utf-8")
+
+    assert iter_python_files([tmp_path]) == [visible]
 
 
 def test_fix_paths_rewrites_safe_rules(tmp_path: Path) -> None:
@@ -73,6 +100,7 @@ def test_cli_list_includes_default_get(capsys) -> None:
     assert code == 0
     assert "default-get" in out
     assert "list-literal" in out
+    assert "bridge=inactive delegates_to=" in out
 
 
 def test_cli_check_exit_code(tmp_path: Path) -> None:

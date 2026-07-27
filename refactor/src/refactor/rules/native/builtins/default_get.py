@@ -60,7 +60,7 @@ class DefaultGetRule:
             parts = DefaultGetRule.match_parts(node)
             if parts is None:
                 return True
-            self.hits.append(DefaultGetRule.hit_for(parts, node, self.path))
+            self.record_hit(DefaultGetRule.hit_for(parts, node, self.path), node)
             return True
 
     @staticmethod

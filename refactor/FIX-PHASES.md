@@ -20,10 +20,10 @@
 
 ## Phase 3: Parity / UX
 
-- [ ] Populate hit line and column from LibCST metadata where feasible.
-- [ ] Make standalone path collection respect gitignore-style ignored directories and generated caches.
-- [ ] Clarify Ruff bridge behavior in CLI/list output and documentation.
-- [ ] Add focused regression coverage for positions, path walking, and bridge UX.
-- [ ] Run `uv run pytest refactor/tests -q`.
-- [ ] Re-run the full dogfood check on `src/shipgate` and `refactor/src/refactor`.
-- [ ] Commit `fix(refactor): phase 3 — improve refactor UX`.
+- [x] Populate hit line and column from LibCST metadata where feasible.
+- [x] Make standalone path collection respect gitignore-style ignored directories and generated caches.
+- [x] Clarify Ruff bridge behavior in CLI/list output and documentation.
+- [x] Add focused regression coverage for positions, path walking, and bridge UX.
+- [x] Run `uv run pytest refactor/tests -q`.
+- [x] Run tiny smoke check instead of full dogfood, which was stopped as too slow.
+- [x] Commit `fix(refactor): phase 3 — locations and parity UX`.

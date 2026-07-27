@@ -20,6 +20,10 @@ Sourcery rule IDs and parity status live in `refactor/inventory/sourcery_ids.yam
 Load them with `refactor.inventory.load_inventory()` (used by inventory tests and
 future parity tracking).
 
+Ruff bridge rules are listed as `bridge=inactive delegates_to=<RUFF_CODE>` by
+`refactor list`. They document parity ownership but `refactor check` does not execute
+Ruff or normalize Ruff diagnostics yet, so bridge rules do not emit standalone hits.
+
 ## Add a rule
 
 1. Create `refactor/src/refactor/rules/native/your_rule.py` (or `rules/bridge/`).

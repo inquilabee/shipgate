@@ -61,7 +61,7 @@ def stmt_finder_type(
         replacement = rule.match_stmt(node)
         if replacement is None:
             return True
-        self.hits.append(rule.stmt_hit_for(node, replacement, self.path))
+        self.record_hit(rule.stmt_hit_for(node, replacement, self.path), node)
         return True
 
     finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
@@ -329,7 +329,7 @@ class ClassFunctionFirstArgRule(StatementRewriteRule):
                 replacement = rule.match_function(node)
                 if replacement is None:
                     return True
-                self.hits.append(rule.stmt_hit_for(node, replacement, self.path))
+                self.record_hit(rule.stmt_hit_for(node, replacement, self.path), node)
                 return True
 
         Finder.__name__ = f"{cls.__name__}Finder"
