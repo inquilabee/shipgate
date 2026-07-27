@@ -2,12 +2,26 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import FormattedStringRewriteRule
 
 
-class SimplifyFstringFormattingRule(PatternNativeRule):
+class SimplifyFstringFormattingRule(FormattedStringRewriteRule):
     rule_id = "simplify-fstring-formatting"
-    kind_value = "refactor"
     summary = "Simplify fstring formatting"
-    needle = "simplify_fstring_formatting"
-    replacement = "Review string pattern for simplify-fstring-formatting"
+    message = "Remove redundant !s conversion from f-string interpolation"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.FormattedString):
+            return None
+        parts = []
+        changed = False
+        for part in node.parts:
+            if isinstance(part, cst.FormattedStringExpression) and part.conversion == "s":
+                parts.append(part.with_changes(conversion=None))
+                changed = True
+            else:
+                parts.append(part)
+        return node.with_changes(parts=parts) if changed else None

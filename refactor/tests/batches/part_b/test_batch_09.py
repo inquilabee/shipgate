@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "remove-empty-nested-block",
-        "remove_empty_nested_block = 1\n",
-        "Review Sourcery pattern for remove-empty-nested-block",
+        "if ready:\n    if unused:\n        pass\n",
+        "",
     ),
     (
         "remove-none-from-default-get",
@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "remove-pass-body",
-        "remove_pass_body = 1\n",
-        "Review Sourcery pattern for remove-pass-body",
+        "if ready:\n    pass\n",
+        "",
     ),
     (
         "remove-pass-elif",
@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "remove-redundant-continue",
-        "for remove_redundant_continue in items:\n    continue\n",
-        "Review loop pattern for remove-redundant-continue",
+        "for item in items:\n    process(item)\n    continue\n",
+        "process(item)",
     ),
     (
         "remove-redundant-except-handler",

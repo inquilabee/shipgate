@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "simplify-single-exception-tuple",
-        'raise RuntimeError("simplify_single_exception_tuple")\n',
-        "Review exception pattern for simplify-single-exception-tuple",
+        "try:\n    risky()\nexcept (ValueError,):\n    recover()\n",
+        "ValueError",
     ),
     (
         "simplify-string-len-comparison",

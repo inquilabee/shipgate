@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "use-any",
-        "use_any = 1\n",
-        "Review Sourcery pattern for use-any",
+        "matched = bool([item.ready for item in items])\n",
+        "any(item.ready for item in items)",
     ),
     (
         "use-assigned-variable",

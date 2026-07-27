@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "dict-comprehension",
-        'data = {"dict_comprehension": 1}\n',
-        "Review dictionary pattern for dict-comprehension",
+        "mapping = dict((key, value) for key, value in pairs)\n",
+        "{key: value for key, value in pairs}",
     ),
     (
         "dont-import-test-modules",

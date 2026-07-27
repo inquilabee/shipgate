@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "use-join",
-        'value = "use_join"\n',
-        "Review string pattern for use-join",
+        "value = first + middle + last\n",
+        '"".join([first, middle, last])',
     ),
     (
         "use-named-expression",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "use-string-remove-affix",
-        'value = "use_string_remove_affix"\n',
-        "Review string pattern for use-string-remove-affix",
+        "value = text[len(prefix):]\n",
+        "text.removeprefix(prefix)",
     ),
 )
 

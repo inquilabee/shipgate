@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from refactor.rules.native.exceptions.collection_builtin_to_comprehension import (
+    CollectionBuiltinToComprehensionRule,
+)
 
 
-class DictComprehensionRule(PatternNativeRule):
+class DictComprehensionRule(CollectionBuiltinToComprehensionRule):
     rule_id = "dict-comprehension"
-    kind_value = "refactor"
     summary = "Dict comprehension"
-    needle = "dict_comprehension"
-    replacement = "Review dictionary pattern for dict-comprehension"
+    message = "Use a dict comprehension instead of dict() around a generator"

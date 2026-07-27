@@ -112,3 +112,21 @@ libcst matchers.
 - `swap-if-else-branches`: uses the same negated-test branch swap matcher.
 
 All phase 5 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 6
+
+Upgrade ten comprehension, string, body-cleanup, and exception stubs to suggest-only
+libcst matchers.
+
+- `dict-comprehension`: reuses the dict comprehension matcher.
+- `simplify-generator`: reuses the list-comprehension-to-generator matcher.
+- `use-any`: `CallRewriteRule` detects `bool([expr for ...])`.
+- `use-string-remove-affix`: `SubscriptRewriteRule` detects affix-removal slices.
+- `simplify-fstring-formatting`: `FormattedStringRewriteRule` removes redundant `!s`.
+- `use-join`: `BinaryOpRewriteRule` detects simple string concatenation chains.
+- `remove-pass-body`: `BodyCleanupRule` detects pass-only bodies.
+- `remove-empty-nested-block`: `BodyCleanupRule` detects pass-only nested blocks.
+- `remove-redundant-continue`: `BodyCleanupRule` detects trailing `continue`.
+- `simplify-single-exception-tuple`: custom visitor detects one-item exception tuples.
+
+All phase 6 rules remain `safe_apply=False` pending explicit round-trip apply tests.

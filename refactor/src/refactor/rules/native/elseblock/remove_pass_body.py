@@ -2,12 +2,34 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING
+
+import libcst as cst
+
+from refactor.rules.native.expr_base import BodyCleanupRule
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from refactor.cst_util import BodyStatement
 
 
-class RemovePassBodyRule(PatternNativeRule):
+class RemovePassBodyRule(BodyCleanupRule):
     rule_id = "remove-pass-body"
-    kind_value = "refactor"
     summary = "Remove pass body"
-    needle = "remove_pass_body"
-    replacement = "Review Sourcery pattern for remove-pass-body"
+    message = "Remove a pass-only body"
+
+    @classmethod
+    def match_body(
+        cls,
+        body: Sequence[cst.BaseStatement],
+    ) -> tuple[cst.BaseStatement, Sequence[BodyStatement]] | None:
+        return (body[0], []) if len(body) == 1 and cls.is_pass_stmt(body[0]) else None
+
+    @staticmethod
+    def is_pass_stmt(stmt: cst.BaseStatement) -> bool:
+        return (
+            isinstance(stmt, cst.SimpleStatementLine)
+            and len(stmt.body) == 1
+            and isinstance(stmt.body[0], cst.Pass)
+        )

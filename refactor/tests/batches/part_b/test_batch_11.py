@@ -42,13 +42,13 @@ CASES = (
     ),
     (
         "simplify-fstring-formatting",
-        'value = "simplify_fstring_formatting"\n',
-        "Review string pattern for simplify-fstring-formatting",
+        'value = f"{name!s}"\n',
+        'f"{name}"',
     ),
     (
         "simplify-generator",
-        "if simplify_generator:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for simplify-generator",
+        "matched = all([item.ready for item in items])\n",
+        "all(item.ready for item in items)",
     ),
     (
         "simplify-len-comparison",
