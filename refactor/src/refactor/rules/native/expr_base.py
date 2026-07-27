@@ -303,6 +303,29 @@ def or_fallback_if_exp(node: cst.CSTNode) -> cst.BaseExpression | None:
     )
 
 
+def invert_any_all_call(node: cst.CSTNode) -> cst.BaseExpression | None:
+    if not isinstance(node, cst.UnaryOperation) or not isinstance(node.operator, cst.Not):
+        return None
+    if not isinstance(node.expression, cst.Call):
+        return None
+    call = node.expression
+    if not isinstance(call.func, cst.Name) or call.func.value not in {"any", "all"}:
+        return None
+    if len(call.args) != 1 or call.args[0].keyword is not None:
+        return None
+    generator = call.args[0].value
+    if not isinstance(generator, cst.GeneratorExp):
+        return None
+    inverted_name = "all" if call.func.value == "any" else "any"
+    inverted_generator = generator.with_changes(
+        elt=cst.UnaryOperation(operator=cst.Not(), expression=generator.elt),
+    )
+    return call.with_changes(
+        func=cst.Name(inverted_name),
+        args=[cst.Arg(value=inverted_generator)],
+    )
+
+
 class SubscriptRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.Subscript`` nodes."""
 

@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "remove-redundant-condition",
-        "if remove_redundant_condition:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for remove-redundant-condition",
+        "result = value if condition else value\n",
+        "value",
     ),
     (
         "remove-redundant-constructor-in-dict-union",

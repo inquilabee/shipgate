@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "dataframe-append-to-concat",
-        "df.dataframe_append_to_concat()\n",
-        "Review pandas pattern for dataframe-append-to-concat",
+        "combined = frame.append(other)\n",
+        "pd.concat([frame, other])",
     ),
     (
         "del-comprehension",

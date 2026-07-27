@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfExpRewriteRule
 
 
-class RemoveRedundantConditionRule(PatternNativeRule):
+class RemoveRedundantConditionRule(IfExpRewriteRule):
     rule_id = "remove-redundant-condition"
-    kind_value = "refactor"
     summary = "Remove redundant condition"
-    needle = "remove_redundant_condition"
-    replacement = "Review conditional pattern for remove-redundant-condition"
+    message = "Remove an if-expression whose branches are identical"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        return (
+            node.body
+            if isinstance(node, cst.IfExp) and node.body.deep_equals(node.orelse)
+            else None
+        )

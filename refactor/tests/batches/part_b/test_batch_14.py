@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "use-isna",
-        "df.use_isna()\n",
-        "Review pandas pattern for use-isna",
+        "mask = series == None\n",
+        "series.isna()",
     ),
     (
         "use-itertools-product",

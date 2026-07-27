@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "pandas-avoid-inplace",
-        "df.pandas_avoid_inplace()\n",
-        "Review pandas pattern for pandas-avoid-inplace",
+        "frame.dropna(inplace=True)\n",
+        "frame.dropna()",
     ),
     (
         "raise-from-previous-error",
@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "remove-dict-items",
-        'data = {"remove_dict_items": 1}\n',
-        "Review dictionary pattern for remove-dict-items",
+        "copy = dict(data.items())\n",
+        "dict(data)",
     ),
     (
         "remove-dict-keys",

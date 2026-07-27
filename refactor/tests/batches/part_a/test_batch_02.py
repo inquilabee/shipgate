@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "convert-any-to-in",
-        "convert_any_to_in = 1\n",
-        "Review Sourcery pattern for convert-any-to-in",
+        "matched = any(item == needle for item in items)\n",
+        "needle in items",
     ),
 )
 

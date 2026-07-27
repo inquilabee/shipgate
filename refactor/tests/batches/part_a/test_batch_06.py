@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "max-min-default",
-        "max_min_default = 1\n",
-        "Review Sourcery pattern for max-min-default",
+        "largest = max(values) if values else 0\n",
+        "max(values, default = 0)",
     ),
     (
         "merge-assign-and-aug-assign",

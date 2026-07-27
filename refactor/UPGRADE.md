@@ -69,3 +69,25 @@ matchers.
 - `use-or-for-fallback`: `IfExpRewriteRule` detects `x if x else y`.
 
 All phase 3 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 4
+
+Upgrade ten call, comparison, generator, and pandas expression stubs to suggest-only
+libcst matchers.
+
+- `max-min-default`: `IfExpRewriteRule` detects `max(x) if x else default` and
+  `min(x) if x else default`.
+- `remove-redundant-condition`: `IfExpRewriteRule` detects identical if-expression
+  branches.
+- `convert-any-to-in`: `CallRewriteRule` detects `any(item == value for item in items)`.
+- `invert-any-all`: `UnaryOpRewriteRule` detects `not any(generator)` /
+  `not all(generator)`.
+- `invert-any-all-body`: `UnaryOpRewriteRule` uses the same inversion matcher.
+- `use-count`: `CallRewriteRule` detects `sum(1 for item in items if item == value)`.
+- `dataframe-append-to-concat`: `CallRewriteRule` detects `.append(other)` and suggests
+  `pd.concat([df, other])`.
+- `use-isna`: `ComparisonRewriteRule` detects pandas-style null comparisons.
+- `pandas-avoid-inplace`: `CallRewriteRule` detects explicit `inplace=True` arguments.
+- `remove-dict-items`: `CallRewriteRule` detects `dict(data.items())`.
+
+All phase 4 rules remain `safe_apply=False` pending explicit round-trip apply tests.

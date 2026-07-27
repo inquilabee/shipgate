@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "use-count",
-        "use_count = 1\n",
-        "Review Sourcery pattern for use-count",
+        "total = sum(1 for item in items if item == needle)\n",
+        "items.count(needle)",
     ),
     (
         "use-datetime-now-not-today",

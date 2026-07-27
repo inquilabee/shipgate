@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import UnaryOpRewriteRule, invert_any_all_call
 
 
-class InvertAnyAllBodyRule(PatternNativeRule):
+class InvertAnyAllBodyRule(UnaryOpRewriteRule):
     rule_id = "invert-any-all-body"
-    kind_value = "refactor"
     summary = "Invert any all body"
-    needle = "invert_any_all_body"
-    replacement = "Review Sourcery pattern for invert-any-all-body"
+    message = "Invert any()/all() body instead of negating the call"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        return invert_any_all_call(node)

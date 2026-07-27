@@ -27,13 +27,13 @@ CASES = (
     ),
     (
         "invert-any-all",
-        "invert_any_all = 1\n",
-        "Review Sourcery pattern for invert-any-all",
+        "if not any(item.ready for item in items):\n    pass\n",
+        "all(not item.ready for item in items)",
     ),
     (
         "invert-any-all-body",
-        "invert_any_all_body = 1\n",
-        "Review Sourcery pattern for invert-any-all-body",
+        "if not all(item.ready for item in items):\n    pass\n",
+        "any(not item.ready for item in items)",
     ),
     (
         "last-if-guard",
