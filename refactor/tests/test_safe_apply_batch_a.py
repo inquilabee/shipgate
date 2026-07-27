@@ -52,6 +52,18 @@ def test_safe_apply_round_trip(
     assert rule.detect(rewritten or "", "sample.py") == []
 
 
+def test_bin_op_identity_skips_multi_target_assign(
+    rules_by_id: dict[str, RefactorRule],
+) -> None:
+    rule = rules_by_id["bin-op-identity"]
+    source = "a = b = x + 0\ny = z + 0\n"
+    hits = rule.detect(source, "sample.py")
+    assert len(hits) == 1
+    rewritten = rule.apply(source, hits)
+    assert rewritten == "a = b = x + 0\ny = z\n"
+    assert rule.detect(rewritten or "", "sample.py") == []
+
+
 @pytest.mark.parametrize(
     ("rule_id", "before", "after"),
     [

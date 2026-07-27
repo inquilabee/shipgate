@@ -42,20 +42,24 @@ class BinOpIdentityRule:
             updated_node: cst.Assign,
         ) -> cst.Assign:
             _ = self, original_node
-            identity = BinOpIdentityRule.match_identity(updated_node.value)
+            identity = BinOpIdentityRule.match_identity_assign(updated_node)
             if identity is None:
                 return updated_node
             return updated_node.with_changes(value=identity)
 
     class Finder(HitCollector):
         def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
-            if len(node.targets) != 1:
-                return True
-            identity = BinOpIdentityRule.match_identity(node.value)
+            identity = BinOpIdentityRule.match_identity_assign(node)
             if identity is None:
                 return True
             self.hits.append(BinOpIdentityRule.hit_for(node, identity, self.path))
             return True
+
+    @staticmethod
+    def match_identity_assign(node: cst.Assign) -> cst.Name | None:
+        if len(node.targets) != 1:
+            return None
+        return BinOpIdentityRule.match_identity(node.value)
 
     @staticmethod
     def match_identity(node: cst.BaseExpression) -> cst.Name | None:
