@@ -8,11 +8,11 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
+    apply_with_transformer,
     detect_with_visitor,
     expr_replacement_hit,
     is_false,
     is_true,
-    noop_apply,
 )
 from refactor.protocol import RuleKind
 
@@ -26,15 +26,27 @@ class SimplifyBooleanComparisonRule:
     rule_id = "simplify-boolean-comparison"
     kind = RuleKind.REFACTOR
     summary = "Replace `x == True` with `x`"
-    safe_apply = False
+    safe_apply = True
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
         return detect_with_visitor(source, path, SimplifyBooleanComparisonRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
+        _ = self, hits
+        return apply_with_transformer(source, SimplifyBooleanComparisonRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_Comparison(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.Comparison,
+            updated_node: cst.Comparison,
+        ) -> cst.BaseExpression:
+            _ = self, original_node
+            replacement = SimplifyBooleanComparisonRule.match_boolean_compare(updated_node)
+            if replacement is None:
+                return updated_node
+            return replacement
 
     class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]

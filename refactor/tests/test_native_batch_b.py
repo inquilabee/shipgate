@@ -20,6 +20,19 @@ BATCH_B_IDS = (
     "identity-comprehension",
 )
 
+BATCH_B_SAFE_APPLY_TRUE = (
+    "none-compare",
+    "boolean-if-exp-identity",
+    "simplify-boolean-comparison",
+)
+
+BATCH_B_SAFE_APPLY_FALSE = (
+    "merge-nested-ifs",
+    "inline-immediately-returned-variable",
+    "use-next",
+    "identity-comprehension",
+)
+
 
 @pytest.fixture
 def rules_by_id() -> dict[str, RefactorRule]:
@@ -99,7 +112,16 @@ def test_simplify_boolean_comparison_detects_false(
     assert "not x" in hits[0].suggestion.after
 
 
-@pytest.mark.parametrize("rule_id", BATCH_B_IDS)
+@pytest.mark.parametrize("rule_id", BATCH_B_SAFE_APPLY_TRUE)
+def test_native_batch_b_safe_apply_true(
+    rules_by_id: dict[str, RefactorRule],
+    rule_id: str,
+) -> None:
+    rule = rules_by_id[rule_id]
+    assert rule.safe_apply is True
+
+
+@pytest.mark.parametrize("rule_id", BATCH_B_SAFE_APPLY_FALSE)
 def test_native_batch_b_safe_apply_false(
     rules_by_id: dict[str, RefactorRule],
     rule_id: str,

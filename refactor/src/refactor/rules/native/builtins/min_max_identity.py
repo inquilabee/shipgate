@@ -8,9 +8,9 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
+    apply_with_transformer,
     detect_with_visitor,
     expr_replacement_hit,
-    noop_apply,
 )
 from refactor.protocol import RuleKind
 
@@ -24,15 +24,31 @@ class MinMaxIdentityRule:
     rule_id = "min-max-identity"
     kind = RuleKind.REFACTOR
     summary = "Replace `x if x < y else y` with `min(x, y)`"
-    safe_apply = False
+    safe_apply = True
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
         return detect_with_visitor(source, path, MinMaxIdentityRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
+        _ = self, hits
+        return apply_with_transformer(source, MinMaxIdentityRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_IfExp(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.IfExp,
+            updated_node: cst.IfExp,
+        ) -> cst.BaseExpression:
+            _ = self, original_node
+            match = MinMaxIdentityRule.match_min_max(updated_node)
+            if match is None:
+                return updated_node
+            func_name, left, right = match
+            return cst.Call(
+                func=cst.Name(func_name),
+                args=[cst.Arg(value=left), cst.Arg(value=right)],
+            )
 
     class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]

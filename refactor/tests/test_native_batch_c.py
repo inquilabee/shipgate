@@ -19,14 +19,16 @@ BATCH_C_IDS = (
     "bin-op-identity",
 )
 
-BATCH_C_SAFE_APPLY_TRUE = ("bin-op-identity",)
+BATCH_C_SAFE_APPLY_TRUE = (
+    "collection-into-set",
+    "yield-from",
+    "bin-op-identity",
+)
 
 BATCH_C_SAFE_APPLY_FALSE = (
     "for-index-replacement",
-    "collection-into-set",
     "default-mutable-arg",
     "remove-unreachable-code",
-    "yield-from",
 )
 
 

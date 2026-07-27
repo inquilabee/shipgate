@@ -22,13 +22,12 @@ BATCH_A_SAFE_APPLY_TRUE = (
     "dict-literal",
     "tuple-literal",
     "remove-redundant-pass",
+    "use-len",
+    "min-max-identity",
     "aug-assign",
 )
 
-BATCH_A_SAFE_APPLY_FALSE = (
-    "use-len",
-    "min-max-identity",
-)
+BATCH_A_SAFE_APPLY_FALSE: tuple[str, ...] = ()
 
 
 @pytest.fixture

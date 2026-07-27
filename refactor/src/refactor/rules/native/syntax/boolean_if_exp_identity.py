@@ -8,11 +8,11 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
+    apply_with_transformer,
     detect_with_visitor,
     expr_replacement_hit,
     is_false,
     is_true,
-    noop_apply,
 )
 from refactor.protocol import RuleKind
 
@@ -26,15 +26,27 @@ class BooleanIfExpIdentityRule:
     rule_id = "boolean-if-exp-identity"
     kind = RuleKind.REFACTOR
     summary = "Simplify `True if cond else False` to `cond`"
-    safe_apply = False
+    safe_apply = True
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
         return detect_with_visitor(source, path, BooleanIfExpIdentityRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
+        _ = self, hits
+        return apply_with_transformer(source, BooleanIfExpIdentityRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_IfExp(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.IfExp,
+            updated_node: cst.IfExp,
+        ) -> cst.BaseExpression:
+            _ = self, original_node
+            replacement = BooleanIfExpIdentityRule.match_identity(updated_node)
+            if replacement is None:
+                return updated_node
+            return replacement
 
     class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]

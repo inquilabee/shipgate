@@ -8,9 +8,9 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
+    apply_with_transformer,
     detect_with_visitor,
     expr_replacement_hit,
-    noop_apply,
 )
 from refactor.protocol import RuleKind
 
@@ -24,15 +24,27 @@ class UseLenRule:
     rule_id = "use-len"
     kind = RuleKind.REFACTOR
     summary = "Replace `len(x) == 0` with `not x`"
-    safe_apply = False
+    safe_apply = True
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
         return detect_with_visitor(source, path, UseLenRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
+        _ = self, hits
+        return apply_with_transformer(source, UseLenRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_Comparison(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.Comparison,
+            updated_node: cst.Comparison,
+        ) -> cst.BaseExpression:
+            _ = self, original_node
+            subject = UseLenRule.len_zero_subject(updated_node)
+            if subject is None:
+                return updated_node
+            return cst.UnaryOperation(operator=cst.Not(), expression=subject)
 
     class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
