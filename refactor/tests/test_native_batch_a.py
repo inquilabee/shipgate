@@ -18,6 +18,18 @@ BATCH_A_IDS = (
     "aug-assign",
 )
 
+BATCH_A_SAFE_APPLY_TRUE = (
+    "dict-literal",
+    "tuple-literal",
+    "remove-redundant-pass",
+    "aug-assign",
+)
+
+BATCH_A_SAFE_APPLY_FALSE = (
+    "use-len",
+    "min-max-identity",
+)
+
 
 @pytest.fixture
 def rules_by_id() -> dict[str, RefactorRule]:
@@ -64,7 +76,16 @@ def test_min_max_identity_detects_max(rules_by_id: dict[str, RefactorRule]) -> N
     assert "max(a, b)" in hits[0].suggestion.after
 
 
-@pytest.mark.parametrize("rule_id", BATCH_A_IDS)
+@pytest.mark.parametrize("rule_id", BATCH_A_SAFE_APPLY_TRUE)
+def test_native_batch_a_safe_apply_true(
+    rules_by_id: dict[str, RefactorRule],
+    rule_id: str,
+) -> None:
+    rule = rules_by_id[rule_id]
+    assert rule.safe_apply is True
+
+
+@pytest.mark.parametrize("rule_id", BATCH_A_SAFE_APPLY_FALSE)
 def test_native_batch_a_safe_apply_false(
     rules_by_id: dict[str, RefactorRule],
     rule_id: str,

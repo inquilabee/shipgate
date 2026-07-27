@@ -8,10 +8,10 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
+    apply_with_transformer,
     code_for_small_stmt,
     detect_with_visitor,
     make_hit,
-    noop_apply,
 )
 from refactor.protocol import RuleKind
 
@@ -25,15 +25,27 @@ class BinOpIdentityRule:
     rule_id = "bin-op-identity"
     kind = RuleKind.REFACTOR
     summary = "Replace `x + 0` and `x * 1` with `x` for simple names"
-    safe_apply = False
+    safe_apply = True
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
         return detect_with_visitor(source, path, BinOpIdentityRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
+        _ = self, hits
+        return apply_with_transformer(source, BinOpIdentityRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_Assign(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.Assign,
+            updated_node: cst.Assign,
+        ) -> cst.Assign:
+            _ = self, original_node
+            identity = BinOpIdentityRule.match_identity(updated_node.value)
+            if identity is None:
+                return updated_node
+            return updated_node.with_changes(value=identity)
 
     class Finder(HitCollector):
         def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]

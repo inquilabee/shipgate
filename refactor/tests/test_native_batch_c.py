@@ -19,6 +19,16 @@ BATCH_C_IDS = (
     "bin-op-identity",
 )
 
+BATCH_C_SAFE_APPLY_TRUE = ("bin-op-identity",)
+
+BATCH_C_SAFE_APPLY_FALSE = (
+    "for-index-replacement",
+    "collection-into-set",
+    "default-mutable-arg",
+    "remove-unreachable-code",
+    "yield-from",
+)
+
 
 @pytest.fixture
 def rules_by_id() -> dict[str, RefactorRule]:
@@ -106,7 +116,16 @@ def test_default_mutable_arg_kind_is_suggestion(rules_by_id: dict[str, RefactorR
     assert rule.kind is RuleKind.SUGGESTION
 
 
-@pytest.mark.parametrize("rule_id", BATCH_C_IDS)
+@pytest.mark.parametrize("rule_id", BATCH_C_SAFE_APPLY_TRUE)
+def test_native_batch_c_safe_apply_true(
+    rules_by_id: dict[str, RefactorRule],
+    rule_id: str,
+) -> None:
+    rule = rules_by_id[rule_id]
+    assert rule.safe_apply is True
+
+
+@pytest.mark.parametrize("rule_id", BATCH_C_SAFE_APPLY_FALSE)
 def test_native_batch_c_safe_apply_false(
     rules_by_id: dict[str, RefactorRule],
     rule_id: str,

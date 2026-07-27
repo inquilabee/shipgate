@@ -9,9 +9,9 @@ import libcst as cst
 from refactor.cst_util import (
     BodyStatement,
     ModuleAndIndentedBlockCollector,
+    apply_with_transformer,
     body_cleanup_hit,
     detect_with_visitor,
-    noop_apply,
 )
 from refactor.protocol import RuleKind
 
@@ -25,15 +25,38 @@ class RemoveRedundantPassRule:
     rule_id = "remove-redundant-pass"
     kind = RuleKind.REFACTOR
     summary = "Remove redundant pass after other statements"
-    safe_apply = False
+    safe_apply = True
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
         return detect_with_visitor(source, path, RemoveRedundantPassRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        return noop_apply(source, hits)
+        _ = self, hits
+        return apply_with_transformer(source, RemoveRedundantPassRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_Module(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.Module,
+            updated_node: cst.Module,
+        ) -> cst.Module:
+            _ = self, original_node
+            cleaned = RemoveRedundantPassRule.body_without_redundant_passes(updated_node.body)
+            if len(cleaned) == len(updated_node.body):
+                return updated_node
+            return updated_node.with_changes(body=cleaned)
+
+        def leave_IndentedBlock(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.IndentedBlock,
+            updated_node: cst.IndentedBlock,
+        ) -> cst.IndentedBlock:
+            _ = self, original_node
+            cleaned = RemoveRedundantPassRule.body_without_redundant_passes(updated_node.body)
+            if len(cleaned) == len(updated_node.body):
+                return updated_node
+            return updated_node.with_changes(body=cleaned)
 
     class Finder(ModuleAndIndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
