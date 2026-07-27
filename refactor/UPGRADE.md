@@ -223,3 +223,22 @@ libcst matchers.
 - `hoist-statement-from-loop`: `ForRewriteRule` hoists a trailing loop statement.
 
 All phase 11 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 12
+
+Upgrade ten assignment, test-structure, loop, and dictionary stubs to suggest-only libcst
+matchers.
+
+- `dont-import-test-modules`: scoped import visitor detects imports from test modules.
+- `no-conditionals-in-tests`: `IfRewriteRule` flattens branch bodies as a test rewrite
+  suggestion.
+- `no-loop-in-tests`: `ForRewriteRule` flattens loop body statements.
+- `while-to-for`: `WhileRewriteRule` detects `i < len(items)` loops with trailing `i += 1`.
+- `use-named-expression`: `BodySequenceRewriteRule` detects assignment before `if name`.
+- `inline-variable`: `BodySequenceRewriteRule` inlines assignment immediately returned.
+- `use-assigned-variable`: reuses the immediate-return assignment matcher.
+- `del-comprehension`: `ForRewriteRule` detects `del mapping[key]` loops.
+- `missing-dict-items`: `ForRewriteRule` detects tuple unpacking over a dict object.
+- `hoist-repeated-if-condition`: merges adjacent if statements with identical tests.
+
+All phase 12 rules remain `safe_apply=False` pending explicit round-trip apply tests.

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
-from refactor.rules.native.stmt_base import ForRewriteRule
+from refactor.rules.native.stmt_base import ForRewriteRule, two_item_tuple_target
 
 
 class ForIndexUnderscoreRule(ForRewriteRule):
@@ -14,11 +14,10 @@ class ForIndexUnderscoreRule(ForRewriteRule):
 
     @classmethod
     def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
-        if not isinstance(node, cst.For):
+        target = two_item_tuple_target(node)
+        if target is None or not isinstance(node, cst.For):
             return None
-        if not isinstance(node.target, cst.Tuple) or len(node.target.elements) != 2:
-            return None
-        index, value = node.target.elements
+        index, value = target
         if not isinstance(value.value, cst.Name) or value.value.value != "_":
             return None
         if not isinstance(node.iter, cst.Call):

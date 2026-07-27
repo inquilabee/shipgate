@@ -2,12 +2,27 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING
+
+import libcst as cst
+
+from refactor.rules.native.stmt_base import (
+    BodySequenceRewriteRule,
+    merge_adjacent_ifs_with_same_test,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
-class HoistRepeatedIfConditionRule(PatternNativeRule):
+class HoistRepeatedIfConditionRule(BodySequenceRewriteRule):
     rule_id = "hoist-repeated-if-condition"
-    kind_value = "refactor"
     summary = "Hoist repeated if condition"
-    needle = "hoist_repeated_if_condition"
-    replacement = "Review conditional pattern for hoist-repeated-if-condition"
+    message = "Merge adjacent if statements with the same condition"
+
+    @classmethod
+    def match_body(
+        cls,
+        body: Sequence[cst.BaseStatement],
+    ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+        return merge_adjacent_ifs_with_same_test(body)

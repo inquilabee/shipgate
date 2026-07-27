@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "del-comprehension",
-        "del_comprehension = 1\n",
-        "Review Sourcery pattern for del-comprehension",
+        "for key in keys:\n    del data[key]\n",
+        "data.pop(key, None)",
     ),
     (
         "dict-assign-update-to-union",
@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "dont-import-test-modules",
-        "dont_import_test_modules = 1\n",
-        "Review Sourcery pattern for dont-import-test-modules",
+        "import tests.helpers\n",
+        "pass",
     ),
     (
         "equality-identity",

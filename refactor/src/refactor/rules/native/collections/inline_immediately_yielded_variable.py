@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.rules.native.stmt_base import BodySequenceRewriteRule
+from refactor.rules.native.stmt_base import BodySequenceRewriteRule, ReturnAssignedExpressionRule
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -24,7 +24,7 @@ class InlineImmediatelyYieldedVariableRule(BodySequenceRewriteRule):
     ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
         for index, assign_stmt in enumerate(body[:-1]):
             yield_stmt = body[index + 1]
-            assign = cls.single_assign(assign_stmt)
+            assign = ReturnAssignedExpressionRule.name_assign_stmt(assign_stmt)
             yielded = cls.single_yield(yield_stmt)
             if assign is None or yielded is None:
                 continue
@@ -36,16 +36,6 @@ class InlineImmediatelyYieldedVariableRule(BodySequenceRewriteRule):
                 [cst.SimpleStatementLine(body=[cst.Expr(value=yielded.with_changes(value=value))])],
             )
         return None
-
-    @staticmethod
-    def single_assign(stmt: cst.BaseStatement) -> tuple[str, cst.BaseExpression] | None:
-        if not isinstance(stmt, cst.SimpleStatementLine) or len(stmt.body) != 1:
-            return None
-        assign = stmt.body[0]
-        if not isinstance(assign, cst.Assign) or len(assign.targets) != 1:
-            return None
-        target = assign.targets[0].target
-        return (target.value, assign.value) if isinstance(target, cst.Name) else None
 
     @staticmethod
     def single_yield(stmt: cst.BaseStatement) -> cst.Yield | None:

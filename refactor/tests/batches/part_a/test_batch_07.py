@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "missing-dict-items",
-        'data = {"missing_dict_items": 1}\n',
-        "Review dictionary pattern for missing-dict-items",
+        "for key, value in data:\n    consume(key, value)\n",
+        "data.items()",
     ),
     (
         "move-assign",
@@ -52,13 +52,13 @@ CASES = (
     ),
     (
         "no-conditionals-in-tests",
-        "if no_conditionals_in_tests:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for no-conditionals-in-tests",
+        "if condition:\n    assert left\nelse:\n    assert right\n",
+        "assert right",
     ),
     (
         "no-loop-in-tests",
-        "for no_loop_in_tests in items:\n    continue\n",
-        "Review loop pattern for no-loop-in-tests",
+        "for case in cases:\n    assert case\n",
+        "assert case",
     ),
 )
 

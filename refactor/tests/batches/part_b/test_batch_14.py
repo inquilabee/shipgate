@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "use-named-expression",
-        "use_named_expression = 1\n",
-        "Review Sourcery pattern for use-named-expression",
+        "value = build()\nif value:\n    consume(value)\n",
+        "value := build()",
     ),
     (
         "use-or-for-fallback",

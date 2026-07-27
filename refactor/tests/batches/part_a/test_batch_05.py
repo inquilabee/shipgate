@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "inline-variable",
-        "inline_variable = 1\n",
-        "Review Sourcery pattern for inline-variable",
+        "value = build()\nreturn value\n",
+        "return build()",
     ),
     (
         "instance-method-first-arg-name",

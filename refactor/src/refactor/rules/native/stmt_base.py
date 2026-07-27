@@ -9,6 +9,7 @@ import libcst as cst
 from refactor.cst_util import (
     HitCollector,
     ModuleAndIndentedBlockCollector,
+    single_small_stmt,
     small_stmt_replacement_hit,
     stmt_replacement_hit,
     stmts_replacement_hit,
@@ -179,6 +180,76 @@ class BodySequenceRewriteRule(StatementRewriteRule):
         Finder.__name__ = f"{cls.__name__}Finder"
         Finder.__qualname__ = Finder.__name__
         return Finder
+
+
+def merge_adjacent_ifs_with_same_test(
+    body: Sequence[cst.BaseStatement],
+) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+    for index, left in enumerate(body[:-1]):
+        right = body[index + 1]
+        if not isinstance(left, cst.If) or not isinstance(right, cst.If):
+            continue
+        if left.orelse is not None or right.orelse is not None:
+            continue
+        if not isinstance(left.body, cst.IndentedBlock) or not isinstance(
+            right.body,
+            cst.IndentedBlock,
+        ):
+            continue
+        if not left.test.deep_equals(right.test):
+            continue
+        return (
+            [left, right],
+            [
+                left.with_changes(
+                    body=left.body.with_changes(body=[*left.body.body, *right.body.body]),
+                ),
+            ],
+        )
+    return None
+
+
+class ReturnAssignedExpressionRule(BodySequenceRewriteRule):
+    """Replace ``name = expr; return name`` with ``return expr``."""
+
+    @classmethod
+    def match_body(
+        cls,
+        body: Sequence[cst.BaseStatement],
+    ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+        for index, assign_stmt in enumerate(body[:-1]):
+            return_stmt = body[index + 1]
+            assignment = cls.name_assign_stmt(assign_stmt)
+            returned_name = cls.return_name_stmt(return_stmt)
+            if assignment is None or returned_name is None:
+                continue
+            target_name, value = assignment
+            if target_name != returned_name:
+                continue
+            return (
+                [assign_stmt, return_stmt],
+                [cst.SimpleStatementLine(body=[cst.Return(value=value)])],
+            )
+        return None
+
+    @staticmethod
+    def name_assign_stmt(stmt: cst.BaseStatement) -> tuple[str, cst.BaseExpression] | None:
+        if not isinstance(stmt, cst.SimpleStatementLine) or len(stmt.body) != 1:
+            return None
+        assign = stmt.body[0]
+        if not isinstance(assign, cst.Assign) or len(assign.targets) != 1:
+            return None
+        target = assign.targets[0].target
+        return (target.value, assign.value) if isinstance(target, cst.Name) else None
+
+    @staticmethod
+    def return_name_stmt(stmt: cst.BaseStatement) -> str | None:
+        if not isinstance(stmt, cst.SimpleStatementLine) or len(stmt.body) != 1:
+            return None
+        return_stmt = stmt.body[0]
+        if not isinstance(return_stmt, cst.Return) or not isinstance(return_stmt.value, cst.Name):
+            return None
+        return return_stmt.value.value
 
 
 class ClassFunctionFirstArgRule(StatementRewriteRule):
@@ -404,3 +475,25 @@ def set_adds_to_update(
         replacement_method="update",
         collection_type=cst.Set,
     )
+
+
+def name_target_for_body_stmt(
+    node: cst.CSTNode,
+) -> tuple[cst.Name, cst.BaseExpression, cst.BaseSmallStatement] | None:
+    if not isinstance(node, cst.For) or not isinstance(node.target, cst.Name):
+        return None
+    if not isinstance(node.body, cst.IndentedBlock):
+        return None
+    stmt = single_small_stmt(node.body)
+    return None if stmt is None else (node.target, node.iter, stmt)
+
+
+def two_item_tuple_target(node: cst.CSTNode) -> tuple[cst.Element, cst.Element] | None:
+    if not isinstance(node, cst.For) or not isinstance(node.target, cst.Tuple):
+        return None
+    if len(node.target.elements) != 2:
+        return None
+    first, second = node.target.elements
+    if not isinstance(first, cst.Element) or not isinstance(second, cst.Element):
+        return None
+    return first, second

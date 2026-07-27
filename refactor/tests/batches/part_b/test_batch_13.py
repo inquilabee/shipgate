@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "use-assigned-variable",
-        "use_assigned_variable = 1\n",
-        "Review Sourcery pattern for use-assigned-variable",
+        "value = build()\nreturn value\n",
+        "return build()",
     ),
     (
         "use-contextlib-suppress",

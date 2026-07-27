@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from refactor.rules.native.stmt_base import ReturnAssignedExpressionRule
 
 
-class UseAssignedVariableRule(PatternNativeRule):
+class UseAssignedVariableRule(ReturnAssignedExpressionRule):
     rule_id = "use-assigned-variable"
-    kind_value = "refactor"
     summary = "Use assigned variable"
-    needle = "use_assigned_variable"
-    replacement = "Review Sourcery pattern for use-assigned-variable"
+    message = "Use the assigned expression directly"

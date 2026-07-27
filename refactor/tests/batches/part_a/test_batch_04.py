@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "hoist-repeated-if-condition",
-        "if hoist_repeated_if_condition:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for hoist-repeated-if-condition",
+        "if ready:\n    prepare()\nif ready:\n    finish()\n",
+        "finish()",
     ),
     (
         "hoist-similar-statement-from-if",

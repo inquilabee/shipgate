@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "while-to-for",
-        "for while_to_for in items:\n    continue\n",
-        "Review loop pattern for while-to-for",
+        "i = 0\nwhile i < len(items):\n    consume(items[i])\n    i += 1\n",
+        "for i in range(len(items))",
     ),
 )
 
