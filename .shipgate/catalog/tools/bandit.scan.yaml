@@ -1,5 +1,8 @@
 bandit.scan:
   executable: bandit
+  display_name: Bandit
+  description: Python security issue scanner
+  documentation_url: https://bandit.readthedocs.io/
   subcommand:
     - -r
     - -ll

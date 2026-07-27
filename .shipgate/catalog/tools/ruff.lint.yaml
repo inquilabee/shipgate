@@ -1,5 +1,8 @@
 ruff.lint:
   executable: ruff
+  display_name: Ruff Lint
+  description: Fast Python linter (Astral)
+  documentation_url: https://docs.astral.sh/ruff/
   subcommand:
     - check
   modes:

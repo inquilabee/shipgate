@@ -1,0 +1,2 @@
+# Optional path/prefix allowlist (e.g. utils/); prefer fixing class-local helpers.
+entries: []

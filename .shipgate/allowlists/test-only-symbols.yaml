@@ -1,0 +1,3 @@
+entries:
+  - path: src/shipgate/policy/class_local_functions.py:ReferenceCollector.visit_ClassDef
+    reason: AST NodeVisitor dispatch calls visit_ClassDef by protocol, not by name reference
