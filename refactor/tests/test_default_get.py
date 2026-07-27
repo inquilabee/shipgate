@@ -28,3 +28,14 @@ def test_apply_round_trip() -> None:
     rewritten = rule.apply(BEFORE, hits)
     assert rewritten == AFTER
     assert rule.detect(rewritten or "", "sample.py") == []
+
+
+def test_default_get_apply_fixes_all_occurrences() -> None:
+    before = "a = d[k] if k in d else 0\nb = d[k] if k in d else 0\n"
+    after = "a = d.get(k, 0)\nb = d.get(k, 0)\n"
+    rule = DefaultGetRule()
+    hits = rule.detect(before, "x.py")
+    assert len(hits) == 2
+    rewritten = rule.apply(before, hits)
+    assert rewritten == after
+    assert rule.detect(rewritten or "", "x.py") == []

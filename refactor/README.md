@@ -26,3 +26,23 @@ future parity tracking).
 1. Implement `RefactorRule` (`detect`, optional `apply`, `safe_apply`).
 1. Register the instance in `registry.py`.
 1. Add golden fixtures + tests under `refactor/tests/`.
+
+### Safe apply (`safe_apply=True`)
+
+Use libcst node transforms, not `str.replace`. Shared helper:
+
+```python
+from refactor.cst_util import apply_with_transformer
+
+class MyRule:
+    def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
+        _ = hits
+        return apply_with_transformer(source, MyRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_SomeNode(self, original, updated):
+            ...
+```
+
+Reuse the same `match_*` / `build_*` helpers from `detect` inside the transformer so
+apply rewrites every matching node in the file.

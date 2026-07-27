@@ -41,6 +41,16 @@ def noop_apply(source: str, hits: Sequence[Hit]) -> str | None:
     return None
 
 
+def apply_with_transformer(source: str, transformer: cst.CSTTransformer) -> str | None:
+    """Parse *source*, run *transformer*, return new code or ``None`` if unchanged."""
+    module = cst.parse_module(source)
+    updated = module.visit(transformer)
+    rewritten = updated.code
+    if rewritten == source:
+        return None
+    return rewritten
+
+
 class ModuleAndIndentedBlockCollector(HitCollector):
     """Visit module and indented-block bodies with a shared checker."""
 

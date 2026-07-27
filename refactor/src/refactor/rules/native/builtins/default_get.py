@@ -9,6 +9,7 @@ import libcst as cst
 
 from refactor.cst_util import (
     HitCollector,
+    apply_with_transformer,
     code_for_expr,
     detect_with_visitor,
     make_hit,
@@ -39,15 +40,20 @@ class DefaultGetRule:
         return detect_with_visitor(source, path, DefaultGetRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self
-        text = source
-        for hit in hits:
-            if hit.suggestion is None:
-                continue
-            text = text.replace(hit.suggestion.before, hit.suggestion.after, 1)
-        if text == source:
-            return None
-        return text
+        _ = self, hits
+        return apply_with_transformer(source, DefaultGetRule.Transformer())
+
+    class Transformer(cst.CSTTransformer):
+        def leave_IfExp(  # ruff:ignore[invalid-function-name]
+            self,
+            original_node: cst.IfExp,
+            updated_node: cst.IfExp,
+        ) -> cst.BaseExpression:
+            _ = self, original_node
+            parts = DefaultGetRule.match_parts(updated_node)
+            if parts is None:
+                return updated_node
+            return DefaultGetRule.build_get_call(parts)
 
     class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
