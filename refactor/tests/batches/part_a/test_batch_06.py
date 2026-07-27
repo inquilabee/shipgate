@@ -47,13 +47,13 @@ CASES = (
     ),
     (
         "merge-is-instance",
-        "merge_is_instance = 1\n",
-        "Review Sourcery pattern for merge-is-instance",
+        "if isinstance(value, str) or isinstance(value, bytes):\n    pass\n",
+        "isinstance(value, (str, bytes))",
     ),
     (
         "merge-isinstance",
-        "merge_isinstance = 1\n",
-        "Review Sourcery pattern for merge-isinstance",
+        "if isinstance(value, int) or isinstance(value, float):\n    pass\n",
+        "isinstance(value, (int, float))",
     ),
     (
         "merge-list-append",

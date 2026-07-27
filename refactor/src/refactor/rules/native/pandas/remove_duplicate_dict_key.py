@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from refactor.protocol import RuleKind
+from refactor.rules.native.extract.remove_duplicate_key import RemoveDuplicateKeyRule
 
 
-class RemoveDuplicateDictKeyRule(PatternNativeRule):
+class RemoveDuplicateDictKeyRule(RemoveDuplicateKeyRule):
     rule_id = "remove-duplicate-dict-key"
-    kind_value = "suggestion"
+    kind = RuleKind.SUGGESTION
     summary = "Remove duplicate dict key"
-    needle = "remove_duplicate_dict_key"
-    replacement = "Review dictionary pattern for remove-duplicate-dict-key"
+    message = "Remove duplicate dictionary keys that are overwritten later"

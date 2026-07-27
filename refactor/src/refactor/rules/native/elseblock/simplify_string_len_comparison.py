@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from refactor.rules.native.compare.simplify_len_comparison import SimplifyLenComparisonRule
 
 
-class SimplifyStringLenComparisonRule(PatternNativeRule):
+class SimplifyStringLenComparisonRule(SimplifyLenComparisonRule):
     rule_id = "simplify-string-len-comparison"
-    kind_value = "refactor"
     summary = "Simplify string len comparison"
-    needle = "simplify_string_len_comparison"
-    replacement = "Review string pattern for simplify-string-len-comparison"
+    message = "Use string truthiness instead of comparing len() to zero"

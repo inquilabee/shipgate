@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "remove-duplicate-dict-key",
-        'data = {"remove_duplicate_dict_key": 1}\n',
-        "Review dictionary pattern for remove-duplicate-dict-key",
+        'data = {"a": 1, "a": 2}\n',
+        '"a": 2',
     ),
     (
         "remove-duplicate-key",

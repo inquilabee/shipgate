@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import cast
+from typing import TypeAlias, cast
 
 import libcst as cst
 
 from refactor.protocol import Hit, Location, Suggestion
 
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+BodyStatement: TypeAlias = cst.SimpleStatementLine | cst.BaseCompoundStatement
 
 BodyChecker = Callable[
     [Sequence[cst.BaseStatement], list[Hit], str],
@@ -46,9 +46,7 @@ def apply_with_transformer(source: str, transformer: cst.CSTTransformer) -> str 
     module = cst.parse_module(source)
     updated = module.visit(transformer)
     rewritten = updated.code
-    if rewritten == source:
-        return None
-    return rewritten
+    return None if rewritten == source else rewritten
 
 
 class ModuleAndIndentedBlockCollector(HitCollector):

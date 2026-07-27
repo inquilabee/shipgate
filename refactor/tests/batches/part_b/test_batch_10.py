@@ -42,13 +42,13 @@ CASES = (
     ),
     (
         "replace-apply-with-method-call",
-        "class Example:\n    def replace_apply_with_method_call(self):\n        return 1\n",
-        "Review method extraction pattern for replace-apply-with-method-call",
+        "names = series.apply(str.lower)\n",
+        "series.str.lower()",
     ),
     (
         "replace-apply-with-numpy-operation",
-        "df.replace_apply_with_numpy_operation()\n",
-        "Review pandas pattern for replace-apply-with-numpy-operation",
+        "roots = series.apply(np.sqrt)\n",
+        "np.sqrt(series)",
     ),
     (
         "replace-dict-items-with-values",

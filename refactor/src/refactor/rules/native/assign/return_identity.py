@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfExpRewriteRule, same_branch_if_exp
 
 
-class ReturnIdentityRule(PatternNativeRule):
+class ReturnIdentityRule(IfExpRewriteRule):
     rule_id = "return-identity"
-    kind_value = "refactor"
     summary = "Return identity"
-    needle = "return_identity"
-    replacement = "Review Sourcery pattern for return-identity"
+    message = "Return the shared branch directly from an if-expression"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        return same_branch_if_exp(node)

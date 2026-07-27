@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 CASES = (
     (
         "return-identity",
-        "return_identity = 1\n",
-        "Review Sourcery pattern for return-identity",
+        "result = value if condition else value\n",
+        "value",
     ),
     (
         "return-or-yield-outside-function",
@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "simplify-numeric-comparison",
-        "if simplify_numeric_comparison:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for simplify-numeric-comparison",
+        "if left - right > 0:\n    pass\n",
+        "left > right",
     ),
 )
 

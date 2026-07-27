@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import BooleanOpRewriteRule, merge_isinstance_calls
 
 
-class MergeIsInstanceRule(PatternNativeRule):
+class MergeIsInstanceRule(BooleanOpRewriteRule):
     rule_id = "merge-is-instance"
-    kind_value = "refactor"
     summary = "Merge is instance"
-    needle = "merge_is_instance"
-    replacement = "Review Sourcery pattern for merge-is-instance"
+    message = "Merge repeated isinstance() calls for the same subject"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        return merge_isinstance_calls(node)

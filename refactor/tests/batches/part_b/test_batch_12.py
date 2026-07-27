@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "simplify-string-len-comparison",
-        'value = "simplify_string_len_comparison"\n',
-        "Review string pattern for simplify-string-len-comparison",
+        "if len(name) == 0:\n    pass\n",
+        "not name",
     ),
     (
         "simplify-substring-search",
@@ -47,13 +47,13 @@ CASES = (
     ),
     (
         "swap-if-else-branches",
-        "if swap_if_else_branches:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for swap-if-else-branches",
+        "result = left if not condition else right\n",
+        "right if condition else left",
     ),
     (
         "swap-if-expression",
-        "if swap_if_expression:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for swap-if-expression",
+        "result = yes if not condition else no\n",
+        "no if condition else yes",
     ),
     (
         "swap-nested-ifs",

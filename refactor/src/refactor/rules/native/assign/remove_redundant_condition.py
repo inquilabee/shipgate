@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
-from refactor.rules.native.expr_base import IfExpRewriteRule
+from refactor.rules.native.expr_base import IfExpRewriteRule, same_branch_if_exp
 
 
 class RemoveRedundantConditionRule(IfExpRewriteRule):
@@ -14,8 +14,4 @@ class RemoveRedundantConditionRule(IfExpRewriteRule):
 
     @classmethod
     def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
-        return (
-            node.body
-            if isinstance(node, cst.IfExp) and node.body.deep_equals(node.orelse)
-            else None
-        )
+        return same_branch_if_exp(node)

@@ -91,3 +91,24 @@ libcst matchers.
 - `remove-dict-items`: `CallRewriteRule` detects `dict(data.items())`.
 
 All phase 4 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 5
+
+Upgrade ten dictionary, comparison, pandas, and if-expression stubs to suggest-only
+libcst matchers.
+
+- `remove-duplicate-dict-key`: reuses the duplicate dict literal matcher with suggestion
+  kind.
+- `merge-isinstance`: `BooleanOpRewriteRule` detects repeated `isinstance()` checks.
+- `merge-is-instance`: uses the same shared `isinstance()` merge matcher.
+- `simplify-string-len-comparison`: reuses the len comparison matcher for strings.
+- `replace-apply-with-method-call`: `CallRewriteRule` detects `series.apply(str.method)`.
+- `replace-apply-with-numpy-operation`: `CallRewriteRule` detects
+  `series.apply(np.func)`.
+- `simplify-numeric-comparison`: `ComparisonRewriteRule` detects `x - y` comparisons
+  against zero.
+- `return-identity`: `IfExpRewriteRule` detects identical if-expression branches.
+- `swap-if-expression`: `IfExpRewriteRule` detects if-expressions with negated tests.
+- `swap-if-else-branches`: uses the same negated-test branch swap matcher.
+
+All phase 5 rules remain `safe_apply=False` pending explicit round-trip apply tests.

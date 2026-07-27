@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, cast
 import libcst as cst
 
 from refactor.cst_util import (
-    BodyStatement,
     HitCollector,
     ModuleAndIndentedBlockCollector,
     body_cleanup_hit,
@@ -40,6 +39,10 @@ class SuggestOnlyExprRule:
         return noop_apply(source, hits)
 
     @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        raise NotImplementedError
+
+    @classmethod
     def finder_type(cls) -> type[HitCollector]:
         raise NotImplementedError
 
@@ -59,6 +62,21 @@ class SuggestOnlyExprRule:
         )
 
 
+def rewrite_finder_type(
+    rule: type[SuggestOnlyExprRule],
+    visit_name: str,
+) -> type[HitCollector]:
+    def visit(self: HitCollector, node: cst.CSTNode) -> bool:
+        replacement = rule.match(node)
+        if replacement is None:
+            return True
+        self.hits.append(rule.hit_for(node, replacement, self.path))
+        return True
+
+    finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
+    return cast("type[HitCollector]", finder)
+
+
 class CallRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.Call`` nodes."""
 
@@ -68,22 +86,7 @@ class CallRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_Call(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.Call,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_Call")
 
 
 class BinaryOpRewriteRule(SuggestOnlyExprRule):
@@ -95,22 +98,7 @@ class BinaryOpRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_BinaryOperation(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.BinaryOperation,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_BinaryOperation")
 
 
 class BooleanOpRewriteRule(SuggestOnlyExprRule):
@@ -122,22 +110,7 @@ class BooleanOpRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_BooleanOperation(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.BooleanOperation,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_BooleanOperation")
 
 
 class UnaryOpRewriteRule(SuggestOnlyExprRule):
@@ -149,22 +122,7 @@ class UnaryOpRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_UnaryOperation(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.UnaryOperation,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_UnaryOperation")
 
 
 class IfExpRewriteRule(SuggestOnlyExprRule):
@@ -176,22 +134,7 @@ class IfExpRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_IfExp(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.IfExp,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_IfExp")
 
 
 class ComparisonRewriteRule(SuggestOnlyExprRule):
@@ -203,22 +146,7 @@ class ComparisonRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_Comparison(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.Comparison,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_Comparison")
 
 
 class DictRewriteRule(SuggestOnlyExprRule):
@@ -230,22 +158,7 @@ class DictRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_Dict(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.Dict,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_Dict")
 
 
 class SetRewriteRule(SuggestOnlyExprRule):
@@ -257,22 +170,7 @@ class SetRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_Set(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.Set,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_Set")
 
 
 def merge_adjacent_comparisons(node: cst.CSTNode) -> cst.BaseExpression | None:
@@ -303,6 +201,18 @@ def or_fallback_if_exp(node: cst.CSTNode) -> cst.BaseExpression | None:
     )
 
 
+def same_branch_if_exp(node: cst.CSTNode) -> cst.BaseExpression | None:
+    return node.body if isinstance(node, cst.IfExp) and node.body.deep_equals(node.orelse) else None
+
+
+def swap_negated_if_exp(node: cst.CSTNode) -> cst.BaseExpression | None:
+    if not isinstance(node, cst.IfExp):
+        return None
+    if not isinstance(node.test, cst.UnaryOperation) or not isinstance(node.test.operator, cst.Not):
+        return None
+    return node.with_changes(test=node.test.expression, body=node.orelse, orelse=node.body)
+
+
 def invert_any_all_call(node: cst.CSTNode) -> cst.BaseExpression | None:
     if not isinstance(node, cst.UnaryOperation) or not isinstance(node.operator, cst.Not):
         return None
@@ -326,6 +236,42 @@ def invert_any_all_call(node: cst.CSTNode) -> cst.BaseExpression | None:
     )
 
 
+def merge_isinstance_calls(node: cst.CSTNode) -> cst.BaseExpression | None:
+    if not isinstance(node, cst.BooleanOperation) or not isinstance(node.operator, cst.Or):
+        return None
+    left = isinstance_call(node.left)
+    right = isinstance_call(node.right)
+    if left is None or right is None:
+        return None
+    subject, left_type = left
+    right_subject, right_type = right
+    if not subject.deep_equals(right_subject):
+        return None
+    return cst.Call(
+        func=cst.Name("isinstance"),
+        args=[
+            cst.Arg(value=subject),
+            cst.Arg(
+                value=cst.Tuple(
+                    elements=[cst.Element(value=left_type), cst.Element(value=right_type)],
+                ),
+            ),
+        ],
+    )
+
+
+def isinstance_call(
+    node: cst.BaseExpression,
+) -> tuple[cst.BaseExpression, cst.BaseExpression] | None:
+    if not isinstance(node, cst.Call):
+        return None
+    if not isinstance(node.func, cst.Name) or node.func.value != "isinstance":
+        return None
+    if len(node.args) != 2 or any(arg.keyword is not None for arg in node.args):
+        return None
+    return node.args[0].value, node.args[1].value
+
+
 class SubscriptRewriteRule(SuggestOnlyExprRule):
     """Rewrite matching ``cst.Subscript`` nodes."""
 
@@ -335,22 +281,7 @@ class SubscriptRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_Subscript(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.Subscript,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_Subscript")
 
 
 class FormattedStringRewriteRule(SuggestOnlyExprRule):
@@ -362,22 +293,7 @@ class FormattedStringRewriteRule(SuggestOnlyExprRule):
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
-        rule = cls
-
-        class Finder(HitCollector):
-            def visit_FormattedString(  # ruff:ignore[invalid-function-name]
-                self,
-                node: cst.FormattedString,
-            ) -> bool:
-                replacement = rule.match(node)
-                if replacement is None:
-                    return True
-                self.hits.append(rule.hit_for(node, replacement, self.path))
-                return True
-
-        Finder.__name__ = f"{cls.__name__}Finder"
-        Finder.__qualname__ = Finder.__name__
-        return Finder
+        return rewrite_finder_type(cls, "visit_FormattedString")
 
 
 class BodyCleanupRule(SuggestOnlyExprRule):
@@ -387,7 +303,13 @@ class BodyCleanupRule(SuggestOnlyExprRule):
     def match_body(
         cls,
         body: Sequence[cst.BaseStatement],
-    ) -> tuple[cst.BaseStatement, Sequence[BodyStatement]] | None:
+    ) -> (
+        tuple[
+            cst.BaseStatement,
+            Sequence[cst.SimpleStatementLine | cst.BaseCompoundStatement],
+        ]
+        | None
+    ):
         raise NotImplementedError
 
     @classmethod

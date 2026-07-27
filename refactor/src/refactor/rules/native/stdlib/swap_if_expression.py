@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfExpRewriteRule, swap_negated_if_exp
 
 
-class SwapIfExpressionRule(PatternNativeRule):
+class SwapIfExpressionRule(IfExpRewriteRule):
     rule_id = "swap-if-expression"
-    kind_value = "refactor"
     summary = "Swap if expression"
-    needle = "swap_if_expression"
-    replacement = "Review conditional pattern for swap-if-expression"
+    message = "Swap if-expression branches to remove a negated condition"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        return swap_negated_if_exp(node)
