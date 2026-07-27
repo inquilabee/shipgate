@@ -100,6 +100,14 @@ def code_for_expr(expr: cst.BaseExpression) -> str:
     return code_for_stmts(cst.SimpleStatementLine(body=[cst.Expr(value=expr)]))
 
 
+def parse_integer_literal(value: str) -> int | None:
+    """Parse a Python integer token without assuming decimal syntax."""
+    try:
+        return int(value.replace("_", ""), 0)
+    except ValueError:
+        return None
+
+
 def make_hit(
     *,
     rule_id: str,

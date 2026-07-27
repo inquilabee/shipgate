@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
+from refactor.cst_util import parse_integer_literal
 from refactor.rules.native.expr_base import BinaryOpRewriteRule
 
 
@@ -30,4 +31,4 @@ class SimplifyConstantSumRule(BinaryOpRewriteRule):
     def integer_value(node: cst.BaseExpression) -> int | None:
         if not isinstance(node, cst.Integer):
             return None
-        return int(node.value.replace("_", ""))
+        return parse_integer_literal(node.value)

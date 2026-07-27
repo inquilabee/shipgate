@@ -6,6 +6,7 @@ import ast
 
 import libcst as cst
 
+from refactor.cst_util import parse_integer_literal
 from refactor.rules.native.expr_base import ComparisonRewriteRule
 
 
@@ -71,11 +72,12 @@ class StrPrefixSuffixRule(ComparisonRewriteRule):
     @staticmethod
     def integer_value(node: cst.BaseExpression | None) -> int | None:
         if isinstance(node, cst.Integer):
-            return int(node.value.replace("_", ""))
+            return parse_integer_literal(node.value)
         if (
             isinstance(node, cst.UnaryOperation)
             and isinstance(node.operator, cst.Minus)
             and isinstance(node.expression, cst.Integer)
         ):
-            return -int(node.expression.value.replace("_", ""))
+            value = parse_integer_literal(node.expression.value)
+            return None if value is None else -value
         return None
