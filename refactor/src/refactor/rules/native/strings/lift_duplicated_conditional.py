@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING
+
+import libcst as cst
+
+from refactor.rules.native.stmt_base import IfRewriteRule, hoist_duplicate_trailing_stmt
+
+if TYPE_CHECKING:
+    from refactor.cst_util import BodyStatement
 
 
-class LiftDuplicatedConditionalRule(PatternNativeRule):
+class LiftDuplicatedConditionalRule(IfRewriteRule):
     rule_id = "lift-duplicated-conditional"
-    kind_value = "refactor"
     summary = "Lift duplicated conditional"
-    needle = "lift_duplicated_conditional"
-    replacement = "Review conditional pattern for lift-duplicated-conditional"
+    message = "Lift duplicate trailing conditional work out of branches"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> list[BodyStatement] | None:
+        return hoist_duplicate_trailing_stmt(node)

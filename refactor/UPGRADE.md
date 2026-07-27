@@ -242,3 +242,22 @@ matchers.
 - `hoist-repeated-if-condition`: merges adjacent if statements with identical tests.
 
 All phase 12 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 13
+
+Upgrade the final nine non-comment extraction, assignment, and duplicate-branch stubs to
+suggest-only libcst matchers.
+
+- `move-assign`: `IfRewriteRule` moves duplicated assignment targets into an if-expression.
+- `move-assign-in-block`: reuses the duplicated assignment target matcher.
+- `extract-duplicate-method`: `ClassRewriteRule` detects adjacent duplicate method bodies.
+- `merge-duplicate-blocks`: `IfRewriteRule` flattens duplicate branch bodies.
+- `class-extract-method`: `ClassRewriteRule` suggests a class helper call for long methods.
+- `extract-method`: `FunctionRewriteRule` suggests a helper call for leading body statements.
+- `lift-duplicated-conditional`: reuses duplicated trailing branch-statement hoisting.
+- `hoist-similar-statement-from-if`: hoists identical trailing statements from branches.
+- `switch`: `IfRewriteRule` converts repeated equality branches to `match`.
+
+All phase 13 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+The remaining `PatternNativeRule` stubs are documented empty-detect comment placeholders:
+`use`, `method`, and `low-code-quality`.

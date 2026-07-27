@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "hoist-similar-statement-from-if",
-        "if hoist_similar_statement_from_if:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for hoist-similar-statement-from-if",
+        "if ready:\n    prepare()\n    finish()\nelse:\n    recover()\n    finish()\n",
+        "finish()",
     ),
     (
         "hoist-statement-from-if",

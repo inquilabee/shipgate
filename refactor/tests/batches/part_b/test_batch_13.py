@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "switch",
-        "if switch:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for switch",
+        'if status == "open":\n    handle_open()\nelif status == "closed":\n    handle_closed()\n',
+        "match status",
     ),
     (
         "ternary-to-if-expression",

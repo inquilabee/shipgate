@@ -27,8 +27,9 @@ CASES = (
     ),
     (
         "class-extract-method",
-        "class Example:\n    def class_extract_method(self):\n        return 1\n",
-        "Review method extraction pattern for class-extract-method",
+        "class Example:\n    def run(self):\n"
+        "        prepare()\n        execute()\n        finish()\n",
+        "self._extracted_method()",
     ),
     (
         "class-method-first-arg-name",

@@ -42,13 +42,14 @@ CASES = (
     ),
     (
         "extract-duplicate-method",
-        "class Example:\n    def extract_duplicate_method(self):\n        return 1\n",
-        "Review method extraction pattern for extract-duplicate-method",
+        "class Example:\n    def left(self):\n"
+        "        return 1\n    def right(self):\n        return 1\n",
+        "return self.left()",
     ),
     (
         "extract-method",
-        "class Example:\n    def extract_method(self):\n        return 1\n",
-        "Review method extraction pattern for extract-method",
+        "def run():\n    prepare()\n    execute()\n    finish()\n",
+        "_extracted_method()",
     ),
     (
         "flatten-nested-try",

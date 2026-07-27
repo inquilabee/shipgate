@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING
+
+import libcst as cst
+
+from refactor.rules.native.stmt_base import IfRewriteRule, hoist_duplicate_trailing_stmt
+
+if TYPE_CHECKING:
+    from refactor.cst_util import BodyStatement
 
 
-class HoistSimilarStatementFromIfRule(PatternNativeRule):
+class HoistSimilarStatementFromIfRule(IfRewriteRule):
     rule_id = "hoist-similar-statement-from-if"
-    kind_value = "refactor"
     summary = "Hoist similar statement from if"
-    needle = "hoist_similar_statement_from_if"
-    replacement = "Review conditional pattern for hoist-similar-statement-from-if"
+    message = "Hoist identical trailing statements from if branches"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> list[BodyStatement] | None:
+        return hoist_duplicate_trailing_stmt(node)

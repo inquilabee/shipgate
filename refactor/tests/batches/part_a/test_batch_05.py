@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "lift-duplicated-conditional",
-        "if lift_duplicated_conditional:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for lift-duplicated-conditional",
+        "if ready:\n    prepare()\n    finish()\nelse:\n    recover()\n    finish()\n",
+        "finish()",
     ),
     (
         "lift-return-into-if",

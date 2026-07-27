@@ -100,6 +100,22 @@ class TryRewriteRule(StatementRewriteRule):
         return stmt_finder_type(cls, "visit_Try")
 
 
+class FunctionRewriteRule(StatementRewriteRule):
+    """Rewrite matching ``cst.FunctionDef`` statements."""
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        return stmt_finder_type(cls, "visit_FunctionDef")
+
+
+class ClassRewriteRule(StatementRewriteRule):
+    """Rewrite matching ``cst.ClassDef`` statements."""
+
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        return stmt_finder_type(cls, "visit_ClassDef")
+
+
 class SimpleStatementLineRewriteRule(StatementRewriteRule):
     """Rewrite matching single-small-statement lines."""
 
@@ -497,3 +513,55 @@ def two_item_tuple_target(node: cst.CSTNode) -> tuple[cst.Element, cst.Element] 
     if not isinstance(first, cst.Element) or not isinstance(second, cst.Element):
         return None
     return first, second
+
+
+def if_else_blocks(node: cst.CSTNode) -> tuple[cst.IndentedBlock, cst.IndentedBlock] | None:
+    if not isinstance(node, cst.If) or not isinstance(node.orelse, cst.Else):
+        return None
+    if not isinstance(node.body, cst.IndentedBlock):
+        return None
+    if not isinstance(node.orelse.body, cst.IndentedBlock):
+        return None
+    return node.body, node.orelse.body
+
+
+def single_assign_block(
+    block: cst.IndentedBlock,
+) -> tuple[cst.BaseAssignTargetExpression, cst.BaseExpression] | None:
+    stmt = single_small_stmt(block)
+    if not isinstance(stmt, cst.Assign) or len(stmt.targets) != 1:
+        return None
+    return stmt.targets[0].target, stmt.value
+
+
+def duplicated_if_body(node: cst.CSTNode) -> Sequence[cst.BaseStatement] | None:
+    blocks = if_else_blocks(node)
+    if blocks is None:
+        return None
+    body, else_body = blocks
+    return body.body if body.deep_equals(else_body) else None
+
+
+def hoist_duplicate_trailing_stmt(node: cst.CSTNode) -> list[BodyStatement] | None:
+    blocks = if_else_blocks(node)
+    if blocks is None or not isinstance(node, cst.If):
+        return None
+    if not isinstance(node.orelse, cst.Else):
+        return None
+    body, else_body = blocks
+    left_body = list(body.body)
+    right_body = list(else_body.body)
+    if not left_body or not right_body or not left_body[-1].deep_equals(right_body[-1]):
+        return None
+    return [
+        cast(
+            "BodyStatement",
+            node.with_changes(
+                body=body.with_changes(body=left_body[:-1]),
+                orelse=node.orelse.with_changes(
+                    body=else_body.with_changes(body=right_body[:-1]),
+                ),
+            ),
+        ),
+        cast("BodyStatement", left_body[-1]),
+    ]

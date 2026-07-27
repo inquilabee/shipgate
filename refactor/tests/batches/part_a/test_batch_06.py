@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "merge-duplicate-blocks",
-        "merge_duplicate_blocks = 1\n",
-        "Review Sourcery pattern for merge-duplicate-blocks",
+        "if ready:\n    finish()\nelse:\n    finish()\n",
+        "finish()",
     ),
     (
         "merge-else-if-into-elif",

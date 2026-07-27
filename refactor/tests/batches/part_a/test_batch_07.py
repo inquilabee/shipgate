@@ -42,13 +42,13 @@ CASES = (
     ),
     (
         "move-assign",
-        "move_assign = 1\n",
-        "Review Sourcery pattern for move-assign",
+        "if ready:\n    result = left\nelse:\n    result = right\n",
+        "result = left if ready else right",
     ),
     (
         "move-assign-in-block",
-        "move_assign_in_block = 1\n",
-        "Review Sourcery pattern for move-assign-in-block",
+        "if ready:\n    value = left\nelse:\n    value = right\n",
+        "value = left if ready else right",
     ),
     (
         "no-conditionals-in-tests",
