@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfRewriteRule, merge_nested_if
 
 
-class SwapNestedIfsRule(PatternNativeRule):
+class SwapNestedIfsRule(IfRewriteRule):
     rule_id = "swap-nested-ifs"
-    kind_value = "refactor"
     summary = "Swap nested ifs"
-    needle = "swap_nested_ifs"
-    replacement = "Review conditional pattern for swap-nested-ifs"
+    message = "Merge nested if statements into one condition"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        return merge_nested_if(node)

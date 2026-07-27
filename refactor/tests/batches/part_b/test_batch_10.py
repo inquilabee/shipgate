@@ -17,8 +17,8 @@ CASES = (
     ),
     (
         "remove-redundant-if",
-        "if remove_redundant_if:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for remove-redundant-if",
+        "if condition:\n    return True\nelse:\n    return False\n",
+        "return condition",
     ),
     (
         "remove-redundant-path-exists",
@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "remove-unnecessary-else",
-        "if remove_unnecessary_else:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for remove-unnecessary-else",
+        "if ready:\n    return result\nelse:\n    return fallback\n",
+        "return fallback",
     ),
     (
         "remove-unused-enumerate",

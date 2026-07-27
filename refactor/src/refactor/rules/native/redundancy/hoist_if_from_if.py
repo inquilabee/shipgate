@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfRewriteRule, merge_nested_if
 
 
-class HoistIfFromIfRule(PatternNativeRule):
+class HoistIfFromIfRule(IfRewriteRule):
     rule_id = "hoist-if-from-if"
-    kind_value = "refactor"
     summary = "Hoist if from if"
-    needle = "hoist_if_from_if"
-    replacement = "Review conditional pattern for hoist-if-from-if"
+    message = "Merge nested if statements into one condition"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        return merge_nested_if(node)

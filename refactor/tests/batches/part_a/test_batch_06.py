@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "merge-else-if-into-elif",
-        "if merge_else_if_into_elif:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for merge-else-if-into-elif",
+        "if ready:\n    result = True\nelse:\n    if fallback:\n        result = False\n",
+        "elif fallback",
     ),
     (
         "merge-except-handler",

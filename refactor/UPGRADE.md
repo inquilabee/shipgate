@@ -130,3 +130,23 @@ libcst matchers.
 - `simplify-single-exception-tuple`: custom visitor detects one-item exception tuples.
 
 All phase 6 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 7
+
+Upgrade ten statement/control-flow stubs to suggest-only libcst matchers with shared
+statement replacement helpers.
+
+- `merge-else-if-into-elif`: `IfRewriteRule` detects `else: if ...` blocks.
+- `remove-unnecessary-else`: `IfRewriteRule` detects `else` after terminal if bodies.
+- `useless-else-on-loop`: `ForRewriteRule` detects loop `else` blocks and flattens them.
+- `hoist-if-from-if`: `IfRewriteRule` detects single nested if bodies and merges tests.
+- `swap-nested-ifs`: reuses the nested-if merge matcher.
+- `remove-pass-elif`: `IfRewriteRule` removes pass-only elif branches.
+- `remove-redundant-if`: `IfRewriteRule` detects boolean-returning if/else statements.
+- `ternary-to-if-expression`: `IfRewriteRule` detects matching assignment targets in both
+  branches.
+- `while-guard-to-condition`: `WhileRewriteRule` detects `while True` with a leading break
+  guard.
+- `hoist-statement-from-if`: `IfRewriteRule` detects identical trailing branch statements.
+
+All phase 7 rules remain `safe_apply=False` pending explicit round-trip apply tests.

@@ -57,8 +57,8 @@ CASES = (
     ),
     (
         "swap-nested-ifs",
-        "if swap_nested_ifs:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for swap-nested-ifs",
+        "if outer:\n    if inner:\n        result = True\n",
+        "outer and inner",
     ),
 )
 

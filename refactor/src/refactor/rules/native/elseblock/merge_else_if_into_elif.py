@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfRewriteRule
 
 
-class MergeElseIfIntoElifRule(PatternNativeRule):
+class MergeElseIfIntoElifRule(IfRewriteRule):
     rule_id = "merge-else-if-into-elif"
-    kind_value = "refactor"
     summary = "Merge else if into elif"
-    needle = "merge_else_if_into_elif"
-    replacement = "Review conditional pattern for merge-else-if-into-elif"
+    message = "Use elif instead of else containing a single if"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        if not isinstance(node, cst.If) or not isinstance(node.orelse, cst.Else):
+            return None
+        body = node.orelse.body.body
+        if len(body) != 1 or not isinstance(body[0], cst.If):
+            return None
+        return node.with_changes(orelse=body[0])

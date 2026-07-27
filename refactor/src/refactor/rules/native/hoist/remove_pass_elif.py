@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.cst_util import single_small_stmt
+from refactor.rules.native.expr_base import IfRewriteRule
 
 
-class RemovePassElifRule(PatternNativeRule):
+class RemovePassElifRule(IfRewriteRule):
     rule_id = "remove-pass-elif"
-    kind_value = "refactor"
     summary = "Remove pass elif"
-    needle = "remove_pass_elif"
-    replacement = "Review conditional pattern for remove-pass-elif"
+    message = "Remove an elif branch that only passes"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> cst.BaseStatement | None:
+        if not isinstance(node, cst.If) or not isinstance(node.orelse, cst.If):
+            return None
+        if not isinstance(node.orelse.body, cst.IndentedBlock):
+            return None
+        if not isinstance(single_small_stmt(node.orelse.body), cst.Pass):
+            return None
+        return node.with_changes(orelse=node.orelse.orelse)

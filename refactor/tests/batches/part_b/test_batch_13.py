@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "ternary-to-if-expression",
-        "if ternary_to_if_expression:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for ternary-to-if-expression",
+        "if condition:\n    result = left\nelse:\n    result = right\n",
+        "left if condition else right",
     ),
     (
         "unwrap-iterable-construction",

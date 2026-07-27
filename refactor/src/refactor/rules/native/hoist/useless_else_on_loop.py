@@ -2,12 +2,26 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+from typing import TYPE_CHECKING, cast
+
+import libcst as cst
+
+from refactor.rules.native.expr_base import ForRewriteRule
+
+if TYPE_CHECKING:
+    from refactor.cst_util import BodyStatement
 
 
-class UselessElseOnLoopRule(PatternNativeRule):
+class UselessElseOnLoopRule(ForRewriteRule):
     rule_id = "useless-else-on-loop"
-    kind_value = "refactor"
     summary = "Useless else on loop"
-    needle = "useless_else_on_loop"
-    replacement = "Review conditional pattern for useless-else-on-loop"
+    message = "Remove loop else by placing its body after the loop"
+
+    @classmethod
+    def match_stmt(cls, node: cst.CSTNode) -> list[BodyStatement] | None:
+        if not isinstance(node, cst.For) or node.orelse is None:
+            return None
+        return [
+            cast("BodyStatement", node.with_changes(orelse=None)),
+            *[cast("BodyStatement", stmt) for stmt in node.orelse.body.body],
+        ]

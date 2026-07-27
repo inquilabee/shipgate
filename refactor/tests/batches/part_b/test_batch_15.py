@@ -12,13 +12,13 @@ if TYPE_CHECKING:
 CASES = (
     (
         "useless-else-on-loop",
-        "if useless_else_on_loop:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for useless-else-on-loop",
+        "for item in items:\n    process(item)\nelse:\n    report()\n",
+        "report()",
     ),
     (
         "while-guard-to-condition",
-        "if while_guard_to_condition:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for while-guard-to-condition",
+        "while True:\n    if not ready:\n        break\n    process()\n",
+        "while ready",
     ),
     (
         "while-to-for",

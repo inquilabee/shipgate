@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "hoist-if-from-if",
-        "if hoist_if_from_if:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for hoist-if-from-if",
+        "if outer:\n    if inner:\n        result = True\n",
+        "outer and inner",
     ),
     (
         "hoist-loop-from-if",
@@ -47,8 +47,8 @@ CASES = (
     ),
     (
         "hoist-statement-from-if",
-        "if hoist_statement_from_if:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for hoist-statement-from-if",
+        "if ready:\n    prepare()\n    finish()\nelse:\n    recover()\n    finish()\n",
+        "finish()",
     ),
     (
         "hoist-statement-from-loop",

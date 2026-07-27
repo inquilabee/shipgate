@@ -32,8 +32,8 @@ CASES = (
     ),
     (
         "remove-pass-elif",
-        "if remove_pass_elif:\n    result = True\nelse:\n    result = False\n",
-        "Review conditional pattern for remove-pass-elif",
+        "if ready:\n    run()\nelif stale:\n    pass\nelse:\n    recover()\n",
+        "else:\n    recover()",
     ),
     (
         "remove-redundant-boolean",
