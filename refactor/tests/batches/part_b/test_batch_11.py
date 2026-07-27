@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "set-comprehension",
-        'items = ["set_comprehension"]\n',
-        "Review collection pattern for set-comprehension",
+        "items = set(item.name for item in records)\n",
+        "{item.name for item in records}",
     ),
     (
         "simplify-constant-sum",

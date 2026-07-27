@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
-from refactor.rules.native.expr_base import IfExpRewriteRule
+from refactor.rules.native.expr_base import IfExpRewriteRule, or_fallback_if_exp
 
 
 class OrIfExpIdentityRule(IfExpRewriteRule):
@@ -14,12 +14,4 @@ class OrIfExpIdentityRule(IfExpRewriteRule):
 
     @classmethod
     def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
-        if not isinstance(node, cst.IfExp):
-            return None
-        if not node.body.deep_equals(node.test):
-            return None
-        return cst.BooleanOperation(
-            left=node.test,
-            operator=cst.Or(),
-            right=node.orelse,
-        )
+        return or_fallback_if_exp(node)

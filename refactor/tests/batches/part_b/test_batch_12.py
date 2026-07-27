@@ -22,13 +22,13 @@ CASES = (
     ),
     (
         "simplify-substring-search",
-        'value = "simplify_substring_search"\n',
-        "Review string pattern for simplify-substring-search",
+        'if text.find("needle") != -1:\n    pass\n',
+        '"needle" in text',
     ),
     (
         "skip-sorted-list-construction",
-        'items = ["skip_sorted_list_construction"]\n',
-        "Review collection pattern for skip-sorted-list-construction",
+        "items = sorted(list(values))\n",
+        "sorted(values)",
     ),
     (
         "split-or-ifs",
@@ -42,8 +42,8 @@ CASES = (
     ),
     (
         "sum-comprehension",
-        "sum_comprehension = 1\n",
-        "Review Sourcery pattern for sum-comprehension",
+        "total = sum([item.count for item in items])\n",
+        "sum(item.count for item in items)",
     ),
     (
         "swap-if-else-branches",

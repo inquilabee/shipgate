@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import IfExpRewriteRule, or_fallback_if_exp
 
 
-class UseOrForFallbackRule(PatternNativeRule):
+class UseOrForFallbackRule(IfExpRewriteRule):
     rule_id = "use-or-for-fallback"
-    kind_value = "refactor"
     summary = "Use or for fallback"
-    needle = "use_or_for_fallback"
-    replacement = "Review loop pattern for use-or-for-fallback"
+    message = "Use or for a value fallback"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        return or_fallback_if_exp(node)

@@ -2,12 +2,36 @@
 
 from __future__ import annotations
 
-from refactor.rules.native.pattern_base import PatternNativeRule
+import libcst as cst
+
+from refactor.rules.native.expr_base import CallRewriteRule
 
 
-class SumComprehensionRule(PatternNativeRule):
+class SumComprehensionRule(CallRewriteRule):
     rule_id = "sum-comprehension"
-    kind_value = "refactor"
     summary = "Sum comprehension"
-    needle = "sum_comprehension"
-    replacement = "Review Sourcery pattern for sum-comprehension"
+    message = "Pass a generator expression to sum() instead of a list comprehension"
+
+    @classmethod
+    def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
+        if not isinstance(node, cst.Call):
+            return None
+        if not isinstance(node.func, cst.Name) or node.func.value != "sum":
+            return None
+        if len(node.args) != 1 or node.args[0].keyword is not None:
+            return None
+        value = node.args[0].value
+        if not isinstance(value, cst.ListComp):
+            return None
+        return node.with_changes(
+            args=[
+                cst.Arg(
+                    value=cst.GeneratorExp(
+                        elt=value.elt,
+                        for_in=value.for_in,
+                        lpar=[],
+                        rpar=[],
+                    ),
+                ),
+            ],
+        )

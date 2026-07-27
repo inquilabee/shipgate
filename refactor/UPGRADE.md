@@ -47,3 +47,25 @@ Upgrade ten more expression/call stubs to narrow suggest-only libcst matchers.
 - `use-getitem-for-re-match-groups`: `CallRewriteRule` detects `match.group(index)`.
 
 All phase 2 rules remain `safe_apply=False` pending explicit round-trip apply tests.
+
+## Phase 3
+
+Upgrade ten collection, string, and fallback expression stubs to suggest-only libcst
+matchers.
+
+- `collection-builtin-to-comprehension`: `CallRewriteRule` detects
+  `dict((k, v) for ...)` generator calls.
+- `comprehension-to-generator`: `CallRewriteRule` detects list comprehensions passed to
+  `any()` or `all()`.
+- `list-comprehension`: `CallRewriteRule` detects `list(x for ...)`.
+- `set-comprehension`: `CallRewriteRule` detects `set(x for ...)`.
+- `sum-comprehension`: `CallRewriteRule` detects list comprehensions passed to `sum()`.
+- `unwrap-iterable-construction`: `CallRewriteRule` detects redundant literal wrappers
+  such as `list([1, 2])`.
+- `skip-sorted-list-construction`: `CallRewriteRule` detects `sorted(list(items))`.
+- `use-file-iterator`: `CallRewriteRule` detects zero-argument `.readlines()` calls.
+- `simplify-substring-search`: `ComparisonRewriteRule` detects `find()` comparisons
+  against `-1`.
+- `use-or-for-fallback`: `IfExpRewriteRule` detects `x if x else y`.
+
+All phase 3 rules remain `safe_apply=False` pending explicit round-trip apply tests.

@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "list-comprehension",
-        'items = ["list_comprehension"]\n',
-        "Review collection pattern for list-comprehension",
+        "items = list(item.name for item in records)\n",
+        "[item.name for item in records]",
     ),
     (
         "low-code-quality",

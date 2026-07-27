@@ -22,8 +22,8 @@ CASES = (
     ),
     (
         "use-file-iterator",
-        "use_file_iterator = 1\n",
-        "Review Sourcery pattern for use-file-iterator",
+        "lines = handle.readlines()\n",
+        "handle",
     ),
     (
         "use-getitem-for-re-match-groups",
@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "use-or-for-fallback",
-        "for use_or_for_fallback in items:\n    continue\n",
-        "Review loop pattern for use-or-for-fallback",
+        "result = value if value else fallback\n",
+        "value or fallback",
     ),
     (
         "use-string-remove-affix",

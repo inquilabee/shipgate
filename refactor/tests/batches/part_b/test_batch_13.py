@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "unwrap-iterable-construction",
-        'items = ["unwrap_iterable_construction"]\n',
-        "Review collection pattern for unwrap-iterable-construction",
+        "items = list([1, 2, 3])\n",
+        "[1, 2, 3]",
     ),
     (
         "use",

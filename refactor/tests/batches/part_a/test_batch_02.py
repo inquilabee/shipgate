@@ -37,8 +37,8 @@ CASES = (
     ),
     (
         "collection-builtin-to-comprehension",
-        'items = ["collection_builtin_to_comprehension"]\n',
-        "Review collection pattern for collection-builtin-to-comprehension",
+        "mapping = dict((key, value) for key, value in pairs)\n",
+        "{key: value for key, value in pairs}",
     ),
     (
         "collection-to-bool",
@@ -52,8 +52,8 @@ CASES = (
     ),
     (
         "comprehension-to-generator",
-        "comprehension_to_generator = 1\n",
-        "Review Sourcery pattern for comprehension-to-generator",
+        "matched = any([item.ready for item in items])\n",
+        "any(item.ready for item in items)",
     ),
     (
         "convert-any-to-in",
