@@ -6,12 +6,19 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
-
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+from refactor.cst_util import (
+    BodyStatement,
+    ModuleAndIndentedBlockCollector,
+    body_cleanup_hit,
+    detect_with_visitor,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class RemoveUnreachableCodeRule:
@@ -22,30 +29,15 @@ class RemoveUnreachableCodeRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = RemoveUnreachableCodeRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, RemoveUnreachableCodeRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
+    class Finder(ModuleAndIndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
-        def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
-            RemoveUnreachableCodeRule.check_block(node.body, self.hits, self.path)
-            return True
-
-        def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
-            self,
-            node: cst.IndentedBlock,
-        ) -> bool:
-            RemoveUnreachableCodeRule.check_block(node.body, self.hits, self.path)
-            return True
+            super().__init__(path=path, checker=RemoveUnreachableCodeRule.check_block)
 
         def visit_SimpleStatementLine(  # ruff:ignore[invalid-function-name]
             self,
@@ -104,14 +96,12 @@ class RemoveUnreachableCodeRule:
         body: Sequence[cst.BaseStatement],
         path: str,
     ) -> Hit:
-        before = cst.Module(body=[cast("BodyStatement", stmt)]).code.strip()
-        cleaned = RemoveUnreachableCodeRule.body_without_unreachable(body)
-        after = cst.Module(body=cleaned).code.strip()
-        return Hit(
+        return body_cleanup_hit(
             rule_id="remove-unreachable-code",
             message="Unreachable code after control-flow exit",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            stmt=stmt,
+            cleaned_body=RemoveUnreachableCodeRule.body_without_unreachable(body),
         )
 
     @staticmethod

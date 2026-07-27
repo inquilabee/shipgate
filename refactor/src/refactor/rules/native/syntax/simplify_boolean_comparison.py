@@ -6,10 +6,20 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    detect_with_visitor,
+    expr_replacement_hit,
+    is_false,
+    is_true,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class SimplifyBooleanComparisonRule:
@@ -20,20 +30,13 @@ class SimplifyBooleanComparisonRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = SimplifyBooleanComparisonRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, SimplifyBooleanComparisonRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
             self,
             node: cst.Comparison,
@@ -45,23 +48,15 @@ class SimplifyBooleanComparisonRule:
             return True
 
     @staticmethod
-    def is_true(node: cst.BaseExpression) -> bool:
-        return isinstance(node, cst.Name) and node.value == "True"
-
-    @staticmethod
-    def is_false(node: cst.BaseExpression) -> bool:
-        return isinstance(node, cst.Name) and node.value == "False"
-
-    @staticmethod
     def match_boolean_compare(node: cst.Comparison) -> cst.BaseExpression | None:
         if len(node.comparisons) != 1:
             return None
         comparison = node.comparisons[0]
         if not isinstance(comparison.operator, cst.Equal):
             return None
-        if SimplifyBooleanComparisonRule.is_true(comparison.comparator):
+        if is_true(comparison.comparator):
             return node.left
-        if SimplifyBooleanComparisonRule.is_false(comparison.comparator):
+        if is_false(comparison.comparator):
             return cst.UnaryOperation(operator=cst.Not(), expression=node.left)
         return None
 
@@ -71,15 +66,10 @@ class SimplifyBooleanComparisonRule:
         replacement: cst.BaseExpression,
         path: str,
     ) -> Hit:
-        before = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=node)])]
-        ).code.strip()
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=replacement)])]
-        ).code.strip()
-        return Hit(
+        return expr_replacement_hit(
             rule_id="simplify-boolean-comparison",
             message="Simplify boolean comparison",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before_expr=node,
+            after_expr=replacement,
         )

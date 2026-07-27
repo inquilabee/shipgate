@@ -6,10 +6,18 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    detect_with_visitor,
+    expr_replacement_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class UseLenRule:
@@ -20,20 +28,13 @@ class UseLenRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = UseLenRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, UseLenRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
             self,
             node: cst.Comparison,
@@ -78,16 +79,11 @@ class UseLenRule:
         subject: cst.BaseExpression,
         path: str,
     ) -> Hit:
-        before = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=node)])]
-        ).code.strip()
         after_expr = cst.UnaryOperation(operator=cst.Not(), expression=subject)
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=after_expr)])]
-        ).code.strip()
-        return Hit(
+        return expr_replacement_hit(
             rule_id="use-len",
             message="Prefer truthiness over `len(x) == 0`",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before_expr=node,
+            after_expr=after_expr,
         )

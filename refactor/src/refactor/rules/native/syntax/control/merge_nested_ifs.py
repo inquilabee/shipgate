@@ -6,12 +6,20 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
-
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+from refactor.cst_util import (
+    BodyStatement,
+    HitCollector,
+    code_for_stmt,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class MergeNestedIfsRule:
@@ -22,20 +30,13 @@ class MergeNestedIfsRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = MergeNestedIfsRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, MergeNestedIfsRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_If(self, node: cst.If) -> bool:  # ruff:ignore[invalid-function-name]
             match = MergeNestedIfsRule.match_nested_ifs(node)
             if match is not None:
@@ -64,11 +65,10 @@ class MergeNestedIfsRule:
 
     @staticmethod
     def hit_for(outer: cst.If, merged: cst.If, path: str) -> Hit:
-        before = cst.Module(body=[cast("BodyStatement", outer)]).code.strip()
-        after = cst.Module(body=[cast("BodyStatement", merged)]).code.strip()
-        return Hit(
+        return make_hit(
             rule_id="merge-nested-ifs",
             message="Merge nested if statements",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before=code_for_stmt(cast("BodyStatement", outer)),
+            after=code_for_stmt(cast("BodyStatement", merged)),
         )

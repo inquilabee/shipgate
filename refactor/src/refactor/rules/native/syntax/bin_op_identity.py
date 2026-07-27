@@ -6,10 +6,19 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    code_for_small_stmt,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class BinOpIdentityRule:
@@ -20,20 +29,13 @@ class BinOpIdentityRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = BinOpIdentityRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, BinOpIdentityRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
             if len(node.targets) != 1:
                 return True
@@ -59,12 +61,11 @@ class BinOpIdentityRule:
 
     @staticmethod
     def hit_for(node: cst.Assign, identity: cst.Name, path: str) -> Hit:
-        before = cst.Module(body=[cst.SimpleStatementLine(body=[node])]).code.strip()
         after_assign = cst.Assign(targets=node.targets, value=identity)
-        after = cst.Module(body=[cst.SimpleStatementLine(body=[after_assign])]).code.strip()
-        return Hit(
+        return make_hit(
             rule_id="bin-op-identity",
             message="Remove identity binary operation",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before=code_for_small_stmt(node),
+            after=code_for_small_stmt(after_assign),
         )

@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
-
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+from refactor.cst_util import (
+    IndentedBlockCollector,
+    check_single_for_named_action,
+    code_for_stmt,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+    single_small_stmt,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class YieldFromRule:
@@ -22,26 +31,15 @@ class YieldFromRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = YieldFromRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, YieldFromRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
+    class Finder(IndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
-        def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
-            self,
-            node: cst.IndentedBlock,
-        ) -> bool:
-            YieldFromRule.check_body(node.body, self.hits, self.path)
-            return True
+            super().__init__(path=path, checker=YieldFromRule.check_body)
 
     @staticmethod
     def check_body(
@@ -49,55 +47,32 @@ class YieldFromRule:
         hits: list[Hit],
         path: str,
     ) -> None:
-        if len(body) != 1:
-            return
-        match = YieldFromRule.match_yield_loop(body[0])
-        if match is None:
-            return
-        for_stmt, iterable = match
-        hits.append(YieldFromRule.hit_for(for_stmt, iterable, path))
-
-    @staticmethod
-    def match_yield_loop(
-        stmt: cst.BaseStatement,
-    ) -> tuple[cst.For, cst.BaseExpression] | None:
-        if not isinstance(stmt, cst.For) or stmt.orelse:
-            return None
-        if not isinstance(stmt.target, cst.Name):
-            return None
-        if not isinstance(stmt.body, cst.IndentedBlock):
-            return None
-        yielded = YieldFromRule.yielded_name(stmt.body)
-        if yielded is None or yielded != stmt.target.value:
-            return None
-        return stmt, stmt.iter
+        check_single_for_named_action(
+            body,
+            hits,
+            path,
+            action_name=YieldFromRule.yielded_name,
+            build_hit=YieldFromRule.hit_for,
+        )
 
     @staticmethod
     def yielded_name(body: cst.IndentedBlock) -> str | None:
-        if len(body.body) != 1:
+        small = single_small_stmt(body)
+        if not isinstance(small, cst.Expr) or not isinstance(small.value, cst.Yield):
             return None
-        inner = body.body[0]
-        if not isinstance(inner, cst.SimpleStatementLine) or len(inner.body) != 1:
+        if small.value.value is None or not isinstance(small.value.value, cst.Name):
             return None
-        expr = inner.body[0]
-        if not isinstance(expr, cst.Expr) or not isinstance(expr.value, cst.Yield):
-            return None
-        if expr.value.value is None:
-            return None
-        if not isinstance(expr.value.value, cst.Name):
-            return None
-        return expr.value.value.value
+        return small.value.value.value
 
     @staticmethod
     def hit_for(for_stmt: cst.For, iterable: cst.BaseExpression, path: str) -> Hit:
-        before = cst.Module(body=[cast("BodyStatement", for_stmt)]).code.strip()
         yield_from = cst.SimpleStatementLine(
             body=[cst.Expr(value=cst.Yield(value=cst.From(item=iterable)))]
         )
-        after = cst.Module(body=[yield_from]).code.strip()
-        return Hit(
+        return make_hit(
             rule_id="yield-from",
             message="Prefer `yield from` over yield-in-loop",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before=code_for_stmt(for_stmt),
+            after=code_for_stmt(yield_from),
         )

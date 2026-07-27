@@ -2,16 +2,25 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
-
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+from refactor.cst_util import (
+    IndentedBlockCollector,
+    check_single_for_named_action,
+    code_for_stmt,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+    single_small_stmt,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class UseNextRule:
@@ -22,26 +31,15 @@ class UseNextRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = UseNextRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, UseNextRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
+    class Finder(IndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
-        def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
-            self,
-            node: cst.IndentedBlock,
-        ) -> bool:
-            UseNextRule.check_body(node.body, self.hits, self.path)
-            return True
+            super().__init__(path=path, checker=UseNextRule.check_body)
 
     @staticmethod
     def check_body(
@@ -49,57 +47,34 @@ class UseNextRule:
         hits: list[Hit],
         path: str,
     ) -> None:
-        if len(body) != 1:
-            return
-        stmt = body[0]
-        match = UseNextRule.match_first_element_for(stmt)
-        if match is None:
-            return
-        for_stmt, iterable = match
-        hits.append(UseNextRule.hit_for(for_stmt, iterable, path))
-
-    @staticmethod
-    def match_first_element_for(
-        stmt: cst.BaseStatement,
-    ) -> tuple[cst.For, cst.BaseExpression] | None:
-        if not isinstance(stmt, cst.For) or stmt.orelse:
-            return None
-        if not isinstance(stmt.target, cst.Name):
-            return None
-        if not isinstance(stmt.body, cst.IndentedBlock):
-            return None
-        returned = UseNextRule.returned_name(stmt.body)
-        if returned is None or returned != stmt.target.value:
-            return None
-        return stmt, stmt.iter
+        check_single_for_named_action(
+            body,
+            hits,
+            path,
+            action_name=UseNextRule.returned_name,
+            build_hit=UseNextRule.hit_for,
+        )
 
     @staticmethod
     def returned_name(body: cst.IndentedBlock) -> str | None:
-        if len(body.body) != 1:
+        small = single_small_stmt(body)
+        if not isinstance(small, cst.Return) or small.value is None:
             return None
-        inner = body.body[0]
-        if not isinstance(inner, cst.SimpleStatementLine) or len(inner.body) != 1:
+        if not isinstance(small.value, cst.Name):
             return None
-        ret = inner.body[0]
-        if not isinstance(ret, cst.Return) or ret.value is None:
-            return None
-        if not isinstance(ret.value, cst.Name):
-            return None
-        return ret.value.value
+        return small.value.value
 
     @staticmethod
     def hit_for(for_stmt: cst.For, iterable: cst.BaseExpression, path: str) -> Hit:
-        before = cst.Module(body=[cast("BodyStatement", for_stmt)]).code.strip()
         next_call = cst.Call(
             func=cst.Name("next"),
             args=[cst.Arg(value=cst.Call(func=cst.Name("iter"), args=[cst.Arg(value=iterable)]))],
         )
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Return(value=next_call)])]
-        ).code.strip()
-        return Hit(
+        after_stmt = cst.SimpleStatementLine(body=[cst.Return(value=next_call)])
+        return make_hit(
             rule_id="use-next",
             message="Prefer `next(iter(...))` for first element",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before=code_for_stmt(for_stmt),
+            after=code_for_stmt(after_stmt),
         )

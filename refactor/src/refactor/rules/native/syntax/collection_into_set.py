@@ -6,10 +6,19 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    code_for_expr,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class CollectionIntoSetRule:
@@ -20,20 +29,13 @@ class CollectionIntoSetRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = CollectionIntoSetRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, CollectionIntoSetRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
             self,
             node: cst.Comparison,
@@ -69,9 +71,6 @@ class CollectionIntoSetRule:
         list_node: cst.List,
         path: str,
     ) -> Hit:
-        before = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=comparison)])]
-        ).code.strip()
         set_elements = [
             cst.Element(value=element.value, comma=element.comma) for element in list_node.elements
         ]
@@ -85,12 +84,10 @@ class CollectionIntoSetRule:
             else:
                 new_comparisons.append(comp)
         after_expr = cst.Comparison(left=comparison.left, comparisons=new_comparisons)
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=after_expr)])]
-        ).code.strip()
-        return Hit(
+        return make_hit(
             rule_id="collection-into-set",
             message="Prefer set literal for membership test",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before=code_for_expr(comparison),
+            after=code_for_expr(after_expr),
         )

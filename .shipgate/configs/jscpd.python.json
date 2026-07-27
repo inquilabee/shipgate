@@ -11,7 +11,6 @@
     "**/venv/**",
     "**/.ruff_cache/**",
     "**/__pycache__/**",
-    "tests/**",
-    "refactor/src/refactor/rules/**"
+    "tests/**"
   ]
 }

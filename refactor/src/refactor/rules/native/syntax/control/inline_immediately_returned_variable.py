@@ -6,12 +6,20 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
-
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+from refactor.cst_util import (
+    BodyStatement,
+    IndentedBlockCollector,
+    code_for_stmts,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class InlineImmediatelyReturnedVariableRule:
@@ -22,26 +30,18 @@ class InlineImmediatelyReturnedVariableRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = InlineImmediatelyReturnedVariableRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, InlineImmediatelyReturnedVariableRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
+    class Finder(IndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
-        def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
-            self,
-            node: cst.IndentedBlock,
-        ) -> bool:
-            InlineImmediatelyReturnedVariableRule.check_body(node.body, self.hits, self.path)
-            return True
+            super().__init__(
+                path=path,
+                checker=InlineImmediatelyReturnedVariableRule.check_body,
+            )
 
     @staticmethod
     def check_body(
@@ -130,18 +130,13 @@ class InlineImmediatelyReturnedVariableRule:
         path: str,
     ) -> Hit:
         _ = name
-        before = cst.Module(
-            body=[
-                cast("BodyStatement", assign_stmt),
-                cast("BodyStatement", return_stmt),
-            ]
-        ).code.strip()
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Return(value=value)])]
-        ).code.strip()
-        return Hit(
+        return make_hit(
             rule_id="inline-immediately-returned-variable",
             message="Inline immediately returned variable",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before=code_for_stmts(
+                cast("BodyStatement", assign_stmt),
+                cast("BodyStatement", return_stmt),
+            ),
+            after=code_for_stmts(cst.SimpleStatementLine(body=[cst.Return(value=value)])),
         )

@@ -7,10 +7,18 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    code_for_expr,
+    detect_with_visitor,
+    make_hit,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 @dataclass(frozen=True)
@@ -28,10 +36,7 @@ class DefaultGetRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = DefaultGetRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, DefaultGetRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
         _ = self
@@ -44,11 +49,7 @@ class DefaultGetRule:
             return None
         return text
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
             parts = DefaultGetRule.match_parts(node)
             if parts is None:
@@ -58,14 +59,13 @@ class DefaultGetRule:
 
     @staticmethod
     def hit_for(parts: DefaultGetParts, node: cst.IfExp, path: str) -> Hit:
-        before = cst.Module(body=[cst.SimpleStatementLine(body=[cst.Expr(value=node)])])
         after_expr = DefaultGetRule.build_get_call(parts)
-        after = cst.Module(body=[cst.SimpleStatementLine(body=[cst.Expr(value=after_expr)])])
-        return Hit(
+        return make_hit(
             rule_id="default-get",
             message="Prefer dict.get over membership ternary",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before.code.strip(), after=after.code.strip()),
+            path=path,
+            before=code_for_expr(node),
+            after=code_for_expr(after_expr),
         )
 
     @staticmethod

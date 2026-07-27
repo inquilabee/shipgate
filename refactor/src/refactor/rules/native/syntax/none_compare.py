@@ -6,10 +6,19 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    detect_with_visitor,
+    expr_replacement_hit,
+    is_none_name,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class NoneCompareRule:
@@ -20,20 +29,13 @@ class NoneCompareRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = NoneCompareRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, NoneCompareRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
             self,
             node: cst.Comparison,
@@ -45,22 +47,18 @@ class NoneCompareRule:
             return True
 
     @staticmethod
-    def is_none(node: cst.BaseExpression) -> bool:
-        return isinstance(node, cst.Name) and node.value == "None"
-
-    @staticmethod
     def match_none_compare(node: cst.Comparison) -> cst.Comparison | None:
         if len(node.comparisons) != 1:
             return None
         comparison = node.comparisons[0]
         operator = comparison.operator
         comparator = comparison.comparator
-        if isinstance(operator, cst.Equal) and NoneCompareRule.is_none(comparator):
+        if isinstance(operator, cst.Equal) and is_none_name(comparator):
             return cst.Comparison(
                 left=node.left,
                 comparisons=[cst.ComparisonTarget(operator=cst.Is(), comparator=comparator)],
             )
-        if isinstance(operator, cst.NotEqual) and NoneCompareRule.is_none(comparator):
+        if isinstance(operator, cst.NotEqual) and is_none_name(comparator):
             return cst.Comparison(
                 left=node.left,
                 comparisons=[cst.ComparisonTarget(operator=cst.IsNot(), comparator=comparator)],
@@ -73,15 +71,10 @@ class NoneCompareRule:
         replacement: cst.Comparison,
         path: str,
     ) -> Hit:
-        before = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=node)])]
-        ).code.strip()
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=replacement)])]
-        ).code.strip()
-        return Hit(
+        return expr_replacement_hit(
             rule_id="none-compare",
             message="Prefer `is None` over `== None`",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before_expr=node,
+            after_expr=replacement,
         )

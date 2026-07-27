@@ -6,10 +6,19 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    code_for_stmt,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class DefaultMutableArgRule:
@@ -20,20 +29,13 @@ class DefaultMutableArgRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = DefaultMutableArgRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, DefaultMutableArgRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
             self,
             node: cst.FunctionDef,
@@ -57,7 +59,6 @@ class DefaultMutableArgRule:
         path: str,
     ) -> Hit:
         param_name = param.name.value
-        before = cst.Module(body=[func]).code.strip()
         default_expr = param.default
         if default_expr is None:
             raise ValueError("mutable default parameter missing default expression")
@@ -98,13 +99,14 @@ class DefaultMutableArgRule:
             params=func.params.with_changes(params=new_params),
             body=new_body,
         )
-        after = cst.Module(body=[after_func]).code.strip()
         hint = f"Use `None` default and `if {param_name} is None: {param_name} = {default_kind}()`"
-        return Hit(
+        return make_hit(
             rule_id="default-mutable-arg",
             message=f"Avoid mutable default for `{param_name}`",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after, message=hint),
+            path=path,
+            before=code_for_stmt(func),
+            after=code_for_stmt(after_func),
+            suggestion_message=hint,
         )
 
     @staticmethod

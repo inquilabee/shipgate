@@ -6,12 +6,20 @@ from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
-
-BodyStatement = cst.SimpleStatementLine | cst.BaseCompoundStatement
+from refactor.cst_util import (
+    BodyStatement,
+    HitCollector,
+    code_for_stmt,
+    detect_with_visitor,
+    make_hit,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class ForIndexReplacementRule:
@@ -22,20 +30,13 @@ class ForIndexReplacementRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = ForIndexReplacementRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, ForIndexReplacementRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_For(self, node: cst.For) -> bool:  # ruff:ignore[invalid-function-name]
             match = ForIndexReplacementRule.match_range_len_for(node)
             if match is None:
@@ -112,7 +113,6 @@ class ForIndexReplacementRule:
         sequence_name: str,
         path: str,
     ) -> Hit:
-        before = cst.Module(body=[cast("BodyStatement", for_stmt)]).code.strip()
         enumerate_call = cst.Call(
             func=cst.Name("enumerate"),
             args=[cst.Arg(value=cst.Name(sequence_name))],
@@ -127,16 +127,13 @@ class ForIndexReplacementRule:
             iter=enumerate_call,
             body=for_stmt.body,
         )
-        after = cst.Module(body=[cast("BodyStatement", after_for)]).code.strip()
-        return Hit(
+        return make_hit(
             rule_id="for-index-replacement",
             message="Prefer `enumerate()` over `range(len(...))` indexing",
-            location=Location(path=path),
-            suggestion=Suggestion(
-                before=before,
-                after=after,
-                message=f"Use `for {index_name}, item in enumerate({sequence_name}):`",
-            ),
+            path=path,
+            before=code_for_stmt(cast("BodyStatement", for_stmt)),
+            after=code_for_stmt(cast("BodyStatement", after_for)),
+            suggestion_message=f"Use `for {index_name}, item in enumerate({sequence_name}):`",
         )
 
     class SubscriptFinder(cst.CSTVisitor):

@@ -6,10 +6,20 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
-from refactor.protocol import Hit, Location, RuleKind, Suggestion
+from refactor.cst_util import (
+    HitCollector,
+    detect_with_visitor,
+    expr_replacement_hit,
+    is_false,
+    is_true,
+    noop_apply,
+)
+from refactor.protocol import RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from refactor.protocol import Hit
 
 
 class BooleanIfExpIdentityRule:
@@ -20,20 +30,13 @@ class BooleanIfExpIdentityRule:
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
-        module = cst.parse_module(source)
-        finder = BooleanIfExpIdentityRule.Finder(path=path)
-        module.visit(finder)
-        return finder.hits
+        return detect_with_visitor(source, path, BooleanIfExpIdentityRule.Finder)
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
-        _ = self, source, hits
-        return None
+        _ = self
+        return noop_apply(source, hits)
 
-    class Finder(cst.CSTVisitor):
-        def __init__(self, *, path: str) -> None:
-            self.path = path
-            self.hits: list[Hit] = []
-
+    class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
             replacement = BooleanIfExpIdentityRule.match_identity(node)
             if replacement is None:
@@ -42,22 +45,10 @@ class BooleanIfExpIdentityRule:
             return True
 
     @staticmethod
-    def is_true(node: cst.BaseExpression) -> bool:
-        return isinstance(node, cst.Name) and node.value == "True"
-
-    @staticmethod
-    def is_false(node: cst.BaseExpression) -> bool:
-        return isinstance(node, cst.Name) and node.value == "False"
-
-    @staticmethod
     def match_identity(node: cst.IfExp) -> cst.BaseExpression | None:
-        if BooleanIfExpIdentityRule.is_true(node.body) and BooleanIfExpIdentityRule.is_false(
-            node.orelse
-        ):
+        if is_true(node.body) and is_false(node.orelse):
             return node.test
-        if BooleanIfExpIdentityRule.is_false(node.body) and BooleanIfExpIdentityRule.is_true(
-            node.orelse
-        ):
+        if is_false(node.body) and is_true(node.orelse):
             return cst.UnaryOperation(operator=cst.Not(), expression=node.test)
         return None
 
@@ -67,15 +58,10 @@ class BooleanIfExpIdentityRule:
         replacement: cst.BaseExpression,
         path: str,
     ) -> Hit:
-        before = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=node)])]
-        ).code.strip()
-        after = cst.Module(
-            body=[cst.SimpleStatementLine(body=[cst.Expr(value=replacement)])]
-        ).code.strip()
-        return Hit(
+        return expr_replacement_hit(
             rule_id="boolean-if-exp-identity",
             message="Simplify boolean if-expression",
-            location=Location(path=path),
-            suggestion=Suggestion(before=before, after=after),
+            path=path,
+            before_expr=node,
+            after_expr=replacement,
         )
