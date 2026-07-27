@@ -1,5 +1,6 @@
 from refactor.rules.native.anydict.str_prefix_suffix import StrPrefixSuffixRule
 from refactor.rules.native.builtins.use_len import UseLenRule
+from refactor.rules.native.compare.hoist_statement_from_loop import HoistStatementFromLoopRule
 from refactor.rules.native.elseblock.class_extract_method import ClassExtractMethodRule
 from refactor.rules.native.elseblock.extract_method import ExtractMethodRule
 from refactor.rules.native.elseblock.no_loop_in_tests import NoLoopInTestsRule
@@ -86,3 +87,18 @@ def test_placeholder_extract_rules_are_silent_by_default() -> None:
     )
     assert ExtractMethodRule().detect(function_source, "x.py") == []
     assert ClassExtractMethodRule().detect(class_source, "x.py") == []
+
+
+def test_unsafe_loop_hoist_is_silent_by_default() -> None:
+    rule = HoistStatementFromLoopRule()
+    accumulator_source = (
+        "worst = 0\nfor req in requests:\n    code = run(req)\n    worst = max(worst, code)\n"
+    )
+    return_source = (
+        "for policy in policies:\n"
+        "    if policy.matches(item):\n"
+        "        return policy\n"
+        "    return None\n"
+    )
+    assert rule.detect(accumulator_source, "x.py") == []
+    assert rule.detect(return_source, "x.py") == []

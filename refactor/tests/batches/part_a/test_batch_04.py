@@ -51,11 +51,6 @@ CASES = (
         "finish()",
     ),
     (
-        "hoist-statement-from-loop",
-        "for item in items:\n    process(item)\n    finish()\n",
-        "finish()",
-    ),
-    (
         "inline-immediately-yielded-variable",
         "value = build()\nyield value\n",
         "yield build()",

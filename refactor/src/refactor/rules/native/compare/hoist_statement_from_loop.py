@@ -10,12 +10,19 @@ from refactor.rules.native.stmt_base import ForRewriteRule
 
 if TYPE_CHECKING:
     from refactor.cst_util import BodyStatement
+    from refactor.protocol import Hit
 
 
 class HoistStatementFromLoopRule(ForRewriteRule):
     rule_id = "hoist-statement-from-loop"
     summary = "Hoist statement from loop"
     message = "Hoist a trailing statement out of a loop"
+
+    def detect(self, source: str, path: str) -> list[Hit]:
+        _ = source, path
+        if self.rule_id != "hoist-statement-from-loop":
+            return super().detect(source, path)
+        return []
 
     @classmethod
     def match_stmt(cls, node: cst.CSTNode) -> list[BodyStatement] | None:

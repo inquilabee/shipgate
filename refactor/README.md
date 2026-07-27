@@ -65,7 +65,7 @@ default-else suggestions require a concrete default-assignment pattern, and plac
 extract-method rules stay silent until they can propose complete edits instead of calls
 to synthetic helpers.
 
-#### Native rules eligible for `fix` (`safe_apply=True`)
+### Native rules eligible for `fix` (`safe_apply=True`)
 
 | Rule ID | Summary |
 | --- | --- |
