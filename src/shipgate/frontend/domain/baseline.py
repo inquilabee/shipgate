@@ -24,18 +24,17 @@ def fingerprints_from_report(
     report: RunReport,
 ) -> set[tuple[str, str, str, int | None, str]]:
     result: set[tuple[str, str, str, int | None, str]] = set()
-    for check in report.reports:
-        for finding in check.findings:
-            loc = finding.location
-            result.add(
-                finding_fingerprint(
-                    check_id=finding.check_id,
-                    rule_id=finding.rule_id,
-                    path=loc.path if loc else None,
-                    line=loc.line if loc else None,
-                    message=finding.message,
-                )
+    for finding in (finding for check in report.reports for finding in check.findings):
+        loc = finding.location
+        result.add(
+            finding_fingerprint(
+                check_id=finding.check_id,
+                rule_id=finding.rule_id,
+                path=loc.path if loc else None,
+                line=loc.line if loc else None,
+                message=finding.message,
             )
+        )
     return result
 
 
@@ -67,29 +66,28 @@ def fixed_finding_rows(
 ) -> list[dict[str, str | int | None]]:
     """Compact rows for baseline findings that were fixed in the current run."""
     rows: list[dict[str, str | int | None]] = []
-    for check in report.reports:
-        for finding in check.findings:
-            loc = finding.location
-            fp = finding_fingerprint(
-                check_id=finding.check_id,
-                rule_id=finding.rule_id,
-                path=loc.path if loc else None,
-                line=loc.line if loc else None,
-                message=finding.message,
-            )
-            if fp not in fixed_fps:
-                continue
-            rows.append(
-                {
-                    "check_id": finding.check_id,
-                    "rule_id": finding.rule_id,
-                    "file": loc.path if loc else None,
-                    "line": loc.line if loc else None,
-                    "message": finding.message,
-                }
-            )
-            if len(rows) >= limit:
-                return rows
+    for finding in (finding for check in report.reports for finding in check.findings):
+        loc = finding.location
+        fp = finding_fingerprint(
+            check_id=finding.check_id,
+            rule_id=finding.rule_id,
+            path=loc.path if loc else None,
+            line=loc.line if loc else None,
+            message=finding.message,
+        )
+        if fp not in fixed_fps:
+            continue
+        rows.append(
+            {
+                "check_id": finding.check_id,
+                "rule_id": finding.rule_id,
+                "file": loc.path if loc else None,
+                "line": loc.line if loc else None,
+                "message": finding.message,
+            }
+        )
+        if len(rows) >= limit:
+            return rows
     return rows
 
 

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import libcst as cst
+from libcst.metadata import ParentNodeProvider
 
+from refactor.cst_util import HitCollector
 from refactor.rules.native.expr_base import CallRewriteRule
 
 
@@ -22,13 +24,38 @@ class RemoveUnnecessaryCastRule(CallRewriteRule):
             return None
         return node.args[1].value
 
+    @classmethod
+    def finder_type(cls) -> type[HitCollector]:
+        class RemoveUnnecessaryCastFinder(HitCollector):
+            METADATA_DEPENDENCIES = (*HitCollector.METADATA_DEPENDENCIES, ParentNodeProvider)
+
+            def visit_Call(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.Call,
+            ) -> bool:
+                replacement = cls.match(node)
+                if replacement is None:
+                    return True
+                try:
+                    parent = self.get_metadata(ParentNodeProvider, node)
+                except KeyError:
+                    parent = None
+                if isinstance(parent, cst.Attribute) and parent.value is node:
+                    return True
+                self.record_hit(cls.hit_for(node, replacement, self.path), node)
+                return True
+
+        return RemoveUnnecessaryCastFinder
+
     @staticmethod
     def is_cast_func(node: cst.BaseExpression) -> bool:
-        if isinstance(node, cst.Name):
-            return node.value == "cast"
         return (
-            isinstance(node, cst.Attribute)
-            and isinstance(node.value, cst.Name)
-            and node.value.value == "typing"
-            and node.attr.value == "cast"
+            node.value == "cast"
+            if isinstance(node, cst.Name)
+            else (
+                isinstance(node, cst.Attribute)
+                and isinstance(node.value, cst.Name)
+                and node.value.value == "typing"
+                and node.attr.value == "cast"
+            )
         )

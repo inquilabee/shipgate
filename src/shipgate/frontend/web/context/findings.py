@@ -191,9 +191,11 @@ def findings_page_url(run_id: str, query: dict[str, str], page: int) -> str:
 
 
 def summary_check_ids(run: RunRecord) -> set[str]:
-    if not run.summary or not run.summary.by_check_id:
-        return set()
-    return {check_id for check_id, count in run.summary.by_check_id.items() if count > 0}
+    return (
+        set()
+        if not run.summary or not run.summary.by_check_id
+        else {check_id for check_id, count in run.summary.by_check_id.items() if count > 0}
+    )
 
 
 def check_options_for_run(storage: SqliteStorage, run: RunRecord) -> list[str]:
@@ -204,6 +206,4 @@ def check_options_for_run(storage: SqliteStorage, run: RunRecord) -> list[str]:
 
 
 def rule_options_for_run(run: RunRecord) -> list[str]:
-    if not run.summary or not run.summary.by_rule_id:
-        return []
-    return sorted(run.summary.by_rule_id.keys())
+    return [] if not run.summary or not run.summary.by_rule_id else sorted(run.summary.by_rule_id)

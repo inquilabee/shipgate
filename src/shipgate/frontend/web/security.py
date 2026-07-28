@@ -22,9 +22,7 @@ def new_csrf_token() -> str:
 
 def ui_token_from_env() -> str | None:
     value = os.environ.get("SHIPGATE_UI_TOKEN")
-    if value is None or value == "":
-        return None
-    return value
+    return None if value is None or value == "" else value
 
 
 def validate_run_submit_tokens(

@@ -104,9 +104,7 @@ class SqliteStorage:
     def get_run(self, run_id: str) -> RunRecord | None:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM runs WHERE id = ?", (run_id,)).fetchone()
-        if row is None:
-            return None
-        return mapping.row_to_run(row)
+        return None if row is None else mapping.row_to_run(row)
 
     def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]:
         query = "SELECT * FROM runs"
@@ -325,4 +323,4 @@ class SqliteStorage:
             placeholders = ", ".join("?" for _ in ids)
             conn.execute(f"DELETE FROM findings WHERE run_id IN ({placeholders})", ids)  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
             conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
-            return len(ids)
+            return ids.__len__()

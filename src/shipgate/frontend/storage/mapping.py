@@ -102,9 +102,9 @@ def dt_from_iso(value: str) -> datetime:
 
 
 def row_to_run(row: sqlite3.Row) -> RunRecord:
-    summary = None
-    if row["summary_json"]:
-        summary = RunSummaryRecord.from_dict(json.loads(row["summary_json"]))
+    summary = (
+        RunSummaryRecord.from_dict(json.loads(row["summary_json"])) if row["summary_json"] else None
+    )
     return RunRecord(
         id=row["id"],
         branch=row["branch"],
@@ -123,8 +123,7 @@ def row_to_run(row: sqlite3.Row) -> RunRecord:
 
 
 def row_to_finding(row: sqlite3.Row) -> FindingRecord:
-    keys = set(row.keys())
-    category_raw = row["category"] if "category" in keys and row["category"] else "code"
+    category_raw = row["category"] or "code"
     return FindingRecord(
         id=row["id"],
         run_id=row["run_id"],

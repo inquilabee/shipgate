@@ -53,15 +53,13 @@ def tool_docs_rows(catalog: Catalog, primary_root: Path) -> list[ToolDocsRow]:
 
 
 def resolve_version(tool: ToolDefinition, primary_root: Path) -> str:
-    installed = installed_version(tool, primary_root)
-    if installed:
+    if installed := installed_version(tool, primary_root):
         return installed
-    pip_version = pip_show_version(tool, primary_root)
-    if pip_version:
-        return pip_version
-    if tool.install and tool.install.version:
-        return tool.install.version
-    return "—"
+    return (
+        pip_version
+        if (pip_version := pip_show_version(tool, primary_root))
+        else (tool.install.version if tool.install and tool.install.version else "—")
+    )
 
 
 def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
@@ -83,8 +81,7 @@ def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
         except InstallError:
             return None
     for flag in VERSION_ATTEMPTS:
-        parsed = run_version_command(binary, flag, tool.executable)
-        if parsed:
+        if parsed := run_version_command(binary, flag, tool.executable):
             return parsed
     return None
 
@@ -96,15 +93,12 @@ def run_version_command(binary: str, flag: str, binary_name: str) -> str | None:
     except (OSError, subprocess.TimeoutExpired):
         return None
     text = "\n".join(part.strip() for part in (completed.stdout, completed.stderr) if part.strip())
-    if not text:
-        return None
-    return parse_version_from_output(text, binary_name)
+    return parse_version_from_output(text, binary_name) if text else None
 
 
 def parse_version_from_output(text: str, binary_name: str) -> str | None:
     for line in text.splitlines():
-        version = version_from_line(line.strip(), binary_name)
-        if version:
+        if version := version_from_line(line.strip(), binary_name):
             return version
     return semver_fallback(text, binary_name)
 
@@ -112,21 +106,20 @@ def parse_version_from_output(text: str, binary_name: str) -> str | None:
 def version_from_line(stripped: str, binary_name: str) -> str | None:
     if not stripped:
         return None
-    match = VERSION_LINE.search(stripped)
-    if match:
-        return clean_version(match.group("version"))
+    if match := VERSION_LINE.search(stripped):
+        return clean_version(match["version"])
     normalized = normalize_version_line(stripped, binary_name)
     if not is_plausible_version(normalized, binary_name):
         return None
     found = SEMVER.search(normalized)
-    return clean_version(found.group(0)) if found else None
+    return clean_version(found[0]) if found else None
 
 
 def semver_fallback(text: str, binary_name: str) -> str | None:
     found = SEMVER.search(text)
-    if found and is_plausible_version(found.group(0), binary_name):
-        return clean_version(found.group(0))
-    return None
+    return (
+        clean_version(found[0]) if found and is_plausible_version(found[0], binary_name) else None
+    )
 
 
 def pip_show_version(tool: ToolDefinition, primary_root: Path) -> str | None:
@@ -157,17 +150,21 @@ def package_name(package: str | None) -> str | None:
     if not package:
         return None
     match = PACKAGE_NAME.match(package.strip())
-    return match.group(1) if match else None
+    return match[1] if match else None
 
 
 def normalize_version_line(line: str, binary_name: str) -> str:
     lowered = line.lower()
     prefix = binary_name.lower()
-    if lowered.startswith(prefix + " "):
-        return line[len(binary_name) :].strip()
-    if lowered.startswith(prefix + "/"):
-        return line[len(binary_name) + 1 :].strip()
-    return LEADING_NAME.sub("", line, count=1).strip() or line
+    return (
+        line.removeprefix(binary_name).strip()
+        if lowered.startswith(prefix + " ")
+        else (
+            line[len(binary_name) + 1 :].strip()
+            if lowered.startswith(prefix + "/")
+            else LEADING_NAME.sub("", line, count=1).strip() or line
+        )
+    )
 
 
 def clean_version(value: str) -> str:
@@ -175,6 +172,8 @@ def clean_version(value: str) -> str:
 
 
 def is_plausible_version(value: str, binary_name: str) -> bool:
-    if not value or value.lower() == binary_name.lower():
-        return False
-    return bool(SEMVER.search(value))
+    return (
+        False
+        if not value or value.lower() == binary_name.lower()
+        else SEMVER.search(value) is not None
+    )

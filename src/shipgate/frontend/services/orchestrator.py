@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import threading
+from contextlib import suppress
+from functools import partial
 from pathlib import Path
 
 from shipgate.app import RunCommand, RunProgress, ShipGateApp
@@ -144,19 +146,7 @@ class RunOrchestrator:
         install_suite(worktree, suite_id, self._app._catalog_for(worktree))
 
         cancel_event = self._cancel_events.setdefault(run_id, threading.Event())
-
-        def on_progress(progress: RunProgress) -> None:
-            self._storage.update_run(
-                run_id,
-                current_check_id=progress.current_check_id or None,
-                checks_completed=progress.checks_completed,
-                checks_total=progress.checks_total,
-            )
-            if progress.completed_check is not None:
-                summary = ingest_check_into_storage(
-                    self._storage, run_id, progress.completed_check, worktree
-                )
-                self._storage.update_run(run_id, summary=summary)
+        on_progress = partial(self._handle_run_progress, self._storage, run_id, worktree)
 
         command = RunCommand(
             project_root=worktree,
@@ -188,12 +178,10 @@ class RunOrchestrator:
         else:
             status = RunStatus.SUCCEEDED if exit_code == 0 else RunStatus.FAILED
             self._storage.update_run(run_id, status=status, finished=True, summary=summary)
-        try:
+        with suppress(FileNotFoundError, OSError):
             from shipgate.runtime.report_store import ReportStore
 
             ReportStore(worktree).merge_metadata(run_id, {"branch": branch})
-        except (FileNotFoundError, OSError):
-            pass
         self._storage.prune_old_runs(keep=MAX_RUNS)
 
     def _resolve_worktree(self, branch: str) -> Path:
@@ -212,6 +200,23 @@ class RunOrchestrator:
             raise OrchestratorError(
                 f"{message}; failed to persist status: {update_message}"
             ) from update_exc
+
+    @staticmethod
+    def _handle_run_progress(
+        storage: Storage,
+        run_id: str,
+        worktree: Path,
+        progress: RunProgress,
+    ) -> None:
+        storage.update_run(
+            run_id,
+            current_check_id=progress.current_check_id or None,
+            checks_completed=progress.checks_completed,
+            checks_total=progress.checks_total,
+        )
+        if progress.completed_check is not None:
+            summary = ingest_check_into_storage(storage, run_id, progress.completed_check, worktree)
+            storage.update_run(run_id, summary=summary)
 
     def _finish_run(self, run_id: str) -> None:
         with self._lock:

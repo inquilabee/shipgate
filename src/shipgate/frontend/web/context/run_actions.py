@@ -35,7 +35,7 @@ def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
     return {
         "request": request,
         "branches": safe_branches(worktrees),
-        "suites": sorted(catalog.suites.keys()),
+        "suites": sorted(catalog.suites),
         "suite_checks": suite_checks,
         "check_options": suite_checks.get(selected_suite, []),
         "default_suite": selected_suite,
@@ -91,11 +91,13 @@ def default_suite(catalog, primary: Path) -> str:
         project = ProjectConfigLoader.load(project_root=primary)
     except ConfigError:
         project = None
-    if project is not None and project.suite is not None and project.suite in catalog.suites:
-        return project.suite
-    if "standard" in catalog.suites:
-        return "standard"
-    return next(iter(sorted(catalog.suites.keys())), "")
+    return (
+        project.suite
+        if project is not None and project.suite is not None and project.suite in catalog.suites
+        else (
+            "standard" if "standard" in catalog.suites else next(iter(sorted(catalog.suites)), "")
+        )
+    )
 
 
 def query_escape(value: str) -> str:

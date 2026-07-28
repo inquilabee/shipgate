@@ -90,8 +90,8 @@ def ingest_check_into_storage(
     merged_rules: dict[str, int] = {}
     run = storage.get_run(run_id)
     if run and run.summary:
-        merged_status.update(run.summary.by_check_status)
-    merged_status.update(by_check_status)
+        merged_status |= run.summary.by_check_status
+    merged_status |= by_check_status
     for finding in all_findings:
         if finding.category == FindingCategory.CODE:
             merged_sev[finding.severity] = merged_sev.get(finding.severity, 0) + 1
@@ -163,13 +163,19 @@ def summarize(
 
 def is_tool_failure_fields(*, rule_id: str, message: str, has_location: bool) -> bool:
     message_l = message.lower()
-    if rule_id == "threshold" or any(marker in message_l for marker in CODE_FAILURE_MARKERS):
-        return False
-    if rule_id in TOOL_RULE_IDS:
-        return True
-    if has_location:
-        return False
-    return any(marker in message_l for marker in TOOL_MESSAGE_MARKERS)
+    return (
+        False
+        if rule_id == "threshold" or any(marker in message_l for marker in CODE_FAILURE_MARKERS)
+        else (
+            True
+            if rule_id in TOOL_RULE_IDS
+            else (
+                False
+                if has_location
+                else any(marker in message_l for marker in TOOL_MESSAGE_MARKERS)
+            )
+        )
+    )
 
 
 def is_tool_failure(finding: Finding) -> bool:
@@ -268,9 +274,7 @@ def docs_from_extra(extra: Mapping[str, object] | None) -> tuple[str | None, lis
 
 
 def as_str_object_map(value: object) -> dict[str, object] | None:
-    if not isinstance(value, Mapping):
-        return None
-    return {str(key): item for key, item in value.items()}
+    return {str(key): item for key, item in value.items()} if isinstance(value, Mapping) else None
 
 
 def docs_url_from_raw(raw: Mapping[str, object]) -> str | None:
@@ -282,15 +286,15 @@ def docs_url_from_raw(raw: Mapping[str, object]) -> str | None:
 
 
 def normalize_docs_url(docs_url: object) -> str | None:
-    if isinstance(docs_url, str) and docs_url.strip():
-        return docs_url.strip()
-    return None
+    return docs_url.strip() if isinstance(docs_url, str) and docs_url.strip() else None
 
 
 def normalize_suggested_commands(commands_raw: object) -> list[str]:
-    if not isinstance(commands_raw, list):
-        return []
-    return [str(item) for item in commands_raw if str(item).strip()]
+    return (
+        [str(item) for item in commands_raw if str(item).strip()]
+        if isinstance(commands_raw, list)
+        else []
+    )
 
 
 def finding_to_record(

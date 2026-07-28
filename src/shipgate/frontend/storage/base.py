@@ -24,11 +24,17 @@ class Storage(Protocol):
         suite_id: str,
         worktree_path: str | None = None,
         run_id: str | None = None,
-    ) -> RunRecord: ...
+    ) -> RunRecord:
+        """Create and persist a queued run."""
+        ...
 
-    def get_run(self, run_id: str) -> RunRecord | None: ...
+    def get_run(self, run_id: str) -> RunRecord | None:
+        """Return a run by id, or None when missing."""
+        ...
 
-    def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]: ...
+    def list_runs(self, *, limit: int = 50, branch: str | None = None) -> list[RunRecord]:
+        """Return recent runs, optionally filtered by branch."""
+        ...
 
     def update_run(
         self,
@@ -42,9 +48,13 @@ class Storage(Protocol):
         checks_total: int | None = None,
         finished: bool = False,
         summary: RunSummaryRecord | None = None,
-    ) -> RunRecord: ...
+    ) -> RunRecord:
+        """Update run fields and optionally mark finished."""
+        ...
 
-    def replace_findings(self, run_id: str, findings: list[FindingRecord]) -> None: ...
+    def replace_findings(self, run_id: str, findings: list[FindingRecord]) -> None:
+        """Replace all findings for a run."""
+        ...
 
     def list_findings(
         self,
@@ -57,7 +67,9 @@ class Storage(Protocol):
         rule_id: str | None = None,
         limit: int | None = None,
         offset: int = 0,
-    ) -> list[FindingRecord]: ...
+    ) -> list[FindingRecord]:
+        """List findings for a run with optional filters."""
+        ...
 
     def count_findings(
         self,
@@ -68,14 +80,24 @@ class Storage(Protocol):
         file: str | None = None,
         category: FindingCategory | None = None,
         rule_id: str | None = None,
-    ) -> int: ...
+    ) -> int:
+        """Count findings for a run with optional filters."""
+        ...
 
     def upsert_check_findings(
         self, run_id: str, check_id: str, findings: list[FindingRecord]
-    ) -> None: ...
+    ) -> None:
+        """Replace findings for one check within a run."""
+        ...
 
-    def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None: ...
+    def previous_completed_run(self, *, branch: str, before_run_id: str) -> RunRecord | None:
+        """Return the prior completed run on a branch."""
+        ...
 
-    def prune_old_runs(self, keep: int = 50) -> int: ...
+    def prune_old_runs(self, keep: int = 50) -> int:
+        """Delete oldest runs past the retention limit."""
+        ...
 
-    def has_run(self, run_id: str) -> bool: ...
+    def has_run(self, run_id: str) -> bool:
+        """Return whether a run id exists."""
+        ...

@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 def store_for_run(primary_root: Path, run: RunRecord | None) -> ReportStore:
     """Use the worktree ReportStore when the run recorded one; else primary."""
-    if run is not None and run.worktree_path:
-        return ReportStore(Path(run.worktree_path))
-    return ReportStore(Path(primary_root))
+    return (
+        ReportStore(Path(run.worktree_path))
+        if run is not None and run.worktree_path
+        else ReportStore(Path(primary_root))
+    )

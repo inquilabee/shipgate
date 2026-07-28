@@ -6,6 +6,7 @@ import hashlib
 import re
 import shutil
 import subprocess
+from contextlib import suppress
 from pathlib import Path
 
 from shipgate.core.process import run_command
@@ -51,16 +52,16 @@ class WorktreeManager:
     def resolve_run_root(self, branch: str) -> Path:
         self._require_git_repo()
         current = self._current_branch()
-        if current is not None and current == branch:
-            return self._primary_root
-        return self.ensure_worktree(branch)
+        return (
+            self._primary_root
+            if current is not None and current == branch
+            else self.ensure_worktree(branch)
+        )
 
     def _current_branch(self) -> str | None:
         result = self._run_git([GIT_REV_PARSE, GIT_ABBREV_REF, "HEAD"])
         name = result.stdout.strip()
-        if name == "HEAD":
-            return None
-        return name
+        return None if name == "HEAD" else name
 
     def _checked_out_branch(self, worktree_path: Path) -> str:
         try:
@@ -84,7 +85,7 @@ class WorktreeManager:
         paths: set[Path] = set()
         for line in result.stdout.splitlines():
             if line.startswith("worktree "):
-                paths.add(Path(line[len("worktree ") :]).resolve())
+                paths.add(Path(line.removeprefix("worktree ")).resolve())
         return paths
 
     def _run_git(self, args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -113,22 +114,18 @@ class WorktreeManager:
             sanitized = sanitized.replace("__", "_")
         if sanitized and sanitized[0].isdigit():
             sanitized = f"b_{sanitized}"
-        if sanitized:
-            return f"{sanitized}_{digest}"
-        return f"wt_{digest}"
+        return f"{sanitized}_{digest}" if sanitized else f"wt_{digest}"
 
 
 def current_branch(project_root: Path) -> str:
     git = shutil.which("git")
     if git is None:
         return "unknown"
-    try:
+    with suppress(OSError, subprocess.SubprocessError):
         result = run_command(
             [git, "-C", str(project_root), GIT_REV_PARSE, GIT_ABBREV_REF, "HEAD"],
         )
         branch = result.stdout.strip()
         if result.returncode == 0 and branch and branch != "HEAD":
             return branch
-    except (OSError, subprocess.SubprocessError):
-        pass
     return "unknown"

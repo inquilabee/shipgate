@@ -186,7 +186,7 @@ def register_new_run_routes(app: FastAPI) -> None:
             suite_id,
             acknowledge_requirements,
             check=check or None,
-            changed_only=bool(changed_only),
+            changed_only=changed_only not in (None, ""),
             since=since or None,
         )
 

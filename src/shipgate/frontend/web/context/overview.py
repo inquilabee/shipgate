@@ -60,14 +60,20 @@ def overview_context(
     if run is None:
         return context
     previous = storage.previous_completed_run(branch=run.branch, before_run_id=run.id)
-    context["previous"] = previous
-    context["deltas"] = severity_deltas(run.summary, previous.summary if previous else None)
+    context |= {
+        "previous": previous,
+        "deltas": severity_deltas(run.summary, previous.summary if previous else None),
+    }
     attach_baseline_context(context, run, baseline)
     code_findings = storage.list_findings(run.id, category=FindingCategory.CODE)
-    context["hotspots"] = file_hotspots(code_findings)
-    context["by_check"] = by_check_rows(run.summary)
-    context["tool_failures"] = storage.list_findings(run.id, category=FindingCategory.TOOL)
-    context["gate_status"] = gate_status(run)
+    context |= {
+        "hotspots": file_hotspots(code_findings),
+        "by_check": by_check_rows(run.summary),
+    }
+    context |= {
+        "tool_failures": storage.list_findings(run.id, category=FindingCategory.TOOL),
+        "gate_status": gate_status(run),
+    }
     attach_baseline_finding_counts(context, baseline, baseline_fps, code_findings)
     return context
 
@@ -86,9 +92,8 @@ def baseline_severity_counts(baseline: RunReport | None) -> dict[str, int] | Non
     if baseline is None or not baseline.reports:
         return None
     baseline_sev: dict[str, int] = {}
-    for check in baseline.reports:
-        for finding in check.findings:
-            baseline_sev[finding.severity] = baseline_sev.get(finding.severity, 0) + 1
+    for finding in (finding for check in baseline.reports for finding in check.findings):
+        baseline_sev[finding.severity] = baseline_sev.get(finding.severity, 0) + 1
     return baseline_sev
 
 
@@ -102,10 +107,12 @@ def attach_baseline_finding_counts(
         return
     current_fps = {fingerprint_from_record(finding) for finding in code_findings}
     fixed_fps = fixed_fingerprints(baseline_fps, current_fps)
-    context["baseline_new_count"] = sum(
-        1 for fingerprint in current_fps if fingerprint not in baseline_fps
-    )
-    context["baseline_fixed_count"] = len(fixed_fps)
+    context |= {
+        "baseline_new_count": sum(
+            1 for fingerprint in current_fps if fingerprint not in baseline_fps
+        ),
+        "baseline_fixed_count": fixed_fps.__len__(),
+    }
     if baseline is not None:
         context["baseline_fixed_rows"] = fixed_finding_rows(baseline, fixed_fps)
 
@@ -113,15 +120,12 @@ def attach_baseline_finding_counts(
 def gate_status(run: RunRecord) -> str | None:
     if run.summary is None:
         return None
-    gate_statuses = {
+    if gate_statuses := {
         check_id: status
         for check_id, status in run.summary.by_check_status.items()
         if check_id.startswith("gate.")
-    }
-    if gate_statuses:
-        if any(status == "failed" for status in gate_statuses.values()):
-            return "failed"
-        return "passed"
+    }:
+        return "failed" if "failed" in gate_statuses.values() else "passed"
     return "passed" if run.status.value == "succeeded" else "failed"
 
 
@@ -130,9 +134,7 @@ def resolve_overview_run(
 ) -> tuple[RunRecord | None, bool]:
     if run_id:
         run = storage.get_run(run_id)
-        if run is None:
-            return None, True
-        return run, False
+        return (None, True) if run is None else (run, False)
     runs = storage.list_runs(limit=1)
     return (runs[0] if runs else None), False
 
@@ -161,15 +163,17 @@ def file_hotspots(findings: list[FindingRecord], *, limit: int = 10) -> list[dic
 
 
 def by_check_rows(summary: RunSummaryRecord | None) -> list[dict[str, Any]]:
-    if summary is None:
-        return []
-    return [
-        {"check_id": check_id, "count": count}
-        for check_id, count in sorted(
-            summary.by_check_id.items(), key=lambda item: (-item[1], item[0])
-        )
-        if count > 0
-    ]
+    return (
+        []
+        if summary is None
+        else [
+            {"check_id": check_id, "count": count}
+            for check_id, count in sorted(
+                summary.by_check_id.items(), key=lambda item: (-item[1], item[0])
+            )
+            if count > 0
+        ]
+    )
 
 
 def overview_payload(storage: SqliteStorage, primary_root, run_id: str) -> dict[str, Any] | None:
@@ -209,8 +213,10 @@ def overview_payload(storage: SqliteStorage, primary_root, run_id: str) -> dict[
     baseline_new_count, baseline_fixed_count = baseline_finding_count_pair(
         baseline_fps, code_findings
     )
-    payload["baseline_new_count"] = baseline_new_count
-    payload["baseline_fixed_count"] = baseline_fixed_count
+    payload |= {
+        "baseline_new_count": baseline_new_count,
+        "baseline_fixed_count": baseline_fixed_count,
+    }
     return payload
 
 

@@ -38,7 +38,7 @@ def new_code_context(request: Request, storage: SqliteStorage, run: RunRecord) -
     return {
         "request": request,
         "run": run,
-        "has_baseline": bool(baseline_fps),
+        "has_baseline": baseline_fps,
         "new_findings": baseline_new_findings(code_findings, baseline_fps),
         "fixed_rows": fixed_rows,
         "fixed_count": fixed_count,
@@ -52,11 +52,15 @@ def baseline_new_findings(
     code_findings: list[FindingRecord],
     baseline_fps: set[FindingFingerprint],
 ) -> list[FindingRecord]:
-    if not baseline_fps:
-        return []
-    return [
-        finding for finding in code_findings if fingerprint_from_record(finding) not in baseline_fps
-    ]
+    return (
+        [
+            finding
+            for finding in code_findings
+            if fingerprint_from_record(finding) not in baseline_fps
+        ]
+        if baseline_fps
+        else []
+    )
 
 
 def baseline_fixed_summary(
