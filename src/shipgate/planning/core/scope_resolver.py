@@ -67,10 +67,7 @@ class ScopeResolver:
 
     def _resolve_against_project_root(self, path: Path) -> Path:
         """Resolve relative paths against project_root, not process CWD."""
-        if path.is_absolute():
-            return path.resolve()
-        # Do not call path.resolve() first — that anchors to CWD.
-        return (self.project_root / path).resolve()
+        return path.resolve() if path.is_absolute() else (self.project_root / path).resolve()
 
     def paths(self, scope: Scope, *, mode: RunMode) -> tuple[Path, ...]:
         if mode == RunMode.APPLY:
@@ -82,21 +79,27 @@ class ScopeResolver:
 
     def _scope_entry_paths(self, scope: Scope) -> list[Path]:
         target = self.resolve_scope_target(scope)
-        if target.is_file() or target != self.project_root:
-            return self._scope_single_path(target, scope)
-        return self._scope_project_root_dirs(scope)
+        return (
+            self._scope_single_path(target, scope)
+            if target.is_file() or target != self.project_root
+            else self._scope_project_root_dirs(scope)
+        )
 
     def _scope_single_path(self, target: Path, scope: Scope) -> list[Path]:
-        if should_ignore(self.project_root, target, extra_excludes=scope.exclude):
-            return []
-        if scope.include and not self._path_matches_include(target, scope.include):
-            return []
-        return [target]
+        return (
+            []
+            if should_ignore(self.project_root, target, extra_excludes=scope.exclude)
+            else (
+                []
+                if scope.include and not self._path_matches_include(target, scope.include)
+                else [target]
+            )
+        )
 
     def _scope_project_root_dirs(self, scope: Scope) -> list[Path]:
-        if scope.include:
-            return self._scope_included_dirs(scope)
-        return self._scope_default_dirs(scope)
+        return (
+            self._scope_included_dirs(scope) if scope.include else self._scope_default_dirs(scope)
+        )
 
     def _scope_included_dirs(self, scope: Scope) -> list[Path]:
         entries: list[Path] = []
@@ -124,16 +127,21 @@ class ScopeResolver:
             path.relative_to(self.project_root)
         except ValueError:
             return False
-        if not path.exists():
-            return False
-        return not should_ignore(self.project_root, path, extra_excludes=scope.exclude)
+        return (
+            not should_ignore(self.project_root, path, extra_excludes=scope.exclude)
+            if path.exists()
+            else False
+        )
 
     def _path_matches_include(self, path: Path, include: tuple[str, ...]) -> bool:
         rel = path.relative_to(self.project_root).as_posix()
-        if path.is_file():
-            return any(rel.startswith(inc.rstrip("/")) for inc in include)
-        return any(
-            rel.startswith(inc.rstrip("/")) or inc.rstrip("/").startswith(rel) for inc in include
+        return (
+            any(rel.startswith(inc.rstrip("/")) for inc in include)
+            if path.is_file()
+            else any(
+                rel.startswith(inc.rstrip("/")) or inc.rstrip("/").startswith(rel)
+                for inc in include
+            )
         )
 
     def _relative_if_under_root(self, path: Path) -> Path:
@@ -152,9 +160,11 @@ class ScopeResolver:
     ) -> tuple[Path, ...]:
         criteria = tool.scope
         if mode == RunMode.APPLY and criteria.delivery == "root":
-            if scope.include:
-                return self._paths_for_root_delivery(scope, self.resolve_scope_target(scope))
-            return (Path(),)
+            return (
+                self._paths_for_root_delivery(scope, self.resolve_scope_target(scope))
+                if scope.include
+                else (Path(),)
+            )
 
         target = self.resolve_scope_target(scope)
         if criteria.delivery == "root":
@@ -206,9 +216,8 @@ class ScopeResolver:
             resolved = self.resolve_scope_target(scope)
             if resolved.is_dir():
                 return (target,)
-            return (target.parent if target.parent.parts else Path(),)
-        if self.resolve_scope_target(scope).is_file():
-            return (target,)
+            parent = target.parent
+            return (parent if parent.parts else Path(),)
         return (target,)
 
     def _expand_scope(
@@ -259,11 +268,16 @@ class ScopeResolver:
         *,
         target: Path,
     ) -> tuple[Path, ...]:
-        if criteria.delivery == "root":
-            # Prefer include-aware root delivery when callers pass matched files.
-            return (self.relative_under_root(target),)
-        if not matched_files:
-            return ()
-        if criteria.delivery == "files":
-            return tuple(self.relative_under_root(path) for path in matched_files)
-        return minimize_covering_dirs(matched_files, self.project_root)
+        return (
+            (self.relative_under_root(target),)
+            if criteria.delivery == "root"
+            else (
+                (
+                    tuple(self.relative_under_root(path) for path in matched_files)
+                    if criteria.delivery == "files"
+                    else minimize_covering_dirs(matched_files, self.project_root)
+                )
+                if matched_files
+                else ()
+            )
+        )

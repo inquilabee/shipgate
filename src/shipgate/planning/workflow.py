@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
+from shipgate.planning.core.checks import check_name_tool_pairs
 from shipgate.planning.core.suites import expand_suite
 
 if TYPE_CHECKING:
@@ -71,12 +72,9 @@ def resolve_suite(
     catalog: Catalog,
     suite_override: str | None,
 ) -> tuple[str, list[SelectedTool]]:
-    if suite_override:
-        suite_id = suite_override
-    elif mode == RunMode.APPLY:
-        suite_id = "format"
-    else:
-        suite_id = project.suite or "standard"
+    suite_id = suite_override or (
+        "format" if mode == RunMode.APPLY else (project.suite or "standard")
+    )
 
     tool_ids = expand_suite(suite_id, catalog)
     selected = [
@@ -98,19 +96,17 @@ def selected_from_check_names(
     selected: list[SelectedTool] = []
     seen: set[str] = set()
     check_names = project.checks or tuple(binding.runnable for binding in project.check_bindings)
-    for check_name in check_names:
-        for tool_id in expand_suite(check_name, catalog):
-            if tool_id in seen:
-                continue
-            seen.add(tool_id)
-            selected.append(
-                SelectedTool(
-                    tool_id=tool_id,
-                    mode=mode,
-                    scope_name=project.scope_for_check(tool_id)
-                    or project.scope_for_check(check_name),
-                )
+    for check_name, tool_id in check_name_tool_pairs(check_names, catalog):
+        if tool_id in seen:
+            continue
+        seen.add(tool_id)
+        selected.append(
+            SelectedTool(
+                tool_id=tool_id,
+                mode=mode,
+                scope_name=project.scope_for_check(tool_id) or project.scope_for_check(check_name),
             )
+        )
     return selected
 
 

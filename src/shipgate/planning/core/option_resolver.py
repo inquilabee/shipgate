@@ -50,8 +50,7 @@ class OptionResolver:
         cli_options: NormalizedOptions,
     ) -> tuple[NormalizedOptions, dict[str, str]]:
         sources: dict[str, str] = {}
-        paths = cli_options.paths
-        if paths:
+        if paths := cli_options.paths:
             sources["paths"] = "cli"
         elif self.project.target != Path():
             paths = (self.project.target,)
@@ -62,9 +61,7 @@ class OptionResolver:
         output = cli_options.output
         if output is not None:
             sources["output"] = "cli"
-
-        config = cli_options.config
-        if config:
+        if config := cli_options.config:
             sources["config"] = "cli"
 
         threshold = self._resolve_threshold(cli_options, sources)

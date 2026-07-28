@@ -36,9 +36,7 @@ def load_gitignore_lines(project_root: Path) -> tuple[str, ...]:
 
 def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
     patterns = list(load_gitignore_lines(project_root))
-    if not patterns:
-        return None
-    return pathspec.PathSpec.from_lines("gitignore", patterns)
+    return pathspec.PathSpec.from_lines("gitignore", patterns) if patterns else None
 
 
 def is_ignored_by_git(project_root: Path, path: Path) -> bool:
@@ -73,9 +71,7 @@ def should_ignore(
     if spec is not None and spec.match_file(rel_str):
         return True
     git_dir = project_root / ".git"
-    if git_dir.is_dir():
-        return is_ignored_by_git(project_root, path)
-    return False
+    return is_ignored_by_git(project_root, path) if git_dir.is_dir() else False
 
 
 def matches_tool_criteria(
@@ -99,9 +95,7 @@ def matches_tool_criteria(
 
 
 def include_allowed(rel: str, include: tuple[str, ...]) -> bool:
-    if not include:
-        return True
-    return any(rel.startswith(inc.rstrip("/")) for inc in include)
+    return any(rel.startswith(inc.rstrip("/")) for inc in include) if include else True
 
 
 def consider_scope_file(

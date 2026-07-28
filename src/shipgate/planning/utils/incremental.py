@@ -34,15 +34,20 @@ class RunScopeSession:
     expand_cache: dict[ExpandScopeKey, tuple[Path, ...]] = field(default_factory=dict)
     _incremental_clean: bool | None = None
 
+    def _compute_incremental_clean(self) -> bool:
+        return (
+            False
+            if not self.changed_only
+            or not is_incremental(changed_only=self.changed_only, since=self.since)
+            else not self.changed_files(self.since)
+        )
+
     def is_incremental_clean(self) -> bool:
-        if self._incremental_clean is None:
-            if not self.changed_only or not is_incremental(
-                changed_only=self.changed_only,
-                since=self.since,
-            ):
-                self._incremental_clean = False
-            else:
-                self._incremental_clean = not self.changed_files(self.since)
+        self._incremental_clean = (
+            self._compute_incremental_clean()
+            if self._incremental_clean is None
+            else self._incremental_clean
+        )
         return self._incremental_clean
 
     def changed_files(self, since: str | None) -> set[str]:
@@ -86,15 +91,16 @@ def tool_paths_after_incremental(
         since=since,
         scope_session=scope_session,
     )
-    if not rel_files:
-        return () if changed_only else paths
-
-    return argv_paths_for_incremental(
-        rel_files,
-        tool=tool,
-        mode=mode,
-        project_root=project_root,
-        fallback=paths,
+    return (
+        argv_paths_for_incremental(
+            rel_files,
+            tool=tool,
+            mode=mode,
+            project_root=project_root,
+            fallback=paths,
+        )
+        if rel_files
+        else (() if changed_only else paths)
     )
 
 
@@ -142,7 +148,7 @@ def argv_paths_for_root_delivery(
         return rel_files
     absolute_files = tuple(project_root / rel for rel in rel_files)
     dirs = minimize_covering_dirs(absolute_files, project_root)
-    return dirs if dirs else rel_files
+    return dirs or rel_files
 
 
 def matched_changed_files(
@@ -155,11 +161,10 @@ def matched_changed_files(
 ) -> tuple[Path, ...]:
     criteria = tool.scope
     target = scope.target.resolve()
-    if not target.is_absolute():
-        target = (project_root / target).resolve()
+    target = target if target.is_absolute() else (project_root / target).resolve()
 
-    if scope_session is not None:
-        matched_files = ScopeResolver(project_root, scope_session=scope_session)._expand_scope(
+    matched_files = (
+        ScopeResolver(project_root, scope_session=scope_session)._expand_scope(
             target,
             include=scope.include,
             exclude=scope.exclude,
@@ -167,8 +172,8 @@ def matched_changed_files(
             globs=criteria.globs,
             respect_gitignore=scope.respect_gitignore,
         )
-    else:
-        matched_files = expand_scope(
+        if scope_session is not None
+        else expand_scope(
             project_root,
             target,
             include=scope.include,
@@ -177,14 +182,16 @@ def matched_changed_files(
             globs=criteria.globs,
             respect_gitignore=scope.respect_gitignore,
         )
+    )
     if not matched_files:
         return ()
 
     ref = since or "HEAD"
-    if scope_session is not None:
-        changed = scope_session.changed_files(since)
-    else:
-        changed = git_changed_files(project_root, ref)
+    changed = (
+        scope_session.changed_files(since)
+        if scope_session is not None
+        else git_changed_files(project_root, ref)
+    )
     if not changed:
         return ()
 
@@ -205,9 +212,7 @@ def relative_under_root(path: Path, project_root: Path) -> Path:
 
 def git_executable() -> str:
     git = shutil.which("git")
-    if git is None:
-        return "git"
-    return git
+    return "git" if git is None else git
 
 
 def git_changed_files(project_root: Path, since: str) -> set[str]:
@@ -229,12 +234,12 @@ def git_changed_files(project_root: Path, since: str) -> set[str]:
             [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, f"{since}..HEAD"],
             cwd=project_root,
         )
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "").strip()
-        raise PlanningError(
-            f"invalid or unresolvable --since ref {since!r}",
-            hint=detail or 'check the ref with "git rev-parse"',
-        )
+        if result.returncode != 0:
+            detail = (result.stderr or result.stdout or "").strip()
+            raise PlanningError(
+                f"invalid or unresolvable --since ref {since!r}",
+                hint=detail or 'check the ref with "git rev-parse"',
+            )
     return {line.strip() for line in result.stdout.splitlines() if line.strip()}
 
 

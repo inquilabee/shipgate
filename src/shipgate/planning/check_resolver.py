@@ -111,9 +111,11 @@ class CheckResolver:
             exclude=exclude,
             command=command,
         )
-        tool_options = self._apply_project_python(tool, tool_options)
-        if is_gate_tool(tool):
-            tool_options = self._prepare_gate_options(tool, tool_options)
+        tool_options = (
+            self._prepare_gate_options(tool, tool_options)
+            if is_gate_tool(tool)
+            else self._apply_project_python(tool, tool_options)
+        )
 
         request = build_execution_request(
             runnable=selected.tool_id,
@@ -139,6 +141,10 @@ class CheckResolver:
         return "required files not present"
 
     @staticmethod
+    def _mode_enabled(selected: SelectedTool, mode: RunMode, tool: ToolDefinition) -> bool:
+        return False if selected.mode != mode else mode in tool.modes
+
+    @staticmethod
     def _options_for_mode(
         selected: SelectedTool,
         tool: ToolDefinition,
@@ -148,8 +154,8 @@ class CheckResolver:
         exclude,
         command: RunCommand,
     ) -> NormalizedOptions:
-        if selected.mode == RunMode.APPLY and RunMode.APPLY in tool.modes:
-            return NormalizedOptions(
+        return (
+            NormalizedOptions(
                 paths=paths,
                 config=config_paths,
                 exclude=exclude,
@@ -157,15 +163,17 @@ class CheckResolver:
                 quiet=command.quiet,
                 check=False,
             )
-        return NormalizedOptions(
-            paths=paths,
-            config=config_paths,
-            exclude=exclude,
-            verbose=command.verbose,
-            quiet=command.quiet,
-            check=(
-                True if selected.mode == RunMode.CHECK and RunMode.CHECK in tool.modes else None
-            ),
+            if CheckResolver._mode_enabled(selected, RunMode.APPLY, tool)
+            else NormalizedOptions(
+                paths=paths,
+                config=config_paths,
+                exclude=exclude,
+                verbose=command.verbose,
+                quiet=command.quiet,
+                check=(
+                    True if CheckResolver._mode_enabled(selected, RunMode.CHECK, tool) else None
+                ),
+            )
         )
 
     def _apply_project_python(
@@ -176,9 +184,7 @@ class CheckResolver:
         if "python" not in tool.cli:
             return options
         python = discover_project_python(self.project_root, process_environ=os.environ)
-        if python is None:
-            return options
-        return replace(options, python=str(python))
+        return options if python is None else replace(options, python=str(python))
 
     def _prepare_gate_options(
         self,
@@ -197,8 +203,10 @@ class CheckResolver:
             config,
         )
         extra = dict(options.extra)
-        extra["gate_config_path"] = str(resolved_config)
-        extra["gate_env"] = gate_env_from_config(config, self.project_root)
+        extra |= {
+            "gate_config_path": str(resolved_config),
+            "gate_env": gate_env_from_config(config, self.project_root),
+        }
         return replace(options, extra=extra)
 
     @staticmethod

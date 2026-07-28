@@ -59,10 +59,12 @@ def scope_paths_for_tool(
     scope_session: RunScopeSession | None = None,
     resolver: ScopeResolver | None = None,
 ) -> tuple[Path, ...]:
-    if resolver is not None:
-        return resolver.paths_for_tool(scope, tool, mode)
-    return ScopeResolver(project_root, scope_session=scope_session).paths_for_tool(
-        scope,
-        tool,
-        mode,
+    return (
+        resolver.paths_for_tool(scope, tool, mode)
+        if resolver is not None
+        else ScopeResolver(project_root, scope_session=scope_session).paths_for_tool(
+            scope,
+            tool,
+            mode,
+        )
     )

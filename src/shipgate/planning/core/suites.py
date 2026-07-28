@@ -28,11 +28,11 @@ def expand_suite_impl(suite_id: str, catalog: Catalog, stack: list[str]) -> list
             if member not in seen:
                 result.append(member)
                 seen.add(member)
-        elif catalog.is_suite(member):
-            for tool_id in expand_suite_impl(member, catalog, [*stack, suite_id]):
-                if tool_id not in seen:
-                    result.append(tool_id)
-                    seen.add(tool_id)
-        else:
+            continue
+        if not catalog.is_suite(member):
             raise PlanningError(f"suite {suite_id!r} references unknown member {member!r}")
+        for tool_id in expand_suite_impl(member, catalog, [*stack, suite_id]):
+            if tool_id not in seen:
+                result.append(tool_id)
+                seen.add(tool_id)
     return result

@@ -67,7 +67,7 @@ def resolve_request(
         check_id=tool.id,
         target=target,
     )
-    sources.update(precedence_sources)
+    sources |= precedence_sources
 
     if request.mode == RunMode.CHECK and options.fix:
         raise PlanningError("fix is not allowed in check mode")
