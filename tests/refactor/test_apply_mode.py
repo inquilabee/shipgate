@@ -102,6 +102,13 @@ def test_reintroduce_else_is_off() -> None:
     assert rule.apply_mode is ApplyMode.OFF
 
 
+def test_remove_redundant_exception_is_off() -> None:
+    rule = next(rule for rule in RULES if rule.rule_id == "remove-redundant-exception")
+    assert rule.apply_mode is ApplyMode.OFF
+    assert getattr(type(rule), "enabled", True) is False
+    assert not rule.detect('raise RuntimeError("x") from None\n', "sample.py")
+
+
 def test_former_applier_whitelist_stays_hint() -> None:
     by_id = {rule.rule_id: rule for rule in RULES}
     assert all(by_id[rule_id].apply_mode is ApplyMode.HINT for rule_id in WHITELIST_HINT_RULE_IDS)

@@ -39,7 +39,7 @@ CASES = (
     ),
     (
         "collection-to-bool",
-        "ready = len(items)\n",
+        "if len(items):\n    process(items)\n",
         "bool(items)",
     ),
     (

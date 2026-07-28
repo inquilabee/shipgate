@@ -338,9 +338,10 @@ def check_rules(
 ) -> tuple[RefactorRule, ...]:
     from refactor.inventory import inventory_by_id, rule_pack_selected
 
-    selected = (
-        tuple(rules) if rules is not None else tuple(rule for rule in RULES if rule_enabled(rule))
-    )
+    # Explicit rule lists are caller-owned (tests/DI); pack gating applies to registry default.
+    if rules is not None:
+        return tuple(rules)
+    selected = tuple(rule for rule in RULES if rule_enabled(rule))
     enable_tokens = frozenset() if enable is None else enable
     entries = inventory_by_id()
     return tuple(

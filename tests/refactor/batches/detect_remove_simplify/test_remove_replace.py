@@ -7,11 +7,6 @@ from refactor.registry import RULES
 
 CASES = (
     (
-        "remove-redundant-exception",
-        'raise RuntimeError("problem") from None\n',
-        'raise RuntimeError("problem")',
-    ),
-    (
         "remove-redundant-if",
         "if condition:\n    return True\nelse:\n    return False\n",
         "return condition",
@@ -73,12 +68,7 @@ def test_remove_replace_detects_fixture(
 ) -> None:
     rule = rules_by_id[rule_id]
     hits = rule.detect(source, "sample.py")
-    skip = rule_id in {
-        "use",
-        "method",
-        "low-code-quality",
-        "remove-redundant-exception",
-    }
+    skip = rule_id in {"use", "method", "low-code-quality"}
     assert (
         (not hits)
         if skip

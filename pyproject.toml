@@ -76,7 +76,6 @@ dev = [
   "httpx>=0.27",
   "pytest-playwright>=0.6",
   "libcst>=1.4",
-  "sourcery>=1.44.0",
 ]
 
 # FastAPI server extras are required at runtime for templates/forms but are not

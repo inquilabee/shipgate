@@ -109,7 +109,7 @@ def attach_baseline_finding_counts(
     fixed_fps = fixed_fingerprints(baseline_fps, current_fps)
     context |= {
         "baseline_new_count": sum(fingerprint not in baseline_fps for fingerprint in current_fps),
-        "baseline_fixed_count": fixed_fps.__len__(),
+        "baseline_fixed_count": len(fixed_fps),
     }
     if baseline is not None:
         context["baseline_fixed_rows"] = fixed_finding_rows(baseline, fixed_fps)

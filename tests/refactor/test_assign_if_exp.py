@@ -38,6 +38,15 @@ def test_assign_if_exp_if_else_assign() -> None:
     assert "left if condition else right" in hits[0].suggestion.after
 
 
+def test_assign_if_exp_explain_reports_native(capsys) -> None:
+    from refactor.cli import main
+
+    assert main(["explain", "assign-if-exp"]) == 0
+    out = capsys.readouterr().out
+    assert "assign-if-exp" in out
+    assert "status: native" in out
+
+
 def test_assign_if_exp_detects_call_match_pattern() -> None:
     source = pathlib.Path("src/refactor/call_match.py").read_text()
     hits = assign_if_exp_rule().detect(source, "src/refactor/call_match.py")

@@ -1,6 +1,6 @@
 - id: assign-if-exp
   kind: refactor
-  status: bridge
+  status: native
   apply_mode: "hint"
   note: null
   rationale: Prefer an if-expression when both branches assign the same target.
@@ -867,8 +867,8 @@
 - id: remove-redundant-exception
   kind: refactor
   status: native
-  apply_mode: "hint"
-  note: null
+  apply_mode: "off"
+  note: Retired — removing from None changes exception chaining; kept as OFF stub
 - id: remove-redundant-fstring
   kind: refactor
   status: native

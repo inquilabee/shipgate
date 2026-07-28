@@ -86,7 +86,7 @@ class CheckRunner:
         on_progress: Callable[..., None] | None,
         should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
-        checks_total = context.selected_tools.__len__()
+        checks_total = len(context.selected_tools)
         emit_progress(on_progress, "", 0, checks_total)
         return (
             CheckRunner._run_parallel_checks(

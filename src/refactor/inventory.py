@@ -117,7 +117,8 @@ def rule_pack_selected(
 ) -> bool:
     entries = inventory if inventory is not None else inventory_by_id()
     entry = entries.get(rule_id)
-    return True if entry is None else entry_enabled_by(entry, enable)
+    # Fail closed: unknown IDs are not selected (avoids pack rules sneaking in).
+    return False if entry is None else entry_enabled_by(entry, enable)
 
 
 def parse_enable_tokens(values: Sequence[str] | None) -> frozenset[str]:

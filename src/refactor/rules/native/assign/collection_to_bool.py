@@ -35,47 +35,46 @@ class CollectionToBoolRule(CallRewriteRule):
 
     @classmethod
     def truthiness_len(cls, node: cst.Call, parent: cst.CSTNode | None) -> bool:
+        """True when ``len(...)`` is used as a boolean, not as a numeric count."""
         return (
-            False
-            if parent is None
-            else (
-                False
-                if isinstance(parent, cst.Comparison)
-                else (
-                    False
-                    if isinstance(
-                        parent,
-                        (cst.Arg, cst.Subscript, cst.Slice, cst.Call, cst.CompFor),
-                    )
-                    else (
-                        False
-                        if isinstance(parent, cst.BinaryOperation)
-                        else (
-                            True
-                            if isinstance(parent, (cst.Assign, cst.AnnAssign, cst.Return))
-                            else (
-                                parent.test is node
-                                if isinstance(parent, cst.If)
-                                else (
-                                    parent.test is node
-                                    if isinstance(parent, cst.While)
-                                    else (
-                                        True
-                                        if isinstance(parent, (cst.BooleanOperation,))
-                                        else (
-                                            True
-                                            if isinstance(parent, cst.UnaryOperation)
-                                            and isinstance(parent.operator, cst.Not)
-                                            else isinstance(parent, cst.NamedExpr)
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            )
+            parent is not None
+            and not cls.count_valued_parent(parent)
+            and cls.bool_valued_parent(node, parent)
         )
+
+    @staticmethod
+    def count_valued_parent(parent: cst.CSTNode) -> bool:
+        # Count-valued uses (return/assign) need the integer length, not bool(...).
+        return isinstance(
+            parent,
+            (
+                cst.Assign,
+                cst.AnnAssign,
+                cst.AugAssign,
+                cst.Return,
+                cst.Comparison,
+                cst.BinaryOperation,
+                cst.Arg,
+                cst.Subscript,
+                cst.Slice,
+                cst.Call,
+                cst.CompFor,
+            ),
+        )
+
+    @staticmethod
+    def bool_valued_parent(node: cst.Call, parent: cst.CSTNode) -> bool:
+        match parent:
+            case cst.If(test=test) | cst.While(test=test):
+                return test is node
+            case cst.BooleanOperation():
+                return True
+            case cst.UnaryOperation(operator=cst.Not()):
+                return True
+            case cst.NamedExpr():
+                return True
+            case _:
+                return False
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:

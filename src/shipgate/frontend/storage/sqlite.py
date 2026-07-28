@@ -323,4 +323,4 @@ class SqliteStorage:
             placeholders = ", ".join("?" for _ in ids)
             conn.execute(f"DELETE FROM findings WHERE run_id IN ({placeholders})", ids)  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
             conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
-            return ids.__len__()
+            return len(ids)

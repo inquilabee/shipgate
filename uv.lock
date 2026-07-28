@@ -1997,7 +1997,6 @@ dev = [
     { name = "ruff" },
     { name = "semgrep" },
     { name = "setuptools" },
-    { name = "sourcery" },
     { name = "ty" },
     { name = "uvicorn" },
     { name = "vulture" },
@@ -2035,7 +2034,6 @@ dev = [
     { name = "ruff", specifier = ">=0.6" },
     { name = "semgrep", specifier = ">=1.0" },
     { name = "setuptools", specifier = ">=68,<81" },
-    { name = "sourcery", specifier = ">=1.44.0" },
     { name = "ty", specifier = ">=0.0.1" },
     { name = "uvicorn", specifier = ">=0.30" },
     { name = "vulture", specifier = ">=2.0" },
@@ -2048,17 +2046,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
-]
-
-[[package]]
-name = "sourcery"
-version = "1.44.0"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/08/16d930fe19a330aab53c5db7d11b19f8b2a71bf06073a15cf113de03c8c4/sourcery-1.44.0-py2.py3-none-macosx_10_9_x86_64.whl", hash = "sha256:837536b2b81ed9e0cb202097f1d68442283c756fe61817323f50d7c0e77ef696", size = 106660240, upload-time = "2026-07-22T13:53:28.459Z" },
-    { url = "https://files.pythonhosted.org/packages/69/83/3bb03998e482d252303b2745a4a1677115f050256015ac1ed67a9a04abaf/sourcery-1.44.0-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:11e6513d48df187570a006774076c7543a76d6f5fdc78a20f61c242a1580c994", size = 92605059, upload-time = "2026-07-22T13:53:32.359Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/9c/1b3b0f12d7ad42dc4a57cc725b937696441edce47e335785d0b655c491c6/sourcery-1.44.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:ffea8de0263d98e2a9d3ffd43160bbcae23cdd203933ded609e786cc2700950c", size = 132090988, upload-time = "2026-07-22T13:53:38.036Z" },
-    { url = "https://files.pythonhosted.org/packages/00/73/73638c7b200376e337e7a4527364f18e07316c540a080cd88eca9786b2e7/sourcery-1.44.0-py2.py3-none-win_amd64.whl", hash = "sha256:ef09e996732fd156e05d6d73586c817ccb09235339d4c4393cce713e5fae419d", size = 90789684, upload-time = "2026-07-22T13:53:43.216Z" },
 ]
 
 [[package]]
