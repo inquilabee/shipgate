@@ -13,9 +13,7 @@ def finding_location(
     line: int | None = None,
     column: int | None = None,
 ) -> FindingLocation | None:
-    if not path:
-        return None
-    return FindingLocation(path=str(path), line=line, column=column)
+    return FindingLocation(path=str(path), line=line, column=column) if path else None
 
 
 def location_from_item(
@@ -44,10 +42,12 @@ def first_value(item: dict[str, Any], keys: tuple[str, ...]) -> object | None:
 
 def first_int(item: dict[str, Any], keys: tuple[str, ...]) -> int | None:
     value = first_value(item, keys)
-    if value is None:
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str) and value.isdigit():
-        return int(value)
-    return None
+    return (
+        None
+        if value is None
+        else (
+            value
+            if isinstance(value, int)
+            else (int(value) if isinstance(value, str) and value.isdigit() else None)
+        )
+    )

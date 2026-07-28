@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import json
 import re
 from pathlib import Path
@@ -34,27 +35,28 @@ class JscpdNormalizer(BaseNormalizer):
         if result.exit_code == 0:
             return empty_pass_report(check_id)
 
-        if payload is not None:
-            findings = self.findings_from_report(check_id, payload, result)
-            if findings:
-                return CheckReport(
-                    check_id=check_id,
-                    tool_id=check_id,
-                    status="failed",
-                    exit_code=result.exit_code,
-                    findings=tuple(findings),
-                )
-
-        if self.is_threshold_failure(result):
+        if payload is not None and (
+            findings := self.findings_from_report(check_id, payload, result)
+        ):
             return CheckReport(
+                check_id=check_id,
+                tool_id=check_id,
+                status="failed",
+                exit_code=result.exit_code,
+                findings=tuple(findings),
+            )
+
+        return (
+            CheckReport(
                 check_id=check_id,
                 tool_id=check_id,
                 status="failed",
                 exit_code=result.exit_code,
                 findings=(self.threshold_finding(check_id, result),),
             )
-
-        return tool_exit_report(check_id, result)
+            if self.is_threshold_failure(result)
+            else tool_exit_report(check_id, result)
+        )
 
     def resolve_report_path(self, request: ResolvedRequest, result: ProcessResult) -> Path | None:
         root = request.project_root
@@ -64,12 +66,11 @@ class JscpdNormalizer(BaseNormalizer):
             if output_dir is not None:
                 path = output_dir if output_dir.is_absolute() else root / output_dir
                 candidates.append(path / REPORT_NAME)
-        default_rel = self.DEFAULT_OUTPUT_BY_TOOL.get(request.tool.id)
-        if default_rel:
+        if default_rel := self.DEFAULT_OUTPUT_BY_TOOL.get(request.tool.id):
             candidates.append(root / default_rel / REPORT_NAME)
         stream_text = f"{result.stderr}\n{result.stdout}"
         candidates.extend(
-            Path(match.group(1)) for match in re.finditer(r"(\S+/jscpd-report\.json)", stream_text)
+            Path(match[1]) for match in re.finditer(r"(\S+/jscpd-report\.json)", stream_text)
         )
         for path in candidates:
             if path.is_file():
@@ -87,9 +88,7 @@ class JscpdNormalizer(BaseNormalizer):
         if not isinstance(payload, dict):
             return None
         output = payload.get("output")
-        if isinstance(output, str) and output.strip():
-            return Path(output.strip())
-        return None
+        return Path(output.strip()) if isinstance(output, str) and output.strip() else None
 
     @staticmethod
     def load_report(path: Path) -> dict[str, Any] | None:
@@ -117,9 +116,7 @@ class JscpdNormalizer(BaseNormalizer):
     @staticmethod
     def duplicate_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
         raw = payload.get("duplicates")
-        if not isinstance(raw, list):
-            return []
-        return [item for item in raw if isinstance(item, dict)]
+        return [item for item in raw if isinstance(item, dict)] if isinstance(raw, list) else []
 
     @staticmethod
     def clone_finding(check_id: str, item: dict[str, Any]) -> Finding | None:
@@ -189,14 +186,17 @@ class JscpdNormalizer(BaseNormalizer):
         )
 
     def threshold_message(self, result: ProcessResult, payload: dict[str, Any] | None) -> str:
-        for stream in (result.stderr, result.stdout):
-            for line in stream.splitlines():
-                if THRESHOLD_MARKER in line.lower():
-                    return re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
+        for line in itertools.chain.from_iterable(
+            stream.splitlines() for stream in (result.stderr, result.stdout)
+        ):
+            if THRESHOLD_MARKER in line.lower():
+                return re.sub(r"\x1b\[[0-9;]*m", "", line).strip()
         pct = self.total_percentage(payload) if payload else None
-        if pct is not None:
-            return f"jscpd found too many duplicates ({pct:.1f}%) over configured threshold"
-        return result.stderr.strip() or result.stdout.strip() or "Duplication over threshold"
+        return (
+            f"jscpd found too many duplicates ({pct:.1f}%) over configured threshold"
+            if pct is not None
+            else result.stderr.strip() or result.stdout.strip() or "Duplication over threshold"
+        )
 
     @staticmethod
     def total_percentage(payload: dict[str, Any] | None) -> float | None:
@@ -209,9 +209,7 @@ class JscpdNormalizer(BaseNormalizer):
         if not isinstance(total, dict):
             return None
         percentage = total.get("percentage")
-        if isinstance(percentage, (int, float)):
-            return float(percentage)
-        return None
+        return float(percentage) if isinstance(percentage, (int, float)) else None
 
     @staticmethod
     def is_threshold_failure(result: ProcessResult) -> bool:

@@ -66,12 +66,12 @@ class GateJsonNormalizer(BaseNormalizer):
             if not isinstance(raw_items, list):
                 return cls.invalid_json_finding(check_id, "gate report 'findings' must be a list")
             items = raw_items
-        elif isinstance(payload, list):
-            items = payload
         else:
-            return cls.invalid_json_finding(
-                check_id, "gate report must be a findings object or a list"
-            )
+            if not isinstance(payload, list):
+                return cls.invalid_json_finding(
+                    check_id, "gate report must be a findings object or a list"
+                )
+            items = payload
         return tuple(
             cls.finding_from_dict(item, check_id) for item in items if isinstance(item, dict)
         )
@@ -89,19 +89,23 @@ class GateJsonNormalizer(BaseNormalizer):
                 findings=(parsed,),
             )
         findings = parsed
-        if findings:
-            return CheckReport(
+        return (
+            CheckReport(
                 check_id=check_id,
                 tool_id=check_id,
                 status="failed",
                 exit_code=result.exit_code or 1,
                 findings=findings,
             )
-        if result.exit_code == 0:
-            return CheckReport(
-                check_id=check_id,
-                tool_id=check_id,
-                status="passed",
-                exit_code=0,
+            if findings
+            else (
+                CheckReport(
+                    check_id=check_id,
+                    tool_id=check_id,
+                    status="passed",
+                    exit_code=0,
+                )
+                if result.exit_code == 0
+                else tool_exit_report(check_id, result)
             )
-        return tool_exit_report(check_id, result)
+        )

@@ -26,12 +26,17 @@ class RemoveEmptyNestedBlockRule(BodyCleanupRule):
     ) -> tuple[cst.BaseStatement, Sequence[BodyStatement]] | None:
         for index, stmt in enumerate(body):
             if cls.is_empty_compound(stmt):
-                cleaned = [cast("BodyStatement", item) for item in body if item is not stmt]
+                cleaned = cast(
+                    "list[BodyStatement]",
+                    [item for item in body if item is not stmt],
+                )
                 return body[index], cleaned
         return None
 
     @staticmethod
     def is_empty_compound(stmt: cst.BaseStatement) -> bool:
+        if isinstance(stmt, cst.Match):
+            return False
         if not isinstance(stmt, cst.BaseCompoundStatement):
             return False
         if not isinstance(stmt.body, cst.IndentedBlock) or len(stmt.body.body) != 1:

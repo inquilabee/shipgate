@@ -37,17 +37,19 @@ class PipAuditNormalizer(JsonItemsNormalizer):
     @staticmethod
     def _vulns_for_dependency(dependency: dict[str, Any]) -> list[dict[str, Any]]:
         vulns = dependency.get("vulns") or []
-        if not isinstance(vulns, list):
-            return []
-        return [
-            {
-                "package": dependency.get("name"),
-                "version": dependency.get("version"),
-                **vuln,
-            }
-            for vuln in vulns
-            if isinstance(vuln, dict)
-        ]
+        return (
+            [
+                {
+                    "package": dependency.get("name"),
+                    "version": dependency.get("version"),
+                    **vuln,
+                }
+                for vuln in vulns
+                if isinstance(vuln, dict)
+            ]
+            if isinstance(vulns, list)
+            else []
+        )
 
     @staticmethod
     def _finding_message(item: dict[str, Any], package: str, version_text: str) -> str:
@@ -55,6 +57,7 @@ class PipAuditNormalizer(JsonItemsNormalizer):
         aliases = item.get("aliases") or []
         alias_text = ""
         if isinstance(aliases, list) and aliases:
-            alias_text = f" (aliases: {', '.join(str(alias) for alias in aliases)})"
+            joined = ", ".join(str(alias) for alias in aliases)
+            alias_text = f" (aliases: {joined})"
         message = description or f"Known vulnerability in {package}{version_text}"
         return f"{package}{version_text}: {message}{alias_text}"

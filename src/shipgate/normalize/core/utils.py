@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from shipgate.domain.reports import CheckReport, Finding
 from shipgate.errors import NormalizationError
@@ -21,13 +21,15 @@ def looks_like_json(text: str) -> bool:
 def read_tool_output(request: ResolvedRequest, result: ProcessResult) -> str:
     stdout = result.stdout
     output_path = request.options.output or request.output_path
-    if (
-        output_path is not None
-        and output_path.is_file()
-        and (not stdout.strip() or not looks_like_json(stdout))
-    ):
-        return output_path.read_text(encoding="utf-8")
-    return stdout
+    return (
+        output_path.read_text(encoding="utf-8")
+        if (
+            output_path is not None
+            and output_path.is_file()
+            and (not stdout.strip() or not looks_like_json(stdout))
+        )
+        else stdout
+    )
 
 
 def tool_exit_report(check_id: str, result: ProcessResult) -> CheckReport:
@@ -91,6 +93,14 @@ def decode_json_payload(
         return tool_exit_report(check_id, result)
 
 
+def dict_items_from_list(raw: object) -> list[dict[str, Any]]:
+    return (
+        [{str(key): value for key, value in item.items()} for item in raw if isinstance(item, dict)]
+        if isinstance(raw, list)
+        else []
+    )
+
+
 def extract_items(
     payload: object,
     *,
@@ -100,16 +110,10 @@ def extract_items(
     if items_key is None:
         if not isinstance(payload, list):
             raise NormalizationError(invalid_message)
-        return cast(
-            "list[dict[str, Any]]",
-            [item for item in payload if isinstance(item, dict)],
-        )
+        return dict_items_from_list(payload)
     if not isinstance(payload, dict):
         raise NormalizationError(invalid_message)
     items = payload.get(items_key, [])
     if not isinstance(items, list):
         raise NormalizationError(invalid_message)
-    return cast(
-        "list[dict[str, Any]]",
-        [item for item in items if isinstance(item, dict)],
-    )
+    return dict_items_from_list(items)

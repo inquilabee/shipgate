@@ -14,6 +14,7 @@ from .location import finding_location, location_from_item  # ruff:ignore[unused
 from .ruff_like import is_ruff_like_item, ruff_like_finding  # ruff:ignore[unused-import]
 from .utils import (  # ruff:ignore[unused-import]
     decode_json_payload,
+    dict_items_from_list,
     empty_pass_report,
     extract_items,
     findings_report,

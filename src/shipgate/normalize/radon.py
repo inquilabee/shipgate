@@ -33,14 +33,16 @@ class RadonNormalizer(BaseNormalizer):
         check_id = request.tool.id
         payload_text = result.stdout.strip()
         if not payload_text:
-            if result.exit_code == 0:
-                return CheckReport(
+            return (
+                CheckReport(
                     check_id=check_id,
                     tool_id=check_id,
                     status="passed",
                     exit_code=0,
                 )
-            return tool_exit_report(check_id, result)
+                if result.exit_code == 0
+                else tool_exit_report(check_id, result)
+            )
 
         try:
             payload = json.loads(payload_text)
@@ -53,8 +55,7 @@ class RadonNormalizer(BaseNormalizer):
         max_value = self.RANK_ORDER.get(
             str(max_rank).upper(), self.RANK_ORDER[self.DEFAULT_MAX_COMPLEXITY_RANK]
         )
-        is_mi = "mi" in request.tool.subcommand
-        if is_mi:
+        if is_mi := "mi" in request.tool.subcommand:
             findings = self.mi_findings(check_id, payload, max_value)
             metrics = RadonMetrics.mi_metrics(payload)
             metric_label = "maintainability index"

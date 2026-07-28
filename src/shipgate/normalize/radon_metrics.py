@@ -223,22 +223,23 @@ class RadonMetrics:
         metric_label: str,
     ) -> Finding | None:
         kind = metrics.get("metric_extreme_kind")
-        if kind == "minimum":
-            mode_key, bound_key, rule_id, label = (
-                "minimum_mode",
-                "minimum_threshold",
-                "minimum-threshold",
-                "Minimum",
-            )
-        elif kind == "maximum":
-            mode_key, bound_key, rule_id, label = (
-                "maximum_mode",
-                "maximum_threshold",
-                "maximum-threshold",
-                "Maximum",
-            )
-        else:
-            return None
+        match kind:
+            case "minimum":
+                mode_key, bound_key, rule_id, label = (
+                    "minimum_mode",
+                    "minimum_threshold",
+                    "minimum-threshold",
+                    "Minimum",
+                )
+            case "maximum":
+                mode_key, bound_key, rule_id, label = (
+                    "maximum_mode",
+                    "maximum_threshold",
+                    "maximum-threshold",
+                    "Maximum",
+                )
+            case _:
+                return None
         return cls.bound_finding(
             check_id,
             metrics.get("metric_extreme"),
@@ -267,12 +268,17 @@ class RadonMetrics:
             return None
         current = float(current_raw)
         bound = float(bound_raw)
-        if worse_when == "higher" and current > bound:
-            msg = f"{subject} {current:.4f} exceeds ceiling {bound:g}"
-        elif worse_when == "lower" and current < bound:
-            msg = f"{subject} {current:.4f} is below floor {bound:g}"
-        else:
-            return None
+        match worse_when:
+            case "higher":
+                if current <= bound:
+                    return None
+                msg = f"{subject} {current:.4f} exceeds ceiling {bound:g}"
+            case "lower":
+                if current >= bound:
+                    return None
+                msg = f"{subject} {current:.4f} is below floor {bound:g}"
+            case _:
+                return None
         return Finding(
             check_id=check_id,
             rule_id=rule_id,
