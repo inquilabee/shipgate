@@ -149,8 +149,8 @@ def summarize(
     by_check_status: dict[str, str],
     by_rule_id: dict[str, int],
 ) -> RunSummaryRecord:
-    code_count = sum(1 for f in findings if f.category == FindingCategory.CODE)
-    tool_count = sum(1 for f in findings if f.category == FindingCategory.TOOL)
+    code_count = sum(f.category == FindingCategory.CODE for f in findings)
+    tool_count = sum(f.category == FindingCategory.TOOL for f in findings)
     return RunSummaryRecord(
         finding_count=code_count,
         tool_failure_count=tool_count,

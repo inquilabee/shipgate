@@ -54,7 +54,7 @@ class UseAssignedVariableRule:
             if assignment is None:
                 continue
             name, value = assignment
-            if UseAssignedVariableRule._trivial_alias(name, value):
+            if UseAssignedVariableRule._skip_assignment(name, value):
                 continue
             for later in body[index + 1 :]:
                 if UseAssignedVariableRule._reassigns_name(later, name):
@@ -75,8 +75,54 @@ class UseAssignedVariableRule:
                 break
 
     @staticmethod
+    def _skip_assignment(name: str, value: cst.BaseExpression) -> bool:
+        # Skip trivial aliases, literals, non-self name aliases, and impure calls.
+        return (
+            UseAssignedVariableRule._trivial_alias(name, value)
+            or UseAssignedVariableRule._constant_literal(value)
+            or (isinstance(value, cst.Name) and value.value != "self")
+            or UseAssignedVariableRule._contains_call(value)
+        )
+
+    @staticmethod
     def _trivial_alias(name: str, value: cst.BaseExpression) -> bool:
         return isinstance(value, cst.Name) and value.value == name
+
+    @staticmethod
+    def _constant_literal(value: cst.BaseExpression) -> bool:
+        return (
+            True
+            if isinstance(
+                value,
+                (
+                    cst.Integer,
+                    cst.Float,
+                    cst.Imaginary,
+                    cst.SimpleString,
+                    cst.ConcatenatedString,
+                    cst.Ellipsis,
+                ),
+            )
+            else isinstance(value, cst.Name) and value.value in {"None", "True", "False"}
+        )
+
+    @staticmethod
+    def _contains_call(value: cst.BaseExpression) -> bool:
+        class CallFinder(cst.CSTVisitor):
+            def __init__(self) -> None:
+                self.found = False
+
+            def visit_Call(  # ruff:ignore[invalid-function-name]
+                self,
+                node: cst.Call,
+            ) -> bool:
+                _ = node
+                self.found = True
+                return False
+
+        finder = CallFinder()
+        value.visit(finder)
+        return finder.found
 
     @staticmethod
     def _reassigns_name(stmt: cst.BaseStatement, name: str) -> bool:
@@ -91,9 +137,11 @@ class UseAssignedVariableRule:
     ) -> cst.BaseStatement | None:
         transformer = UseAssignedVariableRule.ReplaceExpression(value=value, name=name)
         updated = stmt.visit(transformer)
-        if not transformer.replaced or not isinstance(updated, cst.BaseStatement):
-            return None
-        return updated
+        return (
+            None
+            if not transformer.replaced or not isinstance(updated, cst.BaseStatement)
+            else updated
+        )
 
     class ReplaceExpression(cst.CSTTransformer):
         """Replace deep-equal copies of ``value`` with a Name reference."""
@@ -102,6 +150,30 @@ class UseAssignedVariableRule:
             self.value = value
             self.name = name
             self.replaced = False
+
+        def visit_AssignTarget(  # ruff:ignore[invalid-function-name]
+            self,
+            node: cst.AssignTarget,
+        ) -> bool:
+            """Do not rewrite assignment targets (reads only)."""
+            _ = self, node
+            return False
+
+        def visit_AugAssign(  # ruff:ignore[invalid-function-name]
+            self,
+            node: cst.AugAssign,
+        ) -> bool:
+            # Visit RHS only; do not rewrite the augmented target.
+            node.value.visit(self)
+            return False
+
+        def visit_AnnAssign(  # ruff:ignore[invalid-function-name]
+            self,
+            node: cst.AnnAssign,
+        ) -> bool:
+            if node.value is not None:
+                node.value.visit(self)
+            return False
 
         def on_leave(
             self,

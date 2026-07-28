@@ -35,7 +35,7 @@ class ModuleSizeGate(PolicyGate):
 
     @staticmethod
     def count_non_blank_lines(text: str) -> int:
-        return sum(1 for line in text.splitlines() if not BLANK_LINE.match(line))
+        return sum(not BLANK_LINE.match(line) for line in text.splitlines())
 
     @staticmethod
     def check_file_size(

@@ -45,7 +45,7 @@ def test_simplify_constant_sum_rewrites_sum_one_with_filter() -> None:
     hits = rule.detect(source, "x.py")
     assert len(hits) == 1
     assert hits[0].suggestion is not None
-    assert "sum(bool(item.ready) for item in items)" in hits[0].suggestion.after
+    assert "sum(item.ready for item in items)" in hits[0].suggestion.after
 
 
 def test_simplify_constant_sum_skips_unfiltered_sum() -> None:
@@ -138,3 +138,37 @@ def test_unsafe_loop_hoist_is_silent_by_default() -> None:
     )
     assert rule.detect(accumulator_source, "x.py") == []
     assert rule.detect(return_source, "x.py") == []
+
+
+def test_use_assigned_variable_skips_constant_literals() -> None:
+    rule = UseAssignedVariableRule()
+    source = (
+        "class Example:\n"
+        '    rule_id = "demo"\n'
+        "    safe_apply = True\n"
+        "    def run(self):\n"
+        "        value = None\n"
+        "        if other is None:\n"
+        "            return self.rule_id\n"
+    )
+    assert rule.detect(source, "x.py") == []
+
+
+def test_use_assigned_variable_skips_impure_call_alias() -> None:
+    rule = UseAssignedVariableRule()
+    source = (
+        "def elapsed(start):\n    start = time.monotonic()\n    return time.monotonic() - start\n"
+    )
+    assert rule.detect(source, "x.py") == []
+
+
+def test_use_assigned_variable_skips_assignment_targets() -> None:
+    rule = UseAssignedVariableRule()
+    source = (
+        "def update(run, started_at):\n"
+        "    duration_ms = run.duration_ms\n"
+        "    if run.finished_at is not None:\n"
+        "        duration_ms = 1\n"
+        "        run.duration_ms = duration_ms\n"
+    )
+    assert rule.detect(source, "x.py") == []

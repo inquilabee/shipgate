@@ -11,7 +11,7 @@ from refactor.rules.native.expr_base import CallRewriteRule
 class SimplifyConstantSumRule(CallRewriteRule):
     rule_id = "simplify-constant-sum"
     summary = "Simplify constant sum() call"
-    message = "Replace sum(1 for ... if cond) with sum(bool(cond) for ...)"
+    message = "Replace sum(1 for ... if cond) with sum(cond for ...)"
 
     @classmethod
     def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
@@ -35,7 +35,7 @@ class SimplifyConstantSumRule(CallRewriteRule):
             return None
         condition = for_in.ifs[0].test
         return generator.with_changes(
-            elt=cst.Call(func=cst.Name("bool"), args=[cst.Arg(value=condition)]),
+            elt=condition,
             for_in=for_in.with_changes(ifs=()),
         )
 

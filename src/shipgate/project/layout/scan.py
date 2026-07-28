@@ -69,7 +69,6 @@ class LayoutScanner:
         testpaths: list[str],
         python_files: list[str],
     ) -> None:
-        _ = self
         section = False
         for line in ini.read_text(encoding="utf-8", errors="replace").splitlines():
             stripped = line.strip()
