@@ -137,16 +137,25 @@ class AcronymAllowlistGate(PolicyGate):
         _ = finding
         return "acronym"
 
-    def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:  # ruff:ignore[no-self-use]
+    def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:
         if not findings:
             return 0
         for finding in findings:
-            loc = finding.location
-            where = ""
-            if loc is not None:
-                where = f"{loc.file}:{loc.line}: " if loc.line is not None else f"{loc.file}: "
+            where = self._format_finding_where(finding.location)
             print(f"FAIL acronym: {where}{finding.message}", file=sys.stderr)
         return 1
+
+    @staticmethod
+    def _format_finding_where(location: FindingLocation | None) -> str:
+        return (
+            ""
+            if location is None
+            else (
+                f"{location.file}:{location.line}: "
+                if location.line is not None
+                else f"{location.file}: "
+            )
+        )
 
     @staticmethod
     def _settings_from_config(config: dict[str, Any]) -> tuple[tuple[str, ...], Path | None]:
@@ -162,9 +171,7 @@ class AcronymAllowlistGate(PolicyGate):
         if self._root is None:
             msg = "scan root is not bound"
             raise RuntimeError(msg)
-        if not allowlist_path.is_absolute():
-            return self._root / allowlist_path
-        return allowlist_path
+        return allowlist_path if allowlist_path.is_absolute() else self._root / allowlist_path
 
     @staticmethod
     def _load_allowlist(path: Path) -> set[str]:
@@ -182,10 +189,11 @@ class AcronymAllowlistGate(PolicyGate):
             raise RuntimeError(msg)
         violations: list[AcronymViolation] = []
         scoped_files = scope_paths_from_env()
-        if scoped_files:
-            file_paths = [self._root / rel for rel in scoped_files]
-        else:
-            file_paths = self._iter_markdown_files()
+        file_paths = (
+            [self._root / rel for rel in scoped_files]
+            if scoped_files
+            else self._iter_markdown_files()
+        )
         for file_path in file_paths:
             if not file_path.is_file():
                 continue
@@ -223,7 +231,7 @@ class AcronymAllowlistGate(PolicyGate):
     def _find_violations_in_line(self, line: str) -> list[str]:
         tokens: list[str] = []
         for match in ACRONYM_RE.finditer(line):
-            token = match.group(0)
+            token = match[0]
             if token in BUILTIN_EXEMPT or token in self._allowlisted:
                 continue
             tokens.append(token)

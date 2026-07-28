@@ -45,19 +45,23 @@ class ModuleSizeGate(PolicyGate):
         module_max: int,
         portfolio_max: int,
     ) -> PolicyFinding | None:
-        if loc > module_max:
-            return PolicyFinding(
+        return (
+            PolicyFinding(
                 rule_id=GATE_ID,
                 message=f"{rel} has {loc} lines (module cap {module_max})",
                 location=FindingLocation(file=rel, line=1),
             )
-        if loc > portfolio_max:
-            return PolicyFinding(
-                rule_id=GATE_ID,
-                message=f"{rel} has {loc} lines (portfolio cap {portfolio_max})",
-                location=FindingLocation(file=rel, line=1),
+            if loc > module_max
+            else (
+                PolicyFinding(
+                    rule_id=GATE_ID,
+                    message=f"{rel} has {loc} lines (portfolio cap {portfolio_max})",
+                    location=FindingLocation(file=rel, line=1),
+                )
+                if loc > portfolio_max
+                else None
             )
-        return None
+        )
 
     def collect_findings(
         self,

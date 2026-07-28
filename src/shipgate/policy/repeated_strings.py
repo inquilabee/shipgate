@@ -93,13 +93,15 @@ class RepeatedStringsGate(PolicyGate):
 
     @staticmethod
     def should_consider_string(value: str, *, min_length: int, exempt_strings: set[str]) -> bool:
-        if len(value) < min_length:
-            return False
-        if value in BUILTIN_EXEMPT or value in exempt_strings:
-            return False
-        if value.isidentifier():
-            return False
-        return not value.isspace()
+        return (
+            False
+            if len(value) < min_length
+            else (
+                False
+                if value in BUILTIN_EXEMPT or value in exempt_strings
+                else (False if value.isidentifier() else not value.isspace())
+            )
+        )
 
     @staticmethod
     def findings_for_file(
@@ -146,7 +148,7 @@ class RepeatedStringsGate(PolicyGate):
     ) -> Sequence[PolicyFinding]:
         min_occurrences = int(config.get("min_occurrences", 3))
         min_length = int(config.get("min_length", 8))
-        include_tests = bool(config.get("include_tests", False))
+        include_tests = config.get("include_tests", False)
         exempt_raw = config.get("exempt_strings", [])
         exempt_strings: set[str] = set()
         if isinstance(exempt_raw, list | tuple):

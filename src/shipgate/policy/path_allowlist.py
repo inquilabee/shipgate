@@ -16,9 +16,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--file", type=Path, required=True)
     parser.add_argument("--contains", required=True)
     args = parser.parse_args(argv)
-    if PathAllowlist(args.file).contains(args.contains):
-        return 0
-    return 1
+    return 0 if PathAllowlist(args.file).contains(args.contains) else 1
 
 
 if __name__ == "__main__":

@@ -24,8 +24,12 @@ def is_test_path(rel: str) -> bool:
         return True
     name = parts[-1] if parts else normalized
     stem = name[:-3] if name.endswith(".py") else name
-    if stem == "conftest":
-        return True
-    if "test_" in name or "_test" in name:
-        return True
-    return TEST_THEN_UNDERSCORE_RE.search(name) is not None
+    return (
+        True
+        if stem == "conftest"
+        else (
+            True
+            if "test_" in name or "_test" in name
+            else TEST_THEN_UNDERSCORE_RE.search(name) is not None
+        )
+    )

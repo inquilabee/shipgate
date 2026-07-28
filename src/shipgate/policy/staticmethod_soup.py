@@ -47,9 +47,11 @@ class StaticmethodSoupGate(PolicyGate):
 
     @staticmethod
     def is_soup(methods: Sequence[ast.FunctionDef | ast.AsyncFunctionDef]) -> bool:
-        if not methods:
-            return False
-        return all(StaticmethodSoupGate.is_staticmethod(method) for method in methods)
+        return (
+            all(StaticmethodSoupGate.is_staticmethod(method) for method in methods)
+            if methods
+            else False
+        )
 
     @staticmethod
     def findings_for_source(rel: str, source: str) -> list[PolicyFinding]:
@@ -61,19 +63,18 @@ class StaticmethodSoupGate(PolicyGate):
             if not isinstance(node, ast.ClassDef):
                 continue
             methods = StaticmethodSoupGate.class_methods(node)
-            if not StaticmethodSoupGate.is_soup(methods):
-                continue
-            count = len(methods)
-            findings.append(
-                PolicyFinding(
-                    rule_id="staticmethod-soup",
-                    message=(
-                        f"class {node.name} in {rel} has {count} method(s), "
-                        "all @staticmethod; prefer module functions or real methods"
-                    ),
-                    location=FindingLocation(file=rel, line=node.lineno),
+            if methods and StaticmethodSoupGate.is_soup(methods):
+                count = sum(1 for _ in methods)
+                findings.append(
+                    PolicyFinding(
+                        rule_id="staticmethod-soup",
+                        message=(
+                            f"class {node.name} in {rel} has {count} method(s), "
+                            "all @staticmethod; prefer module functions or real methods"
+                        ),
+                        location=FindingLocation(file=rel, line=node.lineno),
+                    )
                 )
-            )
         return findings
 
     def collect_findings(

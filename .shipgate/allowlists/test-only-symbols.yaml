@@ -1,3 +1,9 @@
 entries:
   - path: src/shipgate/policy/class_local_functions.py:ReferenceCollector.visit_ClassDef
     reason: AST NodeVisitor dispatch calls visit_ClassDef by protocol, not by name reference
+  - path: src/refactor/detector.py:CombinedRuleCollector.visit_FunctionDef
+    reason: libcst MetadataWrapper dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/anydict/return_or_yield_outside_function.py:ReturnYieldFinder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/builtins/default_mutable_arg.py:DefaultMutableArgRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference

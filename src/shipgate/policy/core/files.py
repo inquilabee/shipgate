@@ -23,20 +23,19 @@ def path_is_allowlisted(rel: str, allowlist: set[str]) -> bool:
 
 def symbol_is_allowlisted(rel: str, symbol: str, allowlist: set[str]) -> bool:
     cleaned = rel.rstrip("/")
-    if path_is_allowlisted(cleaned, allowlist):
-        return True
-    return f"{cleaned}:{symbol}" in allowlist
+    return True if path_is_allowlisted(cleaned, allowlist) else f"{cleaned}:{symbol}" in allowlist
 
 
 def should_skip_file(rel: str, allowlist: set[str], ignores: EffectiveIgnores | None) -> bool:
-    if path_is_allowlisted(rel, allowlist):
-        return True
-    return bool(ignores and ignores.is_ignored(rel))
+    return (
+        True
+        if path_is_allowlisted(rel, allowlist)
+        else (ignores.is_ignored(rel) if ignores is not None else False)
+    )
 
 
 def iter_python_files(root: Path, scan_roots: tuple[str, ...]) -> list[str]:
-    scoped = scope_paths_from_env()
-    if scoped:
+    if scoped := scope_paths_from_env():
         return list(scoped)
     files: list[str] = []
     for scan_root in scan_roots:
@@ -53,6 +52,4 @@ def iter_python_files(root: Path, scan_roots: tuple[str, ...]) -> list[str]:
 
 def scan_roots_from_config(config: dict[str, object]) -> tuple[str, ...]:
     raw = config.get("scan_roots", ["."])
-    if not isinstance(raw, list | tuple):
-        return (".",)
-    return tuple(str(item) for item in raw)
+    return tuple(str(item) for item in raw) if isinstance(raw, list | tuple) else (".",)

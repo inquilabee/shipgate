@@ -23,5 +23,5 @@ def write_findings_report(
     report_path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, object] = {"findings": [finding.to_dict() for finding in findings]}
     if extra:
-        payload.update(extra)
+        payload |= extra
     report_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

@@ -79,17 +79,13 @@ class ClassLocalFunctionsGate(PolicyGate):
                 continue
             if private_only and not ClassLocalFunctionsGate.is_private(node.name):
                 continue
-            first_arg = None
-            if node.args.args:
-                first_arg = node.args.args[0].arg
+            first_arg = node.args.args[0].arg if node.args.args else None
             functions.append(ModuleFunction(name=node.name, line=node.lineno, first_arg=first_arg))
         return functions
 
     @staticmethod
     def decorator_kind(function: ModuleFunction) -> str:
-        if function.first_arg == "cls":
-            return "classmethod"
-        return "staticmethod"
+        return "classmethod" if function.first_arg == "cls" else "staticmethod"
 
     @staticmethod
     def class_local_finding(
@@ -110,9 +106,7 @@ class ClassLocalFunctionsGate(PolicyGate):
     @staticmethod
     def sole_class_name(refs: Sequence[NameReference]) -> str | None:
         class_names = {ref.class_name for ref in refs}
-        if None in class_names or len(class_names) != 1:
-            return None
-        return next(iter(class_names))
+        return None if None in class_names or len(class_names) != 1 else next(iter(class_names))
 
     @staticmethod
     def findings_for_source(
@@ -151,7 +145,7 @@ class ClassLocalFunctionsGate(PolicyGate):
         allowlist: set[str],
         ignores: EffectiveIgnores | None,
     ) -> Sequence[PolicyFinding]:
-        private_only = bool(config.get("private_only", False))
+        private_only = config.get("private_only", False)
         findings: list[PolicyFinding] = []
         for rel, path in self.iter_scoped_python_files(root, config, allowlist, ignores):
             findings.extend(

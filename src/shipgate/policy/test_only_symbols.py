@@ -69,10 +69,13 @@ class DefinitionCollector(ast.NodeVisitor):
                 self.visit_ClassDef(child)
         self._class_stack.pop()
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        self._add_module_function(node)
+    def visit_FunctionDef(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+        self._visit_function_definition(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
+        self.visit_FunctionDef(node)
+
+    def _visit_function_definition(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         self._add_module_function(node)
 
     def _add_module_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
@@ -197,9 +200,8 @@ class TestOnlySymbolsGate(PolicyGate):
         return findings
 
     def _should_skip_symbol(self, rel: str, qualname: str) -> bool:
-        if rel.rstrip("/") in self._allowlist:
-            return True
-        return f"{rel.rstrip('/')}:{qualname}" in self._allowlist
+        cleaned = rel.rstrip("/")
+        return True if cleaned in self._allowlist else f"{cleaned}:{qualname}" in self._allowlist
 
     @staticmethod
     def _collect_definitions(rel: str, tree: ast.AST) -> list[SymbolDefinition]:
@@ -222,9 +224,11 @@ class TestOnlySymbolsGate(PolicyGate):
 
     @staticmethod
     def _is_test_only_symbol(symbol: SymbolDefinition, index: SymbolIndex) -> bool:
-        if symbol.name not in index.test_refs:
-            return False
-        return symbol.name not in index.production_refs
+        return (
+            False
+            if symbol.name not in index.test_refs
+            else symbol.name not in index.production_refs
+        )
 
     @staticmethod
     def _finding_for_symbol(symbol: SymbolDefinition) -> PolicyFinding:
@@ -239,9 +243,7 @@ class TestOnlySymbolsGate(PolicyGate):
     @staticmethod
     def _finding_sort_key(item: PolicyFinding) -> tuple[str, int]:
         location = item.location
-        if location is None:
-            return ("", 0)
-        return (location.file, location.line or 0)
+        return ("", 0) if location is None else (location.file, location.line or 0)
 
 
 def main(argv: list[str] | None = None) -> int:

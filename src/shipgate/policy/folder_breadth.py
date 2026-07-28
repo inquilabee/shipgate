@@ -77,10 +77,9 @@ class FolderBreadthGate(PolicyGate):
         max_allowed, scan_roots, extensions, config_strict = self._settings_from_config(
             dict(config)
         )
-        if self._enforcing_override is None:
-            self._enforcing = config_strict
-        else:
-            self._enforcing = self._enforcing_override
+        self._enforcing = (
+            config_strict if self._enforcing_override is None else self._enforcing_override
+        )
         self._root = root
         self._max_allowed = max_allowed
         self._scan_roots = scan_roots
@@ -92,18 +91,14 @@ class FolderBreadthGate(PolicyGate):
 
     def report_extra(self, findings: Sequence[PolicyFinding]) -> Mapping[str, object] | None:
         _ = findings
-        if self._report is None:
-            return None
-        return self._report.report_metadata()
+        return None if self._report is None else self._report.report_metadata()
 
     def fail_label(self, finding: PolicyFinding) -> str:
         _ = finding
         return self.gate_id
 
     def emit_exit(self, findings: Sequence[PolicyFinding]) -> int:
-        if not self._enforcing or not findings:
-            return 0
-        return super().emit_exit(findings)
+        return 0 if not self._enforcing or not findings else super().emit_exit(findings)
 
     def main(self, argv: list[str] | None = None) -> int:
         args = self.parse_cli_args(argv)
@@ -131,7 +126,7 @@ class FolderBreadthGate(PolicyGate):
             if not stripped:
                 continue
             extensions.append(stripped if stripped.startswith(".") else f".{stripped}")
-        strict = bool(config.get("strict", True))
+        strict = config.get("strict", True)
         return max_allowed, scan_roots, tuple(extensions), strict
 
     def _scan_folder_breadth(self) -> FolderBreadthReport:
@@ -144,7 +139,7 @@ class FolderBreadthGate(PolicyGate):
         worst_count = 0
 
         scoped_roots = scope_paths_from_env()
-        roots_to_scan = scoped_roots if scoped_roots else self._scan_roots
+        roots_to_scan = scoped_roots or self._scan_roots
 
         for scan_root in roots_to_scan:
             scanned, worst_path, worst_count, root_violations = self._scan_root_breadth(
@@ -207,9 +202,11 @@ class FolderBreadthGate(PolicyGate):
         return violation, file_count, rel
 
     def _should_skip_directory(self, rel: str) -> bool:
-        if self._is_allowlisted(rel):
-            return True
-        return bool(self._ignores and self._ignores.is_ignored(rel))
+        return (
+            True
+            if self._is_allowlisted(rel)
+            else (self._ignores.is_ignored(rel) if self._ignores is not None else False)
+        )
 
     def _is_allowlisted(self, rel_posix: str) -> bool:
         normalized = rel_posix.rstrip("/")
@@ -223,9 +220,15 @@ class FolderBreadthGate(PolicyGate):
         return False
 
     def _breadth_violation(self, rel: str, file_count: int) -> DirBreadthViolation | None:
-        if file_count <= self._max_allowed:
-            return None
-        return DirBreadthViolation(path=rel, count=file_count, max_allowed=self._max_allowed)
+        return (
+            None
+            if file_count <= self._max_allowed
+            else DirBreadthViolation(
+                path=rel,
+                count=file_count,
+                max_allowed=self._max_allowed,
+            )
+        )
 
     @staticmethod
     def _iter_scan_directories(base: Path) -> list[Path]:
