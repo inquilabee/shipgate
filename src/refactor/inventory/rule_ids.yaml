@@ -323,7 +323,7 @@
   kind: refactor
   status: native
   apply_mode: "hint"
-  note: null
+  note: Production-only; skipped on test paths (test↔test imports are expected).
 - id: ensure-file-closed
   kind: refactor
   status: bridge

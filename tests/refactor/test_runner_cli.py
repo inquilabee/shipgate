@@ -3,9 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-from refactor.cli import main
+from refactor.cli import main, resolve_cli_paths
 from refactor.protocol import ApplyMode, Hit, Location, RefactorRule, RuleKind
 from refactor.registry import RULES
+from refactor.rules.native.compare.dont_import_test_modules import (
+    DontImportTestModulesRule,
+)
 from refactor.rules.native.redundancy.lift_return_into_if import LiftReturnIntoIfRule
 from refactor.rules.native.redundancy.reintroduce_else import ReintroduceElseRule
 from refactor.rules.native.strings.remove_redundant_continue import (
@@ -145,6 +148,30 @@ def test_cli_list_includes_default_get(capsys) -> None:
     assert "default-get" in out
     assert "list-literal" in out
     assert "bridge=ruff delegates_to=" in out
+
+
+def test_resolve_cli_paths_defaults_to_dogfood_scope(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "tests" / "refactor").mkdir(parents=True)
+    (tmp_path / "tests" / "unit").mkdir()
+    resolved = resolve_cli_paths([], cwd=tmp_path)
+    assert resolved == [tmp_path / "src", tmp_path / "tests" / "refactor"]
+    assert resolve_cli_paths([Path()], cwd=tmp_path) == resolved
+
+
+def test_resolve_cli_paths_keeps_explicit_fixture_trees(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    (tmp_path / "tests" / "refactor").mkdir(parents=True)
+    unit = tmp_path / "tests" / "unit"
+    unit.mkdir()
+    assert resolve_cli_paths([unit], cwd=tmp_path) == [unit]
+
+
+def test_dont_import_test_modules_skips_test_paths() -> None:
+    source = "from tests.unit.support import helper\n"
+    rule = DontImportTestModulesRule()
+    assert rule.detect(source, "src/pkg/module.py")
+    assert not rule.detect(source, "tests/unit/test_sample.py")
 
 
 def test_cli_check_exit_code(tmp_path: Path) -> None:

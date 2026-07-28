@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -19,8 +20,18 @@ from refactor.runner import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from refactor.inventory import InventoryEntry
     from refactor.protocol import RefactorRule
+
+# Supported dogfood scope: product code + refactor rule fixtures.
+# Fixture-heavy trees (tests/unit, tests/ui, …) trip test-only rules by design.
+DOGFOOD_PATHS = (Path("src"), Path("tests/refactor"))
+PATHS_HELP = (
+    "Python files or directories (default: src and tests/refactor when present; "
+    "'.' maps to that dogfood scope). Pass tests/unit explicitly to scan fixture trees."
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -30,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_list(enable=enable)
     if args.command == "explain":
         return cmd_explain(args.rule_id)
-    paths: list[Path] = list(args.paths) or [Path()]
+    paths = resolve_cli_paths(list(args.paths))
     return (
         cmd_check(paths, strict=args.strict, enable=enable)
         if args.command == "check"
@@ -38,6 +49,32 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "fix"
         else 2
     )
+
+
+def resolve_cli_paths(paths: Sequence[Path], *, cwd: Path | None = None) -> list[Path]:
+    """Prefer dogfood roots for empty args or project-root ``.``."""
+    root = cwd if cwd is not None else Path.cwd()
+    dogfood = [root / path for path in DOGFOOD_PATHS if (root / path).exists()]
+    requested = list(paths)
+    if not requested or is_project_root_only(requested, root=root):
+        if dogfood:
+            if requested:
+                print(
+                    "refactor: '.' uses dogfood scope "
+                    f"{' '.join(str(path.relative_to(root)) for path in dogfood)} "
+                    "(pass tests/unit explicitly to include fixture trees)",
+                    file=sys.stderr,
+                )
+            return dogfood
+        return [root]
+    return requested
+
+
+def is_project_root_only(paths: Sequence[Path], *, root: Path) -> bool:
+    if len(paths) != 1:
+        return False
+    candidate = paths[0]
+    return candidate == Path() or candidate.resolve() == root.resolve()
 
 
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -54,10 +91,10 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         help="Report auto + hint rules (default: auto/blocking rules only)",
     )
     add_enable_argument(check_parser)
-    check_parser.add_argument("paths", nargs="*", type=Path, default=[Path()])
+    check_parser.add_argument("paths", nargs="*", type=Path, default=[], help=PATHS_HELP)
     fix_parser = sub.add_parser("fix", help="Apply auto (apply_mode=auto) rules")
     add_enable_argument(fix_parser)
-    fix_parser.add_argument("paths", nargs="*", type=Path, default=[Path()])
+    fix_parser.add_argument("paths", nargs="*", type=Path, default=[], help=PATHS_HELP)
     return parser.parse_args(argv)
 
 

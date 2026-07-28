@@ -2,15 +2,24 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import libcst as cst
 
+from refactor.cst_util import is_test_path
 from refactor.rules.native.stmt_base import SimpleStatementLineRewriteRule
+
+if TYPE_CHECKING:
+    from refactor.protocol import Hit
 
 
 class DontImportTestModulesRule(SimpleStatementLineRewriteRule):
     rule_id = "dont-import-test-modules"
     summary = "Dont import test modules"
     message = "Do not import test modules from production code"
+
+    def detect(self, source: str, path: str) -> list[Hit]:
+        return [] if is_test_path(path) else super().detect(source, path)
 
     @classmethod
     def match_small_stmt(cls, node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
