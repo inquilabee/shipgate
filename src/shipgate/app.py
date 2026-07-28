@@ -53,9 +53,9 @@ class ShipGateApp:
 
     def _catalog_for(self, project_root: Path) -> Catalog:
         base = (
-            CatalogLoader.load(project_root=project_root)
-            if not self._custom_catalog
-            else self._base_catalog
+            self._base_catalog
+            if self._custom_catalog
+            else CatalogLoader.load(project_root=project_root)
         )
         return GateCatalogMerger.merge(base, project_root)
 
@@ -113,7 +113,7 @@ class ShipGateApp:
 
     def list_suites(self) -> str:
         catalog = self._base_catalog
-        return "\n".join(sorted(catalog.suites.keys())) + "\n"
+        return "\n".join(sorted(catalog.suites)) + "\n"
 
     def list_tools(self, *, tag: str | None = None) -> str:
         tools = self._base_catalog.tools
@@ -204,9 +204,9 @@ class ShipGateApp:
     @staticmethod
     def baseline_show(project_root: Path) -> str:
         baseline = load_baseline(project_root)
-        if baseline is None:
-            return "no baseline\n"
-        return json.dumps(baseline.to_dict(), indent=2) + "\n"
+        return (
+            "no baseline\n" if baseline is None else json.dumps(baseline.to_dict(), indent=2) + "\n"
+        )
 
     def run_batch(self, project_root: Path, batch_path: Path) -> int:
         from shipgate.batch import load_batch_file
@@ -248,14 +248,17 @@ class ShipGateApp:
             project_env=project_env,
         )
         suggestions = suggest_tools(project_root, self._catalog_for(project_root))
-        suggestion_text = ""
-        if suggestions:
-            suggestion_text = "\n".join(suggestions) + "\n"
-        if configs_only:
-            return suggestion_text + "scaffolded .shipgate configs\n"
-        if mode == "pyproject":
-            return suggestion_text + f"updated {path}\n"
-        return suggestion_text + f"created {path}\n"
+        suggestions = suggest_tools(project_root, self._catalog_for(project_root))
+        suggestion_text = "\n".join(suggestions) + "\n" if suggestions else ""
+        return (
+            suggestion_text + "scaffolded .shipgate configs\n"
+            if configs_only
+            else (
+                suggestion_text + f"updated {path}\n"
+                if mode == "pyproject"
+                else suggestion_text + f"created {path}\n"
+            )
+        )
 
     def configs_sync(self, project_root: Path) -> str:
         created = sync_configs(project_root, self._catalog_for(project_root))

@@ -60,6 +60,4 @@ def run(
         verbose=verbose,
         quiet=quiet,
     )
-    if mode == "apply" or mode == "format":
-        return app.format(cmd)
-    return app.check(cmd)
+    return app.format(cmd) if mode == "apply" or mode == "format" else app.check(cmd)

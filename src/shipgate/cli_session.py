@@ -66,9 +66,7 @@ class CliSession:
         if isinstance(code, int):
             return code
         code = getattr(exc, "code", None)
-        if isinstance(code, int):
-            return code
-        return 1
+        return code if isinstance(code, int) else 1
 
     @staticmethod
     def write_error(exc: ShipGateError) -> None:
@@ -250,8 +248,10 @@ class CliSession:
         raise typer.Exit(code)
 
     def dispatch_run(self, mode: str, command: RunCommand) -> int:
-        if mode == "format":
-            return self.app.format(command)
-        if mode == "baseline":
-            return self.app.baseline_update(command)
-        return self.app.check(command)
+        return (
+            self.app.format(command)
+            if mode == "format"
+            else (
+                self.app.baseline_update(command) if mode == "baseline" else self.app.check(command)
+            )
+        )

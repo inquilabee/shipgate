@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -49,9 +50,11 @@ def project_gate_config_path(project_root: Path, gate_id: str) -> Path:
 
 
 def has_shipgate_yaml_config(candidate: Path) -> bool:
-    if (candidate / SHIPGATE_YAML).is_file():
-        return True
-    return any((candidate / name).is_file() for name in LEGACY_CONFIG_FILENAMES)
+    return (
+        True
+        if (candidate / SHIPGATE_YAML).is_file()
+        else any((candidate / name).is_file() for name in LEGACY_CONFIG_FILENAMES)
+    )
 
 
 def parse_env_file(path: Path) -> dict[str, str]:
@@ -73,9 +76,7 @@ def read_cached_policy(env_path: Path) -> str | None:
     if not env_path.is_file():
         return None
     raw = parse_env_file(env_path).get(POLICY_CACHE_KEY)
-    if raw in ALLOWED_POLICY_VALUES:
-        return raw
-    return None
+    return raw if raw in ALLOWED_POLICY_VALUES else None
 
 
 def update_project_cache_env(project_root: Path, updates: Mapping[str, str]) -> Path:
@@ -83,7 +84,7 @@ def update_project_cache_env(project_root: Path, updates: Mapping[str, str]) -> 
     env_path = project_root / PROJECT_CACHE_ENV
     env_path.parent.mkdir(parents=True, exist_ok=True)
     values = parse_env_file(env_path) if env_path.is_file() else {}
-    values.update({key: value for key, value in updates.items() if value})
+    values |= {key: value for key, value in updates.items() if value}
     content = "".join(f"{key}={values[key]}\n" for key in sorted(values))
     env_path.write_text(content, encoding="utf-8")
     return env_path
@@ -156,11 +157,7 @@ def normalize_finding_path(
         return None
     normalized = path.replace("\\", "/")
     if project_root is not None:
-        try:
+        with suppress(ValueError):
             rel = Path(normalized).resolve().relative_to(project_root.resolve())
             return rel.as_posix()
-        except ValueError:
-            pass
-    if normalized.startswith("./"):
-        return normalized[2:]
-    return normalized
+    return normalized[2:] if normalized.startswith("./") else normalized

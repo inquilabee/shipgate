@@ -7,17 +7,13 @@ from pathlib import Path
 
 
 def is_ci_environment() -> bool:
-    return os.environ.get("CI", "").lower() in {"1", "true", "yes"} or bool(
-        os.environ.get("GITHUB_ACTIONS")
+    return os.environ.get("CI", "").lower() in {"1", "true", "yes"} or (
+        os.environ.get("GITHUB_ACTIONS") is not None
     )
 
 
 def apply_ci_defaults(error_format: str | None) -> str:
-    if error_format:
-        return error_format
-    if is_ci_environment():
-        return "github"
-    return "compact"
+    return error_format or ("github" if is_ci_environment() else "compact")
 
 
 def write_github_step_summary(message: str) -> None:

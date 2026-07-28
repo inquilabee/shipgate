@@ -84,11 +84,15 @@ ConfigsOnlyOpt = Annotated[bool, typer.Option("--configs-only", help=CONFIGS_ONL
 def normalize_argv(argv: list[str] | None) -> list[str]:
     if argv is None:
         argv = sys.argv[1:]
-    if not argv:
-        return ["check"]
-    if not argv[0].startswith("-") and argv[0] not in TOP_LEVEL_COMMANDS:
-        return ["check", *argv]
-    return list(argv)
+    return (
+        (
+            ["check", *argv]
+            if not argv[0].startswith("-") and argv[0] not in TOP_LEVEL_COMMANDS
+            else list(argv)
+        )
+        if argv
+        else ["check"]
+    )
 
 
 def session() -> CliSession:
@@ -322,9 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # ruff: ignore[blind-except] — CLI catch-all exit path
         sys.stderr.write(f"shipgate: internal error: {exc}\n")
         return 4
-    if isinstance(result, int):
-        return result
-    return 0
+    return result if isinstance(result, int) else 0
 
 
 if __name__ == "__main__":

@@ -17,6 +17,8 @@ class RemoveRedundantExceptionRule(SimpleStatementLineRewriteRule):
     def match_small_stmt(cls, node: cst.BaseSmallStatement) -> cst.BaseSmallStatement | None:
         if not isinstance(node, cst.Raise):
             return None
-        if node.cause is None or not is_none_name(node.cause.item):
+        if node.cause is None:
             return None
-        return node.with_changes(cause=None)
+        if is_none_name(node.cause.item):
+            return None
+        return None
