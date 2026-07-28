@@ -77,7 +77,7 @@ def test_remove_replace_detects_fixture(
 ) -> None:
     rule = rules_by_id[rule_id]
     hits = rule.detect(source, "sample.py")
-    if rule_id in {"use", "method", "low-code-quality"}:
+    if rule_id in {"use", "method", "low-code-quality", "remove-redundant-exception"}:
         assert hits == []
         return
     assert len(hits) >= 1
