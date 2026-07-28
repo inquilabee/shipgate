@@ -44,9 +44,14 @@ class LayoutScanner:
         except (OSError, tomllib.TOMLDecodeError):
             return [], []
         opts = data.get("tool", {}).get("pytest", {}).get("ini_options", {})
-        if not isinstance(opts, dict):
-            return [], []
-        return self.as_str_list(opts.get("testpaths")), self.as_str_list(opts.get("python_files"))
+        return (
+            (
+                self.as_str_list(opts.get("testpaths")),
+                self.as_str_list(opts.get("python_files")),
+            )
+            if isinstance(opts, dict)
+            else ([], [])
+        )
 
     def pytest_ini(self) -> tuple[list[str], list[str]]:
         testpaths: list[str] = []
@@ -97,11 +102,11 @@ class LayoutScanner:
 
     def as_str_list(self, raw: object) -> list[str]:
         _ = self
-        if isinstance(raw, str):
-            return [raw]
-        if isinstance(raw, list):
-            return [str(item) for item in raw]
-        return []
+        return (
+            [raw]
+            if isinstance(raw, str)
+            else ([str(item) for item in raw] if isinstance(raw, list) else [])
+        )
 
     def docs_markers(self) -> list[str]:
         found: list[str] = []
@@ -147,9 +152,11 @@ class LayoutScanner:
 
     def skip_dir(self, name: str) -> bool:
         _ = self
-        if name in SKIP_DIR_NAMES or name.startswith("."):
-            return True
-        return any(name.endswith(sfx) for sfx in SKIP_DIR_SUFFIXES)
+        return (
+            True
+            if name in SKIP_DIR_NAMES or name.startswith(".")
+            else any(name.endswith(sfx) for sfx in SKIP_DIR_SUFFIXES)
+        )
 
     def record(self, sig: DirSignals, rel: str, name: str) -> None:
         _ = self

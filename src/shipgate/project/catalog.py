@@ -21,8 +21,8 @@ def sync_catalog(project_root: Path) -> list[Path]:
     created: list[Path] = []
 
     tools_src = bundled / "tools"
-    if tools_src.is_dir():
-        for src in sorted(tools_src.glob("*.yaml")):
+    for src in sorted(tools_src.glob("*.yaml")):
+        if tools_src.is_dir():
             result = scaffold_file_if_missing(
                 root,
                 Path(".shipgate/catalog/tools") / src.name,

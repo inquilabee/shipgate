@@ -84,7 +84,7 @@ class LayoutEngine:
         return {
             path
             for path in python_dirs
-            if not any(path == test or path.startswith(f"{test}/") for test in test_dirs)
+            if all(not (path == test or path.startswith(f"{test}/")) for test in test_dirs)
         }
 
     def drop_empty_docs(self, docs_dirs: set[str], python_dirs: set[str]) -> None:

@@ -23,9 +23,7 @@ def sync_configs(project_root: Path, _catalog: Catalog) -> list[Path]:
 
 
 def display_config_path(project_root: Path, path: Path) -> Path:
-    if path.is_relative_to(project_root):
-        return path.relative_to(project_root)
-    return path
+    return path.relative_to(project_root) if path.is_relative_to(project_root) else path
 
 
 def list_resolved_configs(
@@ -42,8 +40,7 @@ def list_resolved_configs(
         tool = catalog.get_tool(tool_id)
         if not tool.configuration.bundled and not tool.configuration.discover:
             continue
-        paths = resolve_config_paths(tool, project, project_root)
-        if paths:
+        if paths := resolve_config_paths(tool, project, project_root):
             rel = display_config_path(project_root, paths[0])
             lines.append(f"{tool_id}: {rel}")
         else:
@@ -77,12 +74,11 @@ def diff_configs(
     *,
     tool_id: str | None = None,
 ) -> str:
-    if tool_id is not None:
-        tools = [catalog.get_tool(tool_id)]
-    else:
-        tools = [tool for tool in catalog.tools.values() if tool.configuration.bundled]
+    tools = (
+        [catalog.get_tool(tool_id)]
+        if tool_id is not None
+        else [tool for tool in catalog.tools.values() if tool.configuration.bundled]
+    )
 
     chunks = [chunk for tool in tools if (chunk := diff_tool_config(project_root, tool))]
-    if not chunks:
-        return "no differences\n"
-    return "\n".join(chunks)
+    return "\n".join(chunks) if chunks else "no differences\n"

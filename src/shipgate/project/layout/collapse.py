@@ -16,9 +16,7 @@ class PathCollapse:
     @staticmethod
     def fold_src(candidates: set[str]) -> set[str]:
         under_src = {c for c in candidates if c == "src" or c.startswith("src/")}
-        if not under_src:
-            return candidates
-        return (candidates - under_src) | {"src"}
+        return (candidates - under_src) | {"src"} if under_src else candidates
 
     @staticmethod
     def collapse_ancestors(candidates: set[str]) -> list[str]:

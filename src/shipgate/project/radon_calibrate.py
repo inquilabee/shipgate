@@ -123,21 +123,23 @@ class RadonCalibrator:
         p95: float,
     ) -> dict[str, float]:
         """Suggest passable absolute bounds (floors for MI, ceilings for CC)."""
-        if kind == "mi":
-            return {
+        return (
+            {
                 "median": cls.suggest_floor(median),
                 "minimum": cls.suggest_floor(minimum),
                 "p5": cls.suggest_floor(p5),
                 "p10": cls.suggest_floor(p10),
                 "p95": cls.suggest_floor(p95),
             }
-        return {
-            "median": cls.suggest_ceiling(median),
-            "maximum": cls.suggest_ceiling(maximum),
-            "p5": cls.suggest_ceiling(p5),
-            "p10": cls.suggest_ceiling(p10),
-            "p95": cls.suggest_ceiling(p95),
-        }
+            if kind == "mi"
+            else {
+                "median": cls.suggest_ceiling(median),
+                "maximum": cls.suggest_ceiling(maximum),
+                "p5": cls.suggest_ceiling(p5),
+                "p10": cls.suggest_ceiling(p10),
+                "p95": cls.suggest_ceiling(p95),
+            }
+        )
 
     @staticmethod
     def suggest_floor(value: float) -> float:
@@ -153,9 +155,7 @@ class RadonCalibrationRenderer:
 
     @classmethod
     def render(cls, calibration: RadonCalibration, *, yaml_snippet: bool = False) -> str:
-        if yaml_snippet:
-            return cls.yaml_snippet(calibration)
-        return cls.text_report(calibration)
+        return cls.yaml_snippet(calibration) if yaml_snippet else cls.text_report(calibration)
 
     @classmethod
     def text_report(cls, calibration: RadonCalibration) -> str:
@@ -178,8 +178,7 @@ class RadonCalibrationRenderer:
             for item in calibration.offenders:
                 detail = f" ({item.detail})" if item.detail else ""
                 lines.append(f"    {item.score:7.2f} {item.path}{detail}")
-        lines.append("")
-        lines.append(cls.yaml_snippet(calibration).rstrip())
+        lines.extend(["", cls.yaml_snippet(calibration).rstrip()])
         lines.append("")
         return "\n".join(lines)
 
@@ -194,12 +193,20 @@ class RadonCalibrationRenderer:
         for field in ("median", "p5", "p10", "p95"):
             if field not in suggestions:
                 continue
-            lines.append(f"    {field}-mode: threshold")
-            lines.append(f"    {field}-threshold: {suggestions[field]:g}")
+            lines.extend(
+                [
+                    f"    {field}-mode: threshold",
+                    f"    {field}-threshold: {suggestions[field]:g}",
+                ]
+            )
         extreme = "minimum" if calibration.kind == "mi" else "maximum"
         if extreme in suggestions:
-            lines.append(f"    {extreme}-mode: threshold")
-            lines.append(f"    {extreme}-threshold: {suggestions[extreme]:g}")
+            lines.extend(
+                [
+                    f"    {extreme}-mode: threshold",
+                    f"    {extreme}-threshold: {suggestions[extreme]:g}",
+                ]
+            )
         lines.append("")
         return "\n".join(lines)
 
@@ -234,9 +241,11 @@ class RadonCalibrationRunner:
         paths: Sequence[Path],
         json_path: Path | None,
     ) -> dict[str, object]:
-        if json_path is not None:
-            return cls.read_json_file(json_path)
-        return cls.run_radon(project_root, kind=kind, paths=paths)
+        return (
+            cls.read_json_file(json_path)
+            if json_path is not None
+            else cls.run_radon(project_root, kind=kind, paths=paths)
+        )
 
     @staticmethod
     def read_json_file(path: Path) -> dict[str, object]:
@@ -276,9 +285,7 @@ class RadonCalibrationRunner:
     @staticmethod
     def resolve_radon(project_root: Path) -> str:
         managed = project_root / PROJECT_MANAGED_PYTHON_ENV / "bin" / "radon"
-        if managed.is_file():
-            return str(managed)
-        return "radon"
+        return str(managed) if managed.is_file() else "radon"
 
 
 def calibrate_radon(

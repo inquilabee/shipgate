@@ -38,8 +38,7 @@ class ProjectPythonResolver:
             candidate = self.root / name
             if self.is_python_env(candidate):
                 return self.cache_path(candidate)
-        virtual_env = self.process_environ.get("VIRTUAL_ENV")
-        if virtual_env:
+        if virtual_env := self.process_environ.get("VIRTUAL_ENV"):
             env_path = Path(virtual_env).resolve()
             if self.is_python_env(env_path) and not self.is_under(env_path):
                 return self.cache_path(env_path)
@@ -65,11 +64,15 @@ class ProjectPythonResolver:
 
     def is_python_env(self, path: Path) -> bool:
         _ = self
-        if not path.is_dir():
-            return False
-        if sys.platform == "win32":
-            return (path / "Scripts" / "python.exe").is_file()
-        return (path / "bin" / "python").is_file()
+        return (
+            (
+                (path / "Scripts" / "python.exe").is_file()
+                if sys.platform == "win32"
+                else (path / "bin" / "python").is_file()
+            )
+            if path.is_dir()
+            else False
+        )
 
     def is_under(self, path: Path) -> bool:
         try:
@@ -92,9 +95,8 @@ def read_cached_project_python(project_root: Path) -> Path | None:
 
 def resolve_cached_project_python(project_root: Path, raw: str) -> Path | None:
     resolver = ProjectPythonResolver(project_root)
-    candidate = Path(raw)
-    if not candidate.is_absolute():
-        candidate = project_root / candidate
+    raw_path = Path(raw)
+    candidate = raw_path if raw_path.is_absolute() else project_root / raw_path
     resolved = candidate.resolve()
     if resolver.is_under(resolved):
         return None
@@ -122,9 +124,7 @@ def persist_project_python(project_root: Path, env_path: Path) -> Path:
 
 def discover_and_persist_project_python(project_root: Path) -> Path | None:
     discovered = ProjectPythonResolver(project_root).discover()
-    if discovered is None:
-        return None
-    return persist_project_python(project_root, discovered)
+    return None if discovered is None else persist_project_python(project_root, discovered)
 
 
 def discover_project_python(

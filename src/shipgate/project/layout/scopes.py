@@ -30,9 +30,7 @@ class ScopeFragments:
 
     def scope_dirs(self, dirs: tuple[str, ...]) -> ScopeBody:
         _ = self
-        if len(dirs) == 1:
-            return {"target": dirs[0]}
-        return {"target": ".", "include": list(dirs)}
+        return {"target": dirs[0]} if len(dirs) == 1 else {"target": ".", "include": list(dirs)}
 
     def render_yaml(self) -> str:
         lines = ["scopes:"]
@@ -90,12 +88,10 @@ class ScopeTemplateSplicer:
 
     def toml_end(self, lines: list[str], start: int) -> int:
         _ = self
-        end = start
-        while end < len(lines):
+        for end in range(start, len(lines)):
             line = lines[end]
             if end > start and line.startswith("[") and not line.startswith(SCOPES_PREFIX):
                 break
-            end += 1
         return end
 
     def insert_toml(self, lines: list[str], block: str) -> str:
@@ -103,6 +99,8 @@ class ScopeTemplateSplicer:
             (i for i, line in enumerate(lines) if line.startswith(ALLOWLISTS_HEADER)),
             None,
         )
-        if allow is None:
-            return self.template.rstrip("\n") + "\n\n" + block
-        return "".join(lines[:allow]) + block + "\n" + "".join(lines[allow:])
+        return (
+            self.template.rstrip("\n") + "\n\n" + block
+            if allow is None
+            else "".join(lines[:allow]) + block + "\n" + "".join(lines[allow:])
+        )

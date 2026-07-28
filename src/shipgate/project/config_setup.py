@@ -39,11 +39,15 @@ def project_config_relpath(tool: ToolDefinition) -> Path | None:
         and bundled_path.parts[0] == "configs"
         and bundled_path.parts[1] == "gates"
     )
-    if is_gate:
-        return PROJECT_GATE_CONFIGS_DIR / f"{tool.id}.yaml"
-    if bundled_path.name == "mdformat.toml":
-        return Path(".mdformat.toml")
-    return Path(".shipgate/configs") / bundled_path.name
+    return (
+        PROJECT_GATE_CONFIGS_DIR / f"{tool.id}.yaml"
+        if is_gate
+        else (
+            Path(".mdformat.toml")
+            if bundled_path.name == "mdformat.toml"
+            else Path(".shipgate/configs") / bundled_path.name
+        )
+    )
 
 
 def bundled_template_path(tool: ToolDefinition) -> Path:
@@ -148,9 +152,11 @@ def read_pyproject_shipgate_template(project_root: Path | None = None) -> str:
         msg = f"bundled pyproject shipgate template not found: {bundled}"
         raise FileNotFoundError(msg)
     text = bundled.read_text(encoding="utf-8")
-    if project_root is None:
-        return text
-    return replace_pyproject_scopes(text, render_scopes_toml(detect_layout(project_root)))
+    return (
+        text
+        if project_root is None
+        else replace_pyproject_scopes(text, render_scopes_toml(detect_layout(project_root)))
+    )
 
 
 def bundled_deptry_pyproject_template() -> Path:
@@ -182,7 +188,7 @@ def ensure_deptry_pyproject_section(project_root: Path) -> Path | None:
             '# known_first_party = ["your_package"]',
             f'known_first_party = ["{root_package}"]',
         )
-    pyproject.write_text(content + "\n" + section, encoding="utf-8")
+    pyproject.write_text("".join([content, "\n", section]), encoding="utf-8")
     return pyproject
 
 
@@ -196,9 +202,11 @@ def read_shipgate_yaml_template(project_root: Path | None = None) -> str:
         msg = f"bundled shipgate.yaml template not found: {bundled}"
         raise FileNotFoundError(msg)
     text = bundled.read_text(encoding="utf-8")
-    if project_root is None:
-        return text
-    return replace_yaml_scopes(text, render_scopes_yaml(detect_layout(project_root)))
+    return (
+        text
+        if project_root is None
+        else replace_yaml_scopes(text, render_scopes_yaml(detect_layout(project_root)))
+    )
 
 
 def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]:

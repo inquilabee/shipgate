@@ -33,7 +33,5 @@ class InitToolSuggestions:
 
     def suggestion_line(self, tool_id: str) -> str:
         _ = self
-        suite_hint = ""
-        if tool_id == "hadolint.check":
-            suite_hint = " (suite: docker)"
+        suite_hint = " (suite: docker)" if tool_id == "hadolint.check" else ""
         return f"suggest: {tool_id} matches project files{suite_hint}"

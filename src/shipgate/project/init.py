@@ -77,9 +77,12 @@ def init_project(
     if configs_only:
         scaffold_project_layout(root, policy=mode, project_env=project_env)
         return None
-    if mode == "pyproject":
-        return ProjectInitializer(root, project_env=project_env).init_pyproject_policy()
-    return ProjectInitializer(root, project_env=project_env).init_yaml_policy()
+    initializer = ProjectInitializer(root, project_env=project_env)
+    return (
+        initializer.init_pyproject_policy()
+        if mode == "pyproject"
+        else initializer.init_yaml_policy()
+    )
 
 
 class ProjectInitializer:
