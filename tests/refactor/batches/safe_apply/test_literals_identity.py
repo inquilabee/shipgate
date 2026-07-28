@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from refactor.protocol import ApplyMode
+from refactor.protocol import ApplyMode, RefactorRule
 from refactor.registry import RULES
-
-if TYPE_CHECKING:
-    from refactor.protocol import RefactorRule
 
 SAFE_APPLY_RULE_IDS = (
     "dict-literal",
@@ -50,7 +45,7 @@ def test_safe_apply_round_trip(
     assert len(hits) >= 1
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 def test_bin_op_identity_skips_multi_target_assign(
@@ -62,7 +57,7 @@ def test_bin_op_identity_skips_multi_target_assign(
     assert len(hits) == 1
     rewritten = rule.apply(source, hits)
     assert rewritten == "a = b = x + 0\ny = z\n"
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 @pytest.mark.parametrize(
@@ -106,4 +101,4 @@ def test_safe_apply_fixes_all_occurrences(
     assert len(hits) >= 2
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")

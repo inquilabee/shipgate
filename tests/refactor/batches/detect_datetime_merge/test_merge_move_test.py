@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from refactor.protocol import ApplyMode
+from refactor.protocol import ApplyMode, RefactorRule
 from refactor.registry import RULES
-
-if TYPE_CHECKING:
-    from refactor.protocol import RefactorRule
 
 CASES = (
     (
@@ -83,12 +78,16 @@ def test_merge_move_test_detects_fixture(
         else "sample.py"
     )
     hits = rule.detect(source, path)
-    if rule_id in {"use", "method", "low-code-quality"}:
-        assert hits == []
-        return
-    assert len(hits) >= 1
-    assert hits[0].suggestion is not None
-    assert expected in hits[0].suggestion.after
+    skip = rule_id in {"use", "method", "low-code-quality"}
+    assert (
+        (not hits)
+        if skip
+        else (
+            len(hits) >= 1
+            and hits[0].suggestion is not None
+            and expected in hits[0].suggestion.after
+        )
+    )
 
 
 @pytest.mark.parametrize(("rule_id", "source", "expected"), CASES)

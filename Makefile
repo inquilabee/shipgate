@@ -20,6 +20,8 @@ check-commit:
 	uv run shipgate format --target .
 	# src-layout: import-linter needs the package on PYTHONPATH in the managed tool env
 	PYTHONPATH=src uv run shipgate check --target .
+	# Commit gate: auto + hint (default check is auto-only)
+	PYTHONPATH=src uv run python -m refactor check --strict src tests/refactor
 
 install-hooks:
 	uv run pre-commit install

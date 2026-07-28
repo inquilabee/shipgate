@@ -37,16 +37,17 @@ class AutoStubRule:
     apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
-        _ = self
-        if "AUTO_MARK" not in source:
-            return []
-        return [
-            Hit(
-                rule_id=self.rule_id,
-                message="auto",
-                location=Location(path=path, line=1, column=1),
-            )
-        ]
+        return (
+            []
+            if "AUTO_MARK" not in source
+            else [
+                Hit(
+                    rule_id=self.rule_id,
+                    message="auto",
+                    location=Location(path=path, line=1, column=1),
+                )
+            ]
+        )
 
     def apply(self, source: str, hits: list[Hit]) -> str | None:
         _ = self, hits
@@ -60,16 +61,17 @@ class HintStubRule:
     apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
-        _ = self
-        if "HINT_MARK" not in source:
-            return []
-        return [
-            Hit(
-                rule_id=self.rule_id,
-                message="hint",
-                location=Location(path=path, line=1, column=1),
-            )
-        ]
+        return (
+            []
+            if "HINT_MARK" not in source
+            else [
+                Hit(
+                    rule_id=self.rule_id,
+                    message="hint",
+                    location=Location(path=path, line=1, column=1),
+                )
+            ]
+        )
 
     def apply(self, source: str, hits: list[Hit]) -> str | None:
         _ = self, hits
@@ -102,8 +104,7 @@ def test_reintroduce_else_is_off() -> None:
 
 def test_former_applier_whitelist_stays_hint() -> None:
     by_id = {rule.rule_id: rule for rule in RULES}
-    for rule_id in WHITELIST_HINT_RULE_IDS:
-        assert by_id[rule_id].apply_mode is ApplyMode.HINT
+    assert all(by_id[rule_id].apply_mode is ApplyMode.HINT for rule_id in WHITELIST_HINT_RULE_IDS)
 
 
 def test_fix_paths_applies_only_auto_not_hint(tmp_path: Path) -> None:

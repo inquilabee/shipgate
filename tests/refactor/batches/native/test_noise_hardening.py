@@ -19,7 +19,7 @@ from refactor.rules.native.syntax.remove_redundant_pass import RemoveRedundantPa
 
 def test_use_len_skips_attribute_chains() -> None:
     rule = UseLenRule()
-    assert rule.detect("if len(reader.pages) == 0:\n    pass\n", "x.py") == []
+    assert not rule.detect("if len(reader.pages) == 0:\n    pass\n", "x.py")
     hits = rule.detect("if len(items) == 0:\n    pass\n", "x.py")
     assert len(hits) == 1
 
@@ -27,7 +27,7 @@ def test_use_len_skips_attribute_chains() -> None:
 def test_remove_redundant_pass_keeps_abstract_docstring_stub() -> None:
     rule = RemoveRedundantPassRule()
     source = 'class Base:\n    def hook(self):\n        """Override me."""\n        pass\n'
-    assert rule.detect(source, "x.py") == []
+    assert not rule.detect(source, "x.py")
     assert rule.apply(source, []) is None
 
 
@@ -50,7 +50,7 @@ def test_simplify_constant_sum_rewrites_sum_one_with_filter() -> None:
 
 def test_simplify_constant_sum_skips_unfiltered_sum() -> None:
     rule = SimplifyConstantSumRule()
-    assert rule.detect("total = sum(1 for item in items)\n", "x.py") == []
+    assert not rule.detect("total = sum(1 for item in items)\n", "x.py")
 
 
 def test_use_assigned_variable_reuses_repeated_expression() -> None:
@@ -89,8 +89,8 @@ def test_str_prefix_suffix_accepts_non_decimal_slice_lengths() -> None:
 
 
 def test_test_only_rules_skip_production_paths() -> None:
-    assert NoConditionalsInTestsRule().detect("if ready:\n    assert ready\n", "src/app.py") == []
-    assert NoLoopInTestsRule().detect("for case in cases:\n    assert case\n", "src/app.py") == []
+    assert not NoConditionalsInTestsRule().detect("if ready:\n    assert ready\n", "src/app.py")
+    assert not NoLoopInTestsRule().detect("for case in cases:\n    assert case\n", "src/app.py")
 
 
 def test_test_only_rules_still_detect_test_paths() -> None:
@@ -108,7 +108,7 @@ def test_test_only_rules_still_detect_test_paths() -> None:
 
 def test_introduce_default_else_requires_default_assignment_pattern() -> None:
     rule = IntroduceDefaultElseRule()
-    assert rule.detect("if ready:\n    run()\n", "x.py") == []
+    assert not rule.detect("if ready:\n    run()\n", "x.py")
     hits = rule.detect("value = fallback\nif ready:\n    value = result\n", "x.py")
     assert len(hits) == 1
     assert hits[0].suggestion is not None
@@ -121,8 +121,8 @@ def test_placeholder_extract_rules_are_silent_by_default() -> None:
         "class Example:\n    def run(self):\n"
         "        prepare()\n        execute()\n        finish()\n"
     )
-    assert ExtractMethodRule().detect(function_source, "x.py") == []
-    assert ClassExtractMethodRule().detect(class_source, "x.py") == []
+    assert not ExtractMethodRule().detect(function_source, "x.py")
+    assert not ClassExtractMethodRule().detect(class_source, "x.py")
 
 
 def test_unsafe_loop_hoist_is_silent_by_default() -> None:
@@ -136,8 +136,8 @@ def test_unsafe_loop_hoist_is_silent_by_default() -> None:
         "        return policy\n"
         "    return None\n"
     )
-    assert rule.detect(accumulator_source, "x.py") == []
-    assert rule.detect(return_source, "x.py") == []
+    assert not rule.detect(accumulator_source, "x.py")
+    assert not rule.detect(return_source, "x.py")
 
 
 def test_use_assigned_variable_skips_constant_literals() -> None:
@@ -151,7 +151,7 @@ def test_use_assigned_variable_skips_constant_literals() -> None:
         "        if other is None:\n"
         "            return self.rule_id\n"
     )
-    assert rule.detect(source, "x.py") == []
+    assert not rule.detect(source, "x.py")
 
 
 def test_use_assigned_variable_skips_impure_call_alias() -> None:
@@ -159,7 +159,7 @@ def test_use_assigned_variable_skips_impure_call_alias() -> None:
     source = (
         "def elapsed(start):\n    start = time.monotonic()\n    return time.monotonic() - start\n"
     )
-    assert rule.detect(source, "x.py") == []
+    assert not rule.detect(source, "x.py")
 
 
 def test_use_assigned_variable_skips_assignment_targets() -> None:
@@ -171,4 +171,4 @@ def test_use_assigned_variable_skips_assignment_targets() -> None:
         "        duration_ms = 1\n"
         "        run.duration_ms = duration_ms\n"
     )
-    assert rule.detect(source, "x.py") == []
+    assert not rule.detect(source, "x.py")

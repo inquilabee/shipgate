@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import libcst as cst
 import pytest
 
 from refactor.cst_util import HitCollector, detect_with_visitor, parse_module_cached
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
 
 class EmptyFinder(HitCollector):
-    pass
+    """Visitor that records no hits."""
 
 
 def test_detect_with_visitor_reuses_cached_parse(
@@ -20,7 +15,7 @@ def test_detect_with_visitor_reuses_cached_parse(
 ) -> None:
     parse_module_cached.cache_clear()
     calls = 0
-    original_parse: Callable[[str], cst.Module] = cst.parse_module
+    original_parse = cst.parse_module
 
     def counting_parse(source: str) -> cst.Module:
         nonlocal calls

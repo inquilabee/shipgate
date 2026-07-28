@@ -9,14 +9,15 @@ from refactor.rules.bridge.ruff.list_literal import ListLiteralBridge
 def test_bridges_registered() -> None:
     bridges = [rule for rule in RULES if hasattr(rule, "delegates_to")]
     assert len(bridges) >= 9
-    for bridge in bridges:
-        delegates_to = getattr(bridge, "delegates_to", None)
-        assert isinstance(delegates_to, str)
-        assert delegates_to
-        assert bridge.summary
-        assert getattr(bridge, "message", None)
-        assert "Delegates to Ruff" not in bridge.summary
-        assert bridge.apply_mode is ApplyMode.HINT
+    assert all(
+        isinstance(getattr(bridge, "delegates_to", None), str)
+        and getattr(bridge, "delegates_to", None)
+        and bridge.summary
+        and getattr(bridge, "message", None)
+        and "Delegates to Ruff" not in bridge.summary
+        and bridge.apply_mode is ApplyMode.HINT
+        for bridge in bridges
+    )
 
 
 def test_avoid_builtin_shadow_detects_via_ruff() -> None:

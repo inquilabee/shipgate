@@ -12,4 +12,4 @@ if ((${#files[@]} == 0)); then
 	exit 0
 fi
 
-exec env PYTHONPATH=src uv run python -m refactor check "${files[@]}"
+exec env PYTHONPATH=src uv run python -m refactor check --strict "${files[@]}"

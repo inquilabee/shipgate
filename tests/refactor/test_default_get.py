@@ -27,7 +27,7 @@ def test_apply_round_trip() -> None:
     hits = rule.detect(BEFORE, "sample.py")
     rewritten = rule.apply(BEFORE, hits)
     assert rewritten == AFTER
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 def test_default_get_apply_fixes_all_occurrences() -> None:
@@ -38,4 +38,4 @@ def test_default_get_apply_fixes_all_occurrences() -> None:
     assert len(hits) == 2
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "x.py") == []
+    assert not rule.detect(rewritten or "", "x.py")

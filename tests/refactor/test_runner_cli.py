@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import cast
 
 from refactor.cli import main
-from refactor.protocol import ApplyMode, Hit, Location, RuleKind
+from refactor.protocol import ApplyMode, Hit, Location, RefactorRule, RuleKind
 from refactor.registry import RULES
 from refactor.rules.native.redundancy.lift_return_into_if import LiftReturnIntoIfRule
 from refactor.rules.native.redundancy.reintroduce_else import ReintroduceElseRule
@@ -18,9 +18,6 @@ from refactor.runner import (
     fix_paths,
     iter_python_files,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 BEFORE = """\
 def pick(d: dict[str, int], key: str) -> int:
@@ -106,7 +103,7 @@ def test_fix_paths_rewrites_safe_rules(tmp_path: Path) -> None:
     assert src in changed
     assert src.read_text(encoding="utf-8") == AFTER
     hits = check_paths([tmp_path])
-    assert not any(hit.rule_id == "default-get" for hit in hits)
+    assert all(hit.rule_id != "default-get" for hit in hits)
 
 
 MULTI_BEFORE = """\
@@ -131,7 +128,7 @@ def test_fix_paths_applies_only_safe_rules(tmp_path: Path) -> None:
     assert src in changed
     assert src.read_text(encoding="utf-8") == MULTI_AFTER
     hits = check_paths([tmp_path])
-    assert not any(hit.rule_id == "dict-literal" for hit in hits)
+    assert all(hit.rule_id != "dict-literal" for hit in hits)
     assert any(hit.rule_id == "default-mutable-arg" for hit in hits)
     assert hits
     assert all(hit.rule_id in NON_AUTO_RULE_IDS for hit in hits)
@@ -170,7 +167,7 @@ def test_custom_detect_path_filter_not_bypassed_by_combined_visitor(
     src = tmp_path / "module.py"
     src.write_text("def f():\n    if True:\n        return 1\n", encoding="utf-8")
     hits = check_paths([tmp_path])
-    assert not any(hit.rule_id == "no-conditionals-in-tests" for hit in hits)
+    assert all(hit.rule_id != "no-conditionals-in-tests" for hit in hits)
 
     tests_dir = tmp_path / "tests"
     tests_dir.mkdir()
@@ -187,23 +184,24 @@ class StillDetectingRule:
     apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
-        _ = self
-        if "HIT_MARKER" not in source:
-            return []
-        return [
-            Hit(
-                rule_id=self.rule_id,
-                message="marker present",
-                location=Location(path=path, line=1, column=1),
-            )
-        ]
+        return (
+            []
+            if "HIT_MARKER" not in source
+            else [
+                Hit(
+                    rule_id=self.rule_id,
+                    message="marker present",
+                    location=Location(path=path, line=1, column=1),
+                )
+            ]
+        )
 
-    def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
+    def apply(self, source: str, hits: list[Hit]) -> str | None:
         _ = self, hits
         return source.replace("HIT_MARKER", "STILL_HAS_HIT_MARKER")
 
 
 def test_apply_auto_rule_rejects_rewrite_that_still_detects() -> None:
-    rule = StillDetectingRule()
+    rule = cast("RefactorRule", StillDetectingRule())
     source = "x = HIT_MARKER\n"
     assert apply_auto_rule(rule, source, Path("sample.py")) == source

@@ -49,11 +49,11 @@ Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/q
 
 **Default suite:** `full` (from `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`).
 
-**Pre-commit:** mirrors format → check; only non-catalog hooks (e.g. djlint for Jinja) stay separate.
+**Pre-commit:** mirrors format → check; only non-catalog hooks (e.g. djlint for Jinja) stay separate. The `refactor-check` hook runs `python -m refactor check --strict` on staged `src/` and `tests/refactor/` Python files (auto + hint; default check is auto-only).
 
 **`shipgate init` scaffolds:** `.shipgate/shipgate.yaml` (yaml mode) or `[tool.shipgate]` in `pyproject.toml` (pyproject mode), `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, `.shipgate/.gitignore`, `.shipgate/cache/.env` (`SHIPGATE_ROOT`, `SHIPGATE_POLICY`). Example pyproject policy: `.shipgate/pyproject.toml.example`.
 
-**Canonical gate (`make check-commit`):** `uv sync --group dev` → `shipgate install` → `shipgate format --target .` → `PYTHONPATH=src shipgate check --target .` (PYTHONPATH is required for src-layout import-linter).
+**Canonical gate (`make check-commit`):** `uv sync --group dev` → `shipgate install` → `shipgate format --target .` → `PYTHONPATH=src shipgate check --target .` → `PYTHONPATH=src python -m refactor check --strict src tests/refactor` (PYTHONPATH is required for src-layout import-linter).
 
 **`env: managed`:** creates `.shipgate/tools/python/` venv; `init` writes `.shipgate/.gitignore` (ignores `cache/`, `reports/`, `tools/`, etc.)
 

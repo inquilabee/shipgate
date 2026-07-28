@@ -35,7 +35,7 @@ repos:
         pass_filenames: false
         always_run: true
       - id: refactor-check
-        name: refactor check
+        name: refactor check --strict
         entry: scripts/refactor-precommit.sh
         language: system
         files: ^(src|tests/refactor)/.*\.py$

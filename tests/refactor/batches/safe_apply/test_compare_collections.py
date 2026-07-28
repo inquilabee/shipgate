@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from refactor.protocol import ApplyMode
+from refactor.protocol import ApplyMode, RefactorRule
 from refactor.registry import RULES
-
-if TYPE_CHECKING:
-    from refactor.protocol import RefactorRule
 
 SAFE_APPLY_RULE_IDS = (
     "use-len",
@@ -62,7 +57,7 @@ def test_safe_apply_round_trip(
     assert len(hits) >= 1
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 def test_none_compare_round_trip_not_equal(
@@ -76,7 +71,7 @@ def test_none_compare_round_trip_not_equal(
     assert "is not None" in hits[0].message
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 def test_min_max_identity_round_trip_max(rules_by_id: dict[str, RefactorRule]) -> None:
@@ -86,7 +81,7 @@ def test_min_max_identity_round_trip_max(rules_by_id: dict[str, RefactorRule]) -
     hits = rule.detect(before, "sample.py")
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 def test_boolean_if_exp_identity_round_trip_inverse(
@@ -98,7 +93,7 @@ def test_boolean_if_exp_identity_round_trip_inverse(
     hits = rule.detect(before, "sample.py")
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 def test_simplify_boolean_comparison_round_trip_false(
@@ -110,7 +105,7 @@ def test_simplify_boolean_comparison_round_trip_false(
     hits = rule.detect(before, "sample.py")
     rewritten = rule.apply(before, hits)
     assert rewritten == after
-    assert rule.detect(rewritten or "", "sample.py") == []
+    assert not rule.detect(rewritten or "", "sample.py")
 
 
 @pytest.mark.parametrize("rule_id", SAFE_APPLY_RULE_IDS)

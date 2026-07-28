@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from refactor.protocol import ApplyMode
+from refactor.protocol import ApplyMode, RefactorRule
 from refactor.registry import RULES
-
-if TYPE_CHECKING:
-    from refactor.protocol import RefactorRule
 
 RULE_IDS = (
     "remove-zero-from-range",
