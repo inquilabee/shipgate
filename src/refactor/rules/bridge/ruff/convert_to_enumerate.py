@@ -1,4 +1,4 @@
-"""Inventory stub: convert-to-enumerate delegates to Ruff SIM113."""
+"""Bridge rule: convert-to-enumerate delegates to Ruff SIM113."""
 
 from __future__ import annotations
 
@@ -9,5 +9,6 @@ from refactor.rules.bridge.ruff.ruff_bridge import RuffBridge
 class ConvertToEnumerateBridge(RuffBridge):
     rule_id = "convert-to-enumerate"
     kind = RuleKind.REFACTOR
-    summary = "Delegates to Ruff SIM113 (not enforced here)."
+    summary = "Convert to enumerate"
+    message = "Use enumerate() instead of a manual loop index"
     delegates_to = "SIM113"

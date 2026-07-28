@@ -332,11 +332,5 @@ def check_rules(
     rules: Sequence[RefactorRule] | None = None,
 ) -> tuple[RefactorRule, ...]:
     return (
-        tuple(rules)
-        if rules is not None
-        else tuple(rule for rule in RULES if not is_inactive_bridge(rule) and rule_enabled(rule))
+        tuple(rules) if rules is not None else tuple(rule for rule in RULES if rule_enabled(rule))
     )
-
-
-def is_inactive_bridge(rule: RefactorRule) -> bool:
-    return getattr(rule, "delegates_to", None) is not None

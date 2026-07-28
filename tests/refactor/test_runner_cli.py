@@ -50,9 +50,9 @@ def test_check_paths_populates_hit_location(tmp_path: Path) -> None:
     assert hit.location.column is not None
 
 
-def test_default_check_rules_skip_inactive_bridges() -> None:
+def test_default_check_rules_include_ruff_bridges() -> None:
     assert any(getattr(rule, "delegates_to", None) is not None for rule in RULES)
-    assert all(getattr(rule, "delegates_to", None) is None for rule in check_rules())
+    assert any(getattr(rule, "delegates_to", None) is not None for rule in check_rules())
     assert check_rules(RULES) == RULES
 
 
@@ -141,7 +141,7 @@ def test_cli_list_includes_default_get(capsys) -> None:
     assert code == 0
     assert "default-get" in out
     assert "list-literal" in out
-    assert "bridge=inactive delegates_to=" in out
+    assert "bridge=ruff delegates_to=" in out
 
 
 def test_cli_check_exit_code(tmp_path: Path) -> None:

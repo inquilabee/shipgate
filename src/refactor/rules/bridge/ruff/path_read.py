@@ -1,4 +1,4 @@
-"""Inventory stub: path-read delegates to Ruff PTH123."""
+"""Bridge rule: path-read delegates to Ruff PTH123."""
 
 from __future__ import annotations
 
@@ -9,5 +9,6 @@ from refactor.rules.bridge.ruff.ruff_bridge import RuffBridge
 class PathReadBridge(RuffBridge):
     rule_id = "path-read"
     kind = RuleKind.REFACTOR
-    summary = "Delegates to Ruff PTH123 (not enforced here)."
+    summary = "Path read"
+    message = "Prefer pathlib.Path.open() over the builtin open()"
     delegates_to = "PTH123"
