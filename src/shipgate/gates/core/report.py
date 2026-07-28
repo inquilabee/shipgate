@@ -23,6 +23,6 @@ def gate_finding_payload(
         location: dict[str, Any] = {"file": file}
         if line not in (None, ""):
             with contextlib.suppress(ValueError):
-                location["line"] = int(line) if not isinstance(line, int) else line
+                location["line"] = line if isinstance(line, int) else int(line)
         finding["location"] = location
     return finding

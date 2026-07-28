@@ -36,9 +36,11 @@ def resolve_gate_script(tool: ToolDefinition, project_root: Path) -> Path:
         return require_under(candidate.resolve(), (bundled_gates, project_gates))
 
     script_path = Path(tool.executable)
-    if script_path.is_absolute():
-        return require_under(script_path.resolve(), (bundled_gates, project_gates))
-    return require_under((project_root / script_path).resolve(), (project_gates,))
+    return (
+        require_under(script_path.resolve(), (bundled_gates, project_gates))
+        if script_path.is_absolute()
+        else require_under((project_root / script_path).resolve(), (project_gates,))
+    )
 
 
 def require_under(path: Path, roots: tuple[Path, ...]) -> Path:

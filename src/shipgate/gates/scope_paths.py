@@ -42,11 +42,15 @@ def gate_scope_rel_path(resolved: ResolvedRequest, path: Path) -> str | None:
 
 
 def gate_scope_entry(delivery: str, candidate: Path, rel_str: str) -> str | None:
-    if delivery == "files":
-        return rel_str if candidate.is_file() else None
-    if delivery in {"dirs", "root"}:
-        return directory_delivery_scope_entry(delivery, candidate, rel_str)
-    return None
+    return (
+        (rel_str if candidate.is_file() else None)
+        if delivery == "files"
+        else (
+            directory_delivery_scope_entry(delivery, candidate, rel_str)
+            if delivery in {"dirs", "root"}
+            else None
+        )
+    )
 
 
 def directory_delivery_scope_entry(delivery: str, candidate: Path, rel_str: str) -> str | None:
@@ -54,8 +58,5 @@ def directory_delivery_scope_entry(delivery: str, candidate: Path, rel_str: str)
         return rel_str or "."
     if candidate.is_file():
         parent = Path(rel_str).parent
-        return "." if not parent.parts else str(parent).replace("\\", "/")
-    if delivery == "root":
-        # Planned/incremental paths may not exist on disk yet.
-        return rel_str or "."
-    return None
+        return str(parent).replace("\\", "/") if parent.parts else "."
+    return rel_str or "." if delivery == "root" else None

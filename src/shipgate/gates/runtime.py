@@ -30,26 +30,22 @@ def prepare_gate_execution(
     *,
     project: ProjectConfig | None = None,
 ) -> tuple[tuple[str, ...], dict[str, str]]:
-    target = "."
-    if resolved.options.paths:
-        target = str(resolved.options.paths[0])
+    target = str(resolved.options.paths[0]) if resolved.options.paths else "."
 
     env = dict(resolved.environment.env)
-    env.update(
-        {
-            "SHIPGATE_ROOT": str(resolved.project_root),
-            "SHIPGATE_TARGET": target,
-            "SHIPGATE_CHECK_ID": resolved.tool.id,
-            "SHIPGATE_PYTHON": sys.executable,
-            "SHIPGATE_REPORT": str(resolved.output_path),
-        }
-    )
+    env |= {
+        "SHIPGATE_ROOT": str(resolved.project_root),
+        "SHIPGATE_TARGET": target,
+        "SHIPGATE_CHECK_ID": resolved.tool.id,
+        "SHIPGATE_PYTHON": sys.executable,
+        "SHIPGATE_REPORT": str(resolved.output_path),
+    }
 
     precomputed_path = resolved.options.extra.get("gate_config_path")
     precomputed_env = resolved.options.extra.get("gate_env")
     if isinstance(precomputed_path, str) and isinstance(precomputed_env, dict):
         env["SHIPGATE_GATE_CONFIG"] = precomputed_path
-        env.update({str(k): str(v) for k, v in precomputed_env.items()})
+        env |= {str(k): str(v) for k, v in precomputed_env.items()}
     else:
         config = load_gate_config(
             resolved.tool,
@@ -63,11 +59,10 @@ def prepare_gate_execution(
             config,
         )
         env["SHIPGATE_GATE_CONFIG"] = str(resolved_config)
-        env.update(gate_env_from_config(config, resolved.project_root))
+        env |= gate_env_from_config(config, resolved.project_root)
 
-    env.update(ignore_env(resolved.project_root, extra_patterns=resolved.options.exclude))
-    scope_paths = gate_scope_paths(resolved)
-    if scope_paths:
+    env |= ignore_env(resolved.project_root, extra_patterns=resolved.options.exclude)
+    if scope_paths := gate_scope_paths(resolved):
         env["SHIPGATE_SCOPE_PATHS"] = "\n".join(scope_paths)
 
     if resolved.tool.module:

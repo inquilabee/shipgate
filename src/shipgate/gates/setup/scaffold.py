@@ -20,8 +20,7 @@ def scaffold_file(
 ) -> Path:
     """Copy a bundled template into the project when the target path is missing."""
     target = Path(relative_path)
-    if not target.is_absolute():
-        target = project_root / target
+    target = target if target.is_absolute() else project_root / target
     if target.is_file():
         return target
     template = bundled_root_path() / bundled_template

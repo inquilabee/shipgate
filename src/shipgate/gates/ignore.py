@@ -18,8 +18,7 @@ class EffectiveIgnores:
 
     def is_ignored(self, rel_path: str) -> bool:
         normalized = rel_path.replace("\\", "/")
-        if normalized.startswith("./"):
-            normalized = normalized[2:]
+        normalized = normalized[2:] if normalized.startswith("./") else normalized
         if not self.path_patterns:
             return False
         matcher = pathspec.PathSpec.from_lines("gitignore", self.path_patterns)
@@ -53,9 +52,7 @@ def ignore_env(project_root: Path, extra_patterns: tuple[str, ...] = ()) -> dict
         *load_gitignore_lines(project_root),
         *extra_patterns,
     ]
-    if not patterns:
-        return {}
-    return {"SHIPGATE_IGNORE_PATHS": "\n".join(patterns)}
+    return {"SHIPGATE_IGNORE_PATHS": "\n".join(patterns)} if patterns else {}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -64,11 +61,7 @@ def main(argv: list[str] | None = None) -> int:
         print("usage: ignore REL_PATH", file=sys.stderr)
         return 2
     ignores = ignores_from_env()
-    if not ignores.path_patterns:
-        return 1
-    if ignores.is_ignored(args[0]):
-        return 0
-    return 1
+    return (0 if ignores.is_ignored(args[0]) else 1) if ignores.path_patterns else 1
 
 
 if __name__ == "__main__":

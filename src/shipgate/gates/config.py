@@ -21,12 +21,14 @@ def load_bundled_gate_config(tool: ToolDefinition) -> dict[str, Any]:
     if not tool.configuration.bundled:
         return {}
     bundled = bundled_root_path() / tool.configuration.bundled
-    if not bundled.is_file():
-        return {}
-    return load_yaml_mapping(
-        bundled,
-        error_cls=ValueError,
-        invalid_message=f"Gate config must be a mapping: {bundled}",
+    return (
+        load_yaml_mapping(
+            bundled,
+            error_cls=ValueError,
+            invalid_message=f"Gate config must be a mapping: {bundled}",
+        )
+        if bundled.is_file()
+        else {}
     )
 
 
@@ -60,9 +62,7 @@ def load_gate_config(
         error_cls=ValueError,
         invalid_message=f"Gate config must be a mapping: {config_path}",
     )
-    config = data
-    if project is not None:
-        config = apply_project_allowlist(project, tool.id, config)
+    config = apply_project_allowlist(project, tool.id, data) if project is not None else data
     resolve_allowlist_path(project_root, config)
     return config
 
@@ -85,11 +85,9 @@ def gate_env_from_config(config: dict[str, Any], project_root: Path) -> dict[str
         if value is None:
             continue
         env[f"GATE_{key.upper()}"] = gate_env_value(value)
-    allowlist = config.get("allowlist_file")
-    if allowlist:
+    if allowlist := config.get("allowlist_file"):
         path = Path(str(allowlist))
-        if not path.is_absolute():
-            path = project_root / path
+        path = path if path.is_absolute() else project_root / path
         env["GATE_ALLOWLIST_FILE"] = str(path.resolve())
     return env
 
@@ -121,15 +119,16 @@ def resolve_allowlist_path(project_root: Path, config: dict[str, Any]) -> None:
     if not raw:
         return
     path = Path(str(raw))
-    if not path.is_absolute():
-        path = project_root / path
+    path = path if path.is_absolute() else project_root / path
     if path.is_file():
         config["allowlist_file"] = str(path.resolve())
 
 
 def gate_env_value(value: Any) -> str:
-    if isinstance(value, list):
-        return " ".join(str(item) for item in value)
-    if isinstance(value, bool):
-        return "1" if value else "0"
-    return str(value)
+    return (
+        " ".join(str(item) for item in value)
+        if isinstance(value, list)
+        else ("1" if value else "0")
+        if isinstance(value, bool)
+        else str(value)
+    )
