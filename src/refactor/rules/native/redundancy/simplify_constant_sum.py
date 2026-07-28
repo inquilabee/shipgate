@@ -1,34 +1,44 @@
-"""Native rule for ``simplify-constant-sum``."""
+"""Native rule for ``simplify-constant-sum`` (Sourcery parity)."""
 
 from __future__ import annotations
 
 import libcst as cst
 
-from refactor.cst_util import parse_integer_literal
-from refactor.rules.native.expr_base import BinaryOpRewriteRule
+from refactor.call_match import single_positional_call
+from refactor.rules.native.expr_base import CallRewriteRule
 
 
-class SimplifyConstantSumRule(BinaryOpRewriteRule):
+class SimplifyConstantSumRule(CallRewriteRule):
     rule_id = "simplify-constant-sum"
-    summary = "Simplify constant sum"
-    message = "Replace arithmetic on integer constants with the computed value"
+    summary = "Simplify constant sum() call"
+    message = "Replace sum(1 for ... if cond) with sum(bool(cond) for ...)"
 
     @classmethod
     def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
-        if not isinstance(node, cst.BinaryOperation):
+        matched = single_positional_call(node, "sum")
+        if matched is None:
             return None
-        left = cls.integer_value(node.left)
-        right = cls.integer_value(node.right)
-        if left is None or right is None:
+        call, argument = matched
+        if not isinstance(argument, cst.GeneratorExp):
             return None
-        return (
-            cst.Integer(str(left + right))
-            if isinstance(node.operator, cst.Add)
-            else (
-                cst.Integer(str(left - right)) if isinstance(node.operator, cst.Subtract) else None
-            )
+        rewritten = cls.bool_generator(argument)
+        if rewritten is None:
+            return None
+        return call.with_changes(args=[cst.Arg(value=rewritten)])
+
+    @classmethod
+    def bool_generator(cls, generator: cst.GeneratorExp) -> cst.GeneratorExp | None:
+        if not cls.is_constant_one(generator.elt):
+            return None
+        for_in = generator.for_in
+        if for_in.inner_for_in is not None or len(for_in.ifs) != 1:
+            return None
+        condition = for_in.ifs[0].test
+        return generator.with_changes(
+            elt=cst.Call(func=cst.Name("bool"), args=[cst.Arg(value=condition)]),
+            for_in=for_in.with_changes(ifs=()),
         )
 
     @staticmethod
-    def integer_value(node: cst.BaseExpression) -> int | None:
-        return parse_integer_literal(node.value) if isinstance(node, cst.Integer) else None
+    def is_constant_one(node: cst.BaseExpression) -> bool:
+        return isinstance(node, cst.Integer) and node.value.replace("_", "") == "1"

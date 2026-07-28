@@ -27,8 +27,8 @@ CASES = (
     ),
     (
         "simplify-constant-sum",
-        "total = 2 + 3\n",
-        "5",
+        'total = sum(1 for book in books if book.author == "Terry Pratchett")\n',
+        'sum(bool(book.author == "Terry Pratchett") for book in books)',
     ),
     (
         "simplify-dictionary-update",

@@ -7,6 +7,7 @@ from refactor.rules.native.elseblock.class_extract_method import ClassExtractMet
 from refactor.rules.native.elseblock.extract_method import ExtractMethodRule
 from refactor.rules.native.elseblock.no_loop_in_tests import NoLoopInTestsRule
 from refactor.rules.native.hoist.introduce_default_else import IntroduceDefaultElseRule
+from refactor.rules.native.hoist.use_assigned_variable import UseAssignedVariableRule
 from refactor.rules.native.merges.no_conditionals_in_tests import (
     NoConditionalsInTestsRule,
 )
@@ -38,14 +39,43 @@ def test_remove_redundant_pass_still_clears_after_real_stmt() -> None:
     assert rule.apply(before, hits) == "def f():\n    x = 1\n"
 
 
-def test_simplify_constant_sum_accepts_python_integer_bases() -> None:
+def test_simplify_constant_sum_rewrites_sum_one_with_filter() -> None:
     rule = SimplifyConstantSumRule()
-    source = "a = 1_000 + 2\nb = 0b10 + 0o10\nc = 0x10 - 0b1\n"
+    source = "total = sum(1 for item in items if item.ready)\n"
     hits = rule.detect(source, "x.py")
-    after_values = [hit.suggestion.after for hit in hits if hit.suggestion is not None]
-    assert "1002" in after_values[0]
-    assert "10" in after_values[1]
-    assert "15" in after_values[2]
+    assert len(hits) == 1
+    assert hits[0].suggestion is not None
+    assert "sum(bool(item.ready) for item in items)" in hits[0].suggestion.after
+
+
+def test_simplify_constant_sum_skips_unfiltered_sum() -> None:
+    rule = SimplifyConstantSumRule()
+    assert rule.detect("total = sum(1 for item in items)\n", "x.py") == []
+
+
+def test_use_assigned_variable_reuses_repeated_expression() -> None:
+    rule = UseAssignedVariableRule()
+    source = (
+        "def total(wardrobe):\n"
+        "    for item in wardrobe:\n"
+        "        count = wardrobe[item]\n"
+        "        add_to_total(wardrobe[item])\n"
+    )
+    hits = rule.detect(source, "x.py")
+    assert len(hits) == 1
+    assert hits[0].suggestion is not None
+    assert "add_to_total(count)" in hits[0].suggestion.after
+
+
+def test_use_assigned_variable_reuses_aliased_self() -> None:
+    rule = UseAssignedVariableRule()
+    source = (
+        "class Example:\n    def detect(self):\n        _ = self\n        return self.rule_id\n"
+    )
+    hits = rule.detect(source, "x.py")
+    assert len(hits) == 1
+    assert hits[0].suggestion is not None
+    assert "return _.rule_id" in hits[0].suggestion.after
 
 
 def test_str_prefix_suffix_accepts_non_decimal_slice_lengths() -> None:

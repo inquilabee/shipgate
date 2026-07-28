@@ -42,8 +42,13 @@ CASES = (
     ),
     (
         "use-assigned-variable",
-        "value = build()\nreturn value\n",
-        "return build()",
+        (
+            "def total(wardrobe):\n"
+            "    for item in wardrobe:\n"
+            "        count = wardrobe[item]\n"
+            "        add_to_total(wardrobe[item])\n"
+        ),
+        "add_to_total(count)",
     ),
     (
         "use-contextlib-suppress",
