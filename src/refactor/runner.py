@@ -42,11 +42,13 @@ def iter_python_files(paths: Sequence[Path]) -> list[Path]:
 
 def collect_python(path: Path) -> list[Path]:
     resolved = path.resolve()
-    if resolved.is_file() and resolved.suffix == ".py":
-        return [resolved]
-    if not resolved.is_dir():
-        return []
-    return walk_python_files(resolved, load_gitignore(resolved))
+    return (
+        [resolved]
+        if resolved.is_file() and resolved.suffix == ".py"
+        else walk_python_files(resolved, load_gitignore(resolved))
+        if resolved.is_dir()
+        else []
+    )
 
 
 def walk_python_files(root: Path, ignore_spec: pathspec.PathSpec) -> list[Path]:
@@ -79,11 +81,13 @@ def filter_walk_dirnames(
 
 def load_gitignore(root: Path) -> pathspec.PathSpec:
     ignore_path = root / ".gitignore"
-    if not ignore_path.is_file():
-        return pathspec.PathSpec.from_lines("gitignore", [])
-    return pathspec.PathSpec.from_lines(
-        "gitignore",
-        ignore_path.read_text(encoding="utf-8").splitlines(),
+    return (
+        pathspec.PathSpec.from_lines(
+            "gitignore",
+            ignore_path.read_text(encoding="utf-8").splitlines(),
+        )
+        if ignore_path.is_file()
+        else pathspec.PathSpec.from_lines("gitignore", [])
     )
 
 
@@ -96,9 +100,9 @@ def should_ignore_path(
 ) -> bool:
     if path.name in IGNORED_DIR_NAMES:
         return True
-    relative = path.relative_to(root).as_posix()
-    if is_dir:
-        relative = f"{relative}/"
+    relative = (
+        f"{path.relative_to(root).as_posix()}/" if is_dir else path.relative_to(root).as_posix()
+    )
     return ignore_spec.match_file(relative)
 
 
@@ -142,11 +146,13 @@ def apply_safe_rule(rule: RefactorRule, source: str, file_path: Path) -> str:
     if not hits:
         return source
     rewritten = rule.apply(source, hits)
-    if rewritten is None:
-        return source
-    if rule.detect(rewritten, str(file_path)):
-        return source
-    return rewritten
+    return (
+        source
+        if rewritten is None
+        else source
+        if rule.detect(rewritten, str(file_path))
+        else rewritten
+    )
 
 
 def hits_to_jsonable(hits: Sequence[Hit]) -> list[dict[str, object]]:

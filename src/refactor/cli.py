@@ -16,11 +16,13 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "list":
         return cmd_list()
     paths: list[Path] = list(args.paths) or [Path()]
-    if args.command == "check":
-        return cmd_check(paths)
-    if args.command == "fix":
-        return cmd_fix(paths)
-    return 2
+    return (
+        cmd_check(paths, strict=args.strict)
+        if args.command == "check"
+        else cmd_fix(paths)
+        if args.command == "fix"
+        else 2
+    )
 
 
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
@@ -28,6 +30,11 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list", help="List registered rules")
     check_parser = sub.add_parser("check", help="Detect issues and print JSON hits")
+    check_parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Report all enabled rules (default: blocking safe_apply rules only)",
+    )
     check_parser.add_argument("paths", nargs="*", type=Path, default=[Path()])
     fix_parser = sub.add_parser("fix", help="Apply safe_apply rules")
     fix_parser.add_argument("paths", nargs="*", type=Path, default=[Path()])
@@ -47,12 +54,13 @@ def cmd_list() -> int:
     return 0
 
 
-def cmd_check(paths: list[Path]) -> int:
+def cmd_check(paths: list[Path], *, strict: bool = False) -> int:
     hits = check_paths(paths)
-    rules_by_id = {rule.rule_id: rule for rule in RULES}
-    blocking_hits = [hit for hit in hits if rules_by_id[hit.rule_id].safe_apply]
-    print(json.dumps(hits_to_jsonable(blocking_hits), indent=2))
-    return 1 if blocking_hits else 0
+    if not strict:
+        rules_by_id = {rule.rule_id: rule for rule in RULES}
+        hits = [hit for hit in hits if rules_by_id[hit.rule_id].safe_apply]
+    print(json.dumps(hits_to_jsonable(hits), indent=2))
+    return 1 if hits else 0
 
 
 def cmd_fix(paths: list[Path]) -> int:

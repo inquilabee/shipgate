@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -36,15 +36,15 @@ def single_positional_call(
     name: str,
 ) -> tuple[cst.Call, cst.BaseExpression] | None:
     call = positional_call(node, name, 1)
-    if call is None:
-        return None
-    return call, call.args[0].value
+    return None if call is None else (call, call.args[0].value)
 
 
 def not_operation(node: cst.CSTNode) -> cst.UnaryOperation | None:
-    if not isinstance(node, cst.UnaryOperation) or not isinstance(node.operator, cst.Not):
-        return None
-    return node
+    return (
+        None
+        if not isinstance(node, cst.UnaryOperation) or not isinstance(node.operator, cst.Not)
+        else node
+    )
 
 
 def attribute_method_call(node: cst.CSTNode, method: str) -> tuple[cst.Call, cst.Attribute] | None:
@@ -79,7 +79,7 @@ def update_call_target(call: cst.Call) -> cst.BaseAssignTargetExpression | None:
     value = attr.value
     if not isinstance(value, cst.Name | cst.Attribute | cst.Subscript):
         return None
-    return cast("cst.BaseAssignTargetExpression", value)
+    return value
 
 
 def equality_name_operand(
@@ -99,11 +99,13 @@ def equality_name_side(
     right: cst.BaseExpression,
     name: str,
 ) -> cst.BaseExpression | None:
-    if isinstance(left, cst.Name) and left.value == name:
-        return right
-    if isinstance(right, cst.Name) and right.value == name:
-        return left
-    return None
+    return (
+        right
+        if isinstance(left, cst.Name) and left.value == name
+        else left
+        if isinstance(right, cst.Name) and right.value == name
+        else None
+    )
 
 
 def adjacent_and_comparisons(
@@ -121,11 +123,13 @@ def adjacent_and_comparisons(
 
 
 def inverted_equal_operator(operator: cst.BaseCompOp) -> cst.BaseCompOp | None:
-    if isinstance(operator, cst.Equal):
-        return cst.NotEqual()
-    if isinstance(operator, cst.NotEqual):
-        return cst.Equal()
-    return None
+    return (
+        cst.NotEqual()
+        if isinstance(operator, cst.Equal)
+        else cst.Equal()
+        if isinstance(operator, cst.NotEqual)
+        else None
+    )
 
 
 def two_positional_method_call(

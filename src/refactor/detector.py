@@ -67,7 +67,11 @@ def detect_combined_rules(
     path: str,
     rules: Sequence[RefactorRule],
 ) -> list[Hit]:
-    combined_rules = [rule for rule in rules if can_use_combined_visitor(rule)]
+    combined_rules = [
+        rule
+        for rule in rules
+        if can_use_combined_visitor(rule) and uses_standard_visitor_detect(rule)
+    ]
     if not combined_rules:
         return []
     module = parse_module_cached(source)
@@ -322,15 +326,17 @@ def has_base_finder(rule: RefactorRule, base: type[object]) -> bool:
 
 
 def rule_enabled(rule: RefactorRule) -> bool:
-    return bool(getattr(type(rule), "enabled", True))
+    return getattr(type(rule), "enabled", True)
 
 
 def check_rules(
     rules: Sequence[RefactorRule] | None = None,
 ) -> tuple[RefactorRule, ...]:
-    if rules is not None:
-        return tuple(rules)
-    return tuple(rule for rule in RULES if not is_inactive_bridge(rule) and rule_enabled(rule))
+    return (
+        tuple(rules)
+        if rules is not None
+        else tuple(rule for rule in RULES if not is_inactive_bridge(rule) and rule_enabled(rule))
+    )
 
 
 def is_inactive_bridge(rule: RefactorRule) -> bool:

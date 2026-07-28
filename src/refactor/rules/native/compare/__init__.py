@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from refactor.rules.native.compare.assign_if_exp import AssignIfExpRule
 from refactor.rules.native.compare.aware_datetime_for_utc import AwareDatetimeForUtcRule
 from refactor.rules.native.compare.dont_import_test_modules import (
     DontImportTestModulesRule,
@@ -26,6 +27,7 @@ from refactor.rules.native.compare.ternary_to_if_expression import (
 from refactor.rules.native.compare.use_join import UseJoinRule
 
 RULES = (
+    AssignIfExpRule(),
     AwareDatetimeForUtcRule(),
     DontImportTestModulesRule(),
     HoistStatementFromLoopRule(),

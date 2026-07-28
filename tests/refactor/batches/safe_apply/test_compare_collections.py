@@ -32,7 +32,11 @@ def rules_by_id() -> dict[str, RefactorRule]:
         ("min-max-identity", "z = a if a < b else b\n", "z = min(a, b)\n"),
         ("none-compare", "if x == None:\n    pass\n", "if x is None:\n    pass\n"),
         ("boolean-if-exp-identity", "y = True if cond else False\n", "y = cond\n"),
-        ("simplify-boolean-comparison", "if x == True:\n    pass\n", "if x:\n    pass\n"),
+        (
+            "simplify-boolean-comparison",
+            "if x == True:\n    pass\n",
+            "if x:\n    pass\n",
+        ),
         (
             "collection-into-set",
             "if x in [1, 2, 3]:\n    pass\n",
@@ -60,7 +64,9 @@ def test_safe_apply_round_trip(
     assert rule.detect(rewritten or "", "sample.py") == []
 
 
-def test_none_compare_round_trip_not_equal(rules_by_id: dict[str, RefactorRule]) -> None:
+def test_none_compare_round_trip_not_equal(
+    rules_by_id: dict[str, RefactorRule],
+) -> None:
     rule = rules_by_id["none-compare"]
     before = "if x != None:\n    pass\n"
     after = "if x is not None:\n    pass\n"

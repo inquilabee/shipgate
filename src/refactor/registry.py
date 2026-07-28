@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from refactor.rules.bridge.ruff.assign_if_exp import AssignIfExpBridge
 from refactor.rules.bridge.ruff.avoid_builtin_shadow import AvoidBuiltinShadowBridge
 from refactor.rules.bridge.ruff.convert_to_enumerate import ConvertToEnumerateBridge
 from refactor.rules.bridge.ruff.de_morgan import DeMorganBridge
@@ -146,7 +145,6 @@ RULES = cast(
         UseFstringForConcatenationBridge(),
         UseFstringForFormattingBridge(),
         PathReadBridge(),
-        AssignIfExpBridge(),
         ConvertToEnumerateBridge(),
         DeMorganBridge(),
         EnsureFileClosedBridge(),

@@ -8,8 +8,16 @@ from refactor.protocol import Hit, Location, RuleKind
 from refactor.registry import RULES
 from refactor.rules.native.redundancy.lift_return_into_if import LiftReturnIntoIfRule
 from refactor.rules.native.redundancy.reintroduce_else import ReintroduceElseRule
-from refactor.rules.native.strings.remove_redundant_continue import RemoveRedundantContinueRule
-from refactor.runner import apply_safe_rule, check_paths, check_rules, fix_paths, iter_python_files
+from refactor.rules.native.strings.remove_redundant_continue import (
+    RemoveRedundantContinueRule,
+)
+from refactor.runner import (
+    apply_safe_rule,
+    check_paths,
+    check_rules,
+    fix_paths,
+    iter_python_files,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -140,6 +148,34 @@ def test_cli_check_exit_code(tmp_path: Path) -> None:
     src = tmp_path / "sample.py"
     src.write_text(BEFORE, encoding="utf-8")
     assert main(["check", str(tmp_path)]) == 1
+
+
+def test_cli_check_strict_reports_suggestion_only_rules(tmp_path: Path, capsys) -> None:
+    src = tmp_path / "sample.py"
+    src.write_text(
+        "from typing import cast\n\ndef f(raw):\n    return cast(int, raw)\n",
+        encoding="utf-8",
+    )
+    assert main(["check", str(tmp_path)]) == 0
+    assert main(["check", "--strict", str(tmp_path)]) == 1
+    out = capsys.readouterr().out
+    assert "remove-unnecessary-cast" in out
+
+
+def test_custom_detect_path_filter_not_bypassed_by_combined_visitor(
+    tmp_path: Path,
+) -> None:
+    src = tmp_path / "module.py"
+    src.write_text("def f():\n    if True:\n        return 1\n", encoding="utf-8")
+    hits = check_paths([tmp_path])
+    assert not any(hit.rule_id == "no-conditionals-in-tests" for hit in hits)
+
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    test_src = tests_dir / "test_module.py"
+    test_src.write_text("def test_f():\n    if True:\n        assert 1\n", encoding="utf-8")
+    hits = check_paths([tmp_path])
+    assert any(hit.rule_id == "no-conditionals-in-tests" for hit in hits)
 
 
 class StillDetectingRule:

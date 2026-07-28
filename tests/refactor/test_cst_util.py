@@ -15,7 +15,9 @@ class EmptyFinder(HitCollector):
     pass
 
 
-def test_detect_with_visitor_reuses_cached_parse(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_detect_with_visitor_reuses_cached_parse(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     parse_module_cached.cache_clear()
     calls = 0
     original_parse: Callable[[str], cst.Module] = cst.parse_module

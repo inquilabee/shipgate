@@ -138,8 +138,7 @@ def parse_integer_literal(value: str) -> int | None:
 
 def is_test_path(path: str) -> bool:
     parsed = PurePath(path)
-    name = parsed.name
-    return "tests" in parsed.parts or name.startswith("test_") or name.endswith("_test.py")
+    return any(part in ("test", "tests") for part in parsed.parts)
 
 
 def make_hit(

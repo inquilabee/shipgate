@@ -1,12 +1,18 @@
 from refactor.rules.native.anydict.str_prefix_suffix import StrPrefixSuffixRule
 from refactor.rules.native.builtins.use_len import UseLenRule
-from refactor.rules.native.compare.hoist_statement_from_loop import HoistStatementFromLoopRule
+from refactor.rules.native.compare.hoist_statement_from_loop import (
+    HoistStatementFromLoopRule,
+)
 from refactor.rules.native.elseblock.class_extract_method import ClassExtractMethodRule
 from refactor.rules.native.elseblock.extract_method import ExtractMethodRule
 from refactor.rules.native.elseblock.no_loop_in_tests import NoLoopInTestsRule
 from refactor.rules.native.hoist.introduce_default_else import IntroduceDefaultElseRule
-from refactor.rules.native.merges.no_conditionals_in_tests import NoConditionalsInTestsRule
-from refactor.rules.native.redundancy.simplify_constant_sum import SimplifyConstantSumRule
+from refactor.rules.native.merges.no_conditionals_in_tests import (
+    NoConditionalsInTestsRule,
+)
+from refactor.rules.native.redundancy.simplify_constant_sum import (
+    SimplifyConstantSumRule,
+)
 from refactor.rules.native.syntax.remove_redundant_pass import RemoveRedundantPassRule
 
 

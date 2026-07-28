@@ -111,7 +111,9 @@ def test_bin_op_identity_detects_multiply(rules_by_id: dict[str, RefactorRule]) 
     assert "y = x" in hits[0].suggestion.after
 
 
-def test_default_mutable_arg_kind_is_suggestion(rules_by_id: dict[str, RefactorRule]) -> None:
+def test_default_mutable_arg_kind_is_suggestion(
+    rules_by_id: dict[str, RefactorRule],
+) -> None:
     from refactor.protocol import RuleKind
 
     rule = rules_by_id["default-mutable-arg"]
