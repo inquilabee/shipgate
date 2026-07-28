@@ -17,8 +17,8 @@ def cli_option_value(options: NormalizedOptions, name: str) -> object | None:
     if name in {"exclude", "rules"}:
         values = getattr(options, name)
         return values or None
-    if name == "output":
-        return str(options.output) if options.output else None
-    if hasattr(options, name):
-        return getattr(options, name)
-    return None
+    return (
+        (str(options.output) if options.output else None)
+        if name == "output"
+        else (getattr(options, name) if hasattr(options, name) else None)
+    )

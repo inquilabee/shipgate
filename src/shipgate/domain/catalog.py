@@ -23,15 +23,15 @@ class CliOptionDefinition:
     aggregate: str | None = None
 
     def aggregate_value(self, value: object, project_root: Path) -> object | None:
-        if self.aggregate != "root":
-            return value
-        if not isinstance(value, (list, tuple)):
-            return value
-        if not value:
-            return None
-        if len(value) == 1:
-            return value[0]
-        return project_root
+        return (
+            value
+            if self.aggregate != "root"
+            else (
+                ((value[0] if len(value) == 1 else project_root) if value else None)
+                if isinstance(value, (list, tuple))
+                else value
+            )
+        )
 
 
 @dataclass(frozen=True)
