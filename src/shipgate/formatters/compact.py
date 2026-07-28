@@ -18,6 +18,8 @@ class CompactFormatter(BaseFormatter):
     @staticmethod
     def format_finding(finding: Finding) -> str:
         loc = finding.location
-        if loc and loc.line is not None:
-            return f"{loc.path}:{loc.line}: {finding.severity}: {finding.rule_id} {finding.message}"
-        return f"{finding.check_id}: {finding.severity}: {finding.rule_id} {finding.message}"
+        return (
+            f"{loc.path}:{loc.line}: {finding.severity}: {finding.rule_id} {finding.message}"
+            if loc and loc.line is not None
+            else f"{finding.check_id}: {finding.severity}: {finding.rule_id} {finding.message}"
+        )
