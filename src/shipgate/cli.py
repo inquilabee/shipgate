@@ -27,6 +27,7 @@ TOP_LEVEL_COMMANDS = frozenset(
         "batch",
         "gates",
         "radon",
+        "refactor",
     }
 )
 
@@ -309,6 +310,18 @@ def radon_calibrate(
         top=top,
         yaml_snippet=yaml_snippet,
     )
+
+
+@app.command(
+    "refactor",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    add_help_option=False,
+)
+def refactor_cmd(ctx: typer.Context) -> None:
+    """AST refactor checks and autofixes (check / fix / list / explain)."""
+    from refactor.cli import main as refactor_main
+
+    raise typer.Exit(refactor_main(list(ctx.args), prog="shipgate refactor"))
 
 
 def main(argv: list[str] | None = None) -> int:

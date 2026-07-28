@@ -13,7 +13,8 @@ from refactor.inventory import DEFAULT_INVENTORY_PATH, load_inventory
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INVENTORY_IN_WHEEL = "refactor/inventory/rule_ids.yaml"
-REFACTOR_SCRIPT = "refactor.cli:main"
+SHIPGATE_SCRIPT = "shipgate.cli:main"
+REFACTOR_MODULE_MAIN = "refactor.cli:main"
 
 
 def test_inventory_package_data_is_loadable() -> None:
@@ -21,11 +22,12 @@ def test_inventory_package_data_is_loadable() -> None:
     assert len(load_inventory()) >= 150
 
 
-def test_refactor_console_script_declared_and_loadable() -> None:
+def test_no_standalone_refactor_console_script() -> None:
     pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     scripts = pyproject["project"]["scripts"]
-    assert scripts["refactor"] == REFACTOR_SCRIPT
-    module_name, attr = REFACTOR_SCRIPT.split(":")
+    assert "refactor" not in scripts
+    assert scripts["shipgate"] == SHIPGATE_SCRIPT
+    module_name, attr = REFACTOR_MODULE_MAIN.split(":")
     target = getattr(import_module(module_name), attr)
     assert callable(target)
 

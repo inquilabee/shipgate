@@ -1,4 +1,4 @@
-"""Standalone CLI: check / fix / list / explain."""
+"""Refactor CLI (invoked as ``shipgate refactor`` or ``python -m refactor``)."""
 
 from __future__ import annotations
 
@@ -28,20 +28,21 @@ if TYPE_CHECKING:
 # Supported dogfood scope: product code + refactor rule fixtures.
 # Fixture-heavy trees (tests/unit, tests/ui, …) trip test-only rules by design.
 DOGFOOD_PATHS = (Path("src"), Path("tests/refactor"))
+DEFAULT_PROG = "python -m refactor"
 PATHS_HELP = (
     "Python files or directories (default: src and tests/refactor when present; "
     "'.' maps to that dogfood scope). Pass tests/unit explicitly to scan fixture trees."
 )
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv)
+def main(argv: list[str] | None = None, *, prog: str = DEFAULT_PROG) -> int:
+    args = parse_args(argv, prog=prog)
     enable = resolve_enable(getattr(args, "enable", None), project_root=Path())
     if args.command == "list":
         return cmd_list(enable=enable)
     if args.command == "explain":
         return cmd_explain(args.rule_id)
-    paths = resolve_cli_paths(list(args.paths))
+    paths = resolve_cli_paths(list(args.paths), prog=prog)
     return (
         cmd_check(paths, strict=args.strict, enable=enable)
         if args.command == "check"
@@ -51,7 +52,12 @@ def main(argv: list[str] | None = None) -> int:
     )
 
 
-def resolve_cli_paths(paths: Sequence[Path], *, cwd: Path | None = None) -> list[Path]:
+def resolve_cli_paths(
+    paths: Sequence[Path],
+    *,
+    cwd: Path | None = None,
+    prog: str = DEFAULT_PROG,
+) -> list[Path]:
     """Prefer dogfood roots for empty args or project-root ``.``."""
     root = cwd if cwd is not None else Path.cwd()
     dogfood = [root / path for path in DOGFOOD_PATHS if (root / path).exists()]
@@ -60,7 +66,7 @@ def resolve_cli_paths(paths: Sequence[Path], *, cwd: Path | None = None) -> list
         if dogfood:
             if requested:
                 print(
-                    "refactor: '.' uses dogfood scope "
+                    f"{prog}: '.' uses dogfood scope "
                     f"{' '.join(str(path.relative_to(root)) for path in dogfood)} "
                     "(pass tests/unit explicitly to include fixture trees)",
                     file=sys.stderr,
@@ -77,8 +83,8 @@ def is_project_root_only(paths: Sequence[Path], *, root: Path) -> bool:
     return candidate == Path() or candidate.resolve() == root.resolve()
 
 
-def parse_args(argv: list[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog="refactor")
+def parse_args(argv: list[str] | None, *, prog: str = DEFAULT_PROG) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog=prog)
     sub = parser.add_subparsers(dest="command", required=True)
     list_parser = sub.add_parser("list", help="List registered rules")
     add_enable_argument(list_parser)

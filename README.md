@@ -40,8 +40,8 @@ pip install shipgate
 # or: uv add --dev shipgate
 ```
 
-The wheel also includes the standalone `refactor` package and CLI
-(`refactor` / `python -m refactor`). Optional report UI extras:
+The wheel also includes the `refactor` package; invoke it as
+`shipgate refactor …` (or `python -m refactor`). Optional report UI extras:
 `pip install 'shipgate[server]'`.
 
 Requires Python 3.11–3.14 (prefer **3.13** for the full suite; Semgrep does not

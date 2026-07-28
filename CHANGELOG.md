@@ -6,8 +6,13 @@
 
 ### Added
 
-- Ship the standalone `refactor` package in the same wheel as ShipGate, with a
-  `refactor` console script and inventory YAML package data.
+- Ship the `refactor` package in the same wheel as ShipGate, with inventory YAML
+  package data and a `shipgate refactor` subcommand (check / fix / list / explain).
+
+### Changed
+
+- Drop the standalone `refactor` console script; use `shipgate refactor` (or
+  `python -m refactor` for module invocation).
 
 ## v0.1.5
 
