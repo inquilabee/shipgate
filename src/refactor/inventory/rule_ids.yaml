@@ -21,6 +21,70 @@
   status: bridge
   apply_mode: "hint"
   note: null
+- id: avoid-global-variables
+  kind: suggestion
+  status: stub
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+  note: GPSG 2.5 — excluded from shipped pack (high false-positive rate); inventory-only stub
+  rationale: Avoid module-level lowercase globals; prefer constants or private names.
+- id: avoid-single-character-names-functions
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+  note: GPSG 3.16 — avoid single-character function names
+  rationale: Avoid single-character function names.
+  example_bad: |
+    def f():
+        pass
+  example_good: |
+    def compute():
+        pass
+- id: avoid-single-character-names-variables
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+  note: GPSG 3.16 — avoid single-character variable names
+  rationale: Avoid single-character names except conventional loop/except/with targets.
+  example_bad: |
+    A = get_account()
+  example_good: |
+    account = get_account()
+- id: avoid-trivial-properties
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+  note: GPSG 3.15 — avoid trivial getters/setters
+  rationale: Prefer public attributes over trivial property pairs.
+  example_bad: |
+    class Student:
+        @property
+        def name(self):
+            return self._name
+        @name.setter
+        def name(self, new_name):
+            self._name = new_name
+  example_good: |
+    class Student:
+        def __init__(self, name):
+            self.name = name
 - id: aware-datetime-for-utc
   kind: suggestion
   status: native
@@ -167,6 +231,94 @@
   status: bridge
   apply_mode: "hint"
   note: null
+- id: do-not-use-staticmethod
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+  note: GPSG 2.17 — avoid staticmethod
+  rationale: Prefer a module-level function over @staticmethod.
+  example_bad: |
+    @staticmethod
+    def suggested_event(new_suggestion) -> str:
+        pass
+  example_good: |
+    def suggested_event(new_suggestion) -> str:
+        pass
+- id: docstrings-for-classes
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-docstrings
+  note: GPSG 3.8 — public class docstrings
+  rationale: Public classes should have docstrings.
+  example_bad: |
+    class CheeseShopAddress:
+        pass
+  example_good: |
+    class CheeseShopAddress:
+        """The address of a cheese shop."""
+- id: docstrings-for-functions
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-docstrings
+  note: GPSG 3.8 — function docstrings
+  rationale: Functions should have docstrings unless private, short, and obvious.
+  example_bad: |
+    def grow(plant):
+        _grow(plant)
+  example_good: |
+    def grow(plant):
+        """Grow the plant."""
+        _grow(plant)
+- id: docstrings-for-modules
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-docstrings
+  note: GPSG 3.8 — module docstrings
+  rationale: Modules should start with a docstring.
+  example_bad: |
+    def hello():
+        print('hello')
+  example_good: |
+    """Module overview."""
+    def hello():
+        print("hello")
+- id: docstrings-for-packages
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-docstrings
+  note: GPSG 3.8 — package (__init__.py) docstrings
+  rationale: Python packages should contain a docstring.
+  example_bad: |
+    def hello():
+        print('hello')
+  example_good: |
+    """Package overview."""
+    def hello():
+        print("hello")
 - id: dont-import-test-modules
   kind: refactor
   status: native
@@ -182,6 +334,23 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: errors-named-error
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+  delegates_to: N818
+  note: GPSG 2.4 — exception names end in Error
+  rationale: Exception names must end in Error.
+  example_bad: |
+    class Foo(ValueError):
+        pass
+  example_good: |
+    class FooError(ValueError):
+        pass
 - id: extract-duplicate-method
   kind: refactor
   status: native
@@ -192,6 +361,21 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: filter-lambda-to-generator
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-lambda
+  note: GPSG 2.10 — prefer generator over filter(lambda)
+  rationale: Prefer generator expressions over filter() with a lambda.
+  example_bad: |
+    filtered = filter(lambda x: x > 0, things)
+  example_good: |
+    filtered = (x for x in things if x > 0)
 - id: flatten-nested-try
   kind: refactor
   status: native
@@ -303,6 +487,22 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: lambdas-should-be-short
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-lambda
+  note: GPSG 2.10 — keep lambdas short
+  rationale: If lambda body exceeds ~80 characters, use a nested function.
+  example_bad: |
+    lambda x: do_something_very_long_and_involved_with(x) - do_other_very_long_and_involved_things_with(x)
+  example_good: |
+    def compute(x):
+        return do_something_very_long_and_involved_with(x) - do_other_very_long_and_involved_things_with(x)
 - id: last-if-guard
   kind: refactor
   status: native
@@ -333,6 +533,22 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: map-lambda-to-generator
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-lambda
+  delegates_to: C417
+  note: GPSG 2.10 — prefer generator over map(lambda)
+  rationale: Prefer generator expressions over map() with a lambda.
+  example_bad: |
+    transformed = map(lambda x: x**2, things)
+  example_good: |
+    transformed = (x**2 for x in things)
 - id: max-min-default
   kind: refactor
   status: native
@@ -440,16 +656,91 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: name-type-suffix
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+  note: GPSG 3.16 — avoid type suffixes
+  rationale: Names shouldn't needlessly include the type as a suffix.
+  example_bad: |
+    magic_int = 42
+  example_good: |
+    magic_number = 42
+- id: no-complex-if-expressions
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+  note: GPSG 2.11 — keep conditional expressions simple
+  rationale: Each portion of a conditional expression must fit on one line (~80 chars).
+  example_bad: |
+    a = 1 if this_is_an_incredibly_long_condition_that_is_more_than_80_characters_long_no_joking_around else 2
+  example_good: |
+    if this_is_an_incredibly_long_condition_that_is_more_than_80_characters_long_no_joking_around:
+        a = 1
+    else:
+        a = 2
 - id: no-conditionals-in-tests
   kind: refactor
   status: native
   apply_mode: "hint"
   note: null
+- id: no-long-functions
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+  delegates_to: PLR0915
+  note: GPSG 3.18 — functions under ~40 statements
+  rationale: Prefer small focused functions (threshold 40 statements).
 - id: no-loop-in-tests
   kind: refactor
   status: native
   apply_mode: "hint"
   note: null
+- id: no-relative-imports
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-import
+  delegates_to: TID252
+  note: GPSG 2.2 — absolute imports only
+  rationale: Do not use relative names in imports.
+  example_bad: |
+    from . import important_function
+  example_good: |
+    from my_package import important_function
+- id: no-wildcard-imports
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-import
+  delegates_to: F403
+  note: GPSG 2.2 — no wildcard imports
+  rationale: Use import statements for packages and modules only, not wildcard imports.
+  example_bad: |
+    from numpy import *
+  example_good: |
+    import numpy as np
 - id: non-equal-comparison
   kind: refactor
   status: native
@@ -672,6 +963,40 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: require-parameter-annotation
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-type-annotations
+  note: GPSG 2.21 — annotate public parameters
+  rationale: Annotate public function parameters (skips self/cls and tests).
+  example_bad: |
+    def add(a, b: int):
+        return a + b
+  example_good: |
+    def add(a: int, b: int) -> int:
+        return a + b
+- id: require-return-annotation
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-type-annotations
+  note: GPSG 2.21 — annotate public returns
+  rationale: Annotate public function return types (skips tests).
+  example_bad: |
+    def f():
+        return 1
+  example_good: |
+    def f() -> int:
+        return 1
 - id: return-identity
   kind: refactor
   status: native
@@ -757,6 +1082,60 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: snake-case-arguments
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+    - gpsg-naming-pep8
+  note: GPSG 3.16 / PEP 8 — snake_case arguments
+  rationale: Use snake_case for function arguments.
+  example_bad: |
+    def placeholder(randomWord):
+        pass
+  example_good: |
+    def placeholder(random_word):
+        pass
+- id: snake-case-functions
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+    - gpsg-naming-pep8
+  note: GPSG 3.16 / PEP 8 — snake_case functions
+  rationale: Use snake_case for function names.
+  example_bad: |
+    def UpperCamelCase():
+        pass
+  example_good: |
+    def upper_camel_case():
+        pass
+- id: snake-case-variable-declarations
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+    - gpsg-naming-pep8
+  note: GPSG 3.16 / PEP 8 — snake_case annotated locals
+  rationale: Use snake_case for annotated variable declarations in functions.
+  example_bad: |
+    def some_function():
+        UpperCamelCase: int
+  example_good: |
+    def some_function():
+        upper_camel_case: int
 - id: split-or-ifs
   kind: refactor
   status: native
@@ -817,6 +1196,24 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: upper-camel-case-classes
+  kind: suggestion
+  status: native
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-naming
+    - gpsg-naming-pep8
+  note: GPSG 3.16 / PEP 8 — CapWords classes
+  rationale: Use UpperCamelCase for class names.
+  example_bad: |
+    class snake_case:
+        pass
+  example_good: |
+    class SnakeCase:
+        pass
 - id: use
   kind: refactor
   status: native
@@ -918,6 +1315,118 @@
   status: native
   apply_mode: "hint"
   note: null
+- id: use-standard-name-for-aliases-datetime
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import datetime as dt
+  rationale: Use the standard abbreviation `dt` for `datetime`.
+  example_bad: |
+    import datetime as wrong
+  example_good: |
+    import datetime as dt
+- id: use-standard-name-for-aliases-matplotlib-pyplot
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import matplotlib.pyplot as plt
+  rationale: Use the standard abbreviation `plt` for `matplotlib.pyplot`.
+  example_bad: |
+    import matplotlib.pyplot as wrong
+  example_good: |
+    import matplotlib.pyplot as plt
+- id: use-standard-name-for-aliases-multiprocessing
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import multiprocessing as mp
+  rationale: Use the standard abbreviation `mp` for `multiprocessing`.
+  example_bad: |
+    import multiprocessing as wrong
+  example_good: |
+    import multiprocessing as mp
+- id: use-standard-name-for-aliases-numpy
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import numpy as np
+  rationale: Use the standard abbreviation `np` for `numpy`.
+  example_bad: |
+    import numpy as wrong
+  example_good: |
+    import numpy as np
+- id: use-standard-name-for-aliases-pandas
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import pandas as pd
+  rationale: Use the standard abbreviation `pd` for `pandas`.
+  example_bad: |
+    import pandas as wrong
+  example_good: |
+    import pandas as pd
+- id: use-standard-name-for-aliases-tensorflow
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import tensorflow as tf
+  rationale: Use the standard abbreviation `tf` for `tensorflow`.
+  example_bad: |
+    import tensorflow as wrong
+  example_good: |
+    import tensorflow as tf
+- id: use-standard-name-for-aliases-tkinter
+  kind: suggestion
+  status: bridge
+  apply_mode: "hint"
+  packs:
+    - gpsg
+  tags:
+    - gpsg
+    - gpsg-standard-import-alias
+  delegates_to: ICN001
+  note: GPSG 2.2 — import tkinter as tk
+  rationale: Use the standard abbreviation `tk` for `tkinter`.
+  example_bad: |
+    import tkinter as wrong
+  example_good: |
+    import tkinter as tk
 - id: use-string-remove-affix
   kind: refactor
   status: native

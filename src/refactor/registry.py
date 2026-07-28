@@ -9,6 +9,7 @@ from refactor.rules.bridge.ruff.convert_to_enumerate import ConvertToEnumerateBr
 from refactor.rules.bridge.ruff.de_morgan import DeMorganBridge
 from refactor.rules.bridge.ruff.do_not_use_bare_except import DoNotUseBareExceptBridge
 from refactor.rules.bridge.ruff.ensure_file_closed import EnsureFileClosedBridge
+from refactor.rules.bridge.ruff.gpsg import RULES as GPSG_BRIDGE_RULES
 from refactor.rules.bridge.ruff.list_literal import ListLiteralBridge
 from refactor.rules.bridge.ruff.path_read import PathReadBridge
 from refactor.rules.bridge.ruff.use_fstring_for_concatenation import (
@@ -35,6 +36,7 @@ from refactor.rules.native.compare import RULES as COMPARE_RULES
 from refactor.rules.native.elseblock import RULES as ELSEBLOCK_RULES
 from refactor.rules.native.exceptions import RULES as EXCEPTIONS_RULES
 from refactor.rules.native.extract import RULES as EXTRACT_RULES
+from refactor.rules.native.gpsg import RULES as GPSG_NATIVE_RULES
 from refactor.rules.native.hoist import RULES as HOIST_RULES
 from refactor.rules.native.hygiene import RULES as HYGIENE_RULES
 from refactor.rules.native.merges import RULES as MERGES_RULES
@@ -149,5 +151,7 @@ RULES = cast(
         DeMorganBridge(),
         EnsureFileClosedBridge(),
         *GENERATED_RULES,
+        *GPSG_BRIDGE_RULES,
+        *GPSG_NATIVE_RULES,
     ),
 )

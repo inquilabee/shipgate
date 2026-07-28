@@ -50,7 +50,11 @@ def test_check_paths_populates_hit_location(tmp_path: Path) -> None:
 def test_default_check_rules_include_ruff_bridges() -> None:
     assert any(getattr(rule, "delegates_to", None) is not None for rule in RULES)
     assert any(getattr(rule, "delegates_to", None) is not None for rule in check_rules())
-    assert check_rules(RULES) == RULES
+    enabled_ids = {rule.rule_id for rule in check_rules()}
+    assert "no-wildcard-imports" not in enabled_ids
+    assert "require-parameter-annotation" not in enabled_ids
+    assert "reintroduce-else" not in enabled_ids
+    assert "default-get" in enabled_ids
 
 
 def test_body_sequence_rules_populate_hit_locations() -> None:

@@ -7,3 +7,49 @@ entries:
     reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
   - path: src/refactor/rules/native/builtins/default_mutable_arg.py:DefaultMutableArgRule.Finder.visit_FunctionDef
     reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/annotations.py:RequireParameterAnnotationRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/annotations.py:RequireReturnAnnotationRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/decorators_properties.py:DoNotUseStaticmethodRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/decorators_properties.py:AvoidTrivialPropertiesRule.Finder.visit_ClassDef
+    reason: libcst visitor dispatch calls visit_ClassDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/docstrings.py:DocstringsForClassesRule.Finder.visit_ClassDef
+    reason: libcst visitor dispatch calls visit_ClassDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/docstrings.py:DocstringsForFunctionsRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/docstrings.py:DocstringsForFunctionsRule.Finder.leave_FunctionDef
+    reason: libcst visitor dispatch calls leave_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/docstrings.py:DocstringsForPackagesRule.Finder.visit_Module
+    reason: libcst visitor dispatch calls visit_Module by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/docstrings.py:DocstringsForModulesRule.Finder.visit_Module
+    reason: libcst visitor dispatch calls visit_Module by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/lambda_style.py:LambdasShouldBeShortRule.Finder.visit_Lambda
+    reason: libcst visitor dispatch calls visit_Lambda by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/lambda_style.py:FilterLambdaToGeneratorRule.Finder.visit_Call
+    reason: libcst visitor dispatch calls visit_Call by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/lambda_style.py:NoComplexIfExpressionsRule.Finder.visit_IfExp
+    reason: libcst visitor dispatch calls visit_IfExp by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:AvoidSingleCharacterNamesVariablesRule.Finder.visit_Assign
+    reason: libcst visitor dispatch calls visit_Assign by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:AvoidSingleCharacterNamesVariablesRule.Finder.visit_AnnAssign
+    reason: libcst visitor dispatch calls visit_AnnAssign by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:AvoidSingleCharacterNamesFunctionsRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:NameTypeSuffixRule.Finder.visit_Assign
+    reason: libcst visitor dispatch calls visit_Assign by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:NameTypeSuffixRule.Finder.visit_AnnAssign
+    reason: libcst visitor dispatch calls visit_AnnAssign by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:SnakeCaseVariableDeclarationsRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:SnakeCaseVariableDeclarationsRule.Finder.leave_FunctionDef
+    reason: libcst visitor dispatch calls leave_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:SnakeCaseVariableDeclarationsRule.Finder.visit_AnnAssign
+    reason: libcst visitor dispatch calls visit_AnnAssign by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:SnakeCaseArgumentsRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:SnakeCaseFunctionsRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/gpsg/naming.py:UpperCamelCaseClassesRule.Finder.visit_ClassDef
+    reason: libcst visitor dispatch calls visit_ClassDef by protocol, not by name reference

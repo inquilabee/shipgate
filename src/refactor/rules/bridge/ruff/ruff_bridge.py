@@ -30,10 +30,11 @@ class RuffBridge:
     message: ClassVar[str]
     delegates_to: ClassVar[str]
     apply_mode = ApplyMode.HINT
+    ruff_config: ClassVar[tuple[str, ...]] = ()
 
     def detect(self, source: str, path: str) -> list[Hit]:
         codes = self.select_codes()
-        diagnostics = run_ruff_check(source, path, codes)
+        diagnostics = run_ruff_check(source, path, codes, config=self.ruff_config or None)
         return [
             self.diagnostic_to_hit(source, path, diagnostic)
             for diagnostic in diagnostics
@@ -44,7 +45,7 @@ class RuffBridge:
         if not hits:
             return None
         path = hits[0].location.path
-        fixed = run_ruff_fix(source, path, self.select_codes())
+        fixed = run_ruff_fix(source, path, self.select_codes(), config=self.ruff_config or None)
         return None if fixed is None or fixed == source else fixed
 
     def select_codes(self) -> frozenset[str]:

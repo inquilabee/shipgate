@@ -42,16 +42,39 @@ def as_json_object(value: object) -> JsonObject | None:
     return {str(key): item for key, item in value.items()} if isinstance(value, Mapping) else None
 
 
+RUFF_CONFIG_FLAG = "--config"
+
+
+def config_args(extra: Sequence[str] | None) -> tuple[str, ...]:
+    """Normalize optional Ruff ``--config`` fragments for ``--isolated`` runs."""
+    if not extra:
+        return ()
+    normalized: list[str] = []
+    for item in extra:
+        if item.startswith(f"{RUFF_CONFIG_FLAG}="):
+            normalized.extend([RUFF_CONFIG_FLAG, item.removeprefix(f"{RUFF_CONFIG_FLAG}=")])
+        elif item == RUFF_CONFIG_FLAG:
+            continue
+        elif item.startswith("--"):
+            normalized.append(item)
+        else:
+            normalized.extend([RUFF_CONFIG_FLAG, item])
+    return tuple(normalized)
+
+
 def run_ruff_check(
     source: str,
     path: str,
     codes: frozenset[str],
+    *,
+    config: Sequence[str] | None = None,
 ) -> list[JsonObject]:
     completed = run_ruff(
         (
             "check",
             "--isolated",
             select_arg(codes),
+            *config_args(config),
             "--output-format=json",
             f"--stdin-filename={path}",
             "-",
@@ -71,12 +94,15 @@ def run_ruff_fix(
     source: str,
     path: str,
     codes: frozenset[str],
+    *,
+    config: Sequence[str] | None = None,
 ) -> str | None:
     completed = run_ruff(
         (
             "check",
             "--isolated",
             select_arg(codes),
+            *config_args(config),
             "--fix",
             "--unsafe-fixes",
             "--quiet",

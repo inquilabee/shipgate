@@ -7,7 +7,8 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from refactor.inventory import load_inventory
+from refactor.config_enable import resolve_enable
+from refactor.inventory import inventory_by_id, load_inventory, rule_pack_selected
 from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 from refactor.runner import (
@@ -24,15 +25,16 @@ if TYPE_CHECKING:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    enable = resolve_enable(getattr(args, "enable", None), project_root=Path())
     if args.command == "list":
-        return cmd_list()
+        return cmd_list(enable=enable)
     if args.command == "explain":
         return cmd_explain(args.rule_id)
     paths: list[Path] = list(args.paths) or [Path()]
     return (
-        cmd_check(paths, strict=args.strict)
+        cmd_check(paths, strict=args.strict, enable=enable)
         if args.command == "check"
-        else cmd_fix(paths)
+        else cmd_fix(paths, enable=enable)
         if args.command == "fix"
         else 2
     )
@@ -41,7 +43,8 @@ def main(argv: list[str] | None = None) -> int:
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog="refactor")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("list", help="List registered rules")
+    list_parser = sub.add_parser("list", help="List registered rules")
+    add_enable_argument(list_parser)
     explain_parser = sub.add_parser("explain", help="Explain a rule with catalog examples")
     explain_parser.add_argument("rule_id", help="Rule id to explain")
     check_parser = sub.add_parser("check", help="Detect issues and print JSON hits")
@@ -50,21 +53,45 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="store_true",
         help="Report auto + hint rules (default: auto/blocking rules only)",
     )
+    add_enable_argument(check_parser)
     check_parser.add_argument("paths", nargs="*", type=Path, default=[Path()])
     fix_parser = sub.add_parser("fix", help="Apply auto (apply_mode=auto) rules")
+    add_enable_argument(fix_parser)
     fix_parser.add_argument("paths", nargs="*", type=Path, default=[Path()])
     return parser.parse_args(argv)
 
 
-def cmd_list() -> int:
-    status_by_id = {entry.id: entry.status for entry in load_inventory()}
+def add_enable_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--enable",
+        action="append",
+        default=[],
+        metavar="TAG_OR_PACK",
+        help=(
+            "Enable optional packs/tags (comma-separated or repeatable). "
+            "Example: --enable gpsg or --enable gpsg-import,gpsg-naming"
+        ),
+    )
+
+
+def cmd_list(*, enable: frozenset[str]) -> int:
+    entries = inventory_by_id()
+    status_by_id = {entry.id: entry.status for entry in entries.values()}
     for rule in RULES:
         inventory_status = status_by_id.get(rule.rule_id, "unknown")
         delegates = getattr(rule, "delegates_to", None)
         suffix = f" bridge=ruff delegates_to={delegates}" if delegates else ""
+        entry = entries.get(rule.rule_id)
+        pack_bits = ""
+        if entry is not None and (entry.packs or entry.tags):
+            selected = rule_pack_selected(rule.rule_id, enable, inventory=entries)
+            packs = ",".join(entry.packs) if entry.packs else ""
+            tags = ",".join(entry.tags) if entry.tags else ""
+            pack_bits = f"\tpacks={packs}\ttags={tags}\tenabled={selected}"
         print(
             f"{rule.rule_id}\t{rule.kind.value}\t"
-            f"inventory={inventory_status}\tapply_mode={rule.apply_mode.value}{suffix}"
+            f"inventory={inventory_status}\tapply_mode={rule.apply_mode.value}"
+            f"{suffix}{pack_bits}"
         )
     return 0
 
@@ -95,6 +122,10 @@ def print_explain_header(
     print(f"rule_id: {rule_id}")
     print(f"kind: {kind}")
     print(f"apply_mode: {apply_mode.value}")
+    if entry is not None and entry.packs:
+        print(f"packs: {','.join(entry.packs)}")
+    if entry is not None and entry.tags:
+        print(f"tags: {','.join(entry.tags)}")
     if summary:
         print(f"summary: {summary}")
 
@@ -110,6 +141,7 @@ def print_explain_examples(
         "status": entry.status,
         "rationale": entry.rationale,
         "note": entry.note if entry.note != summary else None,
+        "delegates_to": entry.delegates_to,
     }
     for label, value in fields.items():
         if value:
@@ -124,14 +156,19 @@ def print_explain_examples(
             print(value.rstrip("\n"))
 
 
-def cmd_check(paths: list[Path], *, strict: bool = False) -> int:
-    hits = filter_hits_by_policy(check_paths(paths), strict=strict)
+def cmd_check(
+    paths: list[Path],
+    *,
+    strict: bool = False,
+    enable: frozenset[str] | None = None,
+) -> int:
+    hits = filter_hits_by_policy(check_paths(paths, enable=enable), strict=strict)
     print(json.dumps(hits_to_jsonable(hits), indent=2))
     return 1 if hits else 0
 
 
-def cmd_fix(paths: list[Path]) -> int:
-    for path in fix_paths(paths):
+def cmd_fix(paths: list[Path], *, enable: frozenset[str] | None = None) -> int:
+    for path in fix_paths(paths, enable=enable):
         print(path)
     return 0
 

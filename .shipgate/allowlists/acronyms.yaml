@@ -12,3 +12,8 @@ CVE: Common Vulnerabilities and Exposures
 PYTHONPATH: Python module search path environment variable
 MI: maintainability index (Radon)
 CC: cyclomatic complexity (Radon)
+GPSG: Google Python Style Guide (Sourcery optional rule pack)
+ICN: Ruff flake8-import-conventions rule family
+MVP: minimum viable product
+ANN: Ruff flake8-annotations rule family
+OR: logical disjunction in enable-token matching

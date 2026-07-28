@@ -333,7 +333,18 @@ def rule_enabled(rule: RefactorRule) -> bool:
 
 def check_rules(
     rules: Sequence[RefactorRule] | None = None,
+    *,
+    enable: frozenset[str] | None = None,
 ) -> tuple[RefactorRule, ...]:
-    return (
+    from refactor.inventory import inventory_by_id, rule_pack_selected
+
+    selected = (
         tuple(rules) if rules is not None else tuple(rule for rule in RULES if rule_enabled(rule))
+    )
+    enable_tokens = frozenset() if enable is None else enable
+    entries = inventory_by_id()
+    return tuple(
+        rule
+        for rule in selected
+        if rule_pack_selected(rule.rule_id, enable_tokens, inventory=entries)
     )

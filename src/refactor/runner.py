@@ -115,8 +115,9 @@ def check_paths(
     paths: Sequence[Path],
     *,
     rules: Sequence[RefactorRule] | None = None,
+    enable: frozenset[str] | None = None,
 ) -> list[Hit]:
-    selected = check_rules(rules)
+    selected = check_rules(rules, enable=enable)
     hits: list[Hit] = []
     for file_path in iter_python_files(paths):
         source = file_path.read_text(encoding="utf-8")
@@ -146,8 +147,9 @@ def fix_paths(
     paths: Sequence[Path],
     *,
     rules: Sequence[RefactorRule] | None = None,
+    enable: frozenset[str] | None = None,
 ) -> list[Path]:
-    selected = tuple(rules) if rules is not None else RULES
+    selected = check_rules(rules, enable=enable)
     auto_rules = tuple(rule for rule in selected if rule.apply_mode is ApplyMode.AUTO)
     return [file_path for file_path in iter_python_files(paths) if fix_file(file_path, auto_rules)]
 
