@@ -22,6 +22,8 @@ def resolve_config_paths(
         candidate = project_root / pattern
         if candidate.is_file():
             return (candidate,)
-    if project.config_mode == "auto" and tool.configuration.bundled:
-        return (bundled / tool.configuration.bundled,)
-    return ()
+    return (
+        (bundled / tool.configuration.bundled,)
+        if project.config_mode == "auto" and tool.configuration.bundled
+        else ()
+    )

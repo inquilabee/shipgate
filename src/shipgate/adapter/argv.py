@@ -8,7 +8,7 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
     tool = request.tool
     argv: list[str] = [tool.executable, *tool.subcommand]
 
-    option_order = tool.option_order or tuple(tool.cli.keys())
+    option_order = tool.option_order or tuple(tool.cli)
 
     for name in option_order:
         if name not in tool.cli:
@@ -28,8 +28,8 @@ def build_argv(request: ResolvedRequest) -> tuple[str, ...]:
 
 def option_value(request: ResolvedRequest, name: str) -> object | None:
     value = request.options.cli_value(name)
-    if value is not None:
-        return value
-    if name in request.tool.cli:
-        return request.tool.cli[name].default
-    return None
+    return (
+        value
+        if value is not None
+        else (request.tool.cli[name].default if name in request.tool.cli else None)
+    )
