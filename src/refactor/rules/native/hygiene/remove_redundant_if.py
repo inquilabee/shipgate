@@ -37,17 +37,21 @@ class RemoveRedundantIfRule(IfRewriteRule):
     ) -> cst.BaseExpression | None:
         then_value = cls.return_value(body)
         else_value = cls.return_value(orelse_body)
-        if then_value is None or else_value is None:
-            return None
-        if is_true(then_value) and is_false(else_value):
-            return node.test
-        if is_false(then_value) and is_true(else_value):
-            return cst.UnaryOperation(operator=cst.Not(), expression=node.test)
-        return None
+        return (
+            None
+            if then_value is None or else_value is None
+            else (
+                node.test
+                if is_true(then_value) and is_false(else_value)
+                else (
+                    cst.UnaryOperation(operator=cst.Not(), expression=node.test)
+                    if is_false(then_value) and is_true(else_value)
+                    else None
+                )
+            )
+        )
 
     @staticmethod
     def return_value(block: cst.IndentedBlock) -> cst.BaseExpression | None:
         stmt = single_small_stmt(block)
-        if isinstance(stmt, cst.Return) and stmt.value is not None:
-            return stmt.value
-        return None
+        return stmt.value if isinstance(stmt, cst.Return) and stmt.value is not None else None

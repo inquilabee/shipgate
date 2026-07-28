@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -22,6 +22,4 @@ class MergeDuplicateBlocksRule(IfRewriteRule):
     @classmethod
     def match_stmt(cls, node: cst.CSTNode) -> Sequence[BodyStatement] | None:
         body = duplicated_if_body(node)
-        if body is None:
-            return None
-        return [cast("BodyStatement", stmt) for stmt in body]
+        return None if body is None else list(body)

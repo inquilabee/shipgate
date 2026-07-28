@@ -43,9 +43,7 @@ class AugAssignRule:
         ) -> cst.BaseSmallStatement:
             _ = self, original_node
             aug = AugAssignRule.match_aug_assign(updated_node)
-            if aug is None:
-                return updated_node
-            return aug
+            return updated_node if aug is None else aug
 
     class Finder(HitCollector):
         def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
@@ -77,13 +75,15 @@ class AugAssignRule:
     def binop_to_aug(
         operator: cst.BaseBinaryOp,
     ) -> cst.BaseAugOp | None:
-        if isinstance(operator, cst.Add):
-            return cst.AddAssign()
-        if isinstance(operator, cst.Subtract):
-            return cst.SubtractAssign()
-        if isinstance(operator, cst.Multiply):
-            return cst.MultiplyAssign()
-        return None
+        return (
+            cst.AddAssign()
+            if isinstance(operator, cst.Add)
+            else (
+                cst.SubtractAssign()
+                if isinstance(operator, cst.Subtract)
+                else (cst.MultiplyAssign() if isinstance(operator, cst.Multiply) else None)
+            )
+        )
 
     @staticmethod
     def hit_for(node: cst.Assign, aug: cst.AugAssign, path: str) -> Hit:

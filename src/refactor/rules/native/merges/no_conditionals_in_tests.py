@@ -35,7 +35,7 @@ class NoConditionalsInTestsRule(IfRewriteRule):
             cst.IndentedBlock,
         ):
             return None
-        body = [cast("BodyStatement", stmt) for stmt in node.body.body]
+        body = list(node.body.body)
         if isinstance(node.orelse, cst.Else):
-            body.extend(cast("BodyStatement", stmt) for stmt in node.orelse.body.body)
+            body.extend(cast("list[cst.BaseStatement]", list(node.orelse.body.body)))
         return body

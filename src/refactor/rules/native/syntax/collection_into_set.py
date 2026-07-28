@@ -43,9 +43,7 @@ class CollectionIntoSetRule:
         ) -> cst.BaseExpression:
             _ = self, original_node
             replacement = CollectionIntoSetRule.transform_comparison(updated_node)
-            if replacement is None:
-                return updated_node
-            return replacement
+            return updated_node if replacement is None else replacement
 
     class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
@@ -64,10 +62,10 @@ class CollectionIntoSetRule:
 
     @staticmethod
     def is_simple_literal_list(node: cst.List) -> bool:
-        if not node.elements:
-            return False
-        return all(
-            CollectionIntoSetRule.is_simple_literal(element.value) for element in node.elements
+        return (
+            all(CollectionIntoSetRule.is_simple_literal(element.value) for element in node.elements)
+            if node.elements
+            else False
         )
 
     @staticmethod
@@ -101,9 +99,7 @@ class CollectionIntoSetRule:
                 changed = True
                 continue
             new_comparisons.append(comp)
-        if not changed:
-            return None
-        return cst.Comparison(left=node.left, comparisons=new_comparisons)
+        return cst.Comparison(left=node.left, comparisons=new_comparisons) if changed else None
 
     @staticmethod
     def hit_for(

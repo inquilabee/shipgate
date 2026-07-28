@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -47,9 +47,9 @@ class YieldFromRule:
         ) -> cst.IndentedBlock:
             _ = self, original_node
             transformed = YieldFromRule.transform_body(updated_node.body)
-            if transformed is None:
-                return updated_node
-            return updated_node.with_changes(body=transformed)
+            return (
+                updated_node if transformed is None else updated_node.with_changes(body=transformed)
+            )
 
     class Finder(IndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
@@ -98,7 +98,7 @@ class YieldFromRule:
         yield_from = cst.SimpleStatementLine(
             body=[cst.Expr(value=cst.Yield(value=cst.From(item=iterable)))]
         )
-        return [cast("BodyStatement", yield_from)]
+        return [yield_from]
 
     @staticmethod
     def hit_for(for_stmt: cst.For, iterable: cst.BaseExpression, path: str) -> Hit:

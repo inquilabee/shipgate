@@ -8,7 +8,6 @@ import libcst as cst
 from libcst.metadata import MetadataWrapper
 
 from refactor.cst_util import (
-    BodyStatement,
     HitCollector,
     body_cleanup_hit,
     parse_module_cached,
@@ -255,7 +254,7 @@ class CombinedRuleCollector(HitCollector):
                         message=rule.message,
                         path=self.path,
                         before_stmts=before,
-                        after_stmts=cast("Sequence[BodyStatement]", after),
+                        after_stmts=after,
                     ),
                     before[0],
                 )

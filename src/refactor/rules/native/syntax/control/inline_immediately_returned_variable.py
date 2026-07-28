@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
 from refactor.cst_util import (
-    BodyStatement,
     IndentedBlockCollector,
     code_for_stmts,
     detect_with_visitor,
@@ -99,9 +98,11 @@ class InlineImmediatelyReturnedVariableRule:
     @staticmethod
     def extract_returned_name(stmt: cst.BaseStatement) -> str | None:
         node = InlineImmediatelyReturnedVariableRule.single_return(stmt)
-        if node is None or node.value is None or not isinstance(node.value, cst.Name):
-            return None
-        return node.value.value
+        return (
+            None
+            if node is None or node.value is None or not isinstance(node.value, cst.Name)
+            else node.value.value
+        )
 
     @staticmethod
     def single_assign(stmt: cst.BaseStatement) -> cst.Assign | None:
@@ -135,8 +136,8 @@ class InlineImmediatelyReturnedVariableRule:
             message="Inline immediately returned variable",
             path=path,
             before=code_for_stmts(
-                cast("BodyStatement", assign_stmt),
-                cast("BodyStatement", return_stmt),
+                assign_stmt,
+                return_stmt,
             ),
             after=code_for_stmts(cst.SimpleStatementLine(body=[cst.Return(value=value)])),
         )

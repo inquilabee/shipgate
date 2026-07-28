@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 from libcst.metadata import ParentNodeProvider, PositionProvider
@@ -26,11 +26,13 @@ class RemoveRedundantContinueRule(BodyCleanupRule):
         cls,
         body: Sequence[cst.BaseStatement],
     ) -> tuple[cst.BaseStatement, Sequence[BodyStatement]] | None:
-        if not body or not cls.is_continue_stmt(body[-1]):
-            return None
         return (
-            body[-1],
-            cast("list[BodyStatement]", list(body[:-1])),
+            None
+            if not body or not cls.is_continue_stmt(body[-1])
+            else (
+                body[-1],
+                list(body[:-1]),
+            )
         )
 
     @staticmethod

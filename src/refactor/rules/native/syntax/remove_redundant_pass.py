@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -43,9 +43,11 @@ class RemoveRedundantPassRule:
         ) -> cst.Module:
             _ = self, original_node
             cleaned = RemoveRedundantPassRule.body_without_redundant_passes(updated_node.body)
-            if len(cleaned) == len(updated_node.body):
-                return updated_node
-            return updated_node.with_changes(body=cleaned)
+            return (
+                updated_node
+                if len(cleaned) == len(updated_node.body)
+                else updated_node.with_changes(body=cleaned)
+            )
 
         def leave_IndentedBlock(  # ruff:ignore[invalid-function-name]
             self,
@@ -54,9 +56,11 @@ class RemoveRedundantPassRule:
         ) -> cst.IndentedBlock:
             _ = self, original_node
             cleaned = RemoveRedundantPassRule.body_without_redundant_passes(updated_node.body)
-            if len(cleaned) == len(updated_node.body):
-                return updated_node
-            return updated_node.with_changes(body=cleaned)
+            return (
+                updated_node
+                if len(cleaned) == len(updated_node.body)
+                else updated_node.with_changes(body=cleaned)
+            )
 
     class Finder(ModuleAndIndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
@@ -80,20 +84,18 @@ class RemoveRedundantPassRule:
 
     @staticmethod
     def is_pass_stmt(stmt: cst.BaseStatement) -> bool:
-        if not isinstance(stmt, cst.SimpleStatementLine):
-            return False
-        if len(stmt.body) != 1:
-            return False
-        return isinstance(stmt.body[0], cst.Pass)
+        return (
+            (False if len(stmt.body) != 1 else isinstance(stmt.body[0], cst.Pass))
+            if isinstance(stmt, cst.SimpleStatementLine)
+            else False
+        )
 
     @staticmethod
     def is_docstring_stmt(stmt: cst.BaseStatement) -> bool:
         if not isinstance(stmt, cst.SimpleStatementLine) or len(stmt.body) != 1:
             return False
         expr = stmt.body[0]
-        if not isinstance(expr, cst.Expr):
-            return False
-        return isinstance(expr.value, cst.SimpleString)
+        return isinstance(expr.value, cst.SimpleString) if isinstance(expr, cst.Expr) else False
 
     @staticmethod
     def hit_for(
@@ -119,9 +121,9 @@ class RemoveRedundantPassRule:
             if RemoveRedundantPassRule.is_pass_stmt(stmt):
                 if saw_real_stmt:
                     continue
-                cleaned.append(cast("BodyStatement", stmt))
+                cleaned.append(stmt)
                 continue
             if not RemoveRedundantPassRule.is_docstring_stmt(stmt):
                 saw_real_stmt = True
-            cleaned.append(cast("BodyStatement", stmt))
+            cleaned.append(stmt)
         return cleaned

@@ -16,9 +16,11 @@ class AwareDatetimeForUtcRule(CallRewriteRule):
     @classmethod
     def match(cls, node: cst.CSTNode) -> cst.BaseExpression | None:
         attr = empty_attribute_call(node, "datetime", "utcnow")
-        if attr is None or not isinstance(node, cst.Call):
-            return None
-        return node.with_changes(
-            func=attr.with_changes(attr=cst.Name("now")),
-            args=[cst.Arg(value=cst.Name("UTC"))],
+        return (
+            None
+            if attr is None or not isinstance(node, cst.Call)
+            else node.with_changes(
+                func=attr.with_changes(attr=cst.Name("now")),
+                args=[cst.Arg(value=cst.Name("UTC"))],
+            )
         )

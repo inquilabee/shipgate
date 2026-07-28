@@ -23,16 +23,21 @@ class RemoveUnnecessaryElseRule(IfRewriteRule):
             return None
         if not isinstance(node.body, cst.IndentedBlock) or not cls.ends_terminal(node.body):
             return None
-        return [
-            cast("BodyStatement", node.with_changes(orelse=None)),
-            *[cast("BodyStatement", stmt) for stmt in node.orelse.body.body],
-        ]
+        return cast(
+            "list[BodyStatement]",
+            [
+                node.with_changes(orelse=None),
+                *list(node.orelse.body.body),
+            ],
+        )
 
     @staticmethod
     def ends_terminal(block: cst.IndentedBlock) -> bool:
         if not block.body:
             return False
         last = block.body[-1]
-        if not isinstance(last, cst.SimpleStatementLine) or len(last.body) != 1:
-            return False
-        return isinstance(last.body[0], cst.Return | cst.Raise | cst.Break | cst.Continue)
+        return (
+            False
+            if not isinstance(last, cst.SimpleStatementLine) or len(last.body) != 1
+            else isinstance(last.body[0], cst.Return | cst.Raise | cst.Break | cst.Continue)
+        )

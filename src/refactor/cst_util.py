@@ -13,7 +13,7 @@ from libcst.metadata import MetadataWrapper, PositionProvider
 
 from refactor.protocol import Hit, Location, Suggestion
 
-BodyStatement: TypeAlias = cst.SimpleStatementLine | cst.BaseCompoundStatement
+BodyStatement: TypeAlias = cst.BaseStatement
 
 BodyChecker = Callable[
     [Sequence[cst.BaseStatement], list[Hit], str],
@@ -112,7 +112,10 @@ class IndentedBlockCollector(HitCollector):
 
 
 def code_for_stmts(*stmts: cst.BaseStatement) -> str:
-    body = [cast("BodyStatement", stmt) for stmt in stmts]
+    body = cast(
+        "list[cst.SimpleStatementLine | cst.BaseCompoundStatement]",
+        list(stmts),
+    )
     return cst.Module(body=body).code.strip()
 
 
@@ -174,7 +177,7 @@ def body_cleanup_hit(
         rule_id=rule_id,
         message=message,
         path=path,
-        before=code_for_stmt(cast("BodyStatement", stmt)),
+        before=code_for_stmt(stmt),
         after=code_for_stmts(*cleaned_body),
     )
 
@@ -213,7 +216,7 @@ def stmt_replacement_hit(
         rule_id=rule_id,
         message=message,
         path=path,
-        before=code_for_stmt(cast("BodyStatement", before_stmt)),
+        before=code_for_stmt(before_stmt),
         after=after,
     )
 

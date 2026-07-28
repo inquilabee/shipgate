@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -58,9 +58,11 @@ def merge_nested_if(node: cst.CSTNode) -> cst.BaseStatement | None:
 
 
 def negated_expr(expr: cst.BaseExpression) -> cst.BaseExpression:
-    if isinstance(expr, cst.UnaryOperation) and isinstance(expr.operator, cst.Not):
-        return expr.expression
-    return cst.UnaryOperation(operator=cst.Not(), expression=expr)
+    return (
+        expr.expression
+        if isinstance(expr, cst.UnaryOperation) and isinstance(expr.operator, cst.Not)
+        else cst.UnaryOperation(operator=cst.Not(), expression=expr)
+    )
 
 
 def single_terminal_stmt(block: cst.IndentedBlock) -> cst.BaseSmallStatement | None:
@@ -70,9 +72,7 @@ def single_terminal_stmt(block: cst.IndentedBlock) -> cst.BaseSmallStatement | N
     if not isinstance(line, cst.SimpleStatementLine) or len(line.body) != 1:
         return None
     stmt = line.body[0]
-    if isinstance(stmt, cst.Return | cst.Raise | cst.Break | cst.Continue):
-        return stmt
-    return None
+    return stmt if isinstance(stmt, cst.Return | cst.Raise | cst.Break | cst.Continue) else None
 
 
 def dict_update_to_union_stmt(
@@ -240,9 +240,11 @@ def single_assign_block(
     block: cst.IndentedBlock,
 ) -> tuple[cst.BaseAssignTargetExpression, cst.BaseExpression] | None:
     stmt = single_small_stmt(block)
-    if not isinstance(stmt, cst.Assign) or len(stmt.targets) != 1:
-        return None
-    return stmt.targets[0].target, stmt.value
+    return (
+        None
+        if not isinstance(stmt, cst.Assign) or len(stmt.targets) != 1
+        else (stmt.targets[0].target, stmt.value)
+    )
 
 
 def duplicated_if_body(node: cst.CSTNode) -> Sequence[cst.BaseStatement] | None:
@@ -300,14 +302,11 @@ def hoist_duplicate_trailing_stmt(node: cst.CSTNode) -> list[BodyStatement] | No
     if not left_body or not right_body or not left_body[-1].deep_equals(right_body[-1]):
         return None
     return [
-        cast(
-            "BodyStatement",
-            node.with_changes(
-                body=body.with_changes(body=left_body[:-1]),
-                orelse=node.orelse.with_changes(
-                    body=else_body.with_changes(body=right_body[:-1]),
-                ),
+        node.with_changes(
+            body=body.with_changes(body=left_body[:-1]),
+            orelse=node.orelse.with_changes(
+                body=else_body.with_changes(body=right_body[:-1]),
             ),
         ),
-        cast("BodyStatement", left_body[-1]),
+        left_body[-1],
     ]

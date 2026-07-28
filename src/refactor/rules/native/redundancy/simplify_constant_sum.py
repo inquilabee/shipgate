@@ -21,14 +21,14 @@ class SimplifyConstantSumRule(BinaryOpRewriteRule):
         right = cls.integer_value(node.right)
         if left is None or right is None:
             return None
-        if isinstance(node.operator, cst.Add):
-            return cst.Integer(str(left + right))
-        if isinstance(node.operator, cst.Subtract):
-            return cst.Integer(str(left - right))
-        return None
+        return (
+            cst.Integer(str(left + right))
+            if isinstance(node.operator, cst.Add)
+            else (
+                cst.Integer(str(left - right)) if isinstance(node.operator, cst.Subtract) else None
+            )
+        )
 
     @staticmethod
     def integer_value(node: cst.BaseExpression) -> int | None:
-        if not isinstance(node, cst.Integer):
-            return None
-        return parse_integer_literal(node.value)
+        return parse_integer_literal(node.value) if isinstance(node, cst.Integer) else None

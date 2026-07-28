@@ -17,14 +17,16 @@ class DontImportTestModulesRule(SimpleStatementLineRewriteRule):
         if isinstance(node, cst.Import):
             has_test_module = any(cls.is_test_module(alias.name) for alias in node.names)
             return cst.Pass() if has_test_module else None
-        if isinstance(node, cst.ImportFrom) and node.module is not None:
-            return cst.Pass() if cls.is_test_module(node.module) else None
-        return None
+        return (
+            (cst.Pass() if cls.is_test_module(node.module) else None)
+            if isinstance(node, cst.ImportFrom) and node.module is not None
+            else None
+        )
 
     @classmethod
     def is_test_module(cls, node: cst.BaseExpression) -> bool:
-        if isinstance(node, cst.Name):
-            return node.value.startswith("test")
-        if isinstance(node, cst.Attribute):
-            return cls.is_test_module(node.value)
-        return False
+        return (
+            node.value.startswith("test")
+            if isinstance(node, cst.Name)
+            else (cls.is_test_module(node.value) if isinstance(node, cst.Attribute) else False)
+        )

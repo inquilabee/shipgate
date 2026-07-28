@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -80,11 +80,15 @@ class RemoveUnreachableCodeRule:
 
     @staticmethod
     def is_terminal(stmt: cst.BaseStatement) -> bool:
-        if not isinstance(stmt, cst.SimpleStatementLine):
-            return False
-        if len(stmt.body) != 1:
-            return False
-        return RemoveUnreachableCodeRule.is_terminal_stmt(stmt.body[0])
+        return (
+            (
+                False
+                if len(stmt.body) != 1
+                else RemoveUnreachableCodeRule.is_terminal_stmt(stmt.body[0])
+            )
+            if isinstance(stmt, cst.SimpleStatementLine)
+            else False
+        )
 
     @staticmethod
     def is_terminal_stmt(stmt: cst.BaseSmallStatement) -> bool:
@@ -113,7 +117,7 @@ class RemoveUnreachableCodeRule:
         for stmt in body:
             if exited:
                 continue
-            cleaned.append(cast("BodyStatement", stmt))
+            cleaned.append(stmt)
             if RemoveUnreachableCodeRule.is_terminal(stmt):
                 exited = True
         return cleaned

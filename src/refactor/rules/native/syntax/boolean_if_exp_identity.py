@@ -44,9 +44,7 @@ class BooleanIfExpIdentityRule:
         ) -> cst.BaseExpression:
             _ = self, original_node
             replacement = BooleanIfExpIdentityRule.match_identity(updated_node)
-            if replacement is None:
-                return updated_node
-            return replacement
+            return updated_node if replacement is None else replacement
 
     class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
@@ -58,11 +56,15 @@ class BooleanIfExpIdentityRule:
 
     @staticmethod
     def match_identity(node: cst.IfExp) -> cst.BaseExpression | None:
-        if is_true(node.body) and is_false(node.orelse):
-            return node.test
-        if is_false(node.body) and is_true(node.orelse):
-            return cst.UnaryOperation(operator=cst.Not(), expression=node.test)
-        return None
+        return (
+            node.test
+            if is_true(node.body) and is_false(node.orelse)
+            else (
+                cst.UnaryOperation(operator=cst.Not(), expression=node.test)
+                if is_false(node.body) and is_true(node.orelse)
+                else None
+            )
+        )
 
     @staticmethod
     def hit_for(

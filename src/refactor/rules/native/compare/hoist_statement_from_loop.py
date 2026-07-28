@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -20,9 +20,7 @@ class HoistStatementFromLoopRule(ForRewriteRule):
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = source, path
-        if self.rule_id != "hoist-statement-from-loop":
-            return super().detect(source, path)
-        return []
+        return super().detect(source, path) if self.rule_id != "hoist-statement-from-loop" else []
 
     @classmethod
     def match_stmt(cls, node: cst.CSTNode) -> list[BodyStatement] | None:
@@ -31,11 +29,8 @@ class HoistStatementFromLoopRule(ForRewriteRule):
         if not isinstance(node.body, cst.IndentedBlock) or len(node.body.body) < 2:
             return None
         return [
-            cast(
-                "BodyStatement",
-                node.with_changes(
-                    body=node.body.with_changes(body=node.body.body[:-1]),
-                ),
+            node.with_changes(
+                body=node.body.with_changes(body=node.body.body[:-1]),
             ),
-            cast("BodyStatement", node.body.body[-1]),
+            node.body.body[-1],
         ]

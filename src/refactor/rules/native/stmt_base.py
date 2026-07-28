@@ -42,7 +42,6 @@ from refactor.stmt_match import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from refactor.cst_util import BodyStatement
     from refactor.protocol import Hit
 
 __all__ = [
@@ -107,7 +106,7 @@ class StatementRewriteRule(SuggestOnlyExprRule):
             message=cls.message,
             path=path,
             before_stmt=cast("cst.BaseStatement", node),
-            after_stmt=cast("BodyStatement | Sequence[BodyStatement]", replacement),
+            after_stmt=replacement,
         )
 
 
@@ -122,8 +121,7 @@ def stmt_finder_type(
         self.record_hit(rule.stmt_hit_for(node, replacement, self.path), node)
         return True
 
-    finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
-    return cast("type[HitCollector]", finder)
+    return type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
 
 
 class IfRewriteRule(StatementRewriteRule):
@@ -195,18 +193,21 @@ class SimpleStatementLineRewriteRule(StatementRewriteRule):
         replacement: cst.BaseStatement | Sequence[cst.BaseStatement],
         path: str,
     ) -> Hit:
-        if isinstance(node, cst.SimpleStatementLine) and isinstance(
-            replacement,
-            cst.SimpleStatementLine,
-        ):
-            return small_stmt_replacement_hit(
+        return (
+            small_stmt_replacement_hit(
                 rule_id=cls.rule_id,
                 message=cls.message,
                 path=path,
                 before_stmt=node.body[0],
                 after_stmt=replacement.body[0],
             )
-        return super().stmt_hit_for(node, replacement, path)
+            if isinstance(node, cst.SimpleStatementLine)
+            and isinstance(
+                replacement,
+                cst.SimpleStatementLine,
+            )
+            else super().stmt_hit_for(node, replacement, path)
+        )
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
@@ -258,7 +259,7 @@ class BodySequenceRewriteRule(StatementRewriteRule):
                         message=rule.message,
                         path=self.path,
                         before_stmts=before,
-                        after_stmts=cast("Sequence[BodyStatement]", after),
+                        after_stmts=after,
                     ),
                     before[0],
                 )
@@ -341,18 +342,20 @@ class ClassFunctionFirstArgRule(StatementRewriteRule):
     @classmethod
     def _rename_allowed(cls, decorators: Sequence[cst.Decorator]) -> bool:
         names = decorator_names(decorators)
-        if cls.required_decorator is not None:
-            return cls.required_decorator in names
-        return not names & cls.forbidden_decorators
+        return (
+            cls.required_decorator in names
+            if cls.required_decorator is not None
+            else not names & cls.forbidden_decorators
+        )
 
     @staticmethod
     def decorator_name(decorator: cst.Decorator) -> str | None:
         expression = decorator.decorator
-        if isinstance(expression, cst.Name):
-            return expression.value
-        if isinstance(expression, cst.Attribute):
-            return expression.attr.value
-        return None
+        return (
+            expression.value
+            if isinstance(expression, cst.Name)
+            else (expression.attr.value if isinstance(expression, cst.Attribute) else None)
+        )
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:

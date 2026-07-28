@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -31,13 +31,10 @@ class GuardRule(IfRewriteRule):
         if single_terminal_stmt(else_body) is None:
             return None
         return [
-            cast(
-                "BodyStatement",
-                node.with_changes(
-                    test=negated_expr(node.test),
-                    body=else_body,
-                    orelse=None,
-                ),
+            node.with_changes(
+                test=negated_expr(node.test),
+                body=else_body,
+                orelse=None,
             ),
-            *[cast("BodyStatement", stmt) for stmt in body.body],
+            *list(body.body),
         ]

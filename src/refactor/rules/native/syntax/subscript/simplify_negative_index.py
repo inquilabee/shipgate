@@ -37,13 +37,19 @@ class SimplifyNegativeIndexRule(SubscriptRewriteRule):
 
     @staticmethod
     def is_len_minus_one(expr: cst.BaseExpression, name: str) -> bool:
-        if not isinstance(expr, cst.BinaryOperation):
-            return False
-        if not isinstance(expr.operator, cst.Subtract):
-            return False
-        if not isinstance(expr.right, cst.Integer) or expr.right.value != "1":
-            return False
-        return SimplifyNegativeIndexRule.len_of_name(expr.left, name)
+        return (
+            (
+                (
+                    False
+                    if not isinstance(expr.right, cst.Integer) or expr.right.value != "1"
+                    else SimplifyNegativeIndexRule.len_of_name(expr.left, name)
+                )
+                if isinstance(expr.operator, cst.Subtract)
+                else False
+            )
+            if isinstance(expr, cst.BinaryOperation)
+            else False
+        )
 
     @staticmethod
     def len_of_name(expr: cst.BaseExpression, name: str) -> bool:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -44,5 +44,5 @@ class RemoveAssertTrueRule(BodyCleanupRule):
         for stmt in body:
             if RemoveAssertTrueRule.is_assert_true_stmt(stmt):
                 continue
-            cleaned.append(cast("BodyStatement", stmt))
+            cleaned.append(stmt)
         return cleaned

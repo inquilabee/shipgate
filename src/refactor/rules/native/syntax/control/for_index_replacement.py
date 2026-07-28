@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
 from refactor.cst_util import (
-    BodyStatement,
     HitCollector,
     code_for_stmt,
     detect_with_visitor,
@@ -89,12 +88,14 @@ class ForIndexReplacementRule:
         index_name: str,
         sequence_name: str,
     ) -> bool:
-        if isinstance(body, cst.IndentedBlock):
-            return any(
+        return (
+            any(
                 ForIndexReplacementRule.statement_uses_subscript(stmt, index_name, sequence_name)
                 for stmt in body.body
             )
-        return False
+            if isinstance(body, cst.IndentedBlock)
+            else False
+        )
 
     @staticmethod
     def statement_uses_subscript(
@@ -131,8 +132,8 @@ class ForIndexReplacementRule:
             rule_id="for-index-replacement",
             message="Prefer `enumerate()` over `range(len(...))` indexing",
             path=path,
-            before=code_for_stmt(cast("BodyStatement", for_stmt)),
-            after=code_for_stmt(cast("BodyStatement", after_for)),
+            before=code_for_stmt(for_stmt),
+            after=code_for_stmt(after_for),
             suggestion_message=f"Use `for {index_name}, item in enumerate({sequence_name}):`",
         )
 
@@ -153,16 +154,15 @@ class ForIndexReplacementRule:
             if node.value.value != self.sequence_name:
                 return True
             slice_parts = node.slice
-            if (
+            if not (
                 isinstance(slice_parts, tuple)
                 and len(slice_parts) == 1
                 and isinstance(slice_parts[0], cst.SubscriptElement)
                 and isinstance(slice_parts[0].slice, cst.Index)
                 and isinstance(slice_parts[0].slice.value, cst.Name)
             ):
-                index_expr = slice_parts[0].slice.value
-            else:
                 return True
+            index_expr = slice_parts[0].slice.value
             if index_expr.value == self.index_name:
                 self.found = True
                 return False

@@ -42,33 +42,39 @@ class BreakContinueFinder(HitCollector):
         super().__init__(path=path)
         self.loop_depth = 0
 
+    def _enter_loop(self) -> None:
+        self.loop_depth += 1
+
+    def _leave_loop(self) -> None:
+        self.loop_depth -= 1
+
     def visit_For(self, node: cst.For) -> bool:  # ruff:ignore[invalid-function-name]
         _ = node
-        self.loop_depth += 1
+        self._enter_loop()
         return True
 
     def leave_For(self, original_node: cst.For) -> None:  # ruff:ignore[invalid-function-name]
         _ = original_node
-        self.loop_depth -= 1
+        self._leave_loop()
 
     def visit_While(self, node: cst.While) -> bool:  # ruff:ignore[invalid-function-name]
         _ = node
-        self.loop_depth += 1
+        self._enter_loop()
         return True
 
     def leave_While(self, original_node: cst.While) -> None:  # ruff:ignore[invalid-function-name]
         _ = original_node
-        self.loop_depth -= 1
+        self._leave_loop()
 
     def visit_Break(self, node: cst.Break) -> bool:  # ruff:ignore[invalid-function-name]
-        self.add_hit(node)
+        self._record_outside_loop(node)
         return True
 
     def visit_Continue(self, node: cst.Continue) -> bool:  # ruff:ignore[invalid-function-name]
-        self.add_hit(node)
+        self._record_outside_loop(node)
         return True
 
-    def add_hit(self, node: cst.BaseSmallStatement) -> None:
+    def _record_outside_loop(self, node: cst.BaseSmallStatement) -> None:
         if self.loop_depth != 0:
             return
         self.hits.append(

@@ -24,9 +24,11 @@ class UseStringRemoveAffixRule(SubscriptRewriteRule):
         if prefix is not None and subscript.upper is None:
             return cls.remove_call(node.value, "removeprefix", prefix)
         suffix = cls.negated_len_call_arg(subscript.upper)
-        if suffix is not None and subscript.lower is None:
-            return cls.remove_call(node.value, "removesuffix", suffix)
-        return None
+        return (
+            cls.remove_call(node.value, "removesuffix", suffix)
+            if suffix is not None and subscript.lower is None
+            else None
+        )
 
     @staticmethod
     def remove_call(
@@ -52,6 +54,8 @@ class UseStringRemoveAffixRule(SubscriptRewriteRule):
     @classmethod
     def negated_len_call_arg(cls, node: cst.BaseExpression | None) -> cst.BaseExpression | None:
         not_node = not_operation(node) if node is not None else None
-        if not_node is None or not isinstance(not_node.operator, cst.Minus):
-            return None
-        return cls.len_call_arg(not_node.expression)
+        return (
+            None
+            if not_node is None or not isinstance(not_node.operator, cst.Minus)
+            else cls.len_call_arg(not_node.expression)
+        )

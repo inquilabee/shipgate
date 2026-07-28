@@ -93,7 +93,7 @@ class DefaultMutableArgRule:
             ),
         )
         new_body = cst.IndentedBlock(
-            body=[init_stmt, *cast("Sequence[cst.BaseStatement]", func.body.body)]
+            body=cast("list[cst.BaseStatement]", [init_stmt, *func.body.body]),
         )
         after_func = func.with_changes(
             params=func.params.with_changes(params=new_params),
@@ -111,16 +111,16 @@ class DefaultMutableArgRule:
 
     @staticmethod
     def mutable_kind(node: cst.BaseExpression) -> str:
-        if isinstance(node, cst.List):
-            return "list"
-        if isinstance(node, cst.Dict):
-            return "dict"
-        return "set"
+        return (
+            "list"
+            if isinstance(node, cst.List)
+            else ("dict" if isinstance(node, cst.Dict) else "set")
+        )
 
     @staticmethod
     def empty_mutable(kind: str) -> cst.BaseExpression:
-        if kind == "list":
-            return cst.List(elements=[])
-        if kind == "dict":
-            return cst.Dict(elements=[])
-        return cst.Set(elements=[])
+        return (
+            cst.List(elements=[])
+            if kind == "list"
+            else (cst.Dict(elements=[]) if kind == "dict" else cst.Set(elements=[]))
+        )

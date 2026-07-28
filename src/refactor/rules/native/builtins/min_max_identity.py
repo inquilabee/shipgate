@@ -73,11 +73,13 @@ class MinMaxIdentityRule:
             return None
         if not comparator.deep_equals(node.orelse):
             return None
-        if isinstance(operator, cst.LessThan):
-            return "min", node.body, node.orelse
-        if isinstance(operator, cst.GreaterThan):
-            return "max", node.body, node.orelse
-        return None
+        return (
+            ("min", node.body, node.orelse)
+            if isinstance(operator, cst.LessThan)
+            else (
+                ("max", node.body, node.orelse) if isinstance(operator, cst.GreaterThan) else None
+            )
+        )
 
     @staticmethod
     def hit_for(

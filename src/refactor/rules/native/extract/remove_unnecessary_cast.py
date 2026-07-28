@@ -22,12 +22,18 @@ class RemoveUnnecessaryCastRule(CallRewriteRule):
             return None
         if len(node.args) != 2 or any(arg.keyword is not None for arg in node.args):
             return None
+        annotation = node.args[0].value
+        if isinstance(annotation, cst.SimpleString):
+            return None
         return node.args[1].value
 
     @classmethod
     def finder_type(cls) -> type[HitCollector]:
         class RemoveUnnecessaryCastFinder(HitCollector):
-            METADATA_DEPENDENCIES = (*HitCollector.METADATA_DEPENDENCIES, ParentNodeProvider)
+            METADATA_DEPENDENCIES = (
+                *HitCollector.METADATA_DEPENDENCIES,
+                ParentNodeProvider,
+            )
 
             def visit_Call(  # ruff:ignore[invalid-function-name]
                 self,

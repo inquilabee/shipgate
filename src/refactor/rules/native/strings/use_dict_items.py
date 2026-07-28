@@ -70,8 +70,12 @@ class UseDictItemsRule(ForRewriteRule):
         mapping: cst.BaseExpression,
         key_name: cst.Name,
     ) -> bool:
-        if not isinstance(value, cst.Subscript) or not value.value.deep_equals(mapping):
-            return False
-        if len(value.slice) != 1 or not isinstance(value.slice[0].slice, cst.Index):
-            return False
-        return value.slice[0].slice.value.deep_equals(key_name)
+        return (
+            False
+            if not isinstance(value, cst.Subscript) or not value.value.deep_equals(mapping)
+            else (
+                False
+                if len(value.slice) != 1 or not isinstance(value.slice[0].slice, cst.Index)
+                else value.slice[0].slice.value.deep_equals(key_name)
+            )
+        )

@@ -51,9 +51,7 @@ class DefaultGetRule:
         ) -> cst.BaseExpression:
             _ = self, original_node
             parts = DefaultGetRule.match_parts(updated_node)
-            if parts is None:
-                return updated_node
-            return DefaultGetRule.build_get_call(parts)
+            return updated_node if parts is None else DefaultGetRule.build_get_call(parts)
 
     class Finder(HitCollector):
         def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]

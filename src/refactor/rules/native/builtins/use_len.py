@@ -42,9 +42,11 @@ class UseLenRule:
         ) -> cst.BaseExpression:
             _ = self, original_node
             subject = UseLenRule.len_zero_subject(updated_node)
-            if subject is None:
-                return updated_node
-            return cst.UnaryOperation(operator=cst.Not(), expression=subject)
+            return (
+                updated_node
+                if subject is None
+                else cst.UnaryOperation(operator=cst.Not(), expression=subject)
+            )
 
     class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]

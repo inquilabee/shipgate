@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -27,12 +27,11 @@ class RemoveRedundantExceptHandlerRule(TryRewriteRule):
         redundant = RemoveRedundantExceptHandlerRule.bare_reraise_handler(node.handlers)
         if redundant is None:
             return None
-        handlers = [handler for handler in node.handlers if handler is not redundant]
-        if handlers:
+        if handlers := [handler for handler in node.handlers if handler is not redundant]:
             return node.with_changes(handlers=handlers)
         if not isinstance(node.body, cst.IndentedBlock):
             return None
-        return [cast("BodyStatement", stmt) for stmt in node.body.body]
+        return list(node.body.body)
 
     @staticmethod
     def bare_reraise_handler(
@@ -43,9 +42,7 @@ class RemoveRedundantExceptHandlerRule(TryRewriteRule):
             for handler in handlers
             if RemoveRedundantExceptHandlerRule.is_bare_reraise_handler(handler)
         ]
-        if len(redundant) != 1:
-            return None
-        return redundant[0]
+        return None if len(redundant) != 1 else redundant[0]
 
     @staticmethod
     def is_bare_reraise_handler(handler: cst.ExceptHandler) -> bool:

@@ -42,9 +42,7 @@ class DictLiteralRule:
             updated_node: cst.Call,
         ) -> cst.BaseExpression:
             _ = self, original_node
-            if not is_empty_call(updated_node, "dict"):
-                return updated_node
-            return cst.Dict(elements=[])
+            return cst.Dict(elements=[]) if is_empty_call(updated_node, "dict") else updated_node
 
     class Finder(HitCollector):
         def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]

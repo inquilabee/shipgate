@@ -19,12 +19,11 @@ class EqualityIdentityRule(ComparisonRewriteRule):
         target = node.comparisons[0]
         if not cls.is_value_literal(target.comparator):
             return None
-        if isinstance(target.operator, cst.Is):
-            operator: cst.BaseCompOp = cst.Equal()
-        elif isinstance(target.operator, cst.IsNot):
-            operator = cst.NotEqual()
-        else:
+        if not isinstance(target.operator, cst.Is | cst.IsNot):
             return None
+        operator: cst.BaseCompOp = (
+            cst.Equal() if isinstance(target.operator, cst.Is) else cst.NotEqual()
+        )
         return cst.Comparison(
             left=node.left,
             comparisons=[

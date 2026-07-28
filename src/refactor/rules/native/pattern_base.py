@@ -29,17 +29,19 @@ class PatternNativeRule:
         return KIND_BY_VALUE.get(self.kind_value, RuleKind.REFACTOR)
 
     def detect(self, source: str, path: str) -> list[Hit]:
-        if not self.needle or self.needle not in source:
-            return []
-        return [
-            make_hit(
-                rule_id=self.rule_id,
-                message=self.summary,
-                path=path,
-                before=self.needle,
-                after=self.replacement,
-            ),
-        ]
+        return (
+            []
+            if not self.needle or self.needle not in source
+            else [
+                make_hit(
+                    rule_id=self.rule_id,
+                    message=self.summary,
+                    path=path,
+                    before=self.needle,
+                    after=self.replacement,
+                ),
+            ]
+        )
 
     def apply(self, source: str, hits: Sequence[Hit]) -> str | None:
         _ = self, source, hits

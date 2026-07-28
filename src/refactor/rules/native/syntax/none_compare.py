@@ -43,9 +43,7 @@ class NoneCompareRule:
         ) -> cst.BaseExpression:
             _ = self, original_node
             replacement = NoneCompareRule.match_none_compare(updated_node)
-            if replacement is None:
-                return updated_node
-            return replacement
+            return updated_node if replacement is None else replacement
 
     class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
@@ -65,23 +63,29 @@ class NoneCompareRule:
         comparison = node.comparisons[0]
         operator = comparison.operator
         comparator = comparison.comparator
-        if isinstance(operator, cst.Equal) and is_none_name(comparator):
-            return cst.Comparison(
+        return (
+            cst.Comparison(
                 left=node.left,
                 comparisons=[cst.ComparisonTarget(operator=cst.Is(), comparator=comparator)],
             )
-        if isinstance(operator, cst.NotEqual) and is_none_name(comparator):
-            return cst.Comparison(
-                left=node.left,
-                comparisons=[cst.ComparisonTarget(operator=cst.IsNot(), comparator=comparator)],
+            if isinstance(operator, cst.Equal) and is_none_name(comparator)
+            else (
+                cst.Comparison(
+                    left=node.left,
+                    comparisons=[cst.ComparisonTarget(operator=cst.IsNot(), comparator=comparator)],
+                )
+                if isinstance(operator, cst.NotEqual) and is_none_name(comparator)
+                else None
             )
-        return None
+        )
 
     @staticmethod
     def hit_message(node: cst.Comparison) -> str:
-        if len(node.comparisons) == 1 and isinstance(node.comparisons[0].operator, cst.NotEqual):
-            return "Prefer `is not None` over `!= None`"
-        return "Prefer `is None` over `== None`"
+        return (
+            "Prefer `is not None` over `!= None`"
+            if len(node.comparisons) == 1 and isinstance(node.comparisons[0].operator, cst.NotEqual)
+            else "Prefer `is None` over `== None`"
+        )
 
     @staticmethod
     def hit_for(

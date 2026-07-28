@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -26,6 +26,8 @@ class NoLoopInTestsRule(ForRewriteRule):
 
     @classmethod
     def match_stmt(cls, node: cst.CSTNode) -> Sequence[BodyStatement] | None:
-        if not isinstance(node, cst.For) or not isinstance(node.body, cst.IndentedBlock):
-            return None
-        return [cast("BodyStatement", stmt) for stmt in node.body.body]
+        return (
+            None
+            if not isinstance(node, cst.For) or not isinstance(node.body, cst.IndentedBlock)
+            else list(node.body.body)
+        )

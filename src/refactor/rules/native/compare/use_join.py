@@ -30,8 +30,12 @@ class UseJoinRule(BinaryOpRewriteRule):
 
     @classmethod
     def string_parts(cls, node: cst.BaseExpression) -> list[cst.BaseExpression]:
-        if isinstance(node, cst.BinaryOperation) and isinstance(node.operator, cst.Add):
-            return [*cls.string_parts(node.left), *cls.string_parts(node.right)]
-        if isinstance(node, cst.Name | cst.Attribute | cst.Subscript | cst.SimpleString):
-            return [node]
-        return []
+        return (
+            [*cls.string_parts(node.left), *cls.string_parts(node.right)]
+            if isinstance(node, cst.BinaryOperation) and isinstance(node.operator, cst.Add)
+            else (
+                [node]
+                if isinstance(node, cst.Name | cst.Attribute | cst.Subscript | cst.SimpleString)
+                else []
+            )
+        )

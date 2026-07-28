@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
@@ -26,10 +26,7 @@ class RemoveEmptyNestedBlockRule(BodyCleanupRule):
     ) -> tuple[cst.BaseStatement, Sequence[BodyStatement]] | None:
         for index, stmt in enumerate(body):
             if cls.is_empty_compound(stmt):
-                cleaned = cast(
-                    "list[BodyStatement]",
-                    [item for item in body if item is not stmt],
-                )
+                cleaned = [item for item in body if item is not stmt]
                 return body[index], cleaned
         return None
 

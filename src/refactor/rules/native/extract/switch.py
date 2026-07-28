@@ -70,9 +70,11 @@ class SwitchRule(IfRewriteRule):
 
     @staticmethod
     def default_body(orelse: cst.If | cst.Else | None) -> cst.IndentedBlock | None:
-        if not isinstance(orelse, cst.Else):
-            return None
-        return orelse.body if isinstance(orelse.body, cst.IndentedBlock) else None
+        return (
+            (orelse.body if isinstance(orelse.body, cst.IndentedBlock) else None)
+            if isinstance(orelse, cst.Else)
+            else None
+        )
 
     @staticmethod
     def equality_case(
@@ -81,6 +83,8 @@ class SwitchRule(IfRewriteRule):
         if not isinstance(test, cst.Comparison) or len(test.comparisons) != 1:
             return None, None
         target = test.comparisons[0]
-        if not isinstance(target.operator, cst.Equal):
-            return None, None
-        return test.left, target.comparator
+        return (
+            (test.left, target.comparator)
+            if isinstance(target.operator, cst.Equal)
+            else (None, None)
+        )

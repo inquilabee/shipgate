@@ -44,9 +44,7 @@ class SimplifyBooleanComparisonRule:
         ) -> cst.BaseExpression:
             _ = self, original_node
             replacement = SimplifyBooleanComparisonRule.match_boolean_compare(updated_node)
-            if replacement is None:
-                return updated_node
-            return replacement
+            return updated_node if replacement is None else replacement
 
     class Finder(HitCollector):
         def visit_Comparison(  # ruff:ignore[invalid-function-name]
@@ -66,11 +64,15 @@ class SimplifyBooleanComparisonRule:
         comparison = node.comparisons[0]
         if not isinstance(comparison.operator, cst.Equal):
             return None
-        if is_true(comparison.comparator):
-            return node.left
-        if is_false(comparison.comparator):
-            return cst.UnaryOperation(operator=cst.Not(), expression=node.left)
-        return None
+        return (
+            node.left
+            if is_true(comparison.comparator)
+            else (
+                cst.UnaryOperation(operator=cst.Not(), expression=node.left)
+                if is_false(comparison.comparator)
+                else None
+            )
+        )
 
     @staticmethod
     def hit_for(

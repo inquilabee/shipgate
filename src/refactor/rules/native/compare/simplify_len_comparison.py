@@ -29,11 +29,11 @@ class SimplifyLenComparisonRule(ComparisonRewriteRule):
         operator: cst.BaseCompOp,
         subject: cst.BaseExpression,
     ) -> cst.BaseExpression | None:
-        if isinstance(operator, cst.Equal | cst.LessThanEqual):
-            return cst.UnaryOperation(operator=cst.Not(), expression=subject)
-        if isinstance(operator, cst.NotEqual | cst.GreaterThan):
-            return subject
-        return None
+        return (
+            cst.UnaryOperation(operator=cst.Not(), expression=subject)
+            if isinstance(operator, cst.Equal | cst.LessThanEqual)
+            else (subject if isinstance(operator, cst.NotEqual | cst.GreaterThan) else None)
+        )
 
     @staticmethod
     def is_len_call(node: cst.Call) -> bool:

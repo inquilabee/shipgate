@@ -24,8 +24,12 @@ class UseIsnaRule(ComparisonRewriteRule):
 
     @staticmethod
     def isna_method_name(target: cst.ComparisonTarget) -> str | None:
-        if isinstance(target.operator, cst.Equal) and is_none_name(target.comparator):
-            return "isna"
-        if isinstance(target.operator, cst.NotEqual) and is_none_name(target.comparator):
-            return "notna"
-        return None
+        return (
+            "isna"
+            if isinstance(target.operator, cst.Equal) and is_none_name(target.comparator)
+            else (
+                "notna"
+                if isinstance(target.operator, cst.NotEqual) and is_none_name(target.comparator)
+                else None
+            )
+        )

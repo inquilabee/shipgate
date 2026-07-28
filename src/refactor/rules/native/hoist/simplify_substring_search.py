@@ -39,13 +39,15 @@ class SimplifySubstringSearchRule(ComparisonRewriteRule):
 
     @staticmethod
     def membership_operator(target: cst.ComparisonTarget) -> cst.BaseCompOp | None:
-        if not SimplifySubstringSearchRule.is_negative_one(target.comparator):
-            return None
-        if isinstance(target.operator, cst.NotEqual):
-            return cst.In()
-        if isinstance(target.operator, cst.Equal):
-            return cst.NotIn()
-        return None
+        return (
+            (
+                cst.In()
+                if isinstance(target.operator, cst.NotEqual)
+                else (cst.NotIn() if isinstance(target.operator, cst.Equal) else None)
+            )
+            if SimplifySubstringSearchRule.is_negative_one(target.comparator)
+            else None
+        )
 
     @staticmethod
     def is_negative_one(node: cst.BaseExpression) -> bool:

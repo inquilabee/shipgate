@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import libcst as cst
 
 from refactor.cst_util import (
-    BodyStatement,
     HitCollector,
     code_for_stmt,
     detect_with_visitor,
@@ -69,6 +68,6 @@ class MergeNestedIfsRule:
             rule_id="merge-nested-ifs",
             message="Merge nested if statements",
             path=path,
-            before=code_for_stmt(cast("BodyStatement", outer)),
-            after=code_for_stmt(cast("BodyStatement", merged)),
+            before=code_for_stmt(outer),
+            after=code_for_stmt(merged),
         )

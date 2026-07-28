@@ -45,6 +45,8 @@ class InlineImmediatelyYieldedVariableRule(BodySequenceRewriteRule):
         if not isinstance(stmt, cst.SimpleStatementLine) or len(stmt.body) != 1:
             return None
         small_stmt = stmt.body[0]
-        if isinstance(small_stmt, cst.Expr) and isinstance(small_stmt.value, cst.Yield):
-            return small_stmt.value
-        return None
+        return (
+            small_stmt.value
+            if isinstance(small_stmt, cst.Expr) and isinstance(small_stmt.value, cst.Yield)
+            else None
+        )

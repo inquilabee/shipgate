@@ -29,8 +29,12 @@ class RemoveRedundantSliceIndexRule(SubscriptRewriteRule):
 
     @staticmethod
     def simplified_slice(slice_node: cst.Slice) -> cst.Slice | None:
-        if isinstance(slice_node.lower, cst.Integer) and slice_node.lower.value == "0":
-            return slice_node.with_changes(lower=None)
-        if slice_node.upper is not None and is_none_name(slice_node.upper):
-            return slice_node.with_changes(upper=None)
-        return None
+        return (
+            slice_node.with_changes(lower=None)
+            if isinstance(slice_node.lower, cst.Integer) and slice_node.lower.value == "0"
+            else (
+                slice_node.with_changes(upper=None)
+                if slice_node.upper is not None and is_none_name(slice_node.upper)
+                else None
+            )
+        )

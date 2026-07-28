@@ -42,9 +42,7 @@ class TupleLiteralRule:
             updated_node: cst.Call,
         ) -> cst.BaseExpression:
             _ = self, original_node
-            if not is_empty_call(updated_node, "tuple"):
-                return updated_node
-            return cst.Tuple(elements=[])
+            return cst.Tuple(elements=[]) if is_empty_call(updated_node, "tuple") else updated_node
 
     class Finder(HitCollector):
         def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]

@@ -19,9 +19,14 @@ class UselessElseOnLoopRule(ForRewriteRule):
 
     @classmethod
     def match_stmt(cls, node: cst.CSTNode) -> list[BodyStatement] | None:
-        if not isinstance(node, cst.For) or node.orelse is None:
-            return None
-        return [
-            cast("BodyStatement", node.with_changes(orelse=None)),
-            *[cast("BodyStatement", stmt) for stmt in node.orelse.body.body],
-        ]
+        return (
+            None
+            if not isinstance(node, cst.For) or node.orelse is None
+            else cast(
+                "list[BodyStatement]",
+                [
+                    node.with_changes(orelse=None),
+                    *list(node.orelse.body.body),
+                ],
+            )
+        )

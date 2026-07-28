@@ -11,6 +11,7 @@ from refactor.call_match import (
     not_operation,
 )
 from refactor.cst_util import (
+    BodyStatement,
     HitCollector,
     body_cleanup_hit,
     detect_with_visitor,
@@ -77,8 +78,7 @@ def rewrite_finder_type(
         self.record_hit(rule.hit_for(node, replacement, self.path), node)
         return True
 
-    finder = type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
-    return cast("type[HitCollector]", finder)
+    return type(f"{rule.__name__}Finder", (HitCollector,), {visit_name: visit})
 
 
 class CallRewriteRule(SuggestOnlyExprRule):
@@ -307,13 +307,7 @@ class BodyCleanupRule(SuggestOnlyExprRule):
     def match_body(
         cls,
         body: Sequence[cst.BaseStatement],
-    ) -> (
-        tuple[
-            cst.BaseStatement,
-            Sequence[cst.SimpleStatementLine | cst.BaseCompoundStatement],
-        ]
-        | None
-    ):
+    ) -> tuple[cst.BaseStatement, Sequence[BodyStatement]] | None:
         raise NotImplementedError
 
     @classmethod

@@ -63,11 +63,15 @@ class StrPrefixSuffixRule(ComparisonRewriteRule):
         subscript = node.slice[0].slice
         if not isinstance(subscript, cst.Slice):
             return None
-        if subscript.lower is None and cls.integer_value(subscript.upper) == expected_len:
-            return node.value, "startswith"
-        if subscript.upper is None and cls.integer_value(subscript.lower) == -expected_len:
-            return node.value, "endswith"
-        return None
+        return (
+            (node.value, "startswith")
+            if subscript.lower is None and cls.integer_value(subscript.upper) == expected_len
+            else (
+                (node.value, "endswith")
+                if subscript.upper is None and cls.integer_value(subscript.lower) == -expected_len
+                else None
+            )
+        )
 
     @staticmethod
     def integer_value(node: cst.BaseExpression | None) -> int | None:

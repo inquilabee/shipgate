@@ -43,9 +43,7 @@ class BinOpIdentityRule:
         ) -> cst.Assign:
             _ = self, original_node
             identity = BinOpIdentityRule.match_identity_assign(updated_node)
-            if identity is None:
-                return updated_node
-            return updated_node.with_changes(value=identity)
+            return updated_node if identity is None else updated_node.with_changes(value=identity)
 
     class Finder(HitCollector):
         def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
@@ -57,15 +55,15 @@ class BinOpIdentityRule:
 
     @staticmethod
     def match_identity_assign(node: cst.Assign) -> cst.Name | None:
-        if len(node.targets) != 1:
-            return None
-        return BinOpIdentityRule.match_identity(node.value)
+        return None if len(node.targets) != 1 else BinOpIdentityRule.match_identity(node.value)
 
     @staticmethod
     def match_identity(node: cst.BaseExpression) -> cst.Name | None:
-        if not isinstance(node, cst.BinaryOperation):
-            return None
-        return BinOpIdentityRule.identity_name(node.operator, node.left, node.right)
+        return (
+            BinOpIdentityRule.identity_name(node.operator, node.left, node.right)
+            if isinstance(node, cst.BinaryOperation)
+            else None
+        )
 
     @staticmethod
     def identity_name(
@@ -73,13 +71,15 @@ class BinOpIdentityRule:
         left: cst.BaseExpression,
         right: cst.BaseExpression,
     ) -> cst.Name | None:
-        if not isinstance(left, cst.Name) or not isinstance(right, cst.Integer):
-            return None
-        if isinstance(operator, cst.Add) and right.value == "0":
-            return left
-        if isinstance(operator, cst.Multiply) and right.value == "1":
-            return left
-        return None
+        return (
+            None
+            if not isinstance(left, cst.Name) or not isinstance(right, cst.Integer)
+            else (
+                left
+                if isinstance(operator, cst.Add) and right.value == "0"
+                else (left if isinstance(operator, cst.Multiply) and right.value == "1" else None)
+            )
+        )
 
     @staticmethod
     def hit_for(node: cst.Assign, identity: cst.Name, path: str) -> Hit:
