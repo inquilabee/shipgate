@@ -42,16 +42,18 @@ class ProjectConfigLoader:
         return cls(project_root=root, config_path=config_path)._load()
 
     def _load(self) -> ProjectConfig:
-        if self._config_path is not None:
-            return self._load_explicit(self._config_path.resolve())
-        return self._load_layered()
+        return (
+            self._load_explicit(self._config_path.resolve())
+            if self._config_path is not None
+            else self._load_layered()
+        )
 
     def _load_explicit(self, path: Path) -> ProjectConfig:
         if self._is_toml_policy_path(path):
             section = PyprojectPolicyLoader.load_shipgate_section(path)
-            if not section:
-                return ProjectConfig()
-            return self._parse_raw(section, path, pyproject_path=path)
+            return (
+                self._parse_raw(section, path, pyproject_path=path) if section else ProjectConfig()
+            )
         if not path.is_file():
             raise ConfigError(f"config file not found: {path}", path=str(path))
         raw = load_yaml_mapping(path, error_cls=ConfigError)
@@ -97,14 +99,20 @@ class ProjectConfigLoader:
         if yaml_raw and pyproject_raw:
             merged = deep_merge_config(pyproject_raw, yaml_raw)
             config_path = yaml_path if policy == "yaml" else pyproject_path
-            if config_path is None:
-                return ProjectConfig()
-            return self._parse_raw(merged, config_path, pyproject_path=pyproject_path)
-        if yaml_raw and yaml_path is not None:
-            return self._parse_raw(yaml_raw, yaml_path, pyproject_path=pyproject_path)
-        if pyproject_raw and pyproject_path is not None:
-            return self._parse_raw(pyproject_raw, pyproject_path, pyproject_path=pyproject_path)
-        return ProjectConfig()
+            return (
+                ProjectConfig()
+                if config_path is None
+                else self._parse_raw(merged, config_path, pyproject_path=pyproject_path)
+            )
+        return (
+            self._parse_raw(yaml_raw, yaml_path, pyproject_path=pyproject_path)
+            if yaml_raw and yaml_path is not None
+            else (
+                self._parse_raw(pyproject_raw, pyproject_path, pyproject_path=pyproject_path)
+                if pyproject_raw and pyproject_path is not None
+                else ProjectConfig()
+            )
+        )
 
     def _parse_raw(
         self,
@@ -128,9 +136,7 @@ class ProjectConfigLoader:
         if cached is not None:
             return cached
         walked = find_cached_policy(self._project_root)
-        if walked is not None:
-            return walked
-        return "yaml"
+        return walked if walked is not None else "yaml"
 
     @staticmethod
     def _is_toml_policy_path(path: Path) -> bool:

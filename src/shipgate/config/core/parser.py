@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from shipgate.config.schema import (
     ALLOWED_CONFIG_MODES,
@@ -37,20 +37,21 @@ class ProjectConfigParser:
             "env",
         )
         error_format_raw = self._raw.get("error-format")
-        error_format = None
-        if error_format_raw is not None:
-            error_format = self._require_allowed(
+        error_format = (
+            self._require_allowed(
                 error_format_raw,
                 ALLOWED_ERROR_FORMATS,
                 "error-format",
             )
+            if error_format_raw is not None
+            else None
+        )
         config_mode = self._parse_config_mode()
         checks, check_bindings = self._parse_checks()
         scopes = self._parse_scopes(self._raw.get("scopes"))
         allowlists = self._parse_allowlists(self._raw.get("allowlists"))
-        suite = self._raw.get("suite", "standard")
-        if suite is not None:
-            suite = str(suite)
+        suite_raw = self._raw.get("suite", "standard")
+        suite = str(suite_raw) if suite_raw is not None else "standard"
         return ProjectConfig(
             suite=suite,
             env=env,
@@ -60,17 +61,16 @@ class ProjectConfigParser:
             checks=checks,
             check_bindings=check_bindings,
             scopes=scopes,
-            auto_install=bool(self._raw.get("auto-install", False)),
-            parallel=bool(self._raw.get("parallel", False)),
-            fail_fast=bool(self._raw.get("fail-fast", False)),
-            changed_only=bool(self._raw.get("changed-only", False)),
+            auto_install=self._raw.get("auto-install", False),
+            parallel=self._raw.get("parallel", False),
+            fail_fast=self._raw.get("fail-fast", False),
+            changed_only=self._raw.get("changed-only", False),
             since=str(self._raw["since"]) if self._raw.get("since") is not None else None,
             allowlists=allowlists,
         )
 
     def _validate_top_level_keys(self) -> None:
-        unknown = set(self._raw) - ALLOWED_TOP_LEVEL_KEYS
-        if unknown:
+        if unknown := set(self._raw) - ALLOWED_TOP_LEVEL_KEYS:
             raise ConfigError(
                 f"unknown config key(s): {', '.join(sorted(unknown))}",
                 path=str(self._path),
@@ -115,10 +115,9 @@ class ProjectConfigParser:
         p95_mode = None
         p95_threshold = None
         if isinstance(value, dict):
-            binding: dict[str, Any] = cast("dict[str, Any]", value)
-            scope_name = binding.get("scope")
-            if scope_name is not None:
-                scope_name = str(scope_name)
+            binding: dict[str, Any] = {str(k): v for k, v in value.items()}
+            scope_raw = binding.get("scope")
+            scope_name = str(scope_raw) if scope_raw is not None else None
             threshold_raw = binding.get("threshold")
             if threshold_raw is not None:
                 threshold = str(threshold_raw)
@@ -242,9 +241,7 @@ class ProjectConfigParser:
         include_raw = value.get("include", []) or []
         if not isinstance(include_raw, list):
             raise ConfigError(f"scope {name!r} include must be a list", path=str(self._path))
-        exclude_raw = value.get("exclude", []) or []
-        if exclude_raw is None:
-            exclude_raw = []
+        exclude_raw = value.get("exclude") or []
         if not isinstance(exclude_raw, list):
             raise ConfigError(f"scope {name!r} exclude must be a list", path=str(self._path))
         target_raw = value.get("target", ".")
@@ -254,7 +251,7 @@ class ProjectConfigParser:
             target=Path(target_raw),
             include=tuple(str(item) for item in include_raw),
             exclude=tuple(str(item) for item in exclude_raw),
-            respect_gitignore=bool(value.get("respect-gitignore", True)),
+            respect_gitignore=value.get("respect-gitignore", True) is not False,
         )
 
     def _parse_scopes(self, raw: object) -> dict[str, Scope] | None:

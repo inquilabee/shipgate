@@ -33,10 +33,9 @@ class ShipgateSectionNormalizer:
             if canonical in normalized and canonical != key:
                 continue
             if isinstance(item, dict):
-                if canonical == "scopes":
-                    normalized[canonical] = self._normalize_scope_mapping(item)
-                else:
-                    normalized[canonical] = dict(item)
+                normalized[canonical] = (
+                    self._normalize_scope_mapping(item) if canonical == "scopes" else dict(item)
+                )
                 continue
             normalized[canonical] = item
         return normalized
@@ -60,9 +59,7 @@ class PyprojectPolicyLoader:
     @staticmethod
     def discover_path(project_root: Path) -> Path | None:
         candidate = project_root / "pyproject.toml"
-        if candidate.is_file():
-            return candidate.resolve()
-        return None
+        return candidate.resolve() if candidate.is_file() else None
 
     @staticmethod
     def load_shipgate_section(path: Path) -> dict[str, Any] | None:
