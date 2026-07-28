@@ -12,7 +12,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     expr_replacement_hit,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -24,7 +24,7 @@ class UseLenRule:
     rule_id = "use-len"
     kind = RuleKind.REFACTOR
     summary = "Replace `len(x) == 0` with `not x`"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

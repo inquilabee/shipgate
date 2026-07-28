@@ -13,7 +13,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class RemoveUnreachableCodeRule:
     rule_id = "remove-unreachable-code"
     kind = RuleKind.REFACTOR
     summary = "Remove unreachable code after return/raise/break/continue"
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

@@ -13,7 +13,7 @@ from refactor.cst_util import (
     make_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class ForIndexReplacementRule:
     rule_id = "for-index-replacement"
     kind = RuleKind.REFACTOR
     summary = "Replace `for i in range(len(xs)): xs[i]` with `enumerate(xs)`"
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -70,4 +71,4 @@ def test_range_slice_simplify_safe_apply_false(
     rule_id: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is False
+    assert rule.apply_mode is not ApplyMode.AUTO

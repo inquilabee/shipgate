@@ -13,7 +13,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     make_hit,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class BinOpIdentityRule:
     rule_id = "bin-op-identity"
     kind = RuleKind.REFACTOR
     summary = "Replace `x + 0` and `x * 1` with `x` for simple names"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

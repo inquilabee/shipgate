@@ -13,7 +13,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     make_hit,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class CollectionIntoSetRule:
     rule_id = "collection-into-set"
     kind = RuleKind.REFACTOR
     summary = "Replace `x in [a, b, c]` with `x in {a, b, c}` for simple literals"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

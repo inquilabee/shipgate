@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import libcst as cst
 
+from refactor.protocol import ApplyMode
 from refactor.rules.native.stmt_base import IfRewriteRule
 
 
@@ -11,6 +12,7 @@ class SplitOrIfsRule(IfRewriteRule):
     rule_id = "split-or-ifs"
     summary = "Split or ifs"
     message = "Split an or condition into two if statements"
+    apply_mode = ApplyMode.OFF
     enabled = False
 
     @classmethod

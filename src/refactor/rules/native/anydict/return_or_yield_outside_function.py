@@ -14,7 +14,7 @@ from refactor.cst_util import (
     make_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,9 +25,9 @@ if TYPE_CHECKING:
 class ReturnOrYieldOutsideFunctionRule:
     rule_id = "return-or-yield-outside-function"
     summary = "Return or yield outside function"
+    apply_mode = ApplyMode.HINT
     message = "Remove return or yield outside a function"
     kind = RuleKind.REFACTOR
-    safe_apply = False
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

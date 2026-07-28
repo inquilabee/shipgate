@@ -15,7 +15,7 @@ from refactor.cst_util import (
     noop_apply,
     single_small_stmt,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -27,7 +27,7 @@ class UseNextRule:
     rule_id = "use-next"
     kind = RuleKind.REFACTOR
     summary = "Replace `for x in xs: return x` with `next(iter(xs))`"
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

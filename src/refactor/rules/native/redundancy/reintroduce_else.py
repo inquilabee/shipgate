@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import libcst as cst
 
+from refactor.protocol import ApplyMode
 from refactor.rules.native.stmt_base import (
     BodySequenceRewriteRule,
     single_terminal_stmt,
@@ -19,6 +20,7 @@ class ReintroduceElseRule(BodySequenceRewriteRule):
     rule_id = "reintroduce-else"
     summary = "Reintroduce else"
     message = "Move following statement into an else branch after terminal if"
+    apply_mode = ApplyMode.OFF
     enabled = False
 
     @classmethod

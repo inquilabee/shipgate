@@ -17,7 +17,7 @@ from refactor.cst_util import (
     match_named_for,
     single_small_stmt,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -29,7 +29,7 @@ class YieldFromRule:
     rule_id = "yield-from"
     kind = RuleKind.REFACTOR
     summary = "Replace `for x in ys: yield x` with `yield from ys`"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

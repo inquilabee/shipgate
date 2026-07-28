@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import libcst as cst
 
 from refactor.cst_util import single_small_stmt
+from refactor.protocol import ApplyMode
 from refactor.rules.native.stmt_base import BodySequenceRewriteRule
 
 if TYPE_CHECKING:
@@ -17,6 +18,7 @@ class LiftReturnIntoIfRule(BodySequenceRewriteRule):
     rule_id = "lift-return-into-if"
     summary = "Lift return into if"
     message = "Lift a following return into an if else branch"
+    apply_mode = ApplyMode.OFF
     enabled = False
 
     @classmethod

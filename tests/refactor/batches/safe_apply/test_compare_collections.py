@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -56,7 +57,7 @@ def test_safe_apply_round_trip(
     after: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is True
+    assert rule.apply_mode is ApplyMode.AUTO
     hits = rule.detect(before, "sample.py")
     assert len(hits) >= 1
     rewritten = rule.apply(before, hits)
@@ -118,4 +119,4 @@ def test_compare_collections_safe_apply_enabled(
     rule_id: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is True
+    assert rule.apply_mode is ApplyMode.AUTO

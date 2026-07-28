@@ -9,11 +9,14 @@ from typing import TYPE_CHECKING
 import pathspec
 
 from refactor.detector import check_rules, detect_file
+from refactor.inventory import load_inventory
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from refactor.inventory import InventoryEntry
     from refactor.protocol import Hit, RefactorRule
 
 IGNORED_DIR_NAMES = frozenset(
@@ -31,6 +34,8 @@ IGNORED_DIR_NAMES = frozenset(
         "venv",
     }
 )
+
+FIX_FIXED_POINT_LIMIT = 100
 
 
 def iter_python_files(paths: Sequence[Path]) -> list[Path]:
@@ -119,28 +124,52 @@ def check_paths(
     return hits
 
 
+def filter_hits_by_policy(
+    hits: Sequence[Hit],
+    *,
+    strict: bool,
+    rules: Sequence[RefactorRule] | None = None,
+) -> list[Hit]:
+    rules_by_id = {rule.rule_id: rule for rule in (rules if rules is not None else RULES)}
+    allowed = {ApplyMode.AUTO, ApplyMode.HINT} if strict else {ApplyMode.AUTO}
+    filtered: list[Hit] = []
+    for hit in hits:
+        rule = rules_by_id.get(hit.rule_id)
+        if rule is None:
+            continue
+        if rule.apply_mode in allowed:
+            filtered.append(hit)
+    return filtered
+
+
 def fix_paths(
     paths: Sequence[Path],
     *,
     rules: Sequence[RefactorRule] | None = None,
 ) -> list[Path]:
     selected = tuple(rules) if rules is not None else RULES
-    return [file_path for file_path in iter_python_files(paths) if fix_file(file_path, selected)]
+    auto_rules = tuple(rule for rule in selected if rule.apply_mode is ApplyMode.AUTO)
+    return [file_path for file_path in iter_python_files(paths) if fix_file(file_path, auto_rules)]
 
 
 def fix_file(file_path: Path, rules: Sequence[RefactorRule]) -> bool:
     source = file_path.read_text(encoding="utf-8")
     original = source
-    for rule in rules:
-        source = apply_safe_rule(rule, source, file_path)
+    for _ in range(FIX_FIXED_POINT_LIMIT):
+        updated = source
+        for rule in rules:
+            updated = apply_auto_rule(rule, updated, file_path)
+        if updated == source:
+            break
+        source = updated
     if source == original:
         return False
     file_path.write_text(source, encoding="utf-8")
     return True
 
 
-def apply_safe_rule(rule: RefactorRule, source: str, file_path: Path) -> str:
-    if not rule.safe_apply:
+def apply_auto_rule(rule: RefactorRule, source: str, file_path: Path) -> str:
+    if rule.apply_mode is not ApplyMode.AUTO:
         return source
     hits = rule.detect(source, str(file_path))
     if not hits:
@@ -155,11 +184,24 @@ def apply_safe_rule(rule: RefactorRule, source: str, file_path: Path) -> str:
     )
 
 
-def hits_to_jsonable(hits: Sequence[Hit]) -> list[dict[str, object]]:
-    return [hit_row(hit) for hit in hits]
+def hits_to_jsonable(
+    hits: Sequence[Hit],
+    *,
+    inventory: Sequence[InventoryEntry] | None = None,
+) -> list[dict[str, object]]:
+    entries = (
+        {entry.id: entry for entry in inventory}
+        if inventory is not None
+        else {entry.id: entry for entry in load_inventory()}
+    )
+    return [hit_row(hit, inventory_by_id=entries) for hit in hits]
 
 
-def hit_row(hit: Hit) -> dict[str, object]:
+def hit_row(
+    hit: Hit,
+    *,
+    inventory_by_id: dict[str, InventoryEntry] | None = None,
+) -> dict[str, object]:
     row: dict[str, object] = {
         "rule_id": hit.rule_id,
         "message": hit.message,
@@ -175,6 +217,17 @@ def hit_row(hit: Hit) -> dict[str, object]:
             "after": hit.suggestion.after,
             "message": hit.suggestion.message,
         }
+    elif inventory_by_id is not None:
+        entry = inventory_by_id.get(hit.rule_id)
+        if entry is not None and (entry.example_bad or entry.example_good):
+            suggestion: dict[str, object] = {}
+            if entry.example_bad is not None:
+                suggestion["before"] = entry.example_bad
+            if entry.example_good is not None:
+                suggestion["after"] = entry.example_good
+            if entry.rationale is not None:
+                suggestion["message"] = entry.rationale
+            row["suggestion"] = suggestion
     if hit.extra:
         row["extra"] = dict(hit.extra)
     return row

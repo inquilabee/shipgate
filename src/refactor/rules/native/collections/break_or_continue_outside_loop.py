@@ -13,7 +13,7 @@ from refactor.cst_util import (
     make_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -24,9 +24,9 @@ if TYPE_CHECKING:
 class BreakOrContinueOutsideLoopRule:
     rule_id = "break-or-continue-outside-loop"
     summary = "Break or continue outside loop"
+    apply_mode = ApplyMode.HINT
     message = "Remove break or continue outside a loop"
     kind = RuleKind.REFACTOR
-    safe_apply = False
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

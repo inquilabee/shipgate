@@ -13,7 +13,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     make_hit,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class AugAssignRule:
     rule_id = "aug-assign"
     kind = RuleKind.REFACTOR
     summary = "Replace `x = x + y` with `x += y` for simple names"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

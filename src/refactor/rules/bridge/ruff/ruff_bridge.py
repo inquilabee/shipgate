@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from refactor.protocol import Hit, Location
+from refactor.protocol import ApplyMode, Hit, Location
 from refactor.ruff_invoke import (
     location_row_column,
     run_ruff_check,
@@ -29,7 +29,7 @@ class RuffBridge:
     summary: ClassVar[str]
     message: ClassVar[str]
     delegates_to: ClassVar[str]
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         codes = self.select_codes()

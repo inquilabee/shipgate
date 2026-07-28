@@ -14,6 +14,19 @@ class RuleKind(Enum):
     COMMENT = "comment"
 
 
+class ApplyMode(Enum):
+    """Policy tier for how a rule participates in check/fix.
+
+    auto: default ``check`` reports; ``fix`` applies via ``rule.apply()``.
+    hint: ``check --strict`` only; ``fix`` never applies.
+    off: never reported, never applied.
+    """
+
+    AUTO = "auto"
+    HINT = "hint"
+    OFF = "off"
+
+
 @dataclass(frozen=True)
 class Location:
     path: str
@@ -41,7 +54,7 @@ class RefactorRule(Protocol):
     rule_id: str
     kind: RuleKind
     summary: str
-    safe_apply: bool
+    apply_mode: ApplyMode
 
     def detect(self, source: str, path: str) -> list[Hit]: ...
 

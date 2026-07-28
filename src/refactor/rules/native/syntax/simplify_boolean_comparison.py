@@ -14,7 +14,7 @@ from refactor.cst_util import (
     is_false,
     is_true,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -26,7 +26,7 @@ class SimplifyBooleanComparisonRule:
     rule_id = "simplify-boolean-comparison"
     kind = RuleKind.REFACTOR
     summary = "Replace `x == True` with `x`"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from refactor.cst_util import make_hit, noop_apply
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -22,7 +22,7 @@ class PatternNativeRule:
     summary: ClassVar[str]
     needle: ClassVar[str]
     replacement: ClassVar[str]
-    safe_apply: ClassVar[bool] = False
+    apply_mode: ClassVar[ApplyMode] = ApplyMode.HINT
 
     @property
     def kind(self) -> RuleKind:

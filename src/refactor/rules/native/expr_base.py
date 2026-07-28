@@ -18,7 +18,7 @@ from refactor.cst_util import (
     expr_replacement_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -27,13 +27,13 @@ if TYPE_CHECKING:
 
 
 class SuggestOnlyExprRule:
-    """Base: detect via ``match``, never auto-apply."""
+    """Base: detect via ``match``; default policy is hint (not auto-applied)."""
 
     rule_id: str
     summary: str
     message: str
     kind = RuleKind.REFACTOR
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
     enabled: ClassVar[bool] = True
 
     def detect(self, source: str, path: str) -> list[Hit]:

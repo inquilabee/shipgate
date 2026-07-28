@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -81,7 +82,7 @@ def test_literals_len_minmax_augassign_safe_apply_true(
     rule_id: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is True
+    assert rule.apply_mode is ApplyMode.AUTO
 
 
 @pytest.mark.parametrize("rule_id", SAFE_APPLY_FALSE_IDS)
@@ -90,4 +91,4 @@ def test_literals_len_minmax_augassign_safe_apply_false(
     rule_id: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is False
+    assert rule.apply_mode is not ApplyMode.AUTO

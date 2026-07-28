@@ -13,7 +13,7 @@ from refactor.cst_util import (
     make_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class InlineImmediatelyReturnedVariableRule:
     rule_id = "inline-immediately-returned-variable"
     kind = RuleKind.REFACTOR
     summary = "Inline variable assigned just before return"
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

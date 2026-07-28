@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ CASES = (
     (
         "simplify-constant-sum",
         'total = sum(1 for book in books if book.author == "Terry Pratchett")\n',
-        'sum(bool(book.author == "Terry Pratchett") for book in books)',
+        'sum(book.author == "Terry Pratchett" for book in books)',
     ),
     (
         "simplify-dictionary-update",
@@ -93,4 +94,4 @@ def test_simplify_comprehension_safe_apply_false(
     expected: str,
 ) -> None:
     _ = source, expected
-    assert rules_by_id[rule_id].safe_apply is False
+    assert rules_by_id[rule_id].apply_mode is not ApplyMode.AUTO

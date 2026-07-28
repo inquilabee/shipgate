@@ -12,7 +12,7 @@ from refactor.cst_util import (
     expr_replacement_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -24,7 +24,7 @@ class IdentityComprehensionRule:
     rule_id = "identity-comprehension"
     kind = RuleKind.REFACTOR
     summary = "Replace `[x for x in xs]` with `list(xs)`"
-    safe_apply = False
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

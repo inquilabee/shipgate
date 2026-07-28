@@ -13,7 +13,7 @@ from refactor.cst_util import (
     expr_replacement_hit,
     is_none_name,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class NoneCompareRule:
     rule_id = "none-compare"
     kind = RuleKind.REFACTOR
     summary = "Replace `== None` with `is None`"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

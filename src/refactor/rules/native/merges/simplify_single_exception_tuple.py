@@ -13,7 +13,7 @@ from refactor.cst_util import (
     make_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,8 +25,8 @@ class SimplifySingleExceptionTupleRule:
     rule_id = "simplify-single-exception-tuple"
     kind = RuleKind.REFACTOR
     summary = "Simplify single exception tuple"
+    apply_mode = ApplyMode.HINT
     message = "Use the exception type directly instead of a one-item tuple"
-    safe_apply = False
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

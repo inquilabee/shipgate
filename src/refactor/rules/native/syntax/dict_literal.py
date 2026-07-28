@@ -13,7 +13,7 @@ from refactor.cst_util import (
     expr_replacement_hit,
     is_empty_call,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class DictLiteralRule:
     rule_id = "dict-literal"
     kind = RuleKind.REFACTOR
     summary = "Replace empty `dict()` with `{}`"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

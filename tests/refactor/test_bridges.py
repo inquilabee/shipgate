@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 from refactor.rules.bridge.ruff.avoid_builtin_shadow import AvoidBuiltinShadowBridge
 from refactor.rules.bridge.ruff.list_literal import ListLiteralBridge
@@ -15,7 +16,7 @@ def test_bridges_registered() -> None:
         assert bridge.summary
         assert getattr(bridge, "message", None)
         assert "Delegates to Ruff" not in bridge.summary
-        assert bridge.safe_apply is False
+        assert bridge.apply_mode is ApplyMode.HINT
 
 
 def test_avoid_builtin_shadow_detects_via_ruff() -> None:

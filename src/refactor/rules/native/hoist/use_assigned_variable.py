@@ -13,7 +13,7 @@ from refactor.cst_util import (
     make_hit,
     noop_apply,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 from refactor.rules.native.stmt_base import ReturnAssignedExpressionRule
 
 if TYPE_CHECKING:
@@ -28,8 +28,8 @@ class UseAssignedVariableRule:
     rule_id = "use-assigned-variable"
     kind = RuleKind.REFACTOR
     summary = "Use previously assigned local variable"
+    apply_mode = ApplyMode.HINT
     message = "Reuse the assigned local instead of repeating its expression"
-    safe_apply = False
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

@@ -14,7 +14,7 @@ from refactor.cst_util import (
     detect_with_visitor,
     make_hit,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -33,7 +33,7 @@ class DefaultGetRule:
     rule_id = "default-get"
     kind = RuleKind.REFACTOR
     summary = "Replace `d[k] if k in d else v` with `d.get(k, v)`"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

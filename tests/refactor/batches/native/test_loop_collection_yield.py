@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from refactor.inventory import load_inventory
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -126,7 +127,7 @@ def test_loop_collection_yield_safe_apply_true(
     rule_id: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is True
+    assert rule.apply_mode is ApplyMode.AUTO
 
 
 @pytest.mark.parametrize("rule_id", SAFE_APPLY_FALSE_IDS)
@@ -135,7 +136,7 @@ def test_loop_collection_yield_safe_apply_false(
     rule_id: str,
 ) -> None:
     rule = rules_by_id[rule_id]
-    assert rule.safe_apply is False
+    assert rule.apply_mode is not ApplyMode.AUTO
 
 
 @pytest.mark.parametrize("rule_id", RULE_IDS)

@@ -325,7 +325,10 @@ def has_base_finder(rule: RefactorRule, base: type[object]) -> bool:
 
 
 def rule_enabled(rule: RefactorRule) -> bool:
-    return getattr(type(rule), "enabled", True)
+    from refactor.protocol import ApplyMode
+
+    mode = getattr(type(rule), "apply_mode", ApplyMode.HINT)
+    return mode is not ApplyMode.OFF and getattr(type(rule), "enabled", True)
 
 
 def check_rules(

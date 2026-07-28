@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from refactor.protocol import ApplyMode
 from refactor.registry import RULES
 
 if TYPE_CHECKING:
@@ -94,4 +95,4 @@ def test_datetime_class_collection_safe_apply_false(
     expected: str,
 ) -> None:
     _ = source, expected
-    assert rules_by_id[rule_id].safe_apply is False
+    assert rules_by_id[rule_id].apply_mode is not ApplyMode.AUTO

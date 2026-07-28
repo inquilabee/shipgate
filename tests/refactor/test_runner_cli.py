@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from refactor.cli import main
-from refactor.protocol import Hit, Location, RuleKind
+from refactor.protocol import ApplyMode, Hit, Location, RuleKind
 from refactor.registry import RULES
 from refactor.rules.native.redundancy.lift_return_into_if import LiftReturnIntoIfRule
 from refactor.rules.native.redundancy.reintroduce_else import ReintroduceElseRule
@@ -12,7 +12,7 @@ from refactor.rules.native.strings.remove_redundant_continue import (
     RemoveRedundantContinueRule,
 )
 from refactor.runner import (
-    apply_safe_rule,
+    apply_auto_rule,
     check_paths,
     check_rules,
     fix_paths,
@@ -119,7 +119,9 @@ def f(items=[]):
     cache = {}
 """
 
-NON_SAFE_RULE_IDS = frozenset(rule.rule_id for rule in RULES if not rule.safe_apply)
+NON_AUTO_RULE_IDS = frozenset(
+    rule.rule_id for rule in RULES if rule.apply_mode is not ApplyMode.AUTO
+)
 
 
 def test_fix_paths_applies_only_safe_rules(tmp_path: Path) -> None:
@@ -132,7 +134,7 @@ def test_fix_paths_applies_only_safe_rules(tmp_path: Path) -> None:
     assert not any(hit.rule_id == "dict-literal" for hit in hits)
     assert any(hit.rule_id == "default-mutable-arg" for hit in hits)
     assert hits
-    assert all(hit.rule_id in NON_SAFE_RULE_IDS for hit in hits)
+    assert all(hit.rule_id in NON_AUTO_RULE_IDS for hit in hits)
 
 
 def test_cli_list_includes_default_get(capsys) -> None:
@@ -182,7 +184,7 @@ class StillDetectingRule:
     rule_id = "still-detecting-stub"
     kind = RuleKind.REFACTOR
     summary = "Stub rule whose apply still leaves detectable hits"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
@@ -201,7 +203,7 @@ class StillDetectingRule:
         return source.replace("HIT_MARKER", "STILL_HAS_HIT_MARKER")
 
 
-def test_apply_safe_rule_rejects_rewrite_that_still_detects() -> None:
+def test_apply_auto_rule_rejects_rewrite_that_still_detects() -> None:
     rule = StillDetectingRule()
     source = "x = HIT_MARKER\n"
-    assert apply_safe_rule(rule, source, Path("sample.py")) == source
+    assert apply_auto_rule(rule, source, Path("sample.py")) == source

@@ -13,7 +13,7 @@ from refactor.cst_util import (
     body_cleanup_hit,
     detect_with_visitor,
 )
-from refactor.protocol import RuleKind
+from refactor.protocol import ApplyMode, RuleKind
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,7 +25,7 @@ class RemoveRedundantPassRule:
     rule_id = "remove-redundant-pass"
     kind = RuleKind.REFACTOR
     summary = "Remove redundant pass after other statements"
-    safe_apply = True
+    apply_mode = ApplyMode.AUTO
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self
