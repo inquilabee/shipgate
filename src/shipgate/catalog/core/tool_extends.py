@@ -25,7 +25,7 @@ class ToolExtendsResolver:
         self._bundled_tools = bundled_tools
         self._project_tools = project_tools or {}
         self._effective_raw = dict(bundled_tools)
-        self._effective_raw.update(self._project_tools)
+        self._effective_raw |= self._project_tools
         self._resolved: dict[str, dict[str, Any]] = {}
         self._resolving: set[str] = set()
 
@@ -64,7 +64,7 @@ class ToolExtendsResolver:
             raise CatalogError(f"tool {tool_id!r} extends must be a tool id string")
 
         parent_id = extends
-        if parent_id == tool_id and tool_id not in self._bundled_tools:
+        if parent_id == tool_id not in self._bundled_tools:
             raise CatalogError(f"tool {tool_id!r} cannot extend itself")
 
         self._resolving.add(tool_id)
@@ -85,9 +85,11 @@ class ToolExtendsResolver:
             if parent_id not in self._bundled_tools:
                 raise CatalogError(f"tool {tool_id!r} cannot extend itself")
             parent_raw = self._bundled_tools[parent_id]
-            if EXTENDS_KEY not in parent_raw:
-                return deepcopy(parent_raw)
-            return self._resolve_tool(parent_id, stack=stack)
+            return (
+                deepcopy(parent_raw)
+                if EXTENDS_KEY not in parent_raw
+                else self._resolve_tool(parent_id, stack=stack)
+            )
 
         if parent_id in self._resolved:
             return deepcopy(self._resolved[parent_id])
@@ -99,6 +101,8 @@ class ToolExtendsResolver:
             )
 
         parent_raw = self._effective_raw[parent_id]
-        if EXTENDS_KEY in parent_raw:
-            return self._resolve_tool(parent_id, stack=stack)
-        return deepcopy(parent_raw)
+        return (
+            self._resolve_tool(parent_id, stack=stack)
+            if EXTENDS_KEY in parent_raw
+            else deepcopy(parent_raw)
+        )

@@ -53,7 +53,7 @@ class CatalogParser:
         configuration = self._parse_configuration(raw.get("configuration") or {})
         install = self._parse_install(raw.get("install"))
         modes = tuple(RunMode(mode) for mode in raw.get("modes", ["check"]))
-        option_order = tuple(raw.get("option_order", list(cli.keys())))
+        option_order = tuple(raw.get("option_order", list(cli)))
         scope = self._parse_scope(raw.get("scope") or {})
         tags = tuple(str(tag) for tag in raw.get("tags", []) or [])
         cache = self._parse_cache(raw.get("cache"))
@@ -94,7 +94,7 @@ class CatalogParser:
                 style=option.get("style", "scalar"),
                 separator=option.get("separator", ","),
                 position=option.get("position"),
-                required=bool(option.get("required", False)),
+                required=option.get("required", False),
                 default=option.get("default"),
                 aggregate=option.get("aggregate"),
             )
@@ -108,33 +108,39 @@ class CatalogParser:
             discover=tuple(raw.get("discover", []) or []),
             pyproject_section=raw.get("pyproject_section"),
             precedence=tuple(raw.get("precedence", ["cli", "repo", "bundled"])),
-            merge=bool(raw.get("merge")),
+            merge=raw.get("merge", False),
         )
 
     def _parse_install(self, raw: dict | None) -> InstallDefinition | None:
-        if not raw:
-            return None
-        return InstallDefinition(
-            manager=raw["manager"],
-            package=raw["package"],
-            version=str(raw.get("version", "") or ""),
-            binary=raw.get("binary"),
-            requires=tuple(raw.get("requires", []) or []),
-            allow_path=bool(raw.get("allow_path", True)),
-            known_bad=tuple(str(item) for item in raw.get("known_bad", []) or []),
-            download=self._parse_download(raw.get("download")),
+        return (
+            InstallDefinition(
+                manager=raw["manager"],
+                package=raw["package"],
+                version=str(raw.get("version", "") or ""),
+                binary=raw.get("binary"),
+                requires=tuple(raw.get("requires", []) or []),
+                allow_path=raw.get("allow_path", True),
+                known_bad=tuple(str(item) for item in raw.get("known_bad", []) or []),
+                download=self._parse_download(raw.get("download")),
+            )
+            if raw
+            else None
         )
 
     @staticmethod
     def _parse_download(raw: dict | None) -> BinaryDownloadSpec | None:
-        if not raw:
-            return None
-        return BinaryDownloadSpec(
-            repo=str(raw["repo"]),
-            asset_template=str(raw["asset_template"]),
-            binary_name=str(raw.get("binary_name") or raw.get("binary") or ""),
-            arch_map={str(key): str(value) for key, value in (raw.get("arch_map") or {}).items()},
-            os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
+        return (
+            BinaryDownloadSpec(
+                repo=str(raw["repo"]),
+                asset_template=str(raw["asset_template"]),
+                binary_name=str(raw.get("binary_name") or raw.get("binary") or ""),
+                arch_map={
+                    str(key): str(value) for key, value in (raw.get("arch_map") or {}).items()
+                },
+                os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
+            )
+            if raw
+            else None
         )
 
     @staticmethod
@@ -143,24 +149,28 @@ class CatalogParser:
             return None
         ttl = raw.get("ttl_seconds")
         return CacheDefinition(
-            results=bool(raw.get("results", True)),
+            results=raw.get("results", True),
             ttl_seconds=int(ttl) if ttl is not None else None,
         )
 
     @staticmethod
     def _parse_suggest_if(raw: dict | None) -> SuggestIfDefinition | None:
-        if not raw:
-            return None
-        return SuggestIfDefinition(
-            files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
+        return (
+            SuggestIfDefinition(
+                files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
+            )
+            if raw
+            else None
         )
 
     @staticmethod
     def _parse_require_if(raw: dict | None) -> RequireIfDefinition | None:
-        if not raw:
-            return None
-        return RequireIfDefinition(
-            files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
+        return (
+            RequireIfDefinition(
+                files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
+            )
+            if raw
+            else None
         )
 
     def _parse_scope(self, raw: dict) -> ScopeCriteria:
@@ -174,15 +184,13 @@ class CatalogParser:
     @staticmethod
     def _normalize_extension(value: object) -> str:
         text = str(value).strip()
-        if not text:
-            return text
-        return text if text.startswith(".") else f".{text}"
+        return (text if text.startswith(".") else f".{text}") if text else text
 
     @staticmethod
     def _parse_suite(suite_id: str, raw: dict) -> SuiteDefinition:
         return SuiteDefinition(
             id=suite_id,
             members=tuple(raw.get("members", []) or []),
-            parallel=bool(raw.get("parallel")),
-            fail_fast=bool(raw.get("fail_fast", raw.get("fail-fast", False))),
+            parallel=raw.get("parallel", False),
+            fail_fast=raw.get("fail_fast", raw.get("fail-fast", False)),
         )

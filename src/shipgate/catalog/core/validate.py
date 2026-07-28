@@ -104,7 +104,7 @@ class CatalogValidator:
             raise CatalogError(
                 f"tool {tool.id!r} has unsupported scope delivery {delivery!r}",
             )
-        has_criteria = bool(tool.scope.extensions or tool.scope.globs)
+        has_criteria = tool.scope.extensions or tool.scope.globs
         if delivery == "files" and not has_criteria:
             raise CatalogError(
                 f"tool {tool.id!r} with delivery 'files' requires extensions or globs",
@@ -215,28 +215,36 @@ class CatalogValidator:
 
     @staticmethod
     def _normalized_pin(version: str) -> str:
-        cleaned = version.strip()
-        if cleaned.startswith("=="):
-            cleaned = cleaned[2:].strip()
+        raw = version.strip()
+        cleaned = raw[2:].strip() if raw.startswith("==") else raw
         return cleaned.lstrip("v")
 
     def _detect_suite_cycle(self, start: str) -> None:
+        CatalogValidator._walk_suite_cycle(self._catalog, start)
+
+    @staticmethod
+    def _walk_suite_cycle(catalog: Catalog, start: str) -> None:
         visited: set[str] = set()
-        stack: list[str] = []
+        path: list[str] = []
+        stack: list[tuple[str, int]] = [(start, 0)]
 
-        def visit(node: str) -> None:
-            if node in stack:
-                cycle = " -> ".join([*stack, node])
-                raise CatalogError(f"suite cycle detected: {cycle}")
-            if node in visited:
-                return
-            if node not in self._catalog.suites:
-                return
-            stack.append(node)
-            for member in self._catalog.suites[node].members:
-                if member in self._catalog.suites:
-                    visit(member)
-            stack.pop()
+        while stack:
+            node, member_index = stack[-1]
+            if member_index == 0:
+                if node in path:
+                    cycle = " -> ".join([*path, node])
+                    raise CatalogError(f"suite cycle detected: {cycle}")
+                if node in visited or node not in catalog.suites:
+                    stack.pop()
+                    continue
+                path.append(node)
+            members = catalog.suites[node].members
+            if member_index < len(members):
+                stack[-1] = (node, member_index + 1)
+                member = members[member_index]
+                if member in catalog.suites:
+                    stack.append((member, 0))
+                continue
+            path.pop()
             visited.add(node)
-
-        visit(start)
+            stack.pop()

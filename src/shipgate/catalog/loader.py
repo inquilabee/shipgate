@@ -52,8 +52,7 @@ class CatalogLoader:
             bundled_tools = bundled_raw.get("tools", {}) or {}
             project_tools: dict = {}
             if self._project_root is not None:
-                project_raw = self._load_project_raw(self._project_root)
-                if project_raw:
+                if project_raw := self._load_project_raw(self._project_root):
                     project_tools = project_raw.get("tools", {}) or {}
                     raw = self._merge_raw(bundled_raw, project_raw)
                 else:
@@ -82,7 +81,7 @@ class CatalogLoader:
             if not overlay_section:
                 continue
             base_section = dict(merged.get(section, {}))
-            base_section.update(overlay_section)
+            base_section |= overlay_section
             merged[section] = base_section
         return merged
 
