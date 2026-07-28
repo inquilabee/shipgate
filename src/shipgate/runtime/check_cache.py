@@ -55,9 +55,8 @@ class CheckResultCache:
         if resolved.tool.install is not None and resolved.tool.install.version:
             parts.append(f"version:{resolved.tool.install.version}")
         for config_path in resolved.options.config:
-            candidate = Path(config_path)
-            if not candidate.is_absolute():
-                candidate = resolved.project_root / candidate
+            config = Path(config_path)
+            candidate = config if config.is_absolute() else resolved.project_root / config
             if candidate.is_file():
                 parts.append(hashlib.sha256(candidate.read_bytes()).hexdigest())
         digest = hashlib.sha256("\n".join(parts).encode()).hexdigest()
@@ -73,12 +72,20 @@ class CheckResultCache:
 
     @staticmethod
     def _is_cacheable(resolved: ResolvedRequest) -> bool:
-        if resolved.mode == RunMode.APPLY:
-            return False
-        if is_gate_tool(resolved.tool):
-            return False
-        if resolved.tool.cache is not None and not resolved.tool.cache.results:
-            return False
-        if resolved.tool.scope.delivery == "root":
-            return False
-        return bool(resolved.options.paths)
+        return (
+            False
+            if resolved.mode == RunMode.APPLY
+            else (
+                False
+                if is_gate_tool(resolved.tool)
+                else (
+                    False
+                    if resolved.tool.cache is not None and not resolved.tool.cache.results
+                    else (
+                        False
+                        if resolved.tool.scope.delivery == "root"
+                        else any(resolved.options.paths)
+                    )
+                )
+            )
+        )

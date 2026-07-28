@@ -45,11 +45,12 @@ def collect_install_requirements_for_tools(
         tool = catalog.get_tool(tool_id)
         if not tool.install:
             continue
-        if tool.install.manager == "python":
-            python_packages[tool.install.package] = tool.install
-        elif tool.install.manager == "binary":
-            key = tool.install.binary or tool.install.package
-            binary_packages[key] = tool.install
+        match tool.install.manager:
+            case "python":
+                python_packages[tool.install.package] = tool.install
+            case "binary":
+                key = tool.install.binary or tool.install.package
+                binary_packages[key] = tool.install
     return python_packages, binary_packages
 
 
@@ -60,26 +61,23 @@ def write_manifest(
     binary_packages: dict[str, InstallDefinition],
 ) -> Path:
     manifest = read_manifest(project_root)
-    manifest.update(
-        {
-            "schema_version": MANIFEST_SCHEMA,
-            "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-            "packages": {
-                **manifest.get("packages", {}),
-                **{
-                    pkg: install_def.version or "latest"
-                    for pkg, install_def in python_packages.items()
-                },
+    manifest |= {
+        "schema_version": MANIFEST_SCHEMA,
+        "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        "packages": {
+            **manifest.get("packages", {}),
+            **{
+                pkg: install_def.version or "latest" for pkg, install_def in python_packages.items()
             },
-            "binaries": {
-                **manifest.get("binaries", {}),
-                **{
-                    name: install_def.version or "latest"
-                    for name, install_def in binary_packages.items()
-                },
+        },
+        "binaries": {
+            **manifest.get("binaries", {}),
+            **{
+                name: install_def.version or "latest"
+                for name, install_def in binary_packages.items()
             },
-        }
-    )
+        },
+    }
     manifest_path = tools_manifest_path(project_root)
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest_path
@@ -165,6 +163,4 @@ def read_manifest(project_root: Path) -> dict:
     if not manifest_path.is_file():
         return {}
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if not isinstance(data, dict):
-        return {}
-    return data
+    return data if isinstance(data, dict) else {}

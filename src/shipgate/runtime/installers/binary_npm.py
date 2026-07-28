@@ -40,9 +40,11 @@ class NpmInstaller:
             raise InstallError(
                 f"failed to install {package_spec}: {result.stderr.strip()}",
             )
-        installed = bin_dir / "node_modules" / ".bin" / binary_name
-        if sys.platform == "win32":
-            installed = installed.with_suffix(".cmd")
+        installed = (
+            (bin_dir / "node_modules" / ".bin" / binary_name).with_suffix(".cmd")
+            if sys.platform == "win32"
+            else bin_dir / "node_modules" / ".bin" / binary_name
+        )
         if not installed.is_file():
             raise InstallError(f"{install_def.package} install did not produce an executable")
         link_binary(installed, destination)

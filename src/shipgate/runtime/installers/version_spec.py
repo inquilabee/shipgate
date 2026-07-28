@@ -6,10 +6,8 @@ from shipgate.errors import InstallError
 
 
 def clean_pin(version: str) -> str:
-    cleaned = version.strip()
-    if cleaned.startswith("=="):
-        cleaned = cleaned[2:].strip()
-    return cleaned
+    stripped = version.strip()
+    return stripped[2:].strip() if stripped.startswith("==") else stripped
 
 
 def assert_exact_pin(version: str, *, kind: str) -> str:
@@ -25,9 +23,11 @@ def pip_package_spec(package: str, version: str) -> str:
     if not version.strip():
         return package
     cleaned = version.strip()
-    if cleaned.startswith(("=", "<", ">", "~", "!")):
-        return f"{package}{cleaned}"
-    return f"{package}=={clean_pin(cleaned)}"
+    return (
+        f"{package}{cleaned}"
+        if cleaned.startswith(("=", "<", ">", "~", "!"))
+        else f"{package}=={clean_pin(cleaned)}"
+    )
 
 
 def npm_package_spec(package: str, version: str) -> str:

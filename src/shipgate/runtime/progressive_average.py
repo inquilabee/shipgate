@@ -36,9 +36,8 @@ class ProgressiveMetricGate:
         findings: list[Finding] = []
         updates: dict[str, str] = {}
         for spec in specs:
-            past = cls.read_baseline(request.project_root, spec.cache_key)
-            if past is None:
-                past = spec.current
+            baseline = cls.read_baseline(request.project_root, spec.cache_key)
+            past = spec.current if baseline is None else baseline
             if cls.is_worse(spec.current, past, worse_when=spec.worse_when):
                 findings.append(
                     Finding(
@@ -56,17 +55,19 @@ class ProgressiveMetricGate:
 
         if updates:
             update_project_cache_env(request.project_root, updates)
-        if not findings:
-            return report
-        return CheckReport(
-            check_id=report.check_id,
-            tool_id=report.tool_id,
-            status="failed",
-            exit_code=report.exit_code,
-            findings=(*report.findings, *findings),
-            stdout_path=report.stdout_path,
-            stderr_path=report.stderr_path,
-            extra=report.extra,
+        return (
+            CheckReport(
+                check_id=report.check_id,
+                tool_id=report.tool_id,
+                status="failed",
+                exit_code=report.exit_code,
+                findings=(*report.findings, *findings),
+                stdout_path=report.stdout_path,
+                stderr_path=report.stderr_path,
+                extra=report.extra,
+            )
+            if findings
+            else report
         )
 
     @classmethod
@@ -176,20 +177,26 @@ class ProgressiveMetricGate:
             return None
         if not isinstance(cache_key, str) or not cache_key:
             return None
-        if kind == "minimum" and options_extra.get("minimum_mode") == "progressive":
-            label = "Minimum"
-            rule_id = "minimum-progressive"
-        elif kind == "maximum" and options_extra.get("maximum_mode") == "progressive":
-            label = "Maximum"
-            rule_id = "maximum-progressive"
-        else:
-            return None
-        return ProgressiveMetricSpec(
-            label=label,
-            current=float(current),
-            cache_key=cache_key,
-            worse_when=worse_when,
-            rule_id=rule_id,
+        return (
+            ProgressiveMetricSpec(
+                label="Minimum",
+                current=float(current),
+                cache_key=cache_key,
+                worse_when=worse_when,
+                rule_id="minimum-progressive",
+            )
+            if kind == "minimum" and options_extra.get("minimum_mode") == "progressive"
+            else (
+                ProgressiveMetricSpec(
+                    label="Maximum",
+                    current=float(current),
+                    cache_key=cache_key,
+                    worse_when=worse_when,
+                    rule_id="maximum-progressive",
+                )
+                if kind == "maximum" and options_extra.get("maximum_mode") == "progressive"
+                else None
+            )
         )
 
     @staticmethod
@@ -207,9 +214,7 @@ class ProgressiveMetricGate:
 
     @staticmethod
     def is_worse(current: float, past: float, *, worse_when: str) -> bool:
-        if worse_when == "higher":
-            return current > past
-        return current < past
+        return current > past if worse_when == "higher" else current < past
 
     @staticmethod
     def format_value(value: float) -> str:

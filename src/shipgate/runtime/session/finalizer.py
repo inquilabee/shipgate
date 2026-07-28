@@ -66,12 +66,14 @@ def finalize_failed_run(
 ) -> tuple[int, RunReport]:
     if write_reports:
         report = ReportStore(project_root).save_final(report)
-    if emit_failure_output and not command.quiet:
-        output = get_formatter(error_format).render(report)
-        if output:
-            import sys
+    if (
+        emit_failure_output
+        and not command.quiet
+        and (output := get_formatter(error_format).render(report))
+    ):
+        import sys
 
-            sys.stderr.write(output)
+        sys.stderr.write(output)
     if command.ci or is_ci_environment():
         write_github_step_summary(f"## ShipGate {report.mode}\n\nStatus: **{report.status}**\n")
     return 1, report

@@ -33,10 +33,7 @@ class PythonInstaller:
                 [sys.executable, "-m", "venv", str(venv)],
                 check=True,
             )
-        if sys.platform == "win32":
-            pip = venv / "Scripts" / "pip"
-        else:
-            pip = venv / "bin" / "pip"
+        pip = venv / "Scripts" / "pip" if sys.platform == "win32" else venv / "bin" / "pip"
         for package, install_def in sorted(packages.items()):
             self._refuse_known_bad(install_def)
             specs = [pip_package_spec(package, install_def.version)]

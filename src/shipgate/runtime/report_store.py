@@ -43,7 +43,7 @@ class ReportStore:
             "timestamp": datetime.now(UTC).isoformat(),
         }
         if metadata:
-            meta.update(metadata)
+            meta |= metadata
         (run_dir / "metadata.json").write_text(
             dumps_indented(meta, trailing_newline=False),
             encoding="utf-8",
@@ -87,9 +87,11 @@ class ReportStore:
         tmp.replace(self.index_path)
 
     def _load_index(self) -> list[dict]:
-        if not self.index_path.is_file():
-            return []
-        return json.loads(self.index_path.read_text(encoding="utf-8"))
+        return (
+            json.loads(self.index_path.read_text(encoding="utf-8"))
+            if self.index_path.is_file()
+            else []
+        )
 
     def list_runs(self) -> list[dict]:
         return self._load_index()
@@ -104,7 +106,7 @@ class ReportStore:
             meta = dict(json.loads(meta_path.read_text(encoding="utf-8")))
         elif not (run_dir / REPORT_FILENAME).is_file():
             raise FileNotFoundError(f"run not found: {safe_run_id}")
-        meta.update(metadata)
+        meta |= metadata
         meta.setdefault("run_id", safe_run_id)
         meta_path.parent.mkdir(parents=True, exist_ok=True)
         meta_path.write_text(
@@ -119,10 +121,9 @@ class ReportStore:
         if not path.is_file():
             failures_root = (self.root / "failures").resolve()
             failures = self._contained_run_dir(failures_root, safe_run_id) / REPORT_FILENAME
-            if failures.is_file():
-                path = failures
-            else:
+            if not failures.is_file():
                 raise FileNotFoundError(f"run not found: {safe_run_id}")
+            path = failures
         data = json.loads(path.read_text(encoding="utf-8"))
         return RunReport.from_dict(data)
 

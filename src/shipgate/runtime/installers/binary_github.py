@@ -99,9 +99,13 @@ class GitHubReleaseInstaller:
 
     @staticmethod
     def resolve_release_version(repo: str, version: str) -> str:
-        if version != "latest":
-            return version if version.startswith("v") else f"v{version.lstrip('v')}"
-        return GitHubReleaseInstaller.fetch_latest_release_tag(repo)
+        return (
+            version
+            if version.startswith("v")
+            else f"v{version.lstrip('v')}"
+            if version != "latest"
+            else GitHubReleaseInstaller.fetch_latest_release_tag(repo)
+        )
 
     @staticmethod
     def build_github_release_url(
@@ -117,10 +121,11 @@ class GitHubReleaseInstaller:
                 download, GitHubReleaseInstaller.github_arch()
             ),
         )
-        if version == "latest":
-            url = f"https://github.com/{repo}/releases/latest/download/{asset_name}"
-        else:
-            url = f"https://github.com/{repo}/releases/download/{resolved_version}/{asset_name}"
+        url = (
+            f"https://github.com/{repo}/releases/latest/download/{asset_name}"
+            if version == "latest"
+            else f"https://github.com/{repo}/releases/download/{resolved_version}/{asset_name}"
+        )
         return url, asset_name
 
     @staticmethod

@@ -48,10 +48,7 @@ def system_environment() -> ExecutionEnvironment:
 def managed_environment(project_root: Path) -> ExecutionEnvironment:
     venv = project_root / PROJECT_MANAGED_PYTHON_ENV
     bin_dir = project_root / PROJECT_MANAGED_BIN_DIR
-    if sys.platform == "win32":
-        scripts = venv / "Scripts"
-    else:
-        scripts = venv / "bin"
+    scripts = venv / "Scripts" if sys.platform == "win32" else venv / "bin"
     env = filter_environ(dict(os.environ))
     env.pop("VIRTUAL_ENV", None)
     path_parts: list[str] = []
@@ -91,8 +88,7 @@ def resolve_executable(
             return found
     from shutil import which
 
-    found = which(name)
-    if found:
+    if found := which(name):
         return found
     raise InstallError(
         f"executable not found: {name}",
@@ -108,9 +104,7 @@ def find_in_bin_dir(bin_dir: Path, name: str) -> str | None:
         if candidate.is_file():
             return str(candidate)
     candidate = bin_dir / name
-    if candidate.is_file():
-        return str(candidate)
-    return None
+    return str(candidate) if candidate.is_file() else None
 
 
 def tools_manifest_path(project_root: Path) -> Path:

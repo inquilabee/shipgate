@@ -60,6 +60,23 @@ class CheckRunner:
         self._executor = executor
         self._executor_is_default = executor_is_default
 
+    def _run_one_selected(
+        self,
+        selected: SelectedTool,
+        command: RunCommand,
+        context: RunContext,
+        run_id: str,
+    ) -> CheckReport:
+        report = self.run_selected_tool(
+            selected=selected,
+            command=command,
+            context=context,
+            run_id=run_id,
+        )
+        if context.fail_fast and report.status == "failed":
+            raise FailFastError(report)
+        return report
+
     def run_all_checks(
         self,
         *,
@@ -69,35 +86,25 @@ class CheckRunner:
         on_progress: Callable[..., None] | None,
         should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
-        checks_total = len(context.selected_tools)
+        checks_total = context.selected_tools.__len__()
         emit_progress(on_progress, "", 0, checks_total)
-
-        def run_one(selected: SelectedTool) -> CheckReport:
-            report = self.run_selected_tool(
-                selected=selected,
-                command=command,
-                context=context,
-                run_id=run_id,
-            )
-            if context.fail_fast and report.status == "failed":
-                raise FailFastError(report)
-            return report
-
-        if context.parallel:
-            return CheckRunner._run_parallel_checks(
+        return (
+            CheckRunner._run_parallel_checks(
                 context.selected_tools,
-                run_one,
+                lambda selected: self._run_one_selected(selected, command, context, run_id),
                 fail_fast=context.fail_fast,
                 on_progress=on_progress,
                 checks_total=checks_total,
                 should_cancel=should_cancel,
             )
-        return CheckRunner._run_sequential_checks(
-            context.selected_tools,
-            run_one,
-            on_progress=on_progress,
-            checks_total=checks_total,
-            should_cancel=should_cancel,
+            if context.parallel
+            else CheckRunner._run_sequential_checks(
+                context.selected_tools,
+                lambda selected: self._run_one_selected(selected, command, context, run_id),
+                on_progress=on_progress,
+                checks_total=checks_total,
+                should_cancel=should_cancel,
+            )
         )
 
     @staticmethod
@@ -137,6 +144,40 @@ class CheckRunner:
         return reports
 
     @staticmethod
+    def _run_one_with_progress(
+        selected: SelectedTool,
+        *,
+        run_one: Callable[[SelectedTool], CheckReport],
+        should_cancel: Callable[[], bool] | None,
+        lock: threading.Lock,
+        progress: dict[str, int | bool],
+        on_progress: Callable[..., None] | None,
+        checks_total: int,
+    ) -> CheckReport:
+        if should_cancel is not None and should_cancel():
+            progress["cancelled"] = True
+            raise FailFastError(
+                CheckReport(
+                    check_id=selected.tool_id,
+                    tool_id=selected.tool_id,
+                    status="skipped",
+                    exit_code=0,
+                    findings=(),
+                )
+            )
+        report = run_one(selected)
+        with lock:
+            progress["completed"] = int(progress["completed"]) + 1
+            emit_progress(
+                on_progress,
+                selected.tool_id,
+                int(progress["completed"]),
+                checks_total,
+                completed_check=report,
+            )
+        return report
+
+    @staticmethod
     def _run_parallel_checks(
         selected_tools: tuple[SelectedTool, ...] | list[SelectedTool],
         run_one: Callable[[SelectedTool], CheckReport],
@@ -146,45 +187,25 @@ class CheckRunner:
         checks_total: int,
         should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
-        completed = 0
         lock = threading.Lock()
-        cancelled = False
-
-        def run_one_with_progress(selected: SelectedTool) -> CheckReport:
-            nonlocal completed, cancelled
-            if should_cancel is not None and should_cancel():
-                cancelled = True
-                raise FailFastError(
-                    CheckReport(
-                        check_id=selected.tool_id,
-                        tool_id=selected.tool_id,
-                        status="skipped",
-                        exit_code=0,
-                        findings=(),
-                    )
-                )
-            report = run_one(selected)
-            with lock:
-                completed += 1
-                emit_progress(
-                    on_progress,
-                    selected.tool_id,
-                    completed,
-                    checks_total,
-                    completed_check=report,
-                )
-            return report
+        progress: dict[str, int | bool] = {"completed": 0, "cancelled": False}
 
         try:
             return run_parallel(
                 list(selected_tools),
-                run_one_with_progress,
-                fail_fast=fail_fast or cancelled,
+                lambda selected: CheckRunner._run_one_with_progress(
+                    selected,
+                    run_one=run_one,
+                    should_cancel=should_cancel,
+                    lock=lock,
+                    progress=progress,
+                    on_progress=on_progress,
+                    checks_total=checks_total,
+                ),
+                fail_fast=fail_fast or progress["cancelled"],
             )
         except FailFastError as exc:
-            if exc.report.status == "skipped":
-                return []
-            return [exc.report]
+            return [] if exc.report.status == "skipped" else [exc.report]
 
     def run_selected_tool(
         self,
@@ -236,8 +257,8 @@ class CheckRunner:
         if is_gate_tool(resolved.tool):
             argv, env = prepare_gate_execution(resolved, project=project)
         else:
-            if self._executor_is_default:
-                executable = resolve_executable(
+            executable = (
+                resolve_executable(
                     resolved.tool.executable,
                     resolved.environment,
                     install_binary=(
@@ -245,8 +266,9 @@ class CheckRunner:
                     ),
                     project_root=resolved.project_root,
                 )
-            else:
-                executable = resolved.tool.executable
+                if self._executor_is_default
+                else resolved.tool.executable
+            )
             argv = build_tool_argv(resolved, executable=executable)
             env = dict(resolved.environment.env)
         if display_cli:

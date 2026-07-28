@@ -35,7 +35,9 @@ class BinaryInstallStrategy(Protocol):
         binary_name: str,
         install_def: InstallDefinition,
         destination: Path,
-    ) -> None: ...
+    ) -> None:
+        """Install a binary tool to the destination path."""
+        ...
 
 
 class BinaryInstaller:
@@ -60,9 +62,11 @@ class BinaryInstaller:
         for _name, install_def in sorted(packages.items()):
             self._refuse_known_bad(install_def)
             binary_name = install_def.binary or install_def.package
-            destination = bin_dir / binary_name
-            if sys.platform == "win32":
-                destination = destination.with_suffix(".exe")
+            destination = (
+                (bin_dir / binary_name).with_suffix(".exe")
+                if sys.platform == "win32"
+                else bin_dir / binary_name
+            )
             if destination.is_file() and not force:
                 continue
             if destination.is_file() and force:

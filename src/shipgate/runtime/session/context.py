@@ -53,9 +53,7 @@ class RunContext:
 
 def resolve_error_format(command: RunCommand, project: ProjectConfig) -> str:
     explicit = command.error_format or project.error_format
-    if command.ci or is_ci_environment():
-        return apply_ci_defaults(explicit)
-    return explicit or "json"
+    return apply_ci_defaults(explicit) if command.ci or is_ci_environment() else explicit or "json"
 
 
 def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> RunContext:
