@@ -51,6 +51,8 @@ Gates apply to the full codebase with no legacy carve-outs; see `.cursor/rules/q
 
 **Pre-commit:** mirrors format → check; only non-catalog hooks (e.g. djlint for Jinja) stay separate. The `refactor-check` hook runs `python -m refactor check --strict` on staged `src/` and `tests/refactor/` Python files (auto + hint; default check is auto-only).
 
+**Refactor:** ships in the same wheel as ShipGate (`pip install shipgate` → `import refactor` and `refactor` / `python -m refactor` CLIs). No catalog/PolicyGate coupling. Dogfood/pre-commit keep `python -m refactor` with `PYTHONPATH=src` for src-layout reliability.
+
 **Refactor dogfood scope:** `src` + `tests/refactor` only. `python -m refactor check --strict` / `check --strict .` maps to that scope when those roots exist (fixture-heavy `tests/unit`, `tests/ui`, … trip test-only rules by design). Pass an explicit tree such as `tests/unit` when you intentionally want that noise. GPSG stays opt-in via `--enable gpsg`.
 
 **`shipgate init` scaffolds:** `.shipgate/shipgate.yaml` (yaml mode) or `[tool.shipgate]` in `pyproject.toml` (pyproject mode), `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, `.shipgate/.gitignore`, `.shipgate/cache/.env` (`SHIPGATE_ROOT`, `SHIPGATE_POLICY`). Example pyproject policy: `.shipgate/pyproject.toml.example`.

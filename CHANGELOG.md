@@ -4,6 +4,11 @@
 
 ## Unreleased
 
+### Added
+
+- Ship the standalone `refactor` package in the same wheel as ShipGate, with a
+  `refactor` console script and inventory YAML package data.
+
 ## v0.1.5
 
 ### Added

@@ -1964,6 +1964,7 @@ name = "shipgate"
 version = "0.1.5"
 source = { editable = "." }
 dependencies = [
+    { name = "libcst" },
     { name = "pathspec" },
     { name = "pyyaml" },
     { name = "typer" },
@@ -1986,7 +1987,6 @@ dev = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "jinja2" },
-    { name = "libcst" },
     { name = "mdformat" },
     { name = "mdformat-frontmatter" },
     { name = "pre-commit" },
@@ -2006,6 +2006,7 @@ dev = [
 requires-dist = [
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.115" },
     { name = "jinja2", marker = "extra == 'server'", specifier = ">=3.1" },
+    { name = "libcst", specifier = ">=1.4" },
     { name = "pathspec", specifier = ">=0.12" },
     { name = "python-multipart", marker = "extra == 'server'", specifier = ">=0.0.9" },
     { name = "pyyaml", specifier = ">=6.0" },
@@ -2023,7 +2024,6 @@ dev = [
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jinja2", specifier = ">=3.1" },
-    { name = "libcst", specifier = ">=1.4" },
     { name = "mdformat", specifier = ">=0.7" },
     { name = "mdformat-frontmatter", specifier = ">=2.0" },
     { name = "pre-commit", specifier = ">=4.0" },
