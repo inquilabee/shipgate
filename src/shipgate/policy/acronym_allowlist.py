@@ -158,7 +158,9 @@ class AcronymAllowlistGate(PolicyGate):
         )
 
     @staticmethod
-    def _settings_from_config(config: dict[str, Any]) -> tuple[tuple[str, ...], Path | None]:
+    def _settings_from_config(
+        config: dict[str, Any],
+    ) -> tuple[tuple[str, ...], Path | None]:
         scan_roots = tuple(str(item) for item in config.get("scan_roots", ["."]))
         allowlist_file = config.get("allowlist_file")
         allowlist_path = Path(str(allowlist_file)) if allowlist_file else None
@@ -238,7 +240,9 @@ class AcronymAllowlistGate(PolicyGate):
         return tokens
 
     @staticmethod
-    def _findings_from_violations(violations: list[AcronymViolation]) -> list[PolicyFinding]:
+    def _findings_from_violations(
+        violations: list[AcronymViolation],
+    ) -> list[PolicyFinding]:
         return [
             PolicyFinding(
                 rule_id="undocumented-acronym",

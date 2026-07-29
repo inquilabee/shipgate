@@ -232,11 +232,11 @@ class BodySequenceRewriteRule(StatementRewriteRule):
             def __init__(self, *, path: str) -> None:
                 super().__init__(path=path)
 
-            def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+            def visit_Module(self, node: cst.Module) -> bool:
                 self.check_body(node.body)
                 return True
 
-            def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+            def visit_IndentedBlock(
                 self,
                 node: cst.IndentedBlock,
             ) -> bool:
@@ -366,16 +366,16 @@ class ClassFunctionFirstArgRule(StatementRewriteRule):
                 super().__init__(path=path)
                 self.class_depth = 0
 
-            def visit_ClassDef(self, node: cst.ClassDef) -> bool:  # ruff:ignore[invalid-function-name]
+            def visit_ClassDef(self, node: cst.ClassDef) -> bool:
                 _ = node
                 self.class_depth += 1
                 return True
 
-            def leave_ClassDef(self, original_node: cst.ClassDef) -> None:  # ruff:ignore[invalid-function-name]
+            def leave_ClassDef(self, original_node: cst.ClassDef) -> None:
                 _ = original_node
                 self.class_depth -= 1
 
-            def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:  # ruff:ignore[invalid-function-name]
+            def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
                 if self.class_depth == 0:
                     return True
                 replacement = rule.match_function(node)

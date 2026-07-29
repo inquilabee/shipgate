@@ -35,7 +35,7 @@ class RemoveUnnecessaryCastRule(CallRewriteRule):
                 ParentNodeProvider,
             )
 
-            def visit_Call(  # ruff:ignore[invalid-function-name]
+            def visit_Call(
                 self,
                 node: cst.Call,
             ) -> bool:

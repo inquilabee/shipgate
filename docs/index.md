@@ -23,7 +23,7 @@ scanners, metric gates, and structural Python rules without hand-rolled CI glue.
 ## Where to start
 
 | You want… | Start here |
-| --- | --- |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Install and run in minutes | [README on GitHub](https://github.com/inquilabee/shipgate/blob/main/README.md) — quick commands only |
 | Suites, CI, error formats, gates | [Usage guide](usage.md) |
 | Structural Python refactor rules | [Refactor](refactor.md) |
@@ -92,7 +92,7 @@ Browse suite runs and findings at `http://127.0.0.1:8765/`.
 ## Learn more
 
 | Guide | Contents |
-| --- | --- |
+| --------------------------------- | ----------------------------------------------------------- |
 | [Usage](usage.md) | Commands, suites, error formats, CI, gates |
 | [Refactor](refactor.md) | Structural Python rules (`check`, `fix`, `list`, `explain`) |
 | [Configuration](configuration.md) | Policy, scopes, Radon metric gates |

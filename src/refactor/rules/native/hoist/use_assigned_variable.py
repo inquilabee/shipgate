@@ -1,4 +1,4 @@
-"""Native rule for ``use-assigned-variable`` (Sourcery parity)."""
+"""Native rule for ``use-assigned-variable`` (external refactor parity)."""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ class UseAssignedVariableRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+        def visit_IndentedBlock(
             self,
             node: cst.IndentedBlock,
         ) -> bool:
@@ -112,7 +112,7 @@ class UseAssignedVariableRule:
             def __init__(self) -> None:
                 self.found = False
 
-            def visit_Call(  # ruff:ignore[invalid-function-name]
+            def visit_Call(
                 self,
                 node: cst.Call,
             ) -> bool:
@@ -151,7 +151,7 @@ class UseAssignedVariableRule:
             self.name = name
             self.replaced = False
 
-        def visit_AssignTarget(  # ruff:ignore[invalid-function-name]
+        def visit_AssignTarget(
             self,
             node: cst.AssignTarget,
         ) -> bool:
@@ -159,7 +159,7 @@ class UseAssignedVariableRule:
             _ = self, node
             return False
 
-        def visit_AugAssign(  # ruff:ignore[invalid-function-name]
+        def visit_AugAssign(
             self,
             node: cst.AugAssign,
         ) -> bool:
@@ -167,7 +167,7 @@ class UseAssignedVariableRule:
             node.value.visit(self)
             return False
 
-        def visit_AnnAssign(  # ruff:ignore[invalid-function-name]
+        def visit_AnnAssign(
             self,
             node: cst.AnnAssign,
         ) -> bool:

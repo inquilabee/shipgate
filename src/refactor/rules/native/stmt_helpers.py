@@ -11,7 +11,10 @@ from refactor.rules.native.stmt_if_blocks import (
     if_else_blocks,
     single_assign_block,
 )
-from refactor.rules.native.stmt_if_merge import merge_adjacent_ifs_with_same_test, merge_nested_if
+from refactor.rules.native.stmt_if_merge import (
+    merge_adjacent_ifs_with_same_test,
+    merge_nested_if,
+)
 from refactor.rules.native.stmt_loop_helpers import (
     dict_items_call,
     name_target_for_body_stmt,

@@ -37,7 +37,7 @@ class BooleanIfExpIdentityRule:
         return apply_with_transformer(source, BooleanIfExpIdentityRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_IfExp(  # ruff:ignore[invalid-function-name]
+        def leave_IfExp(
             self,
             original_node: cst.IfExp,
             updated_node: cst.IfExp,
@@ -47,7 +47,7 @@ class BooleanIfExpIdentityRule:
             return updated_node if replacement is None else replacement
 
     class Finder(HitCollector):
-        def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_IfExp(self, node: cst.IfExp) -> bool:
             replacement = BooleanIfExpIdentityRule.match_identity(node)
             if replacement is None:
                 return True

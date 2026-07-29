@@ -43,19 +43,19 @@ class ReturnYieldFinder(HitCollector):
         super().__init__(path=path)
         self.function_depth = 0
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
         _ = node
         self.function_depth += 1
         return True
 
-    def leave_FunctionDef(  # ruff:ignore[invalid-function-name]
+    def leave_FunctionDef(
         self,
         original_node: cst.FunctionDef,
     ) -> None:
         _ = original_node
         self.function_depth -= 1
 
-    def visit_Return(self, node: cst.Return) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Return(self, node: cst.Return) -> bool:
         if self.function_depth == 0:
             self.hits.append(
                 make_hit(
@@ -68,7 +68,7 @@ class ReturnYieldFinder(HitCollector):
             )
         return True
 
-    def visit_Yield(self, node: cst.Yield) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Yield(self, node: cst.Yield) -> bool:
         if self.function_depth == 0:
             self.hits.append(
                 make_hit(

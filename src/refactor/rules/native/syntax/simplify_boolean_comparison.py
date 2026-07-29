@@ -37,7 +37,7 @@ class SimplifyBooleanComparisonRule:
         return apply_with_transformer(source, SimplifyBooleanComparisonRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_Comparison(  # ruff:ignore[invalid-function-name]
+        def leave_Comparison(
             self,
             original_node: cst.Comparison,
             updated_node: cst.Comparison,
@@ -47,7 +47,7 @@ class SimplifyBooleanComparisonRule:
             return updated_node if replacement is None else replacement
 
     class Finder(HitCollector):
-        def visit_Comparison(  # ruff:ignore[invalid-function-name]
+        def visit_Comparison(
             self,
             node: cst.Comparison,
         ) -> bool:

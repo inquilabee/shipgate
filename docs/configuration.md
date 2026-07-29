@@ -44,7 +44,7 @@ Semgrep (Semgrep does not support 3.14 yet).
 ## Key fields
 
 | Field | Role |
-| --- | --- |
+| -------------- | ----------------------------------------------------- |
 | `suite` | Default checklist (`standard`, `full`, `security`, …) |
 | `env` | `managed` installs tools under `.shipgate/tools/` |
 | `target` | Default path root for `check` / `format` |
@@ -62,7 +62,7 @@ Letter-rank `threshold` still gates each block (cyclomatic complexity) or file
 computed from Radon JSON:
 
 | Metric | Meaning | Prefer for gating? |
-| --- | --- | --- |
+| --------------------- | ------------------------------------------ | ----------------------------------- |
 | `average` | Arithmetic mean | Useful, but skewed by outliers |
 | `median` | 50th percentile | Preferred central tendency (robust) |
 | `minimum` / `maximum` | Worst single value | Strict; one outlier fails the gate |
@@ -85,7 +85,7 @@ summary (`n`, median, mean) and the worst offenders (lowest MI files / highest C
 blocks) so humans and agents can fix without re-running ad-hoc radon scripts.
 
 | Tool | Typical keys | Worse when |
-| --- | --- | --- |
+| ---------- | -------------------------------------------------------------------- | ----------------- |
 | `radon.mi` | `median-*`, `p5-*`, `p10-*` (also `average-*`, `minimum-*`, `p95-*`) | lower (floors) |
 | `radon.cc` | `median-*`, `p95-*` (also `average-*`, `maximum-*`, `p5-*`, `p10-*`) | higher (ceilings) |
 

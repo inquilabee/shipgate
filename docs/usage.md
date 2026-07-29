@@ -55,7 +55,7 @@ shipgate format --target .
 ## Suites
 
 | Suite | Use it for |
-| --- | --- |
+| --------------------- | --------------------------------------------------------- |
 | `python-quality` | Core Python lint + type check (`ruff.lint`, `ty.check`) |
 | `format` | Formatter/autofix tools that write files |
 | `security` | Bandit, Gitleaks, Semgrep, pip-audit |
@@ -95,7 +95,7 @@ List live names anytime: `shipgate list suites`.
 ## Error formats
 
 | Format | Role |
-| --- | --- |
+| --------- | ------------------------------------------- |
 | `json` | Pretty JSON report, including `report_path` |
 | `log` | Timestamped finding lines |
 | `text` | Bullet-style finding lines |

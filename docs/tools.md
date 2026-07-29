@@ -15,7 +15,7 @@ shipgate list checks    # alias
 ## Bundled tools
 
 | Tool | Purpose |
-| --- | --- |
+| ----------------------------------------------------------- | -------------------------------------------------- |
 | [Bandit](https://bandit.readthedocs.io/) | Security issue scanner for Python |
 | [codespell](https://github.com/codespell-project/codespell) | Common misspellings in text and code |
 | [deadcode](https://github.com/alanedwardes/deadcode) | Unused Python code via static analysis |

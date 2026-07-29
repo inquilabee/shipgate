@@ -39,7 +39,7 @@ class RemoveUnreachableCodeRule:
         def __init__(self, *, path: str) -> None:
             super().__init__(path=path, checker=RemoveUnreachableCodeRule.check_block)
 
-        def visit_SimpleStatementLine(  # ruff:ignore[invalid-function-name]
+        def visit_SimpleStatementLine(
             self,
             node: cst.SimpleStatementLine,
         ) -> bool:

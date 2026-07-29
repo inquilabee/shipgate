@@ -102,9 +102,11 @@ class GitHubReleaseInstaller:
         return (
             version
             if version.startswith("v")
-            else f"v{version.lstrip('v')}"
-            if version != "latest"
-            else GitHubReleaseInstaller.fetch_latest_release_tag(repo)
+            else (
+                f"v{version.lstrip('v')}"
+                if version != "latest"
+                else GitHubReleaseInstaller.fetch_latest_release_tag(repo)
+            )
         )
 
     @staticmethod

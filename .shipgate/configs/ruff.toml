@@ -51,3 +51,7 @@ max-complexity = 8
 [lint.per-file-ignores]
 "tests/**" = ["assert", "subprocess-without-shell-equals-true"]
 "tests/refactor/**" = ["assert", "subprocess-without-shell-equals-true"]
+# libcst visitors must keep CamelCase method names (visit_ClassDef, …).
+"src/refactor/**" = ["invalid-function-name"]
+# Placeholder count is dynamic; values are bound via parameter tuple.
+"src/shipgate/frontend/storage/sqlite.py" = ["hardcoded-sql-expression"]

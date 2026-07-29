@@ -94,7 +94,7 @@ uv run shipgate list checks
 ### How selection interacts
 
 | Invocation | What runs |
-| --- | --- |
+| ----------------------------- | ----------------------------------------------- |
 | `shipgate check` | Project `suite` (or built-in default), expanded |
 | `shipgate check --suite NAME` | That suite only, expanded |
 | `shipgate check --check ID` | That single tool |
@@ -104,7 +104,7 @@ uv run shipgate list checks
 ## What the YAML controls (any tool)
 
 | Field | Effect at runtime |
-| --- | --- |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `executable` / `subcommand` | Leading argv tokens |
 | `cli` + `option_order` | How config, format, output, paths become flags |
 | `configuration` | Which config files are discovered or fall back to bundled |

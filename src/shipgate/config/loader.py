@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from shipgate.config.core import ProjectConfigParser, PyprojectPolicyLoader, ScopeSourceResolver
+from shipgate.config.core import (
+    ProjectConfigParser,
+    PyprojectPolicyLoader,
+    ScopeSourceResolver,
+)
 from shipgate.config.discovery import discover_yaml_config_path
 from shipgate.config.merge import deep_merge_config
 from shipgate.core.yaml_io import load_yaml_mapping

@@ -58,7 +58,7 @@ error formats, CI, gates, and the full tool catalog, use the
 [documentation site](https://inquilabee.github.io/shipgate/).
 
 | Guide | Contents |
-| --- | --- |
+| --------------------------------------------------------------------- | ----------------------------------------------------------- |
 | [Usage](https://inquilabee.github.io/shipgate/usage/) | Commands, suites, error formats, CI, pre-commit |
 | [Refactor](https://inquilabee.github.io/shipgate/refactor/) | Structural Python rules (`check`, `fix`, `list`, `explain`) |
 | [Configuration](https://inquilabee.github.io/shipgate/configuration/) | Policy files, scopes, Radon metric gates |

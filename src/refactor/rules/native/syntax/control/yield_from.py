@@ -40,7 +40,7 @@ class YieldFromRule:
         return apply_with_transformer(source, YieldFromRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_IndentedBlock(  # ruff:ignore[invalid-function-name]
+        def leave_IndentedBlock(
             self,
             original_node: cst.IndentedBlock,
             updated_node: cst.IndentedBlock,

@@ -16,7 +16,8 @@ from refactor.rules.native.gpsg.naming import UpperCamelCaseClassesRule
 from refactor.runner import check_paths
 
 GPSG_IDS = frozenset(entry.id for entry in load_inventory() if "gpsg" in entry.packs)
-# Sourcery 32 minus Py2-only do-not-use-has-key; avoid-global-variables remains inventory stub.
+# GPSG pack baseline of 32 minus Py2-only do-not-use-has-key;
+# avoid-global-variables remains inventory stub.
 EXPECTED_GPSG_INVENTORY = 31
 
 

@@ -36,7 +36,7 @@ class TupleLiteralRule:
         return apply_with_transformer(source, TupleLiteralRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_Call(  # ruff:ignore[invalid-function-name]
+        def leave_Call(
             self,
             original_node: cst.Call,
             updated_node: cst.Call,
@@ -45,7 +45,7 @@ class TupleLiteralRule:
             return cst.Tuple(elements=[]) if is_empty_call(updated_node, "tuple") else updated_node
 
     class Finder(HitCollector):
-        def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Call(self, node: cst.Call) -> bool:
             if not is_empty_call(node, "tuple"):
                 return True
             self.hits.append(TupleLiteralRule.hit_for(node, self.path))

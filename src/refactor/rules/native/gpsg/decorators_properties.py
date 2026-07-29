@@ -32,7 +32,7 @@ class DoNotUseStaticmethodRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -66,7 +66,7 @@ class AvoidTrivialPropertiesRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_ClassDef(self, node: cst.ClassDef) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool:
             methods = [item for item in node.body.body if isinstance(item, cst.FunctionDef)]
             getters = {
                 item.name.value: item

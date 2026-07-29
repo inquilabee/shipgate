@@ -65,7 +65,7 @@ class ProjectConfigParser:
             parallel=self._raw.get("parallel", False),
             fail_fast=self._raw.get("fail-fast", False),
             changed_only=self._raw.get("changed-only", False),
-            since=str(self._raw["since"]) if self._raw.get("since") is not None else None,
+            since=(str(self._raw["since"]) if self._raw.get("since") is not None else None),
             allowlists=allowlists,
         )
 

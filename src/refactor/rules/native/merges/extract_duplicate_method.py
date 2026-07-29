@@ -51,13 +51,17 @@ class ExtractDuplicateMethodRule(ClassRewriteRule):
         return None
 
     @staticmethod
-    def _method_body_statements(method: cst.FunctionDef) -> tuple[cst.BaseStatement, ...]:
+    def _method_body_statements(
+        method: cst.FunctionDef,
+    ) -> tuple[cst.BaseStatement, ...]:
         body = method.body
         return cast(
             "tuple[cst.BaseStatement, ...]",
-            tuple(body.body)
-            if isinstance(body, cst.IndentedBlock | cst.SimpleStatementSuite)
-            else (),
+            (
+                tuple(body.body)
+                if isinstance(body, cst.IndentedBlock | cst.SimpleStatementSuite)
+                else ()
+            ),
         )
 
     @classmethod

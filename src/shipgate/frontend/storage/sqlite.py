@@ -259,7 +259,7 @@ class SqliteStorage:
             rule_id=rule_id,
         )
         # where/params come from findings_filter_clause (column allowlist), not user SQL.
-        query = f"SELECT COUNT(*) FROM findings WHERE {where}"  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
+        query = f"SELECT COUNT(*) FROM findings WHERE {where}"  # nosec B608
         with self._connect() as conn:
             row = conn.execute(query, params).fetchone()
         return int(row[0])
@@ -291,7 +291,7 @@ class SqliteStorage:
             return None
         placeholders = ", ".join("?" for _ in COMPLETED_STATUSES)
         query = (
-            f"SELECT * FROM runs WHERE branch = ? AND status IN ({placeholders}) "  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
+            f"SELECT * FROM runs WHERE branch = ? AND status IN ({placeholders}) "  # nosec B608
             "AND started_at < ? ORDER BY started_at DESC LIMIT 1"
         )
         with self._connect() as conn:
@@ -321,6 +321,6 @@ class SqliteStorage:
             if not ids:
                 return 0
             placeholders = ", ".join("?" for _ in ids)
-            conn.execute(f"DELETE FROM findings WHERE run_id IN ({placeholders})", ids)  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
-            conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # ruff:ignore[hardcoded-sql-expression]  # nosec B608
+            conn.execute(f"DELETE FROM findings WHERE run_id IN ({placeholders})", ids)  # nosec B608
+            conn.execute(f"DELETE FROM runs WHERE id IN ({placeholders})", ids)  # nosec B608
             return len(ids)

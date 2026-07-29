@@ -131,90 +131,90 @@ class CombinedRuleCollector(HitCollector):
         self.body_sequence_rules = self.rules_for_base(rules, BodySequenceRewriteRule)
         self.body_cleanup_rules = self.rules_for_base(rules, BodyCleanupRule)
 
-    def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Call(self, node: cst.Call) -> bool:
         self.record_expr_rules(node, self.call_rules)
         return True
 
-    def visit_BinaryOperation(  # ruff:ignore[invalid-function-name]
+    def visit_BinaryOperation(
         self,
         node: cst.BinaryOperation,
     ) -> bool:
         self.record_expr_rules(node, self.binary_op_rules)
         return True
 
-    def visit_BooleanOperation(  # ruff:ignore[invalid-function-name]
+    def visit_BooleanOperation(
         self,
         node: cst.BooleanOperation,
     ) -> bool:
         self.record_expr_rules(node, self.boolean_op_rules)
         return True
 
-    def visit_UnaryOperation(  # ruff:ignore[invalid-function-name]
+    def visit_UnaryOperation(
         self,
         node: cst.UnaryOperation,
     ) -> bool:
         self.record_expr_rules(node, self.unary_op_rules)
         return True
 
-    def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_IfExp(self, node: cst.IfExp) -> bool:
         self.record_expr_rules(node, self.if_exp_rules)
         return True
 
-    def visit_Comparison(self, node: cst.Comparison) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Comparison(self, node: cst.Comparison) -> bool:
         self.record_expr_rules(node, self.comparison_rules)
         return True
 
-    def visit_Dict(self, node: cst.Dict) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Dict(self, node: cst.Dict) -> bool:
         self.record_expr_rules(node, self.dict_rules)
         return True
 
-    def visit_Set(self, node: cst.Set) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Set(self, node: cst.Set) -> bool:
         self.record_expr_rules(node, self.set_rules)
         return True
 
-    def visit_Subscript(self, node: cst.Subscript) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Subscript(self, node: cst.Subscript) -> bool:
         self.record_expr_rules(node, self.subscript_rules)
         return True
 
-    def visit_FormattedString(  # ruff:ignore[invalid-function-name]
+    def visit_FormattedString(
         self,
         node: cst.FormattedString,
     ) -> bool:
         self.record_expr_rules(node, self.formatted_string_rules)
         return True
 
-    def visit_If(self, node: cst.If) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_If(self, node: cst.If) -> bool:
         self.record_stmt_rules(node, self.if_rules)
         return True
 
-    def visit_For(self, node: cst.For) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_For(self, node: cst.For) -> bool:
         self.record_stmt_rules(node, self.for_rules)
         return True
 
-    def visit_While(self, node: cst.While) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_While(self, node: cst.While) -> bool:
         self.record_stmt_rules(node, self.while_rules)
         return True
 
-    def visit_Try(self, node: cst.Try) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Try(self, node: cst.Try) -> bool:
         self.record_stmt_rules(node, self.try_rules)
         return True
 
-    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
         self.record_stmt_rules(node, self.function_rules)
         return True
 
-    def visit_SimpleStatementLine(  # ruff:ignore[invalid-function-name]
+    def visit_SimpleStatementLine(
         self,
         node: cst.SimpleStatementLine,
     ) -> bool:
         self.record_stmt_rules(node, self.simple_statement_line_rules)
         return True
 
-    def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Module(self, node: cst.Module) -> bool:
         self.record_body_rules(node.body)
         return True
 
-    def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+    def visit_IndentedBlock(
         self,
         node: cst.IndentedBlock,
     ) -> bool:

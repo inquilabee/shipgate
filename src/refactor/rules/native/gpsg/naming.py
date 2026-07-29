@@ -47,7 +47,7 @@ class AvoidSingleCharacterNamesVariablesRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Assign(self, node: cst.Assign) -> bool:
             for target in node.targets:
                 name = target.target
                 if not isinstance(name, cst.Name):
@@ -65,7 +65,7 @@ class AvoidSingleCharacterNamesVariablesRule:
                 )
             return True
 
-        def visit_AnnAssign(  # ruff:ignore[invalid-function-name]
+        def visit_AnnAssign(
             self,
             node: cst.AnnAssign,
         ) -> bool:
@@ -105,7 +105,7 @@ class AvoidSingleCharacterNamesFunctionsRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -138,11 +138,11 @@ class NameTypeSuffixRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Assign(self, node: cst.Assign) -> bool:
             self.check_targets(node.targets)
             return True
 
-        def visit_AnnAssign(  # ruff:ignore[invalid-function-name]
+        def visit_AnnAssign(
             self,
             node: cst.AnnAssign,
         ) -> bool:
@@ -188,7 +188,7 @@ class SnakeCaseVariableDeclarationsRule:
             super().__init__(path=path)
             self._in_function = 0
 
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -196,18 +196,19 @@ class SnakeCaseVariableDeclarationsRule:
             self._in_function += 1
             return True
 
-        def leave_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def leave_FunctionDef(
             self,
             original_node: cst.FunctionDef,
         ) -> None:
             _ = original_node
             self._in_function = max(0, self._in_function - 1)
 
-        def visit_AnnAssign(  # ruff:ignore[invalid-function-name]
+        def visit_AnnAssign(
             self,
             node: cst.AnnAssign,
         ) -> bool:
-            # Sourcery: bare annotated locals in functions (no value) that aren't snake_case.
+            # External refactor rules: bare annotated locals in functions
+            # (no value) that aren't snake_case.
             if self._in_function == 0 or node.value is not None:
                 return True
             if not isinstance(node.target, cst.Name) or is_snake_case(node.target.value):
@@ -239,7 +240,7 @@ class SnakeCaseArgumentsRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -251,7 +252,7 @@ class SnakeCaseArgumentsRule:
                 name = param.name.value
                 if name in {"self", "cls"}:
                     continue
-                # Sourcery flags dunder argument names and non-snake_case names.
+                # External refactor rules flag dunder argument names and non-snake_case names.
                 dunder = name.startswith("__") and name.endswith("__")
                 if not dunder and is_snake_case(name):
                     continue
@@ -282,7 +283,7 @@ class SnakeCaseFunctionsRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -318,7 +319,7 @@ class UpperCamelCaseClassesRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_ClassDef(self, node: cst.ClassDef) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool:
             if is_upper_camel_case(node.name.value):
                 return True
             self.record_hit(

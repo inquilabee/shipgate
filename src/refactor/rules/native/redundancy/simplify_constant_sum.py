@@ -1,4 +1,4 @@
-"""Native rule for ``simplify-constant-sum`` (Sourcery parity)."""
+"""Native rule for ``simplify-constant-sum`` (external refactor parity)."""
 
 from __future__ import annotations
 

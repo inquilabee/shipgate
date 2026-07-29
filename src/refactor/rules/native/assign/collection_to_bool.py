@@ -83,7 +83,7 @@ class CollectionToBoolRule(CallRewriteRule):
         class Finder(HitCollector):
             METADATA_DEPENDENCIES = (PositionProvider, ParentNodeProvider)
 
-            def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]
+            def visit_Call(self, node: cst.Call) -> bool:
                 replacement = rule.match(node)
                 if replacement is None:
                     return True

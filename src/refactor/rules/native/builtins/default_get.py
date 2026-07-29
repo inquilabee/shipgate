@@ -44,7 +44,7 @@ class DefaultGetRule:
         return apply_with_transformer(source, DefaultGetRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_IfExp(  # ruff:ignore[invalid-function-name]
+        def leave_IfExp(
             self,
             original_node: cst.IfExp,
             updated_node: cst.IfExp,
@@ -54,7 +54,7 @@ class DefaultGetRule:
             return updated_node if parts is None else DefaultGetRule.build_get_call(parts)
 
     class Finder(HitCollector):
-        def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_IfExp(self, node: cst.IfExp) -> bool:
             parts = DefaultGetRule.match_parts(node)
             if parts is None:
                 return True

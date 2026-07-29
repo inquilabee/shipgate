@@ -20,7 +20,7 @@ After changing `suite:` in `.shipgate/shipgate.yaml`, re-run `shipgate install` 
 Useful Make targets:
 
 | Target | Purpose |
-| --- | --- |
+| -------------------- | --------------------------------------------------------- |
 | `make install-hooks` | Install git pre-commit hooks |
 | `make check-commit` | `shipgate install` → `format` → `check` (dogfood suite) |
 | `make unit` | Deterministic unit tests |

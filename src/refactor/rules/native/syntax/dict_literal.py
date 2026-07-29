@@ -36,7 +36,7 @@ class DictLiteralRule:
         return apply_with_transformer(source, DictLiteralRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_Call(  # ruff:ignore[invalid-function-name]
+        def leave_Call(
             self,
             original_node: cst.Call,
             updated_node: cst.Call,
@@ -45,7 +45,7 @@ class DictLiteralRule:
             return cst.Dict(elements=[]) if is_empty_call(updated_node, "dict") else updated_node
 
     class Finder(HitCollector):
-        def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Call(self, node: cst.Call) -> bool:
             if not is_empty_call(node, "dict"):
                 return True
             self.record_hit(DictLiteralRule.hit_for(node, self.path), node)

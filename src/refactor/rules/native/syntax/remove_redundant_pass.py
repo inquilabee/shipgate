@@ -36,7 +36,7 @@ class RemoveRedundantPassRule:
         return apply_with_transformer(source, RemoveRedundantPassRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_Module(  # ruff:ignore[invalid-function-name]
+        def leave_Module(
             self,
             original_node: cst.Module,
             updated_node: cst.Module,
@@ -49,7 +49,7 @@ class RemoveRedundantPassRule:
                 else updated_node.with_changes(body=cleaned)
             )
 
-        def leave_IndentedBlock(  # ruff:ignore[invalid-function-name]
+        def leave_IndentedBlock(
             self,
             original_node: cst.IndentedBlock,
             updated_node: cst.IndentedBlock,

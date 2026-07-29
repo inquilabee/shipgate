@@ -318,11 +318,11 @@ class BodyCleanupRule(SuggestOnlyExprRule):
             def __init__(self, *, path: str) -> None:
                 super().__init__(path=path)
 
-            def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+            def visit_Module(self, node: cst.Module) -> bool:
                 self.check_body(node.body)
                 return True
 
-            def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+            def visit_IndentedBlock(
                 self,
                 node: cst.IndentedBlock,
             ) -> bool:

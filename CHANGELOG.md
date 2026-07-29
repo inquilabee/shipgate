@@ -4,15 +4,25 @@
 
 ## Unreleased
 
+## v0.1.6
+
 ### Added
 
 - Ship the `refactor` package in the same wheel as ShipGate, with inventory YAML
   package data and a `shipgate refactor` subcommand (check / fix / list / explain).
+- MkDocs documentation site (`docs/`, `mkdocs.yml`) with usage, architecture, and
+  catalog reference pages.
+- Split refactor and catalog validation into focused modules for maintainability.
 
 ### Changed
 
 - Drop the standalone `refactor` console script; use `shipgate refactor` (or
   `python -m refactor` for module invocation).
+
+### Notes
+
+- Dogfood `.shipgate/configs/ruff.toml` calibrations (libcst visitor naming,
+  sqlite dynamic SQL) stay project-local; bundled defaults remain portable.
 
 ## v0.1.5
 

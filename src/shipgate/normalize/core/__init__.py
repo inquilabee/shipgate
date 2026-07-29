@@ -11,7 +11,10 @@ from .gate_json import GateJsonNormalizer  # ruff:ignore[unused-import]
 from .generic import GenericExitNormalizer  # ruff:ignore[unused-import]
 from .json import JsonItemsNormalizer  # ruff:ignore[unused-import]
 from .location import finding_location, location_from_item  # ruff:ignore[unused-import]
-from .ruff_like import is_ruff_like_item, ruff_like_finding  # ruff:ignore[unused-import]
+from .ruff_like import (  # ruff:ignore[unused-import]
+    is_ruff_like_item,
+    ruff_like_finding,
+)
 from .utils import (  # ruff:ignore[unused-import]
     decode_json_payload,
     dict_items_from_list,

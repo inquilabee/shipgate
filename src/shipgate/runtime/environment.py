@@ -8,7 +8,11 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.execution import ExecutionEnvironment
 from shipgate.errors import InstallError
-from shipgate.paths import PROJECT_MANAGED_BIN_DIR, PROJECT_MANAGED_PYTHON_ENV, PROJECT_TOOLS_DIR
+from shipgate.paths import (
+    PROJECT_MANAGED_BIN_DIR,
+    PROJECT_MANAGED_PYTHON_ENV,
+    PROJECT_TOOLS_DIR,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -36,7 +36,7 @@ class MergeNestedIfsRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_If(self, node: cst.If) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_If(self, node: cst.If) -> bool:
             match = MergeNestedIfsRule.match_nested_ifs(node)
             if match is not None:
                 outer, merged = match

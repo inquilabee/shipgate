@@ -36,7 +36,7 @@ class BinOpIdentityRule:
         return apply_with_transformer(source, BinOpIdentityRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_Assign(  # ruff:ignore[invalid-function-name]
+        def leave_Assign(
             self,
             original_node: cst.Assign,
             updated_node: cst.Assign,
@@ -46,7 +46,7 @@ class BinOpIdentityRule:
             return updated_node if identity is None else updated_node.with_changes(value=identity)
 
     class Finder(HitCollector):
-        def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Assign(self, node: cst.Assign) -> bool:
             identity = BinOpIdentityRule.match_identity_assign(node)
             if identity is None:
                 return True

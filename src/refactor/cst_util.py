@@ -84,11 +84,11 @@ class ModuleAndIndentedBlockCollector(HitCollector):
         super().__init__(path=path)
         self.checker = checker
 
-    def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Module(self, node: cst.Module) -> bool:
         self.checker(node.body, self.hits, self.path)
         return True
 
-    def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+    def visit_IndentedBlock(
         self,
         node: cst.IndentedBlock,
     ) -> bool:
@@ -103,7 +103,7 @@ class IndentedBlockCollector(HitCollector):
         super().__init__(path=path)
         self.checker = checker
 
-    def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+    def visit_IndentedBlock(
         self,
         node: cst.IndentedBlock,
     ) -> bool:

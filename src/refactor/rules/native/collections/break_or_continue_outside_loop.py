@@ -48,29 +48,29 @@ class BreakContinueFinder(HitCollector):
     def _leave_loop(self) -> None:
         self.loop_depth -= 1
 
-    def visit_For(self, node: cst.For) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_For(self, node: cst.For) -> bool:
         _ = node
         self._enter_loop()
         return True
 
-    def leave_For(self, original_node: cst.For) -> None:  # ruff:ignore[invalid-function-name]
+    def leave_For(self, original_node: cst.For) -> None:
         _ = original_node
         self._leave_loop()
 
-    def visit_While(self, node: cst.While) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_While(self, node: cst.While) -> bool:
         _ = node
         self._enter_loop()
         return True
 
-    def leave_While(self, original_node: cst.While) -> None:  # ruff:ignore[invalid-function-name]
+    def leave_While(self, original_node: cst.While) -> None:
         _ = original_node
         self._leave_loop()
 
-    def visit_Break(self, node: cst.Break) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Break(self, node: cst.Break) -> bool:
         self._record_outside_loop(node)
         return True
 
-    def visit_Continue(self, node: cst.Continue) -> bool:  # ruff:ignore[invalid-function-name]
+    def visit_Continue(self, node: cst.Continue) -> bool:
         self._record_outside_loop(node)
         return True
 

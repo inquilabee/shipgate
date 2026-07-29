@@ -50,9 +50,7 @@ def collect_python(path: Path) -> list[Path]:
     return (
         [resolved]
         if resolved.is_file() and resolved.suffix == ".py"
-        else walk_python_files(resolved, load_gitignore(resolved))
-        if resolved.is_dir()
-        else []
+        else (walk_python_files(resolved, load_gitignore(resolved)) if resolved.is_dir() else [])
     )
 
 

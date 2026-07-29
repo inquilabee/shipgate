@@ -35,7 +35,7 @@ class RequireParameterAnnotationRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -93,7 +93,7 @@ class RequireReturnAnnotationRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:

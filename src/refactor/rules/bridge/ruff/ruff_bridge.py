@@ -1,6 +1,6 @@
 """Shared Ruff-delegating bridge rules.
 
-Each subclass declares a Sourcery-facing ``rule_id`` and the Ruff code(s) it
+Each subclass declares an external refactor ``rule_id`` and the Ruff code(s) it
 delegates to. Detection runs ``ruff check --select=<codes>`` on the source;
 optional apply runs ``ruff check --fix`` for the same selection.
 """

@@ -34,7 +34,7 @@ class LambdasShouldBeShortRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_Lambda(self, node: cst.Lambda) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Lambda(self, node: cst.Lambda) -> bool:
             body = code_span(node.body)
             if len(body) <= LAMBDA_BODY_LIMIT:
                 return True
@@ -65,7 +65,7 @@ class FilterLambdaToGeneratorRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_Call(self, node: cst.Call) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Call(self, node: cst.Call) -> bool:
             if not isinstance(node.func, cst.Name) or node.func.value != "filter":
                 return True
             if len(node.args) != 2 or any(arg.keyword is not None for arg in node.args):
@@ -120,7 +120,7 @@ class NoComplexIfExpressionsRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_IfExp(self, node: cst.IfExp) -> bool:
             arms = (code_span(node.body), code_span(node.test), code_span(node.orelse))
             if all(len(arm) <= IF_EXP_ARM_LIMIT for arm in arms):
                 return True

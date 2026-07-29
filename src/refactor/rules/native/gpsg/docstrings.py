@@ -43,7 +43,7 @@ class DocstringsForClassesRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_ClassDef(self, node: cst.ClassDef) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_ClassDef(self, node: cst.ClassDef) -> bool:
             if node.name.value.startswith("_") or class_docstring(node) is not None:
                 return True
             self.record_hit(
@@ -81,7 +81,7 @@ class DocstringsForFunctionsRule:
             super().__init__(path=path)
             self._function_depth = 0
 
-        def visit_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def visit_FunctionDef(
             self,
             node: cst.FunctionDef,
         ) -> bool:
@@ -104,7 +104,7 @@ class DocstringsForFunctionsRule:
             )
             return True
 
-        def leave_FunctionDef(  # ruff:ignore[invalid-function-name]
+        def leave_FunctionDef(
             self,
             original_node: cst.FunctionDef,
         ) -> None:
@@ -131,7 +131,7 @@ class DocstringsForPackagesRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Module(self, node: cst.Module) -> bool:
             if module_docstring(node) is not None:
                 return False
             self.record_hit(
@@ -166,7 +166,7 @@ class DocstringsForModulesRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_Module(self, node: cst.Module) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Module(self, node: cst.Module) -> bool:
             if module_docstring(node) is not None:
                 return False
             self.record_hit(

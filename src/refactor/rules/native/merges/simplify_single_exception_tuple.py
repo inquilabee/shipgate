@@ -37,7 +37,7 @@ class SimplifySingleExceptionTupleRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_ExceptHandler(  # ruff:ignore[invalid-function-name]
+        def visit_ExceptHandler(
             self,
             node: cst.ExceptHandler,
         ) -> bool:

@@ -36,7 +36,7 @@ class ForIndexReplacementRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_For(self, node: cst.For) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_For(self, node: cst.For) -> bool:
             match = ForIndexReplacementRule.match_range_len_for(node)
             if match is None:
                 return True
@@ -143,7 +143,7 @@ class ForIndexReplacementRule:
             self.sequence_name = sequence_name
             self.found = False
 
-        def visit_Subscript(  # ruff:ignore[invalid-function-name]
+        def visit_Subscript(
             self,
             node: cst.Subscript,
         ) -> bool:

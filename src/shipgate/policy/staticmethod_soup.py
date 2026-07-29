@@ -38,7 +38,9 @@ class StaticmethodSoupGate(PolicyGate):
         return False
 
     @staticmethod
-    def class_methods(node: ast.ClassDef) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
+    def class_methods(
+        node: ast.ClassDef,
+    ) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
         return [
             child
             for child in node.body

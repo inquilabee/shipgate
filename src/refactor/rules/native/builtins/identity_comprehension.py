@@ -35,7 +35,7 @@ class IdentityComprehensionRule:
         return noop_apply(source, hits)
 
     class Finder(HitCollector):
-        def visit_ListComp(  # ruff:ignore[invalid-function-name]
+        def visit_ListComp(
             self,
             node: cst.ListComp,
         ) -> bool:

@@ -35,7 +35,7 @@ class MinMaxIdentityRule:
         return apply_with_transformer(source, MinMaxIdentityRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_IfExp(  # ruff:ignore[invalid-function-name]
+        def leave_IfExp(
             self,
             original_node: cst.IfExp,
             updated_node: cst.IfExp,
@@ -51,7 +51,7 @@ class MinMaxIdentityRule:
             )
 
     class Finder(HitCollector):
-        def visit_IfExp(self, node: cst.IfExp) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_IfExp(self, node: cst.IfExp) -> bool:
             match = MinMaxIdentityRule.match_min_max(node)
             if match is None:
                 return True

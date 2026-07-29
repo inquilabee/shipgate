@@ -8,7 +8,7 @@ Tool YAML → `shipgate check` walkthrough: [Check flow](check-flow.md).
 
 ## Vision
 
-ShipGate sits between repository policy and external tools (linters, scanners, formatters, project gates). Projects say *what* should run; the catalog says *how* each tool is invoked. Tools still do the work.
+ShipGate sits between repository policy and external tools (linters, scanners, formatters, project gates). Projects say _what_ should run; the catalog says _how_ each tool is invoked. Tools still do the work.
 
 Ready by default means opinionated and strict, not loose. Suites group tools; there is no separate workflow or capability catalog.
 
@@ -20,7 +20,7 @@ domain/ → config/ → catalog/ → planning/ → adapter/ → runtime/ → nor
 ```
 
 | Package | Responsibility |
-| --- | --- |
+| ------------------- | ----------------------------------------------------------- |
 | `domain/` | Frozen types: project, catalog, options, execution, reports |
 | `config/` | Project policy discovery and loading |
 | `catalog/` | Bundled tool/suite YAML, validation, load |
@@ -33,7 +33,7 @@ domain/ → config/ → catalog/ → planning/ → adapter/ → runtime/ → nor
 | `app.py` / `cli.py` | Orchestration and argparse entry |
 
 | Parallel package | Responsibility |
-| --- | --- |
+| ---------------- | ------------------------------------------------------ |
 | `policy/` | Bundled `PolicyGate` modules (`module:` catalog tools) |
 | `frontend/` | Report UI; reads canonical reports only |
 | `project/` | `init` / scaffold / project Python helpers |

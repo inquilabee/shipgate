@@ -62,7 +62,7 @@ def test_ruff_format_check_mode(tmp_path):
     assert "--check" in argv
 
 
-def test_shfmt_apply_matches_trunk_flags(tmp_path):
+def test_shfmt_apply_matches_external_tool_flags(tmp_path):
     catalog = CatalogLoader.load()
     tool = catalog.get_tool("shfmt.apply")
     script = tmp_path / "script.sh"

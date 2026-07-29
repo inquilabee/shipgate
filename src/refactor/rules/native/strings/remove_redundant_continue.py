@@ -58,7 +58,7 @@ class RemoveRedundantContinueRule(BodyCleanupRule):
         class Finder(HitCollector):
             METADATA_DEPENDENCIES = (PositionProvider, ParentNodeProvider)
 
-            def visit_IndentedBlock(  # ruff:ignore[invalid-function-name]
+            def visit_IndentedBlock(
                 self,
                 node: cst.IndentedBlock,
             ) -> bool:

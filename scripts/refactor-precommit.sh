@@ -3,8 +3,8 @@ set -euo pipefail
 
 files=()
 for path in "$@"; do
-	case "$path" in
-	src/* | tests/refactor/*) files+=("$path") ;;
+	case "${path}" in
+	src/* | tests/refactor/*) files+=("${path}") ;;
 	esac
 done
 

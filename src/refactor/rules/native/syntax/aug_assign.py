@@ -36,7 +36,7 @@ class AugAssignRule:
         return apply_with_transformer(source, AugAssignRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
-        def leave_Assign(  # ruff:ignore[invalid-function-name]
+        def leave_Assign(
             self,
             original_node: cst.Assign,
             updated_node: cst.Assign,
@@ -46,7 +46,7 @@ class AugAssignRule:
             return updated_node if aug is None else aug
 
     class Finder(HitCollector):
-        def visit_Assign(self, node: cst.Assign) -> bool:  # ruff:ignore[invalid-function-name]
+        def visit_Assign(self, node: cst.Assign) -> bool:
             aug = AugAssignRule.match_aug_assign(node)
             if aug is None:
                 return True
