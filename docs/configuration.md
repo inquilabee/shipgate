@@ -49,8 +49,24 @@ Semgrep (Semgrep does not support 3.14 yet).
 | `env` | `managed` installs tools under `.shipgate/tools/` |
 | `target` | Default path root for `check` / `format` |
 | `error-format` | Stderr shape on failure (`compact`, `github`, …) |
-| `configs.mode` | How bundled vs project configs are discovered |
+| `configs.mode` | How bundled vs project configs are discovered (see below) |
 | `checks` | Per-tool scopes, thresholds, and metric gates |
+
+### `configs.mode`
+
+Each catalog tool declares `configuration.discover` paths (for example ruff:
+`.shipgate/configs/ruff.toml`, `.ruff.toml`, `pyproject.toml`). ShipGate passes
+the first resolved path to the tool's `--config` flag (or equivalent).
+
+| Mode | Behavior |
+| ---- | -------- |
+| `auto` (default) | Prefer **repo-native** configs (anything outside `.shipgate/configs/`). If the project already has `[tool.ruff]` in `pyproject.toml`, a root `.ruff.toml`, or similar, that wins over scaffolded `.shipgate/configs/*` from `shipgate init`. Fall back to scaffold, then bundled catalog defaults when nothing repo-native exists. |
+| `repo` | Use catalog `discover` order as written — `.shipgate/configs/` first when present. |
+| `bundled` | Always use the bundled catalog config; ignore project files. |
+
+`pyproject.toml` counts as a discover match only when the tool's
+`pyproject_section` exists (for ruff, `[tool.ruff]`). This keeps `auto` aligned
+with tools the project already configured.
 
 Override the project suite for one run with `--suite`. List live names:
 `shipgate list suites`.

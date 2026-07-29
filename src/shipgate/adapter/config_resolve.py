@@ -2,12 +2,102 @@
 
 from pathlib import Path
 
+from shipgate.config.core.pyproject import PyprojectPolicyLoader
 from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.project import ProjectConfig
 
 
-def bundled_configs_root() -> Path:
-    return Path(__file__).resolve().parents[1] / "catalog" / "bundled"
+class ConfigPathResolver:
+    """Resolve tool configuration file paths for a project root."""
+
+    def __init__(
+        self,
+        tool: ToolDefinition,
+        project: ProjectConfig,
+        project_root: Path,
+    ) -> None:
+        self._tool = tool
+        self._project = project
+        self._project_root = project_root
+        self._bundled = self.bundled_configs_root()
+
+    @classmethod
+    def resolve(
+        cls,
+        tool: ToolDefinition,
+        project: ProjectConfig,
+        project_root: Path,
+    ) -> tuple[Path, ...]:
+        return cls(tool, project, project_root)._resolve()
+
+    @staticmethod
+    def bundled_configs_root() -> Path:
+        return Path(__file__).resolve().parents[1] / "catalog" / "bundled"
+
+    def _resolve(self) -> tuple[Path, ...]:
+        config = self._tool.configuration
+        if self._project.config_mode == "bundled" and config.bundled:
+            return (self._bundled / config.bundled,)
+
+        if self._project.config_mode == "auto":
+            return self._resolve_auto()
+
+        if path := self._first_discover_match(config.discover):
+            return (path,)
+        return self._bundled_fallback()
+
+    def _resolve_auto(self) -> tuple[Path, ...]:
+        config = self._tool.configuration
+        if path := self._discover_repo_native(config.discover):
+            return (path,)
+        if path := self._first_discover_match(config.discover):
+            return (path,)
+        return self._bundled_fallback()
+
+    def _discover_repo_native(self, patterns: tuple[str, ...]) -> Path | None:
+        for pattern in patterns:
+            if self._is_shipgate_scaffold_path(pattern):
+                continue
+            if path := self._match_candidate(pattern):
+                return path
+        return None
+
+    def _first_discover_match(self, patterns: tuple[str, ...]) -> Path | None:
+        for pattern in patterns:
+            if path := self._match_candidate(pattern):
+                return path
+        return None
+
+    @staticmethod
+    def _is_shipgate_scaffold_path(pattern: str) -> bool:
+        normalized = pattern.replace("\\", "/")
+        return normalized.startswith(".shipgate/configs/")
+
+    def _match_candidate(self, pattern: str) -> Path | None:
+        candidate = self._project_root / pattern
+        return (
+            (self._match_pyproject(candidate) if candidate.name == "pyproject.toml" else candidate)
+            if candidate.is_file()
+            else None
+        )
+
+    def _match_pyproject(self, path: Path) -> Path | None:
+        section = self._tool.configuration.pyproject_section
+        if not section:
+            return None
+        try:
+            PyprojectPolicyLoader.load_section(path, section)
+        except (KeyError, TypeError):
+            return None
+        return path
+
+    def _bundled_fallback(self) -> tuple[Path, ...]:
+        config = self._tool.configuration
+        return (
+            (self._bundled / config.bundled,)
+            if self._project.config_mode == "auto" and config.bundled
+            else ()
+        )
 
 
 def resolve_config_paths(
@@ -15,15 +105,4 @@ def resolve_config_paths(
     project: ProjectConfig,
     project_root: Path,
 ) -> tuple[Path, ...]:
-    bundled = bundled_configs_root()
-    if project.config_mode == "bundled" and tool.configuration.bundled:
-        return (bundled / tool.configuration.bundled,)
-    for pattern in tool.configuration.discover:
-        candidate = project_root / pattern
-        if candidate.is_file():
-            return (candidate,)
-    return (
-        (bundled / tool.configuration.bundled,)
-        if project.config_mode == "auto" and tool.configuration.bundled
-        else ()
-    )
+    return ConfigPathResolver.resolve(tool, project, project_root)

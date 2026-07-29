@@ -187,7 +187,23 @@ def test_resolve_prefers_shipgate_config(tmp_path: Path):
     project = ProjectConfigLoader.load(project_root=tmp_path)
     tool = catalog.get_tool("ruff.lint")
     paths = resolve_config_paths(tool, project, tmp_path)
-    assert paths == (tmp_path / ".shipgate/configs/ruff.toml",), "project config not preferred"
+    assert paths == (tmp_path / ".shipgate/configs/ruff.toml",), (
+        "auto mode should use scaffold when no repo-native config exists"
+    )
+
+
+def test_resolve_repo_mode_prefers_shipgate_config(tmp_path: Path):
+    from dataclasses import replace
+
+    catalog = CatalogLoader.load()
+    scaffold_project_layout(tmp_path)
+    (tmp_path / ".ruff.toml").write_text("[lint]\nselect = ['F']\n", encoding="utf-8")
+    project = replace(ProjectConfigLoader.load(project_root=tmp_path), config_mode="repo")
+    tool = catalog.get_tool("ruff.lint")
+    paths = resolve_config_paths(tool, project, tmp_path)
+    assert paths == (tmp_path / ".shipgate/configs/ruff.toml",), (
+        "repo mode should prefer scaffold discover order"
+    )
 
 
 def test_resolve_import_linter_prefers_shipgate_config(tmp_path: Path):

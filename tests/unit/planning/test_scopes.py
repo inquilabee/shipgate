@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from shipgate.adapter.config_resolve import bundled_configs_root
+from shipgate.adapter.config_resolve import ConfigPathResolver
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import ProjectConfig, Scope
@@ -37,7 +37,8 @@ def test_jscpd_bundled_configs_write_under_shipgate_reports():
         tool = catalog.get_tool(tool_id)
         bundled = tool.configuration.bundled
         assert bundled is not None
-        jscpd_config = json.loads((bundled_configs_root() / bundled).read_text(encoding="utf-8"))
+        bundled_root = ConfigPathResolver.bundled_configs_root()
+        jscpd_config = json.loads((bundled_root / bundled).read_text(encoding="utf-8"))
         assert jscpd_config["output"] == f".shipgate/reports/{output_dir}"
         assert ".shipgate/**" in jscpd_config["ignore"]
 
