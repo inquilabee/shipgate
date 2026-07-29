@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="ShipGate logo">
+  <defs>
+    <linearGradient id="sg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#0f172a"/>
+  <path d="M24 72V48c0-6 4-11 10-12l30-8c6-2 12 3 12 9v44c0 6-6 11-12 9l-30-8c-6-1-10-6-10-12z" fill="url(#sg-grad)" opacity="0.95"/>
+  <path d="M52 40h36c8 0 14 6 14 14v20c0 8-6 14-14 14H52" fill="none" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="88" cy="64" r="6" fill="#e2e8f0"/>
+</svg>

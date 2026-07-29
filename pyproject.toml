@@ -47,6 +47,7 @@ server = [
 
 [project.urls]
 Changelog = "https://github.com/inquilabee/shipgate/blob/main/CHANGELOG.md"
+Documentation = "https://inquilabee.github.io/shipgate/"
 Homepage = "https://github.com/inquilabee/shipgate"
 Issues = "https://github.com/inquilabee/shipgate/issues"
 Repository = "https://github.com/inquilabee/shipgate"
@@ -58,6 +59,7 @@ shipgate = "shipgate.cli:main"
 dev = [
   "pre-commit>=4.0",
   "djlint>=1.40",
+  "mkdocs-material>=9.5",
   "pytest>=8.0",
   "ruff>=0.6",
   "ty>=0.0.1",

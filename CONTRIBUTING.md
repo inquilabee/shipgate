@@ -2,7 +2,8 @@
 
 Thanks for helping improve the orchestrator. This guide is for people changing
 **shipgate itself**, not for using it in an application repo. Quick start:
-[README.md](README.md). Usage details: [docs/usage.md](docs/usage.md).
+[README.md](README.md). Usage details: [docs/usage.md](docs/usage.md),
+[docs/configuration.md](docs/configuration.md), [docs/tools.md](docs/tools.md).
 Maintainer index: [AGENTS.md](AGENTS.md).
 
 ## Development setup

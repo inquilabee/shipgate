@@ -32,40 +32,51 @@ class AssignIfExpRule(BodySequenceRewriteRule):
         cls,
         body: Sequence[cst.BaseStatement],
     ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
-        for index, if_stmt in enumerate(body[:-1]):
-            following = body[index + 1]
-            if not isinstance(if_stmt, cst.If) or if_stmt.orelse is not None:
-                continue
-            if cls.test_has_named_expr(if_stmt.test):
-                continue
-            if not isinstance(if_stmt.body, cst.IndentedBlock):
-                continue
-            terminal = single_terminal_stmt(if_stmt.body)
-            if terminal is None or not isinstance(terminal, cst.Return):
-                continue
-            if cls.is_none_return(terminal) and cls.has_prior_none_guard(body, index):
-                continue
-            follow_return = cls.following_return(following)
-            if follow_return is None:
-                continue
-            then_value = cls.return_branch_value(terminal)
-            return (
-                [if_stmt, following],
-                [
-                    cst.SimpleStatementLine(
-                        body=[
-                            cst.Return(
-                                value=cst.IfExp(
-                                    test=if_stmt.test,
-                                    body=then_value,
-                                    orelse=cls.return_branch_value_expr(follow_return),
-                                ),
-                            ),
-                        ],
-                    ),
-                ],
-            )
+        for index in range(len(body) - 1):
+            replacement = cls._return_if_exp_at(body, index)
+            if replacement is not None:
+                return replacement
         return None
+
+    @classmethod
+    def _return_if_exp_at(
+        cls,
+        body: Sequence[cst.BaseStatement],
+        index: int,
+    ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+        if_stmt = body[index]
+        following = body[index + 1]
+        if not isinstance(if_stmt, cst.If) or if_stmt.orelse is not None:
+            return None
+        if AssignIfExpRule.test_has_named_expr(if_stmt.test):
+            return None
+        if not isinstance(if_stmt.body, cst.IndentedBlock):
+            return None
+        terminal = single_terminal_stmt(if_stmt.body)
+        if terminal is None or not isinstance(terminal, cst.Return):
+            return None
+        if cls.is_none_return(terminal) and cls.has_prior_none_guard(body, index):
+            return None
+        follow_return = cls.following_return(following)
+        if follow_return is None:
+            return None
+        then_value = cls.return_branch_value(terminal)
+        return (
+            [if_stmt, following],
+            [
+                cst.SimpleStatementLine(
+                    body=[
+                        cst.Return(
+                            value=cst.IfExp(
+                                test=if_stmt.test,
+                                body=then_value,
+                                orelse=cls.return_branch_value_expr(follow_return),
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        )
 
     @classmethod
     def assign_if_exp(
@@ -73,38 +84,47 @@ class AssignIfExpRule(BodySequenceRewriteRule):
         body: Sequence[cst.BaseStatement],
     ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
         for node in body:
-            if not isinstance(node, cst.If) or not isinstance(node.orelse, cst.Else):
-                continue
-            if not isinstance(node.body, cst.IndentedBlock):
-                continue
-            then_assign = cls.single_assign(node.body)
-            orelse_body = node.orelse.body
-            if not isinstance(orelse_body, cst.IndentedBlock):
-                continue
-            else_assign = cls.single_assign(orelse_body)
-            if then_assign is None or else_assign is None:
-                continue
-            if len(then_assign.targets) != 1 or len(else_assign.targets) != 1:
-                continue
-            if not then_assign.targets[0].target.deep_equals(else_assign.targets[0].target):
-                continue
-            return (
-                [node],
-                [
-                    cst.SimpleStatementLine(
-                        body=[
-                            then_assign.with_changes(
-                                value=cst.IfExp(
-                                    test=node.test,
-                                    body=then_assign.value,
-                                    orelse=else_assign.value,
-                                ),
-                            ),
-                        ],
-                    ),
-                ],
-            )
+            replacement = cls._assign_if_exp_node(node)
+            if replacement is not None:
+                return replacement
         return None
+
+    @classmethod
+    def _assign_if_exp_node(
+        cls,
+        node: cst.BaseStatement,
+    ) -> tuple[Sequence[cst.BaseStatement], Sequence[cst.BaseStatement]] | None:
+        if not isinstance(node, cst.If) or not isinstance(node.orelse, cst.Else):
+            return None
+        if not isinstance(node.body, cst.IndentedBlock):
+            return None
+        then_assign = cls.single_assign(node.body)
+        orelse_body = node.orelse.body
+        if not isinstance(orelse_body, cst.IndentedBlock):
+            return None
+        else_assign = cls.single_assign(orelse_body)
+        if then_assign is None or else_assign is None:
+            return None
+        if len(then_assign.targets) != 1 or len(else_assign.targets) != 1:
+            return None
+        if not then_assign.targets[0].target.deep_equals(else_assign.targets[0].target):
+            return None
+        return (
+            [node],
+            [
+                cst.SimpleStatementLine(
+                    body=[
+                        then_assign.with_changes(
+                            value=cst.IfExp(
+                                test=node.test,
+                                body=then_assign.value,
+                                orelse=else_assign.value,
+                            ),
+                        ),
+                    ],
+                ),
+            ],
+        )
 
     @staticmethod
     def single_assign(block: cst.IndentedBlock) -> cst.Assign | None:
@@ -134,37 +154,14 @@ class AssignIfExpRule(BodySequenceRewriteRule):
 
     @staticmethod
     def test_has_named_expr(test: cst.BaseExpression) -> bool:
+        return AssignIfExpRule.contains_named_expr(test)
+
+    @staticmethod
+    def contains_named_expr(node: cst.CSTNode) -> bool:
         return (
             True
-            if isinstance(test, cst.NamedExpr)
-            else (
-                AssignIfExpRule.test_has_named_expr(test.expression)
-                if isinstance(test, cst.UnaryOperation)
-                else (
-                    AssignIfExpRule.test_has_named_expr(test.left)
-                    or AssignIfExpRule.test_has_named_expr(
-                        test.right,
-                    )
-                    if isinstance(test, cst.BooleanOperation)
-                    else (
-                        AssignIfExpRule.test_has_named_expr(test.left)
-                        or any(
-                            AssignIfExpRule.test_has_named_expr(comp.comparator)
-                            for comp in test.comparisons
-                        )
-                        if isinstance(test, cst.Comparison)
-                        else (
-                            any(AssignIfExpRule.test_has_named_expr(arg.value) for arg in test.args)
-                            if isinstance(test, cst.Call)
-                            else (
-                                AssignIfExpRule.test_has_named_expr(test.value)
-                                if isinstance(test, cst.Attribute)
-                                else False
-                            )
-                        )
-                    )
-                )
-            )
+            if isinstance(node, cst.NamedExpr)
+            else any(AssignIfExpRule.contains_named_expr(child) for child in node.children)
         )
 
     @staticmethod

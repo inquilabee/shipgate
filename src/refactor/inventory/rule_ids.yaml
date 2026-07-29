@@ -1,7 +1,7 @@
 - id: assign-if-exp
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Prefer an if-expression when both branches assign the same target.
   example_bad: |
@@ -14,17 +14,17 @@
 - id: aug-assign
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: avoid-builtin-shadow
   kind: comment
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: avoid-global-variables
   kind: suggestion
   status: stub
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -34,7 +34,7 @@
 - id: avoid-single-character-names-functions
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -51,7 +51,7 @@
 - id: avoid-single-character-names-variables
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -66,7 +66,7 @@
 - id: avoid-trivial-properties
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -88,27 +88,27 @@
 - id: aware-datetime-for-utc
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: bin-op-identity
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: boolean-if-exp-identity
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: break-or-continue-outside-loop
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: chain-compares
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Chain comparisons that share an operand.
   example_bad: |
@@ -120,27 +120,27 @@
 - id: class-extract-method
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: class-method-first-arg-name
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: collection-builtin-to-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: collection-into-set
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: collection-to-bool
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Empty collections are falsy; prefer boolean context over len(...).
   example_bad: |
@@ -152,17 +152,17 @@
 - id: compare-via-equals
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: comprehension-to-generator
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: convert-any-to-in
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Prefer membership tests over any(... == ...).
   example_bad: |
@@ -174,22 +174,22 @@
 - id: convert-to-enumerate
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: dataframe-append-to-concat
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: de-morgan
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: default-get
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
   rationale: Use dict.get for membership-plus-subscript fallbacks.
   example_bad: |
@@ -199,27 +199,27 @@
 - id: default-mutable-arg
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: del-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: dict-assign-update-to-union
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: dict-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: dict-literal
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
   rationale: Prefer {} over empty dict().
   example_bad: |
@@ -229,12 +229,12 @@
 - id: do-not-use-bare-except
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: do-not-use-staticmethod
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -251,7 +251,7 @@
 - id: docstrings-for-classes
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -268,7 +268,7 @@
 - id: docstrings-for-functions
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -286,7 +286,7 @@
 - id: docstrings-for-modules
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -304,7 +304,7 @@
 - id: docstrings-for-packages
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -322,22 +322,22 @@
 - id: dont-import-test-modules
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: Production-only; skipped on test paths (test↔test imports are expected).
 - id: ensure-file-closed
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: equality-identity
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: errors-named-error
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -354,17 +354,17 @@
 - id: extract-duplicate-method
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: extract-method
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: filter-lambda-to-generator
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -379,67 +379,67 @@
 - id: flatten-nested-try
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: flip-comparison
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: for-append-to-extend
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: for-index-replacement
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: for-index-underscore
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: guard
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: hoist-if-from-if
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: hoist-loop-from-if
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: hoist-repeated-if-condition
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: hoist-similar-statement-from-if
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: hoist-statement-from-if
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: hoist-statement-from-loop
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: identity-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Identity list comprehensions can be list(...) of the iterable.
   example_bad: |
@@ -449,7 +449,7 @@
 - id: inline-immediately-returned-variable
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Inline a variable that is only used in the next return.
   example_bad: |
@@ -460,37 +460,37 @@
 - id: inline-immediately-yielded-variable
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: inline-variable
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: instance-method-first-arg-name
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: introduce-default-else
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: invert-any-all
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: invert-any-all-body
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: lambdas-should-be-short
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -499,19 +499,19 @@
   note: GPSG 2.10 — keep lambdas short
   rationale: If lambda body exceeds ~80 characters, use a nested function.
   example_bad: |
-    lambda x: do_something_very_long_and_involved_with(x) - do_other_very_long_and_involved_things_with(x)
+    lambda x: do_something_long_with(x) - do_other_long_things_with(x)
   example_good: |
     def compute(x):
-        return do_something_very_long_and_involved_with(x) - do_other_very_long_and_involved_things_with(x)
+        return do_something_long_with(x) - do_other_long_things_with(x)
 - id: last-if-guard
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: lift-duplicated-conditional
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: lift-return-into-if
   kind: refactor
@@ -521,22 +521,22 @@
 - id: list-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: list-literal
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: low-code-quality
   kind: comment
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: map-lambda-to-generator
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -552,17 +552,17 @@
 - id: max-min-default
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-assign-and-aug-assign
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-comparisons
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Merge adjacent comparisons that share structure.
   example_bad: |
@@ -574,92 +574,92 @@
 - id: merge-dict-assign
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-duplicate-blocks
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-else-if-into-elif
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-except-handler
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-is-instance
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: wiki Current-Refactorings only
 - id: merge-isinstance
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-list-append
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-list-appends-into-extend
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-list-extend
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-nested-ifs
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-repeated-ifs
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: merge-set-add
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: method
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: docs page missing; id from wiki slug
 - id: min-max-identity
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: missing-dict-items
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: move-assign
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: move-assign-in-block
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: name-type-suffix
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -674,7 +674,7 @@
 - id: no-complex-if-expressions
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -682,7 +682,7 @@
   note: GPSG 2.11 — keep conditional expressions simple
   rationale: Each portion of a conditional expression must fit on one line (~80 chars).
   example_bad: |
-    a = 1 if this_is_an_incredibly_long_condition_that_is_more_than_80_characters_long_no_joking_around else 2
+    a = 1 if this_is_a_very_long_condition_that_exceeds_eighty_chars_total else 2
   example_good: |
     if this_is_an_incredibly_long_condition_that_is_more_than_80_characters_long_no_joking_around:
         a = 1
@@ -691,12 +691,12 @@
 - id: no-conditionals-in-tests
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: no-long-functions
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -707,12 +707,12 @@
 - id: no-loop-in-tests
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: no-relative-imports
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -728,7 +728,7 @@
 - id: no-wildcard-imports
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -744,37 +744,37 @@
 - id: non-equal-comparison
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: none-compare
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: or-if-exp-identity
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: pandas-avoid-inplace
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: path-read
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: raise-from-previous-error
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: raise-specific-error
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: reintroduce-else
   kind: refactor
@@ -784,72 +784,72 @@
 - id: remove-assert-true
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-dict-items
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-dict-keys
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-duplicate-dict-key
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-duplicate-key
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: wiki Current-Refactorings only
 - id: remove-duplicate-set-key
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-empty-nested-block
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-none-from-default-get
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-pass-body
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-pass-elif
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-boolean
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-condition
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-constructor-in-dict-union
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-continue
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: A trailing continue at the end of a loop body is redundant.
   example_bad: |
@@ -862,7 +862,7 @@
 - id: remove-redundant-except-handler
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-exception
   kind: refactor
@@ -872,47 +872,47 @@
 - id: remove-redundant-fstring
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-if
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-pass
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: remove-redundant-path-exists
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-redundant-slice-index
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-str-from-fstring
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-str-from-print
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-unit-step-from-range
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-unnecessary-cast
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: cast() is a typing no-op at runtime; prefer a typed binding or assert.
   example_bad: |
@@ -926,47 +926,47 @@
 - id: remove-unnecessary-else
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-unreachable-code
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-unused-enumerate
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: remove-zero-from-range
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: replace-apply-with-method-call
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: replace-apply-with-numpy-operation
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: replace-dict-items-with-values
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: replace-interpolation-with-fstring
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: require-parameter-annotation
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -983,7 +983,7 @@
 - id: require-return-annotation
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1000,92 +1000,92 @@
 - id: return-identity
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: wiki Current-Refactorings only
 - id: return-or-yield-outside-function
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: set-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-boolean-comparison
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: simplify-constant-sum
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-dictionary-update
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-division
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-empty-collection-comparison
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-fstring-formatting
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-generator
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-len-comparison
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-negative-index
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-numeric-comparison
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-single-exception-tuple
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-string-len-comparison
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: simplify-substring-search
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: skip-sorted-list-construction
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: snake-case-arguments
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1103,7 +1103,7 @@
 - id: snake-case-functions
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1121,7 +1121,7 @@
 - id: snake-case-variable-declarations
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1144,62 +1144,62 @@
 - id: square-identity
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: str-prefix-suffix
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: sum-comprehension
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: swap-if-else-branches
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: swap-if-expression
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: swap-nested-ifs
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: swap-variable
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: switch
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: ternary-to-if-expression
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: tuple-literal
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: unwrap-iterable-construction
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: upper-camel-case-classes
   kind: suggestion
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1217,17 +1217,17 @@
 - id: use
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: docs page missing; id from wiki slug
 - id: use-any
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-assigned-variable
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
   rationale: Reuse a local binding instead of repeating the same expression.
   example_bad: |
@@ -1238,87 +1238,87 @@
 - id: use-contextlib-suppress
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-count
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-datetime-now-not-today
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-dict-items
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-dictionary-union
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-file-iterator
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-fstring-for-concatenation
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-fstring-for-formatting
   kind: refactor
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-getitem-for-re-match-groups
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-isna
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-itertools-product
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-join
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-len
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null
 - id: use-named-expression
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-next
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-or-for-fallback
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: use-standard-name-for-aliases-datetime
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1334,7 +1334,7 @@
 - id: use-standard-name-for-aliases-matplotlib-pyplot
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1350,7 +1350,7 @@
 - id: use-standard-name-for-aliases-multiprocessing
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1366,7 +1366,7 @@
 - id: use-standard-name-for-aliases-numpy
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1382,7 +1382,7 @@
 - id: use-standard-name-for-aliases-pandas
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1398,7 +1398,7 @@
 - id: use-standard-name-for-aliases-tensorflow
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1414,7 +1414,7 @@
 - id: use-standard-name-for-aliases-tkinter
   kind: suggestion
   status: bridge
-  apply_mode: "hint"
+  apply_mode: hint
   packs:
     - gpsg
   tags:
@@ -1430,25 +1430,25 @@
 - id: use-string-remove-affix
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: useless-else-on-loop
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: while-guard-to-condition
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: while-to-for
   kind: refactor
   status: native
-  apply_mode: "hint"
+  apply_mode: hint
   note: null
 - id: yield-from
   kind: refactor
   status: native
-  apply_mode: "auto"
+  apply_mode: auto
   note: null

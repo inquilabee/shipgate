@@ -1,6 +1,8 @@
 # ShipGate usage guide
 
-Consumer-facing details beyond the [README](../README.md) quick start.
+Day-to-day commands, suites, and integration patterns. For policy files and
+threshold bindings see [Configuration](configuration.md). For the bundled
+catalog see [Tools](tools.md).
 
 ## Mental model
 
@@ -14,182 +16,41 @@ Consumer-facing details beyond the [README](../README.md) quick start.
 Pick a suite once in project policy; run the same three commands everywhere.
 Override with `--suite` only for one-offs.
 
-## Config
+## Commands
 
-Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`
-(see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
-`.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
-That includes an `importlinter.ini` starter when an importable `src/<pkg>/`
-package exists (src-layout only; flat-layout packages are skipped until laid out
-under `src/`) and a `[tool.deptry]` section in `pyproject.toml` when missing.
-`known_first_party` is filled only for a real importable package — otherwise the
-commented placeholder stays. Customize contracts for your layout; pip-audit needs
-no project config file. If an older init left a broken `importlinter.ini`
-(`root_package` set to the directory name), delete it and re-run
-`shipgate configs sync` after you have a real package.
+```bash
+shipgate install
+shipgate format
+shipgate check
+shipgate list suites
+shipgate list tools
+shipgate check --check ruff.lint --target .
+shipgate schema > failure-report.schema.json
+```
 
-```yaml
-# .shipgate/shipgate.yaml
-suite: standard
-env: managed
-target: .
-error-format: compact
-configs:
-  mode: auto
+### Check examples
+
+```bash
+shipgate check --check ruff.lint --target app.py --error-format compact
+```
+
+```text
+app.py:1: error: F401 `os` imported but unused
+app.py:3: error: E302 Expected 2 blank lines, found 1
 ```
 
 ```bash
-shipgate check --suite extended
-shipgate install --suite standard
+shipgate check
+shipgate check --suite security
+shipgate check --target src
+shipgate check --error-format github   # CI / PR annotations
 ```
 
-Path delivery respects `.gitignore`. Failures write canonical JSON under
-`.shipgate/reports/`; `error-format` controls stderr only. Success is silent
-(exit `0`).
-
-### Radon metric gates
-
-Letter-rank `threshold` still gates each block (cyclomatic complexity) or file
-(maintainability index). Optional numeric gates cover distribution summaries
-computed from Radon JSON:
-
-| Metric | Meaning | Prefer for gating? |
-| --- | --- | --- |
-| `average` | Arithmetic mean | Useful, but skewed by outliers |
-| `median` | 50th percentile | Preferred central tendency (robust) |
-| `minimum` / `maximum` | Worst single value | Strict; one outlier fails the gate |
-| `p5` / `p10` | Left-tail percentiles | Preferred low-end floors for MI |
-| `p95` | 95th percentile (inclusive linear interp.) | Preferred high-end tail for CC |
-
-**Direction:** Maintainability index is worse when lower → floors for average,
-median, minimum, `p5`, `p10`, and `p95`. Cyclomatic complexity is worse when
-higher → ceilings for average, median, maximum, `p5`, `p10`, and `p95`.
-
-Prefer **median** over average when you care about typical code. For MI, prefer
-**`p5` / `p10` / `minimum` floors** to control the bad left tail; a high MI
-`p95` floor (for example `100`) mostly measures how many near-perfect files you
-have, not how bad the worst files are. For CC, prefer **`p95`** over raw
-`maximum` when you want a hard high-end bound without letting a single block
-fail the whole suite.
-
-When a metric gate fails, ShipGate emits canonical findings with the distribution
-summary (`n`, median, mean) and the worst offenders (lowest MI files / highest CC
-blocks) so humans and agents can fix without re-running ad-hoc radon scripts.
-
-| Tool | Typical keys | Worse when |
-| --- | --- | --- |
-| `radon.mi` | `median-*`, `p5-*`, `p10-*` (also `average-*`, `minimum-*`, `p95-*`) | lower (floors) |
-| `radon.cc` | `median-*`, `p95-*` (also `average-*`, `maximum-*`, `p5-*`, `p10-*`) | higher (ceilings) |
-
-Modes:
-
-- `threshold` — absolute floor/ceiling; fails when the measured metric crosses it.
-- `progressive` — must not regress vs the last saved value in
-  `.shipgate/cache/.env`. First progressive run seeds the baseline and passes.
-
-Bundled `shipgate init` scaffolds **progressive** MI distribution floors (seed on
-first run, fail on regression) plus letter rank `B`. That stays portable across
-repos; pin absolute floors with `shipgate radon calibrate` when you want dogfood-
-style strictness. ShipGate’s own `.shipgate/shipgate.yaml` uses absolute median /
-`p5` / `p10` thresholds and progressive `minimum` — not an inverted MI `p95≥100`
-floor.
-
-Env keys (progressive only): `SHIPGATE_RADON_MI_AVG`, `SHIPGATE_RADON_MI_MEDIAN`,
-`SHIPGATE_RADON_MI_MIN`, `SHIPGATE_RADON_MI_P5`, `SHIPGATE_RADON_MI_P10`,
-`SHIPGATE_RADON_MI_P95`, `SHIPGATE_RADON_CC_AVG`, `SHIPGATE_RADON_CC_MEDIAN`,
-`SHIPGATE_RADON_CC_MAX`, `SHIPGATE_RADON_CC_P5`, `SHIPGATE_RADON_CC_P10`,
-`SHIPGATE_RADON_CC_P95`.
-
-```yaml
-# Bundled init (portable): progressive MI floors
-checks:
-  radon.mi:
-    threshold: B
-    median-mode: progressive
-    p5-mode: progressive
-    p10-mode: progressive
-    minimum-mode: progressive
-  radon.cc:
-    threshold: B
-    median-mode: threshold
-    median-threshold: 3
-    p95-mode: threshold
-    p95-threshold: 7
-```
-
-```yaml
-# Absolute MI floors after calibrate (ShipGate dogfood style)
-checks:
-  radon.mi:
-    threshold: B
-    median-mode: threshold
-    median-threshold: 55.8
-    p5-mode: threshold
-    p5-threshold: 28
-    p10-mode: threshold
-    p10-threshold: 32
-    minimum-mode: progressive
-```
-
-#### Calibrate suggested thresholds
+### Format
 
 ```bash
-shipgate radon calibrate mi --path src --path tests
-shipgate radon calibrate cc --path src --yaml
-shipgate radon calibrate mi --json-file /tmp/radon-mi.json
+shipgate format --target .
 ```
-
-`shipgate radon calibrate` prints the live distribution (`n`, mean/median/min/max,
-`p5`/`p10`/`p95`), the worst offenders, and a YAML binding snippet with
-passable suggested floors (MI) or ceilings (CC). Use `--yaml` for the snippet
-only. Prefer `--json-file` in tests or offline; otherwise radon runs from the
-managed tool env when present.
-
-Consumers may still use progressive or average/min/max:
-
-```yaml
-checks:
-  radon.mi:
-    threshold: B
-    average-mode: progressive
-    minimum-mode: threshold
-    minimum-threshold: 20
-  radon.cc:
-    threshold: B
-    average-mode: threshold
-    average-threshold: 5
-    maximum-mode: progressive
-```
-
-Python support: **3.11–3.14**. Prefer **3.13** when running suites that include
-Semgrep (Semgrep does not support 3.14 yet).
-
-## Pre-commit
-
-A minimal consumer hook (also shown in the README):
-
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: shipgate-format
-        name: shipgate format
-        entry: shipgate format --target .
-        language: system
-        pass_filenames: false
-      - id: shipgate-check
-        name: shipgate check
-        entry: shipgate check --target .
-        language: system
-        pass_filenames: false
-```
-
-```bash
-pre-commit install
-```
-
-This repository’s own dogfood hooks are richer (see `.pre-commit-config.yaml` and
-`make install-hooks`).
 
 ## Suites
 
@@ -241,17 +102,30 @@ List live names anytime: `shipgate list suites`.
 | `compact` | `src/app.py:42: error: E501 Line too long` |
 | `github` | `::error file=…,title=…::…` annotations |
 
-## Commands
+## Pre-commit
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: shipgate-format
+        name: shipgate format
+        entry: shipgate format --target .
+        language: system
+        pass_filenames: false
+      - id: shipgate-check
+        name: shipgate check
+        entry: shipgate check --target .
+        language: system
+        pass_filenames: false
+```
 
 ```bash
-shipgate install
-shipgate format
-shipgate check
-shipgate list suites
-shipgate list tools
-shipgate check --check ruff.lint --target .
-shipgate schema > failure-report.schema.json
+pre-commit install
 ```
+
+This repository's own dogfood hooks are richer (see `.pre-commit-config.yaml` and
+`make install-hooks`).
 
 ## Report UI
 
@@ -261,11 +135,27 @@ shipgate serve
 shipgate serve --port 8765 --open
 ```
 
+Browse suite runs and findings at `http://127.0.0.1:8765/`.
+
+## Refactor
+
+Structural Python rules ship in the same wheel but outside catalog suites:
+
+```bash
+shipgate refactor check .
+shipgate refactor fix src
+shipgate refactor list
+```
+
+See [Refactor](refactor.md) for `explain`, `--strict`, optional packs, and
+`python -m refactor`.
+
 ## Project-local gates
 
 Scaffold under `.shipgate/gates/` and extend the project catalog under
 `.shipgate/catalog/` when the bundled catalog is not enough. See
-[CONTRIBUTING.md](../CONTRIBUTING.md) and [AGENTS.md](../AGENTS.md).
+[Tools — project extensions](tools.md#project-extensions),
+[Check flow](check-flow.md), and [Contributing](contributing.md).
 
 ## CI
 
@@ -288,32 +178,3 @@ jobs:
 ```
 
 Set `error-format: github` in project policy for PR annotations.
-
-## Bundled tools
-
-| Tool | Purpose |
-| --- | --- |
-| [Bandit](https://bandit.readthedocs.io/) | Security issue scanner for Python |
-| [codespell](https://github.com/codespell-project/codespell) | Common misspellings in text and code |
-| [deadcode](https://github.com/alanedwardes/deadcode) | Unused Python code via static analysis |
-| [deptry](https://deptry.com/) | Missing / unused / misplaced declared dependencies |
-| [Gitleaks](https://github.com/gitleaks/gitleaks) | Secret scanning for git repositories |
-| [Hadolint](https://github.com/hadolint/hadolint) | Dockerfile linter |
-| [import-linter](https://import-linter.readthedocs.io/) | Layer and forbidden-import contracts |
-| [JSCPD](https://docs.jscpd.io/) | Copy/paste / duplication detector |
-| [markdownlint](https://github.com/DavidAnson/markdownlint) | Markdown style linter |
-| [mdformat](https://github.com/executablebooks/mdformat) | Markdown formatter |
-| [pip-audit](https://github.com/pypa/pip-audit) | Dependency CVE / vulnerability audit |
-| [pydeps](https://github.com/thebjorn/pydeps) | Python dependency graphs |
-| Policy gates | Bundled in-process / project-local policy checks |
-| [Radon](https://radon.readthedocs.io/) | Cyclomatic complexity and maintainability metrics |
-| [Ruff](https://docs.astral.sh/ruff/) | Fast Python linter and formatter |
-| [Semgrep](https://semgrep.dev/) | Pattern-based security and quality analysis |
-| [ShellCheck](https://www.shellcheck.net/) | Static analysis for shell scripts |
-| [shfmt](https://github.com/mvdan/sh) | Shell script formatter |
-| [ty](https://docs.astral.sh/ty/) | Astral static type checker for Python |
-| [Vulture](https://github.com/jendrikseipp/vulture) | Dead Python code with high confidence |
-| [yamlfmt](https://github.com/google/yamlfmt) | YAML formatter |
-| [yamllint](https://yamllint.readthedocs.io/) | YAML syntax and style linter |
-
-Live catalog: `shipgate list tools`.

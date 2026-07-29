@@ -1,0 +1,64 @@
+site_name: ShipGate
+site_url: https://inquilabee.github.io/shipgate/
+site_description: Policy-first quality-gate orchestrator for Python projects.
+repo_url: https://github.com/inquilabee/shipgate
+repo_name: inquilabee/shipgate
+edit_uri: edit/main/docs/
+theme:
+  name: material
+  logo: images/shipgate-logo.svg
+  favicon: images/shipgate-logo.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+    - toc.follow
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Refactor: refactor.md
+  - Configuration: configuration.md
+  - Tools: tools.md
+  - Architecture: architecture.md
+  - Check flow: check-flow.md
+  - Contributing: contributing.md
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+plugins:
+  - search
+exclude_docs: |
+  superpowers/
+validation:
+  unrecognized_links: ignore
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/inquilabee/shipgate

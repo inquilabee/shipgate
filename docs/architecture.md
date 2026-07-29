@@ -2,8 +2,9 @@
 
 Repo-policy-first quality orchestration. Projects declare intent; ShipGate runs tools through catalog metadata, Execution Requests, and canonical reports.
 
-Consumer usage (suites, config, CI, tools): [`docs/usage.md`](usage.md).\
-Tool YAML → `shipgate check` walkthrough: [`docs/check-flow.md`](check-flow.md).
+Consumer usage (suites, config, CI, tools): [Usage](usage.md),
+[Configuration](configuration.md), [Tools](tools.md).\
+Tool YAML → `shipgate check` walkthrough: [Check flow](check-flow.md).
 
 ## Vision
 
@@ -44,7 +45,7 @@ Policy stays out of argv details. Catalog metadata owns flags, config discovery,
 
 ## Scoping and ignores
 
-ShipGate resolves check paths through gitignore-aware scoping ([`planning/utils/gitignore.py`](../src/shipgate/planning/utils/gitignore.py)) before building argv. Prefer that single source of truth over duplicating exclude lists in every bundled tool config.
+ShipGate resolves check paths through gitignore-aware scoping ([`planning/utils/gitignore.py`](https://github.com/inquilabee/shipgate/blob/main/src/shipgate/planning/utils/gitignore.py)) before building argv. Prefer that single source of truth over duplicating exclude lists in every bundled tool config.
 
 Bundled per-tool excludes remain only when the tool **also** walks trees itself outside ShipGate's path list (for example Bandit's `exclude_dirs` in `configs/bandit.yaml`). Tools that only see the paths ShipGate passes (yamlfmt notes this in its config header) should not grow parallel ignore YAML.
 
@@ -104,4 +105,4 @@ flowchart TB
   Session --> Fmt["formatters/"]
 ```
 
-For how a Tool Definition becomes argv and a report, including `shipgate check`, `--suite`, and `--check` examples, see `docs/check-flow.md`.
+For how a Tool Definition becomes argv and a report, including `shipgate check`, `--suite`, and `--check` examples, see [Check flow](check-flow.md).

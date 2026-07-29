@@ -29,6 +29,12 @@ install-hooks:
 build:
 	uv build
 
+docs:
+	uv run mkdocs build
+
+docs-serve:
+	uv run mkdocs serve
+
 publish-check: build
 	uv run python -c "import glob, zipfile, re; paths=sorted(glob.glob('dist/*.whl'), key=lambda p: [int(x) if x.isdigit() else x for x in re.findall(r'[0-9]+|[^0-9]+', p)]); assert paths, 'no wheel'; z=zipfile.ZipFile(paths[-1]); z.testzip(); print(paths[-1], 'ok')"
 

@@ -150,18 +150,35 @@ def cmd_explain(rule_id: str) -> int:
     return 0
 
 
+def explain_apply_mode(
+    rule: RefactorRule | None,
+    entry: InventoryEntry | None,
+) -> ApplyMode:
+    return (
+        rule.apply_mode
+        if rule is not None
+        else entry.apply_mode
+        if entry is not None
+        else ApplyMode.HINT
+    )
+
+
+def explain_kind(rule: RefactorRule | None, entry: InventoryEntry | None) -> str:
+    return rule.kind.value if rule is not None else (entry.kind if entry is not None else "unknown")
+
+
+def explain_summary(rule: RefactorRule | None, entry: InventoryEntry | None) -> str | None:
+    return rule.summary if rule is not None else (entry.note if entry is not None else None)
+
+
 def print_explain_header(
     rule_id: str,
     rule: RefactorRule | None,
     entry: InventoryEntry | None,
 ) -> None:
-    apply_mode = (
-        rule.apply_mode
-        if rule is not None
-        else (entry.apply_mode if entry is not None else ApplyMode.HINT)
-    )
-    summary = rule.summary if rule is not None else (entry.note if entry else None)
-    kind = rule.kind.value if rule is not None else (entry.kind if entry else "unknown")
+    apply_mode = explain_apply_mode(rule, entry)
+    summary = explain_summary(rule, entry)
+    kind = explain_kind(rule, entry)
     print(f"rule_id: {rule_id}")
     print(f"kind: {kind}")
     print(f"apply_mode: {apply_mode.value}")

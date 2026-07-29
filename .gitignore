@@ -7,17 +7,19 @@ docker/dogfood-staging/
 .venv/
 build/
 dist/
+site/
 __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
 
-.cursor/rules/you.mdc
+.cursor/
+AGENTS.md
 
 .trunk/
 
 todo.md
 notes/
-.cursor/rules/persona/
 docs/superpowers/
 .worktrees/
+docker/dogfood-staging/
