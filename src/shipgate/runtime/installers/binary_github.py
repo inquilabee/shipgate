@@ -20,7 +20,8 @@ if TYPE_CHECKING:
 
 
 class GitHubReleaseInstaller:
-    def can_install(self, binary_name: str, install_def: InstallDefinition) -> bool:  # ruff:ignore[no-self-use]
+    @staticmethod
+    def can_install(binary_name: str, install_def: InstallDefinition) -> bool:
         _ = binary_name
         return install_def.download is not None
 
@@ -51,16 +52,16 @@ class GitHubReleaseInstaller:
             shutil.copy2(extracted, destination)
             destination.chmod(destination.stat().st_mode | 0o100)
 
-    def release_arch(self, download: BinaryDownloadSpec, arch: str) -> str:
-        _ = self
+    @staticmethod
+    def release_arch(download: BinaryDownloadSpec, arch: str) -> str:
         return download.arch_map.get(arch, arch)
 
     def release_os(self, download: BinaryDownloadSpec) -> str:
         system = self.github_os()
         return download.os_map.get(system, system)
 
-    def github_os(self) -> str:
-        _ = self
+    @staticmethod
+    def github_os() -> str:
         system = sys.platform
         if system == "darwin":
             return "darwin"
@@ -70,8 +71,8 @@ class GitHubReleaseInstaller:
             return "windows"
         raise InstallError(f"unsupported platform for binary install: {system}")
 
-    def github_arch(self) -> str:
-        _ = self
+    @staticmethod
+    def github_arch() -> str:
         machine = platform.machine().lower()
         if machine in {"x86_64", "amd64"}:
             return "x86_64"
@@ -79,8 +80,8 @@ class GitHubReleaseInstaller:
             return "arm64"
         raise InstallError(f"unsupported architecture for binary install: {machine}")
 
-    def fetch_latest_release_tag(self, repo: str) -> str:
-        _ = self
+    @staticmethod
+    def fetch_latest_release_tag(repo: str) -> str:
         url = f"https://api.github.com/repos/{repo}/releases/latest"
         try:
             data = get_github_url(
@@ -125,8 +126,8 @@ class GitHubReleaseInstaller:
         )
         return url, asset_name
 
-    def normalize_version(self, version: str) -> str:
-        _ = self
+    @staticmethod
+    def normalize_version(version: str) -> str:
         cleaned = version.strip()
         if not cleaned:
             raise InstallError("binary install requires an exact version pin")
@@ -136,8 +137,8 @@ class GitHubReleaseInstaller:
             cleaned = cleaned[2:].strip()
         return cleaned
 
-    def missing_archive_binary(self, binary_name: str) -> InstallError:
-        _ = self
+    @staticmethod
+    def missing_archive_binary(binary_name: str) -> InstallError:
         return InstallError(f"could not find {binary_name} in downloaded archive")
 
     def extract_from_tar(

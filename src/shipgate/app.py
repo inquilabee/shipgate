@@ -133,8 +133,8 @@ class ShipGateApp:
         checks = list_project_checks(project, catalog)
         return "\n".join(checks) + ("\n" if checks else "")
 
+    @staticmethod
     def radon_calibrate(
-        self,
         project_root: Path,
         *,
         kind: str,
@@ -143,7 +143,6 @@ class ShipGateApp:
         top: int = 15,
         yaml_snippet: bool = False,
     ) -> str:
-        _ = self
         from shipgate.project.radon_calibrate import calibrate_radon
 
         return calibrate_radon(
@@ -155,33 +154,32 @@ class ShipGateApp:
             yaml_snippet=yaml_snippet,
         )
 
-    def radon_reset(self, project_root: Path) -> str:
-        _ = self
+    @staticmethod
+    def radon_reset(project_root: Path) -> str:
         from shipgate.paths import PROJECT_CACHE_ENV, reset_radon_cache_env
 
         reset_radon_cache_env(project_root)
         return f"Reset progressive radon baselines in {PROJECT_CACHE_ENV}\n"
 
-    def schema(self) -> str:
-        _ = self
+    @staticmethod
+    def schema() -> str:
         return json.dumps(report_json_schema(), indent=2) + "\n"
 
+    @staticmethod
     def serve(
-        self,
         project_root: Path,
         host: str = "127.0.0.1",
         port: int = 8765,
         *,
         open_browser: bool = False,
     ) -> int:
-        _ = self
         from shipgate.frontend.server import serve
 
         serve(project_root, host=host, port=port, open_browser=open_browser)
         return 0
 
-    def lock(self, project_root: Path) -> int:
-        _ = self
+    @staticmethod
+    def lock(project_root: Path) -> int:
         manifest = project_root / ".shipgate" / "tools" / "manifest.json"
         packages: dict[str, str] = {}
         if manifest.is_file():
@@ -211,8 +209,8 @@ class ShipGateApp:
         save_baseline(command.project_root, baseline_report)
         return 0
 
-    def baseline_show(self, project_root: Path) -> str:
-        _ = self
+    @staticmethod
+    def baseline_show(project_root: Path) -> str:
         baseline = load_baseline(project_root)
         return (
             "no baseline\n" if baseline is None else json.dumps(baseline.to_dict(), indent=2) + "\n"
@@ -243,13 +241,13 @@ class ShipGateApp:
             worst = max(worst, code)
         return worst
 
-    def gates_init(self, project_root: Path, name: str) -> str:
-        _ = self
+    @staticmethod
+    def gates_init(project_root: Path, name: str) -> str:
         path = init_gate(project_root, name)
         return f"created gate: {path}\n"
 
-    def gates_lib_path(self) -> str:
-        _ = self
+    @staticmethod
+    def gates_lib_path() -> str:
         return f"{gates_lib_path()}\n"
 
     def init(

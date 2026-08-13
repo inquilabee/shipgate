@@ -129,8 +129,8 @@ class CheckRunner:
             )
         )
 
+    @staticmethod
     def _run_sequential_checks(
-        self,
         selected_tools: tuple[SelectedTool, ...] | list[SelectedTool],
         run_one: Callable[[SelectedTool], CheckReport],
         *,
@@ -138,7 +138,6 @@ class CheckRunner:
         checks_total: int,
         should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
-        _ = self
         reports: list[CheckReport] = []
         for completed, selected in enumerate(selected_tools):
             if should_cancel is not None and should_cancel():
@@ -166,8 +165,8 @@ class CheckRunner:
             )
         return reports
 
+    @staticmethod
     def _run_one_with_progress(
-        self,
         selected: SelectedTool,
         *,
         run_one: Callable[[SelectedTool], CheckReport],
@@ -177,7 +176,6 @@ class CheckRunner:
         on_progress: Callable[..., None] | None,
         checks_total: int,
     ) -> CheckReport:
-        _ = self
         if should_cancel is not None and should_cancel():
             progress["cancelled"] = True
             raise FailFastError(
