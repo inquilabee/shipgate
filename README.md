@@ -36,7 +36,8 @@ rules for structural cleanup alongside catalog gates.
 
 ## Quick start
 
-Requires Python 3.11–3.14 (prefer **3.13** for the full suite).
+Requires Python 3.11–3.14 (prefer **3.13** for the full suite). On 3.14, Semgrep
+and deadcode skip with an explicit `requires_python` message instead of crashing.
 
 ```bash
 pip install shipgate              # or: uv add --dev shipgate

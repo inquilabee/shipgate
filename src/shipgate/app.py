@@ -154,6 +154,13 @@ class ShipGateApp:
         )
 
     @staticmethod
+    def radon_reset(project_root: Path) -> str:
+        from shipgate.paths import PROJECT_CACHE_ENV, reset_radon_cache_env
+
+        reset_radon_cache_env(project_root)
+        return f"Reset progressive radon baselines in {PROJECT_CACHE_ENV}\n"
+
+    @staticmethod
     def schema() -> str:
         return json.dumps(report_json_schema(), indent=2) + "\n"
 

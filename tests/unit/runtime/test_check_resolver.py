@@ -263,7 +263,7 @@ def test_prepare_run_skips_import_linter_without_src_package(tmp_path: Path):
     assert prepared.request is None
     assert prepared.report is not None
     assert prepared.report.status == "skipped"
-    assert prepared.report.extra["skipped"] == "required files not present"
+    assert prepared.report.extra["skipped"] == "required files not present: src/*/__init__.py"
 
 
 def test_prepare_run_skips_deptry_without_pyproject(tmp_path: Path):
@@ -281,7 +281,7 @@ def test_prepare_run_skips_deptry_without_pyproject(tmp_path: Path):
     assert prepared.request is None
     assert prepared.report is not None
     assert prepared.report.status == "skipped"
-    assert prepared.report.extra["skipped"] == "required files not present"
+    assert prepared.report.extra["skipped"] == "required files not present: pyproject.toml"
 
 
 def test_prepare_run_skips_pip_audit_without_pyproject(tmp_path: Path):
@@ -297,7 +297,7 @@ def test_prepare_run_skips_pip_audit_without_pyproject(tmp_path: Path):
     assert prepared.request is None
     assert prepared.report is not None
     assert prepared.report.status == "skipped"
-    assert prepared.report.extra["skipped"] == "required files not present"
+    assert prepared.report.extra["skipped"] == "required files not present: pyproject.toml"
 
 
 def test_prepare_run_runs_import_linter_with_src_package(tmp_path: Path):
@@ -320,3 +320,30 @@ def test_prepare_run_runs_import_linter_with_src_package(tmp_path: Path):
     assert prepared.report is None
     assert prepared.request is not None
     assert prepared.request.runnable == "import-linter.check"
+
+
+def test_prepare_run_skips_deadcode_on_unsupported_python(tmp_path: Path, monkeypatch):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.setattr(
+        "shipgate.planning.check_resolver.host_python_minor",
+        lambda: (3, 14),
+    )
+    catalog = CatalogLoader.load()
+    selected = SelectedTool(tool_id="deadcode.check", mode=RunMode.CHECK)
+    command = RunCommand(
+        project_root=tmp_path,
+        target=tmp_path,
+        check="deadcode.check",
+    )
+    prepared = prepare_run(
+        selected=selected,
+        command=command,
+        context=make_run_context(tmp_path, selected),
+        catalog=catalog,
+    )
+    assert prepared.request is None
+    assert prepared.report is not None
+    assert prepared.report.status == "skipped"
+    assert prepared.report.extra["skipped"] == (
+        "deadcode.check does not support Python 3.14 (requires_python: >=3.11,<3.14)"
+    )

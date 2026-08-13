@@ -8,6 +8,7 @@ deadcode.check:
     manager: python
     package: deadcode
     version: 2.4.1
+    requires_python: ">=3.11,<3.14"
   cli:
     paths:
       style: positional

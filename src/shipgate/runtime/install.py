@@ -6,6 +6,7 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
+from shipgate.catalog.core.python_spec import PythonVersionSpec, host_python_minor
 from shipgate.errors import InstallError
 from shipgate.paths import PROJECT_TOOLS_DIR
 from shipgate.planning.core.suites import expand_suite
@@ -52,6 +53,27 @@ def collect_install_requirements_for_tools(
                 key = tool.install.binary or tool.install.package
                 binary_packages[key] = tool.install
     return python_packages, binary_packages
+
+
+def partition_python_packages(
+    packages: dict[str, InstallDefinition],
+) -> tuple[dict[str, InstallDefinition], tuple[str, ...]]:
+    version = host_python_minor()
+    kept: dict[str, InstallDefinition] = {}
+    skipped: list[str] = []
+    for name, install_def in packages.items():
+        if not install_def.requires_python:
+            kept[name] = install_def
+            continue
+        message = PythonVersionSpec.parse(install_def.requires_python).unsupported_message(
+            name,
+            version,
+        )
+        if message is None:
+            kept[name] = install_def
+        else:
+            skipped.append(message)
+    return kept, tuple(skipped)
 
 
 def write_manifest(
@@ -106,6 +128,9 @@ def install_suite(
     force: bool = False,
 ) -> Path:
     python_packages, binary_packages = collect_install_requirements(suite_id, catalog)
+    python_packages, skipped = partition_python_packages(python_packages)
+    for reason in skipped:
+        sys.stderr.write(f"{reason}\n")
     (project_root / PROJECT_TOOLS_DIR).mkdir(parents=True, exist_ok=True)
     if python_packages:
         get_installer("python").install_packages(project_root, python_packages, force=force)

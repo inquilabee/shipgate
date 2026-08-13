@@ -41,6 +41,22 @@ RADON_MI_MIN_CACHE_ENV = "SHIPGATE_RADON_MI_MIN"
 RADON_MI_P5_CACHE_ENV = "SHIPGATE_RADON_MI_P5"
 RADON_MI_P10_CACHE_ENV = "SHIPGATE_RADON_MI_P10"
 RADON_MI_P95_CACHE_ENV = "SHIPGATE_RADON_MI_P95"
+RADON_CACHE_ENV_KEYS = frozenset(
+    {
+        RADON_CC_AVG_CACHE_ENV,
+        RADON_CC_MEDIAN_CACHE_ENV,
+        RADON_CC_MAX_CACHE_ENV,
+        RADON_CC_P5_CACHE_ENV,
+        RADON_CC_P10_CACHE_ENV,
+        RADON_CC_P95_CACHE_ENV,
+        RADON_MI_AVG_CACHE_ENV,
+        RADON_MI_MEDIAN_CACHE_ENV,
+        RADON_MI_MIN_CACHE_ENV,
+        RADON_MI_P5_CACHE_ENV,
+        RADON_MI_P10_CACHE_ENV,
+        RADON_MI_P95_CACHE_ENV,
+    }
+)
 ALLOWED_POLICY_VALUES = frozenset({"yaml", "pyproject"})
 
 
@@ -88,6 +104,24 @@ def update_project_cache_env(project_root: Path, updates: Mapping[str, str]) -> 
     content = "".join(f"{key}={values[key]}\n" for key in sorted(values))
     env_path.write_text(content, encoding="utf-8")
     return env_path
+
+
+def remove_project_cache_env_keys(project_root: Path, keys: frozenset[str]) -> Path:
+    """Drop named keys from ``.shipgate/cache/.env``; no-op if the file is missing."""
+    env_path = project_root / PROJECT_CACHE_ENV
+    if not env_path.is_file():
+        return env_path
+    values = parse_env_file(env_path)
+    for key in keys:
+        values.pop(key, None)
+    content = "".join(f"{key}={values[key]}\n" for key in sorted(values))
+    env_path.write_text(content, encoding="utf-8")
+    return env_path
+
+
+def reset_radon_cache_env(project_root: Path) -> Path:
+    """Remove progressive radon baselines; leave other cache env keys in place."""
+    return remove_project_cache_env_keys(project_root, RADON_CACHE_ENV_KEYS)
 
 
 def read_cached_project_root(env_path: Path) -> Path | None:

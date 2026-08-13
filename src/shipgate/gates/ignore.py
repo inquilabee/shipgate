@@ -22,7 +22,9 @@ class EffectiveIgnores:
         if not self.path_patterns:
             return False
         matcher = pathspec.PathSpec.from_lines("gitignore", self.path_patterns)
-        return matcher.match_file(normalized)
+        return matcher.match_file(normalized) or (
+            not normalized.endswith("/") and matcher.match_file(f"{normalized}/")
+        )
 
 
 def patterns_from_env() -> tuple[str, ...]:

@@ -211,6 +211,49 @@ def test_minimize_covering_dirs_prunes_nested(tmp_path: Path):
     assert dirs == (Path("docs"), Path("src/pkg"))
 
 
+def test_minimize_covering_dirs_keeps_root_files(tmp_path: Path):
+    files = (
+        tmp_path / "main.py",
+        tmp_path / "pkg" / "a.py",
+        tmp_path / "scripts" / "run.py",
+        tmp_path / "tests" / "test_a.py",
+    )
+    for file_path in files:
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text("x\n", encoding="utf-8")
+    dirs = minimize_covering_dirs(files, tmp_path)
+    assert dirs == (Path("main.py"), Path("pkg"), Path("scripts"), Path("tests"))
+    assert Path() not in dirs
+
+
+def test_dirs_delivery_does_not_emit_dot_for_root_entrypoint(tmp_path: Path):
+    (tmp_path / "main.py").write_text("x = 1\n", encoding="utf-8")
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "a.py").write_text("y = 2\n", encoding="utf-8")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_a.py").write_text("z = 3\n", encoding="utf-8")
+    tools = tmp_path / ".shipgate" / "tools"
+    tools.mkdir(parents=True)
+    (tools / "x.py").write_text("w = 4\n", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    scope = Scope(
+        target=tmp_path,
+        include=("main.py", "pkg", "tests"),
+        respect_gitignore=True,
+    )
+    for tool_id in ("deadcode.check", "vulture.check"):
+        paths = scope_paths_for_tool(
+            scope,
+            catalog.get_tool(tool_id),
+            tmp_path,
+            mode=RunMode.CHECK,
+        )
+        assert Path() not in paths
+        assert paths == (Path("main.py"), Path("pkg"), Path("tests"))
+
+
 def test_matches_tool_criteria_extensions_and_globs():
     assert matches_tool_criteria("src/a.py", extensions=(".py",))
     assert not matches_tool_criteria("src/a.md", extensions=(".py",))

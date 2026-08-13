@@ -122,6 +122,7 @@ class CatalogParser:
                 allow_path=raw.get("allow_path", True),
                 known_bad=tuple(str(item) for item in raw.get("known_bad", []) or []),
                 download=self._parse_download(raw.get("download")),
+                requires_python=str(raw["requires_python"]) if raw.get("requires_python") else None,
             )
             if raw
             else None

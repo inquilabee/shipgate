@@ -30,7 +30,9 @@ Useful Make targets:
 | `make publish-check` | Build and sanity-check the wheel |
 | `make docker-test` | Fresh-machine smoke (Docker; network for tool pins) |
 
-Use Python **3.13** locally when running the full suite (Semgrep does not support 3.14 yet). Library `requires-python` remains `>=3.11,<3.15`.
+Use Python **3.13** locally when running the full suite. On 3.14, Semgrep and
+deadcode skip via catalog `requires_python` instead of crashing. Library
+`requires-python` remains `>=3.11,<3.15`.
 
 Managed binary installs need `git`, `curl`, and (for npm-based tools) `nodejs`/`npm` on `PATH`. See `docker/Dockerfile`.
 

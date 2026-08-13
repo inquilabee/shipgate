@@ -209,8 +209,8 @@ def minimize_covering_dirs(files: tuple[Path, ...], project_root: Path) -> tuple
     for file_path in files:
         resolved = file_path.resolve()
         rel = resolved.relative_to(project_root).as_posix()
-        parent = str(Path(rel).parent)
-        rel_dirs.add("." if parent == "." else parent)
+        parent = Path(rel).parent
+        rel_dirs.add(rel if parent == Path() else str(parent))
     kept: list[str] = []
     for candidate in sorted(rel_dirs, key=lambda item: item.count("/")):
         if any(

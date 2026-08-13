@@ -20,6 +20,16 @@ def test_effective_ignores_matches_gitignore_patterns():
     assert not ignores.is_ignored("src/module.py")
 
 
+def test_effective_ignores_matches_directory_gitignore_prefix():
+    ignores = EffectiveIgnores(path_patterns=("notes/", ".cursor/"))
+    assert ignores.is_ignored("notes")
+    assert ignores.is_ignored("notes/")
+    assert ignores.is_ignored("notes/foo.md")
+    assert ignores.is_ignored(".cursor")
+    assert ignores.is_ignored(".cursor/skills/x.py")
+    assert not ignores.is_ignored("src/module.py")
+
+
 def test_patterns_from_env_reads_paths_and_profiles(monkeypatch, tmp_path):
     profile = tmp_path / "ignore.txt"
     profile.write_text(

@@ -11,8 +11,13 @@ Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.tom
 (see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
 `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
 That includes an `importlinter.ini` starter when an importable `src/<pkg>/`
-package exists (src-layout only; flat-layout packages are skipped until laid out
-under `src/`) and a `[tool.deptry]` section in `pyproject.toml` when missing.
+package exists (src-layout only; flat-layout packages skip `import-linter.check`
+with a stderr line such as `required files not present: src/*/__init__.py`)
+and a `[tool.deptry]` section in `pyproject.toml` when missing.
+Managed env prepends `src/` onto `PYTHONPATH` when that src-layout package
+exists, so `lint-imports` can import the package without a consumer `.pth`
+script. Flat-layout packages at the repo root stay importable on the default
+path and do not get a `PYTHONPATH=src` injection.
 `known_first_party` is filled only for a real importable package — otherwise the
 commented placeholder stays. Customize contracts for your layout; pip-audit needs
 no project config file. If an older init left a broken `importlinter.ini`
@@ -39,7 +44,8 @@ Path delivery respects `.gitignore`. Failures write canonical JSON under
 (exit `0`).
 
 Python support: **3.11–3.14**. Prefer **3.13** when running suites that include
-Semgrep (Semgrep does not support 3.14 yet).
+Semgrep or deadcode. On 3.14 those tools skip with `requires_python: >=3.11,<3.14`
+instead of crashing.
 
 ## Key fields
 
@@ -123,6 +129,18 @@ Env keys (progressive only): `SHIPGATE_RADON_MI_AVG`, `SHIPGATE_RADON_MI_MEDIAN`
 `SHIPGATE_RADON_MI_P95`, `SHIPGATE_RADON_CC_AVG`, `SHIPGATE_RADON_CC_MEDIAN`,
 `SHIPGATE_RADON_CC_MAX`, `SHIPGATE_RADON_CC_P5`, `SHIPGATE_RADON_CC_P10`,
 `SHIPGATE_RADON_CC_P95`.
+
+After a refactor that dipped then recovered, reset those keys and re-seed on the
+next check. This is not the check-result cache under `.shipgate/cache/check-results/`.
+
+```bash
+shipgate radon reset
+shipgate check --check radon.mi
+shipgate check --check radon.cc
+```
+
+Use `shipgate radon calibrate` when you want absolute floors instead of
+progressive baselines.
 
 ```yaml
 # Bundled init (portable): progressive MI floors

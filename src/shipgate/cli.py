@@ -312,6 +312,12 @@ def radon_calibrate(
     )
 
 
+@radon_app.command("reset")
+def radon_reset() -> None:
+    """Delete progressive radon baselines from .shipgate/cache/.env."""
+    session().radon_reset()
+
+
 @app.command(
     "refactor",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},

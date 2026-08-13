@@ -4,3 +4,5 @@ exclude_dirs:
   - .venv
   - venv
   - .shipgate
+  - .cursor
+  - notes
