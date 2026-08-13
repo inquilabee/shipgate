@@ -11,6 +11,7 @@ from shipgate.domain.project import Scope
 from shipgate.paths import relative_if_under
 from shipgate.planning.utils.gitignore import (
     expand_scope,
+    include_allowed,
     minimize_covering_dirs,
     should_ignore,
 )
@@ -74,11 +75,25 @@ class ScopeResolver:
 
     def paths(self, scope: Scope, *, mode: RunMode) -> tuple[Path, ...]:
         if mode == RunMode.APPLY:
-            return (self._relative_if_under_root(self.resolve_scope_target(scope)),)
+            return self._relatives((self.resolve_scope_target(scope),))
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
             return (self.resolve_scope_target(scope),)
         paths = self._scope_entry_paths(scope)
-        return tuple(paths) if paths else (self.resolve_scope_target(scope),)
+        return tuple(paths) if paths else self._unfiltered_target(scope)
+
+    def _unfiltered_target(self, scope: Scope) -> tuple[Path, ...]:
+        target = self.resolve_scope_target(scope)
+        rel = self.relative_under_root(target)
+        return (
+            ()
+            if rel is None
+            or (
+                target != self.project_root
+                and scope.include
+                and not include_allowed(rel.as_posix() if rel.parts else "", scope.include)
+            )
+            else (target,)
+        )
 
     def _scope_entry_paths(self, scope: Scope) -> list[Path]:
         target = self.resolve_scope_target(scope)
@@ -89,12 +104,14 @@ class ScopeResolver:
         )
 
     def _scope_single_path(self, target: Path, scope: Scope) -> list[Path]:
+        rel = self.relative_under_root(target)
         return (
             []
-            if should_ignore(self.project_root, target, extra_excludes=scope.exclude)
+            if rel is None or should_ignore(self.project_root, target, extra_excludes=scope.exclude)
             else (
                 []
-                if scope.include and not self._path_matches_include(target, scope.include)
+                if scope.include
+                and not include_allowed(rel.as_posix() if rel.parts else "", scope.include)
                 else [target]
             )
         )
@@ -120,40 +137,19 @@ class ScopeResolver:
                 continue
             if should_ignore(self.project_root, child, extra_excludes=scope.exclude):
                 continue
-            if scope.include and not self._path_matches_include(child, scope.include):
-                continue
             entries.append(child)
         return entries
 
     def _include_path_allowed(self, path: Path, scope: Scope) -> bool:
-        try:
-            path.relative_to(self.project_root)
-        except ValueError:
-            return False
         return (
-            not should_ignore(self.project_root, path, extra_excludes=scope.exclude)
-            if path.exists()
-            else False
-        )
-
-    def _path_matches_include(self, path: Path, include: tuple[str, ...]) -> bool:
-        rel = path.relative_to(self.project_root).as_posix()
-        return (
-            any(rel.startswith(inc.rstrip("/")) for inc in include)
-            if path.is_file()
-            else any(
-                rel.startswith(inc.rstrip("/")) or inc.rstrip("/").startswith(rel)
-                for inc in include
+            False
+            if self.relative_under_root(path) is None
+            else (
+                not should_ignore(self.project_root, path, extra_excludes=scope.exclude)
+                if path.exists()
+                else False
             )
         )
-
-    def _relative_if_under_root(self, path: Path) -> Path:
-        resolved = path.resolve()
-        try:
-            rel = resolved.relative_to(self.project_root)
-        except ValueError:
-            return path
-        return rel if rel.parts else Path()
 
     def paths_for_tool(
         self,

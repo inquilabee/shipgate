@@ -1,5 +1,8 @@
 from pathlib import Path
 
+from shipgate.domain.modes import RunMode
+from shipgate.domain.project import Scope
+from shipgate.planning.core.scopes import scope_paths
 from shipgate.planning.utils.gitignore import (
     expand_scope,
     include_allowed,
@@ -53,6 +56,30 @@ def test_expand_scope_include_does_not_match_prefix_sibling(tmp_path: Path):
     names = {p.name for p in paths}
     assert "ok.py" in names
     assert "no.py" not in names
+
+
+def test_scope_paths_include_does_not_match_prefix_sibling(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src_backup").mkdir()
+    scope = Scope(target=tmp_path, include=("src",), respect_gitignore=True)
+    paths = scope_paths(scope, tmp_path, mode=RunMode.CHECK)
+    assert paths == (tmp_path / "src",)
+
+
+def test_scope_paths_nested_target_rejects_include_prefix_sibling(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    backup = tmp_path / "src_backup"
+    backup.mkdir()
+    scope = Scope(target=backup, include=("src",), respect_gitignore=True)
+    paths = scope_paths(scope, tmp_path, mode=RunMode.CHECK)
+    assert backup not in paths
+
+
+def test_scope_paths_apply_outside_root_is_empty(tmp_path: Path):
+    outside = tmp_path.parent / f"outside-apply-{tmp_path.name}"
+    outside.mkdir()
+    scope = Scope(target=outside, respect_gitignore=True)
+    assert scope_paths(scope, tmp_path, mode=RunMode.APPLY) == ()
 
 
 def test_matches_tool_criteria_glob():
