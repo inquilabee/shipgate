@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 from shipgate.project.layout.engine import LayoutEngine
 
+INIT_PY = "__init__.py"
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -44,20 +46,22 @@ class RootPackageDetector:
         if rel == "src":
             return self._packages_under(self.root / "src")
         path = self.root / rel
-        return (path.name,) if (path / "__init__.py").is_file() else ()
+        return (path.name,) if (path / INIT_PY).is_file() else ()
 
     @staticmethod
     def _packages_under(parent: Path) -> tuple[str, ...]:
-        return (
-            tuple(
-                sorted(
-                    path.name
-                    for path in parent.iterdir()
-                    if path.is_dir()
-                    and not path.name.startswith(".")
-                    and (path / "__init__.py").is_file()
-                )
+        if not parent.is_dir():
+            return ()
+        names: list[str] = []
+        for path in sorted(parent.iterdir()):
+            if not path.is_dir() or path.name.startswith("."):
+                continue
+            if (path / INIT_PY).is_file():
+                names.append(path.name)
+                continue
+            names.extend(
+                f"{path.name}.{child.name}"
+                for child in sorted(path.iterdir())
+                if child.is_dir() and not child.name.startswith(".") and (child / INIT_PY).is_file()
             )
-            if parent.is_dir()
-            else ()
-        )
+        return tuple(names)

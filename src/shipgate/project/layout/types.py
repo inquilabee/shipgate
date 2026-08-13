@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-DOC_BASENAMES = frozenset({"docs", "doc", "documentation"})
+DOC_BASENAMES = frozenset({"docs", "doc", "documentation", "sphinx"})
 TEST_DIR_BASENAMES = frozenset({"test", "tests"})
 DOC_EXTENSIONS = frozenset({".md", ".rst", ".adoc"})
 UTILITY_PY_BASENAMES = frozenset(
@@ -19,6 +19,10 @@ UTILITY_PY_BASENAMES = frozenset(
         "tools",
         "migrations",
         "alembic",
+        "benchmarks",
+        "benchmark",
+        "typing_tests",
+        "sphinx",
     }
 )
 SKIP_DIR_NAMES = frozenset(
@@ -43,6 +47,10 @@ SKIP_DIR_NAMES = frozenset(
         ".idea",
         ".vscode",
         ".shipgate",
+        ".review-venv",
+        ".direnv",
+        ".nox",
+        "site-packages",
         "mlruns",
         "mutants",
         ".next",

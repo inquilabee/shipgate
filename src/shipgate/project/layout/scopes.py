@@ -21,7 +21,8 @@ class ScopeFragments:
     def default_scopes(self) -> dict[str, ScopeBody]:
         scopes: dict[str, ScopeBody] = {"semgrep": {"target": "."}}
         if self.layout.python_dirs:
-            scopes["python-src"] = self.scope_dirs(self.layout.python_dirs)
+            src_scope = self.scope_dirs(self.layout.python_dirs)
+            scopes |= {"python-src": src_scope, "ty-src": src_scope}
         if self.layout.test_dirs:
             scopes["python-test-src"] = self.scope_dirs(self.layout.test_dirs)
         if self.layout.docs_dirs:

@@ -34,12 +34,9 @@ class LayoutRoles:
         return rel_dir.rsplit("/", 1)[-1].lower() if rel_dir else ""
 
     def is_utility(self, rel_dir: str, sig: DirSignals) -> bool:
+        _ = sig
         return (
-            (
-                not ("/" not in rel_dir and sig.has_init)
-                if any(self.basename(part) in UTILITY_PY_BASENAMES for part in rel_dir.split("/"))
-                else False
-            )
+            any(self.basename(part) in UTILITY_PY_BASENAMES for part in rel_dir.split("/"))
             if rel_dir
             else False
         )

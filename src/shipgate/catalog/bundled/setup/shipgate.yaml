@@ -8,6 +8,8 @@ configs:
 checks:
   semgrep.scan:
     scope: semgrep
+  ty.check:
+    scope: ty-src
   radon.cc:
     # Letter rank is per-block. Median / p95 gate typical and tail complexity.
     threshold: B
