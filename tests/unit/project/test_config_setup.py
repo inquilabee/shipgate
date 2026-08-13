@@ -7,7 +7,6 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import SHIPGATE_YAML
 from shipgate.project.config_setup import (
-    ensure_minimal_pyproject,
     project_config_relpath,
     scaffold_bundled_configs,
 )
@@ -112,47 +111,17 @@ def test_scaffold_import_linter_flat_layout(tmp_path: Path):
     assert "root_package = mypkg" in content
 
 
-def test_scaffold_merges_deptry_into_pyproject(tmp_path: Path):
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "demo"\nversion = "0.1.0"\n',
-        encoding="utf-8",
-    )
+def test_scaffold_does_not_write_deptry_into_pyproject(tmp_path: Path):
+    original = '[project]\nname = "demo"\nversion = "0.1.0"\n'
+    (tmp_path / "pyproject.toml").write_text(original, encoding="utf-8")
     pkg = tmp_path / "src" / "demo"
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     catalog = CatalogLoader.load()
     scaffold_bundled_configs(tmp_path, catalog)
-    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
-    assert "[tool.deptry]" in content
-    assert 'known_first_party = ["demo"]' in content
-
-
-def test_scaffold_deptry_leaves_known_first_party_comment_without_package(tmp_path: Path):
-    (tmp_path / "pyproject.toml").write_text(
-        'requires-python = ">=3.11"\n',
-        encoding="utf-8",
-    )
-    catalog = CatalogLoader.load()
-    scaffold_bundled_configs(tmp_path, catalog)
-    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
-    assert "[tool.deptry]" in content
-    assert '# known_first_party = ["your_package"]' in content
-
-
-def test_scaffold_deptry_ignores_pyproject_name_without_package(tmp_path: Path):
-    """Fresh yaml-init trees get a name but no package — do not invent known_first_party."""
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "main.py").write_text("print('hi')\n", encoding="utf-8")
-    ensure_minimal_pyproject(tmp_path)
-    catalog = CatalogLoader.load()
-    scaffold_bundled_configs(tmp_path, catalog)
-    content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
-    assert "[tool.deptry]" in content
-    assert '# known_first_party = ["your_package"]' in content
-    uncommented = [
-        line for line in content.splitlines() if line.strip().startswith("known_first_party")
-    ]
-    assert uncommented == []
+    assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == original
+    assert not (tmp_path / ".mdformat.toml").is_file()
+    assert (tmp_path / ".shipgate/configs/mdformat.toml").is_file()
 
 
 def test_scaffold_bundled_configs_does_not_overwrite(tmp_path: Path):

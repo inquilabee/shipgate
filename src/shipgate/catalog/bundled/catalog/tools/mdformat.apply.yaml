@@ -24,6 +24,7 @@ mdformat.apply:
   configuration:
     bundled: configs/mdformat.toml
     discover:
+      - .shipgate/configs/mdformat.toml
       - .mdformat.toml
     precedence:
       - repo

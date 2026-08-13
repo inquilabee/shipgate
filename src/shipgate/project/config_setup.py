@@ -43,11 +43,7 @@ def project_config_relpath(tool: ToolDefinition) -> Path | None:
     return (
         PROJECT_GATE_CONFIGS_DIR / f"{tool.id}.yaml"
         if is_gate
-        else (
-            Path(".mdformat.toml")
-            if bundled_path.name == "mdformat.toml"
-            else Path(".shipgate/configs") / bundled_path.name
-        )
+        else Path(".shipgate/configs") / bundled_path.name
     )
 
 
@@ -139,39 +135,6 @@ def read_pyproject_shipgate_template(project_root: Path | None = None) -> str:
     )
 
 
-def bundled_deptry_pyproject_template() -> Path:
-    return bundled_root_path() / "setup" / "deptry-pyproject.toml"
-
-
-def read_deptry_pyproject_template() -> str:
-    bundled = bundled_deptry_pyproject_template()
-    if not bundled.is_file():
-        msg = f"bundled deptry pyproject template not found: {bundled}"
-        raise FileNotFoundError(msg)
-    return bundled.read_text(encoding="utf-8")
-
-
-def ensure_deptry_pyproject_section(project_root: Path) -> Path | None:
-    """Append a starter [tool.deptry] section when pyproject.toml lacks one."""
-    pyproject = project_root / PYPROJECT_TOML
-    if not pyproject.is_file():
-        return None
-    content = pyproject.read_text(encoding="utf-8")
-    if "[tool.deptry]" in content:
-        return None
-    if content and not content.endswith("\n"):
-        content += "\n"
-    section = read_deptry_pyproject_template()
-    root_package = detect_importable_root_package(project_root)
-    if root_package is not None:
-        section = section.replace(
-            '# known_first_party = ["your_package"]',
-            f'known_first_party = ["{root_package}"]',
-        )
-    pyproject.write_text("".join([content, "\n", section]), encoding="utf-8")
-    return pyproject
-
-
 def bundled_shipgate_yaml_template() -> Path:
     return bundled_root_path() / "setup" / "shipgate.yaml"
 
@@ -209,7 +172,4 @@ def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]
         )
         if result is not None:
             created.append(result)
-    deptry = ensure_deptry_pyproject_section(root)
-    if deptry is not None:
-        created.append(deptry)
     return created
