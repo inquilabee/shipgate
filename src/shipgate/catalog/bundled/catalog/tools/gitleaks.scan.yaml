@@ -5,6 +5,8 @@ gitleaks.scan:
     - --no-banner
     - --report-format
     - json
+    - --report-path
+    - "-"
   modes:
     - check
   normalizer: gitleaks

@@ -158,3 +158,5 @@ def test_gitleaks_scan_uses_project_root_for_multiple_scope_paths(tmp_path):
     assert "--source" in argv
     source_index = argv.index("--source")
     assert argv[source_index + 1] == str(tmp_path)
+    assert argv[argv.index("--report-format") + 1] == "json"
+    assert argv[argv.index("--report-path") + 1] == "-"
