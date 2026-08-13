@@ -4,6 +4,32 @@
 
 ## Unreleased
 
+## v0.1.10
+
+### Fixed
+
+- Ignore leftover tool JSON unless this run wrote the output file.
+- Contain install, git, pip, and config paths under the project root.
+- Auto-mode refactor no longer rewrites aliases, async generators, or empty `len()`.
+- Honor pyproject-only policy without merging leftover YAML; skip unsupported apply
+  mode.
+- Reject extra batch paths and treat invalid batch files as config errors.
+- Walk GitHub download redirects hop by hop; refuse userinfo / off-site hosts
+  before reading a body; open `.tar.xz` assets with xz.
+- Refactor check/fix: skip only parse and I/O errors; do not read escaped
+  check paths; stop gitignore walking at `.git` or `pyproject.toml`; stack
+  nested `!` un-ignore patterns.
+- Scope include `src` no longer matches `src_backup`; apply mode drops targets
+  outside the project.
+- Parallel fail-fast and cancel keep completed sibling reports.
+- Map managed-venv failures to `InstallError`.
+- Treat `[::1]` as loopback; non-loopback HTML can unlock via an HttpOnly
+  UI-token cookie instead of embedding the secret in the page.
+
+### Changed
+
+- `ProjectConfigParser.parse` takes `dict[str, object]` (no `Any` cast).
+
 ## v0.1.9
 
 ### Fixed

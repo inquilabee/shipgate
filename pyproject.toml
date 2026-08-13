@@ -1,6 +1,6 @@
 [project]
 name = "shipgate"
-version = "0.1.9"
+version = "0.1.10"
 description = "Portable quality-gate orchestrator for developer tools"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
