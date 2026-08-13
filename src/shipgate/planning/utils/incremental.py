@@ -60,6 +60,8 @@ class RunScopeSession:
 
 
 def effective_incremental(command: RunCommand, project: ProjectConfig) -> tuple[bool, str | None]:
+    if command.full_tree:
+        return False, None
     changed_only = command.changed_only or project.changed_only
     since = command.since if command.since is not None else project.since
     return changed_only, since

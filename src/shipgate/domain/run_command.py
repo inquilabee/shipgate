@@ -24,4 +24,5 @@ class RunCommand:
     ci: bool = False
     no_cache: bool = False
     changed_only: bool = False
+    full_tree: bool = False
     since: str | None = None

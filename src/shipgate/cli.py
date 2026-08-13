@@ -71,6 +71,13 @@ DisplayCliOpt = Annotated[
 CiOpt = Annotated[bool, typer.Option("--ci", help="CI mode")]
 NoCacheOpt = Annotated[bool, typer.Option("--no-cache", help="Disable check result cache")]
 ChangedOnlyOpt = Annotated[bool, typer.Option("--changed-only", help="Incremental checks")]
+FullTreeOpt = Annotated[
+    bool,
+    typer.Option(
+        "--full-tree",
+        help="Scan the whole tree; ignore changed-only and --since for this run",
+    ),
+]
 SinceOpt = Annotated[str | None, typer.Option("--since", help="Git ref for incremental checks")]
 ProjectEnvOpt = Annotated[
     Path | None,
@@ -115,6 +122,7 @@ def register_run_command(typer_app: typer.Typer, name: str, *, mode: str) -> Non
         ci: CiOpt = False,
         no_cache: NoCacheOpt = False,
         changed_only: ChangedOnlyOpt = False,
+        full_tree: FullTreeOpt = False,
         since: SinceOpt = None,
         project_env: ProjectEnvOpt = None,
     ) -> None:
@@ -133,6 +141,7 @@ def register_run_command(typer_app: typer.Typer, name: str, *, mode: str) -> Non
                 ci=ci,
                 no_cache=no_cache,
                 changed_only=changed_only,
+                full_tree=full_tree,
                 since=since,
                 project_env=project_env,
             ),

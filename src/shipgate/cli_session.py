@@ -31,6 +31,7 @@ class CliRunOptions:
     ci: bool = False
     no_cache: bool = False
     changed_only: bool = False
+    full_tree: bool = False
     since: str | None = None
     project_env: Path | None = None
 
@@ -57,6 +58,7 @@ class CliSession:
             ci=opts.ci,
             no_cache=opts.no_cache,
             changed_only=opts.changed_only,
+            full_tree=opts.full_tree,
             since=opts.since,
         )
 
@@ -119,6 +121,14 @@ class CliSession:
         )
 
     def run(self, mode: str, opts: CliRunOptions) -> None:
+        if opts.full_tree and opts.changed_only:
+            self.write_error(
+                ShipGateError(
+                    "cannot combine --full-tree with --changed-only",
+                    hint="use --full-tree for a whole-tree scan, or --changed-only for incremental",
+                )
+            )
+            raise typer.Exit(ShipGateError.exit_code)
         project_root = self.project_root()
         self.persist_project_env(project_root, opts.project_env)
         command = self.build_run_command(project_root, opts)

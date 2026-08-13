@@ -6,10 +6,12 @@ import pytest
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.core import run_command
 from shipgate.domain.modes import RunMode
-from shipgate.domain.project import Scope
+from shipgate.domain.project import ProjectConfig, Scope
+from shipgate.domain.run_command import RunCommand
 from shipgate.errors import PlanningError
 from shipgate.paths import relative_if_under
 from shipgate.planning.utils.incremental import (
+    effective_incremental,
     file_matches_changed,
     git_changed_files,
     tool_paths_after_incremental,
@@ -154,3 +156,15 @@ def test_aggregate_root_keeps_planned_paths_under_changed_only(tmp_path):
         changed_only=True,
     )
     assert paths == (Path("src"),)
+
+
+def test_full_tree_overrides_project_changed_only(tmp_path):
+    command = RunCommand(project_root=tmp_path, full_tree=True, changed_only=True, since="HEAD")
+    project = ProjectConfig(changed_only=True, since="main")
+    assert effective_incremental(command, project) == (False, None)
+
+
+def test_effective_incremental_or_keeps_project_changed_only(tmp_path):
+    command = RunCommand(project_root=tmp_path)
+    project = ProjectConfig(changed_only=True, since="main")
+    assert effective_incremental(command, project) == (True, "main")

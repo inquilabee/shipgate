@@ -21,6 +21,17 @@ def test_build_run_command_maps_options(tmp_path: Path):
     )
 
 
+def test_run_rejects_full_tree_with_changed_only(tmp_path: Path, monkeypatch):
+    app = MagicMock(spec=ShipGateApp)
+    session = CliSession(app=app)
+    monkeypatch.setattr("shipgate.cli_session.find_project_root", lambda: tmp_path)
+
+    with pytest.raises(typer.Exit) as exc:
+        session.run("check", CliRunOptions(full_tree=True, changed_only=True))
+    assert exc.value.exit_code == ShipGateError.exit_code
+    app.check.assert_not_called()
+
+
 def test_run_exits_with_app_code(tmp_path: Path, monkeypatch):
     app = MagicMock(spec=ShipGateApp)
     app.check.return_value = 2

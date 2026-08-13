@@ -266,15 +266,18 @@ class ShipGateApp:
         )
         suggestions = suggest_tools(project_root, self._catalog_for(project_root))
         suggestion_text = "\n".join(suggestions) + "\n" if suggestions else ""
-        return (
-            suggestion_text + "scaffolded .shipgate configs\n"
+        created = (
+            "scaffolded .shipgate configs\n"
             if configs_only
-            else (
-                suggestion_text + f"updated {path}\n"
-                if mode == "pyproject"
-                else suggestion_text + f"created {path}\n"
-            )
+            else (f"updated {path}\n" if mode == "pyproject" else f"created {path}\n")
         )
+        hint = (
+            ""
+            if configs_only
+            else "next: shipgate install --suite full\n"
+            "      shipgate check --suite full --full-tree\n"
+        )
+        return "".join([suggestion_text, created, hint])
 
     def configs_sync(self, project_root: Path) -> str:
         created = sync_configs(project_root, self._catalog_for(project_root))
