@@ -169,6 +169,7 @@ class CatalogParser:
         return (
             RequireIfDefinition(
                 files_present=tuple(str(item) for item in raw.get("files_present", []) or []),
+                importable_package=raw.get("importable_package") is True,
             )
             if raw
             else None

@@ -78,9 +78,10 @@ class SuggestIfDefinition:
 
 @dataclass(frozen=True)
 class RequireIfDefinition:
-    """Skip the tool at check time unless at least one pattern matches."""
+    """Skip the tool at check time unless prerequisites match."""
 
     files_present: tuple[str, ...] = ()
+    importable_package: bool = False
 
 
 @dataclass(frozen=True)

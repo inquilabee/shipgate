@@ -25,6 +25,7 @@ from shipgate.planning.utils.incremental import (
     effective_incremental,
     tool_paths_after_incremental,
 )
+from shipgate.project.layout.packages import detect_importable_packages
 from shipgate.project.python import discover_project_python
 
 if TYPE_CHECKING:
@@ -141,12 +142,17 @@ class CheckResolver:
         return PreparedRun(request=resolved)
 
     def _require_if_skip_reason(self, tool: ToolDefinition) -> str | None:
-        if tool.require_if is None or not tool.require_if.files_present:
+        require_if = tool.require_if
+        if require_if is None:
             return None
-        if any_files_present(self.project_root, tool.require_if.files_present):
-            return None
-        patterns = ", ".join(tool.require_if.files_present)
-        return f"required files not present: {patterns}"
+        if require_if.importable_package and not detect_importable_packages(self.project_root):
+            return "no importable package in project layout"
+        if require_if.files_present and not any_files_present(
+            self.project_root, require_if.files_present
+        ):
+            patterns = ", ".join(require_if.files_present)
+            return f"required files not present: {patterns}"
+        return None
 
     @staticmethod
     def _requires_python_skip_reason(tool: ToolDefinition) -> str | None:

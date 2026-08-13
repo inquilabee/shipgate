@@ -14,6 +14,7 @@ from shipgate.paths import (
     update_project_cache_env,
 )
 from shipgate.project.layout import detect_layout
+from shipgate.project.layout.packages import detect_importable_root_package
 from shipgate.project.scope_defaults import (
     render_scopes_toml,
     render_scopes_yaml,
@@ -55,27 +56,6 @@ def bundled_template_path(tool: ToolDefinition) -> Path:
         msg = f"tool {tool.id!r} has no bundled config"
         raise ValueError(msg)
     return bundled_root_path() / tool.configuration.bundled
-
-
-def detect_importable_root_package(project_root: Path) -> str | None:
-    """Importable src-layout package name for import-linter / deptry scaffolding."""
-    return RootPackageDetector(project_root).from_src_layout()
-
-
-class RootPackageDetector:
-    def __init__(self, project_root: Path) -> None:
-        self.root = project_root.resolve()
-
-    def from_src_layout(self) -> str | None:
-        src = self.root / "src"
-        if not src.is_dir():
-            return None
-        packages = sorted(
-            path.name
-            for path in src.iterdir()
-            if path.is_dir() and not path.name.startswith(".") and (path / "__init__.py").is_file()
-        )
-        return packages[0] if packages else None
 
 
 def render_root_package_template(text: str, root_package: str) -> str:
@@ -214,7 +194,7 @@ def scaffold_bundled_configs(project_root: Path, catalog: Catalog) -> list[Path]
     root = project_root.resolve()
     created: list[Path] = []
     seen: set[Path] = set()
-    # Only substitute import-linter placeholders when a real src package exists.
+    # Only substitute import-linter placeholders when a real package exists.
     importable_package = detect_importable_root_package(root)
     for tool in catalog.tools.values():
         rel = project_config_relpath(tool)

@@ -67,5 +67,7 @@ def validate_suggest_if(tool: ToolDefinition) -> None:
 def validate_require_if(tool: ToolDefinition) -> None:
     if tool.require_if is None:
         return
-    if not tool.require_if.files_present:
-        raise CatalogError(f"tool {tool.id!r} require_if.files_present must not be empty")
+    if not tool.require_if.files_present and not tool.require_if.importable_package:
+        raise CatalogError(
+            f"tool {tool.id!r} require_if must set files_present or importable_package"
+        )

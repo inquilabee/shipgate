@@ -7,12 +7,12 @@ from shipgate.catalog.loader import CatalogLoader
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.paths import SHIPGATE_YAML
 from shipgate.project.config_setup import (
-    detect_importable_root_package,
     ensure_minimal_pyproject,
     project_config_relpath,
     scaffold_bundled_configs,
 )
 from shipgate.project.init import init_project, scaffold_project_layout
+from shipgate.project.layout.packages import detect_importable_root_package
 
 
 def test_project_config_relpath_deduplicates_ruff():
@@ -47,6 +47,14 @@ def test_detect_importable_root_package_from_src_layout(tmp_path: Path):
     pkg.mkdir(parents=True)
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     assert detect_importable_root_package(tmp_path) == "acme"
+
+
+def test_detect_importable_root_package_from_flat_layout(tmp_path: Path):
+    pkg = tmp_path / "mypkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "service.py").write_text("x = 1\n", encoding="utf-8")
+    assert detect_importable_root_package(tmp_path) == "mypkg"
 
 
 def test_detect_importable_returns_none_without_package(tmp_path: Path):
@@ -91,6 +99,17 @@ def test_scaffold_import_linter_substitutes_root_package(tmp_path: Path):
     assert "containers =\n    widgets" in content
     assert "(domain)" in content
     assert "widgets.domain" not in content
+
+
+def test_scaffold_import_linter_flat_layout(tmp_path: Path):
+    pkg = tmp_path / "mypkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "service.py").write_text("x = 1\n", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    scaffold_bundled_configs(tmp_path, catalog)
+    content = (tmp_path / ".shipgate/configs/importlinter.ini").read_text(encoding="utf-8")
+    assert "root_package = mypkg" in content
 
 
 def test_scaffold_merges_deptry_into_pyproject(tmp_path: Path):

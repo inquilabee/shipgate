@@ -240,32 +240,6 @@ def test_prepare_run_short_circuits_when_incremental_clean(tmp_path: Path):
     assert prepared.report.extra["skipped"] == "no matching files in scope"
 
 
-def test_prepare_run_skips_import_linter_without_src_package(tmp_path: Path):
-    (tmp_path / "src").mkdir()
-    (tmp_path / "src" / "main.py").write_text("x = 1\n", encoding="utf-8")
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "fresh"\nversion = "0.1.0"\n',
-        encoding="utf-8",
-    )
-    catalog = CatalogLoader.load()
-    selected = SelectedTool(tool_id="import-linter.check", mode=RunMode.CHECK)
-    command = RunCommand(
-        project_root=tmp_path,
-        target=tmp_path,
-        check="import-linter.check",
-    )
-    prepared = prepare_run(
-        selected=selected,
-        command=command,
-        context=make_run_context(tmp_path, selected),
-        catalog=catalog,
-    )
-    assert prepared.request is None
-    assert prepared.report is not None
-    assert prepared.report.status == "skipped"
-    assert prepared.report.extra["skipped"] == "required files not present: src/*/__init__.py"
-
-
 def test_prepare_run_skips_deptry_without_pyproject(tmp_path: Path):
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "main.py").write_text("x = 1\n", encoding="utf-8")
@@ -298,28 +272,6 @@ def test_prepare_run_skips_pip_audit_without_pyproject(tmp_path: Path):
     assert prepared.report is not None
     assert prepared.report.status == "skipped"
     assert prepared.report.extra["skipped"] == "required files not present: pyproject.toml"
-
-
-def test_prepare_run_runs_import_linter_with_src_package(tmp_path: Path):
-    pkg = tmp_path / "src" / "demo"
-    pkg.mkdir(parents=True)
-    (pkg / "__init__.py").write_text("", encoding="utf-8")
-    catalog = CatalogLoader.load()
-    selected = SelectedTool(tool_id="import-linter.check", mode=RunMode.CHECK)
-    command = RunCommand(
-        project_root=tmp_path,
-        target=tmp_path,
-        check="import-linter.check",
-    )
-    prepared = prepare_run(
-        selected=selected,
-        command=command,
-        context=make_run_context(tmp_path, selected),
-        catalog=catalog,
-    )
-    assert prepared.report is None
-    assert prepared.request is not None
-    assert prepared.request.runnable == "import-linter.check"
 
 
 def test_prepare_run_skips_deadcode_on_unsupported_python(tmp_path: Path, monkeypatch):

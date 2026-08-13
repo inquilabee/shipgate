@@ -4,6 +4,15 @@
 
 ## Unreleased
 
+## v0.1.9
+
+### Fixed
+
+- `shipgate.__version__` follows the installed package metadata (`pyproject.toml`),
+  so it cannot drift from the published version.
+- `import-linter.check` uses layout detection for an importable package (src or
+  flat) instead of requiring `src/*/__init__.py`.
+
 ## v0.1.8
 
 ### Fixed

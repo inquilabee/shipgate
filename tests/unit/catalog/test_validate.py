@@ -6,6 +6,7 @@ from shipgate.domain.catalog import (
     Catalog,
     CliOptionDefinition,
     InstallDefinition,
+    RequireIfDefinition,
     SuiteDefinition,
     ToolDefinition,
 )
@@ -112,6 +113,22 @@ def test_validator_rejects_invalid_requires_python():
         suites={},
     )
     with pytest.raises(CatalogError, match="requires_python"):
+        CatalogValidator.validate(catalog)
+
+
+def test_validator_rejects_empty_require_if():
+    catalog = Catalog(
+        tools={
+            "bad.tool": ToolDefinition(
+                id="bad.tool",
+                executable="bad",
+                modes=(RunMode.CHECK,),
+                require_if=RequireIfDefinition(),
+            )
+        },
+        suites={},
+    )
+    with pytest.raises(CatalogError, match="files_present or importable_package"):
         CatalogValidator.validate(catalog)
 
 
