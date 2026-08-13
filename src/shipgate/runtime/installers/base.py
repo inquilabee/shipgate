@@ -79,14 +79,20 @@ class GitHubUrlFetcher:
         raise InstallError(f"too many redirects fetching {url}")
 
     @staticmethod
-    def is_github_netloc(netloc: str) -> bool:
-        host = netloc.lower().split(":")[0]
-        return host in GITHUB_HOSTS or host.endswith(GITHUB_HOST_SUFFIXES)
+    def is_github_netloc(host: str) -> bool:
+        name = host.lower()
+        return name in GITHUB_HOSTS or name.endswith(GITHUB_HOST_SUFFIXES)
 
     @staticmethod
     def require_github_https(url: str, message: str) -> None:
         parsed = urlparse(url)
-        if parsed.scheme != "https" or not GitHubUrlFetcher.is_github_netloc(parsed.netloc):
+        host = parsed.hostname
+        if (
+            parsed.scheme != "https"
+            or parsed.username is not None
+            or host is None
+            or not GitHubUrlFetcher.is_github_netloc(host)
+        ):
             raise InstallError(f"{message}: {url}")
 
     @staticmethod

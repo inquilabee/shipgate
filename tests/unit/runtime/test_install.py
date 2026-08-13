@@ -284,3 +284,41 @@ def test_get_github_url_follows_github_redirect(monkeypatch: pytest.MonkeyPatch)
 def test_download_https_file_refuses_non_github(tmp_path: Path) -> None:
     with pytest.raises(InstallError, match="refusing untrusted download URL"):
         download_https_file("https://evil.example/x", tmp_path / "out.bin")
+
+
+def test_get_github_url_refuses_userinfo_host(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetched: list[str] = []
+
+    def fake_get(url: str, *args, **kwargs):
+        del args, kwargs
+        fetched.append(url)
+        response = MagicMock()
+        response.status_code = 200
+        response.headers = {}
+        response.url = url
+        return response
+
+    monkeypatch.setattr("shipgate.runtime.installers.base.requests.get", fake_get)
+    with pytest.raises(InstallError, match="refusing untrusted download URL"):
+        get_github_url("https://github.com:443@evil.example/x", timeout=1)
+    with pytest.raises(InstallError, match="refusing untrusted download URL"):
+        get_github_url("https://github.com:443@127.0.0.1/x", timeout=1)
+    assert fetched == []
+
+
+def test_get_github_url_refuses_userinfo_redirect(monkeypatch: pytest.MonkeyPatch) -> None:
+    fetched: list[str] = []
+
+    def fake_get(url: str, *args, **kwargs):
+        del args, kwargs
+        fetched.append(url)
+        response = MagicMock()
+        response.status_code = 302
+        response.headers = {"Location": "https://github.com:443@evil.example/payload"}
+        response.url = url
+        return response
+
+    monkeypatch.setattr("shipgate.runtime.installers.base.requests.get", fake_get)
+    with pytest.raises(InstallError, match="refusing redirect off github"):
+        get_github_url("https://github.com/owner/repo/releases/download/x", timeout=1)
+    assert fetched == ["https://github.com/owner/repo/releases/download/x"]
