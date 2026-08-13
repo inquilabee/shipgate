@@ -205,12 +205,8 @@ def matched_changed_files(
 
 def relatives_under_root(paths: tuple[Path, ...], project_root: Path) -> tuple[Path, ...]:
     return tuple(
-        rel for path in paths if (rel := relative_under_root(path, project_root)) is not None
+        rel for path in paths if (rel := relative_if_under(path, project_root)) is not None
     )
-
-
-def relative_under_root(path: Path, project_root: Path) -> Path | None:
-    return relative_if_under(path, project_root)
 
 
 def git_executable() -> str:
@@ -283,5 +279,5 @@ def file_matches_changed(path: Path, project_root: Path, changed: set[str]) -> b
     try:
         rel = path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError:
-        rel = path.as_posix()
+        return False
     return rel in changed

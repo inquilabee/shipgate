@@ -12,6 +12,8 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
+.import_linter_cache/
+.env
 
 .cursor/
 AGENTS.md
@@ -24,4 +26,3 @@ notes/
 .cursor-persona/
 docs/superpowers/
 .worktrees/
-docker/dogfood-staging/

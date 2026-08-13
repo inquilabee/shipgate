@@ -50,6 +50,28 @@ def test_batch_file_rejects_invalid_mode(tmp_path: Path):
         BatchFileLoader.load(path)
 
 
+def test_batch_file_rejects_multiple_paths(tmp_path: Path):
+    path = tmp_path / "batch.yaml"
+    path.write_text(
+        "requests:\n  - runnable: ruff.lint\n    options:\n      paths: [src, tests]\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigError, match="exactly one path"):
+        BatchFileLoader.load(path)
+
+
+def test_batch_file_empty_paths_default_to_dot(tmp_path: Path):
+    path = tmp_path / "batch.yaml"
+    path.write_text(
+        "requests:\n  - runnable: ruff.lint\n    options:\n      paths: []\n",
+        encoding="utf-8",
+    )
+    requests = BatchFileLoader.load(path)
+    assert requests == [
+        BatchRequest(runnable="ruff.lint", mode=RunMode.CHECK, target=Path()),
+    ]
+
+
 def test_run_batch_rejects_install_mode(tmp_path: Path):
     from shipgate.app import ShipGateApp
 

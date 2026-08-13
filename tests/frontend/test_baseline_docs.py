@@ -4,7 +4,9 @@ from shipgate.frontend.domain.baseline import (
     fingerprints_from_report,
     fixed_fingerprints,
 )
+from shipgate.frontend.domain.models import FindingRecord
 from shipgate.frontend.services.ingest import docs_from_extra, finding_to_record, normalize_docs_url
+from shipgate.frontend.web.context.serialize import finding_to_api
 
 
 def test_fixed_fingerprints_are_baseline_minus_current():
@@ -24,6 +26,20 @@ def test_normalize_docs_url_allows_only_http_https():
     assert normalize_docs_url("https://example.com/docs") == "https://example.com/docs"
     assert normalize_docs_url("javascript:alert(1)") is None
     assert normalize_docs_url("data:text/html,hi") is None
+
+
+def test_finding_to_api_drops_non_http_docs_url():
+    finding = FindingRecord(
+        id="1",
+        run_id="r1",
+        check_id="ruff.lint",
+        tool_id="ruff.lint",
+        rule_id="F401",
+        severity="error",
+        message="unused",
+        docs_url="javascript:alert(1)",
+    )
+    assert finding_to_api(finding)["docs_url"] is None
 
 
 def test_docs_from_extra_reads_raw_url():

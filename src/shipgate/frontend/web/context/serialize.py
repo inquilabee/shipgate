@@ -6,6 +6,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from shipgate.frontend.services.ingest import normalize_docs_url
+
 if TYPE_CHECKING:
     from shipgate.frontend.domain.models import FindingRecord, RunRecord
 
@@ -29,7 +31,7 @@ def finding_to_api(finding: FindingRecord) -> dict[str, object]:
         "line": finding.line,
         "column": finding.column,
         "category": finding.category.value,
-        "docs_url": finding.docs_url,
+        "docs_url": normalize_docs_url(finding.docs_url),
         "suggested_commands": list(finding.suggested_commands),
     }
 

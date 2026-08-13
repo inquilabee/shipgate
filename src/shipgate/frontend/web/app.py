@@ -40,6 +40,7 @@ from shipgate.frontend.web.security import (
 from shipgate.paths import (
     PROJECT_SERVER_DIR,
     SERVER_DB_FILENAME,
+    contained_child,
     normalize_finding_path,
 )
 
@@ -51,15 +52,17 @@ GITHUB_REPO_URL = "https://github.com/inquilabee/shipgate"
 
 
 def contained_file(root: Path, rel_path: str) -> Path:
-    root_resolved = root.resolve()
-    path = (root_resolved / rel_path).resolve()
+    """Resolve a UI file under ``root``. Follow the leaf, then refuse symlink escape."""
     try:
-        path.relative_to(root_resolved)
+        candidate = contained_child(root, rel_path)
     except ValueError as exc:
         raise ValueError("path escapes root") from exc
-    if not path.is_file():
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(root.resolve()):
+        raise ValueError("path escapes root")
+    if not resolved.is_file():
         raise FileNotFoundError(rel_path)
-    return path
+    return resolved
 
 
 def create_app(primary_root: Path, *, require_ui_token: bool = False) -> FastAPI:

@@ -92,3 +92,4 @@ def test_use_len_skips_empty_and_starred_calls(rules_by_id: dict[str, RefactorRu
     rule = rules_by_id["use-len"]
     assert not rule.detect("if len() == 0:\n    pass\n", "sample.py")
     assert not rule.detect("if len(*items) == 0:\n    pass\n", "sample.py")
+    assert not rule.detect("if len(a, b) == 0:\n    pass\n", "sample.py")

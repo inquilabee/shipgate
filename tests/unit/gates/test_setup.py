@@ -4,7 +4,7 @@ import pytest
 
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.gates.setup import setup_bundled_gates
-from shipgate.gates.setup.registry import SETUPS
+from shipgate.gates.setup.registry import make_setup
 from shipgate.policy.core.path_allowlist import PathAllowlist
 
 
@@ -28,7 +28,7 @@ def test_gate_setup_does_not_overwrite_existing_allowlist(tmp_path: Path):
         "entries:\n  - path: src/custom.py\n    reason: legacy exemption\n",
         encoding="utf-8",
     )
-    SETUPS["gate.module-private-vars"](tmp_path)
+    make_setup("gate.module-private-vars")(tmp_path)
     assert "src/custom.py" in path.read_text(encoding="utf-8")
 
 

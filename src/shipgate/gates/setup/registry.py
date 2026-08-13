@@ -26,9 +26,8 @@ def make_setup(gate_id: str, catalog: Catalog | None = None) -> Callable[[Path],
     return setup
 
 
-SETUPS: dict[str, Callable[[Path], None]] = {
-    gate_id: make_setup(gate_id)
-    for gate_id in (
+GATE_SETUP_IDS: frozenset[str] = frozenset(
+    {
         "gate.module-size",
         "gate.module-private-vars",
         "gate.folder-breadth",
@@ -37,13 +36,13 @@ SETUPS: dict[str, Callable[[Path], None]] = {
         "gate.repeated-strings",
         "gate.class-local-functions",
         "gate.staticmethod-soup",
-    )
-}
+    }
+)
 
 
 def setup_bundled_gates(project_root: Path, catalog: Catalog) -> None:
     """Run per-gate setup for bundled policy gates that register scaffolding."""
-    for tool_id in SETUPS:
+    for tool_id in GATE_SETUP_IDS:
         if not catalog.is_tool(tool_id):
             continue
         make_setup(tool_id, catalog)(project_root.resolve())

@@ -8,9 +8,10 @@ from shipgate.core import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
 from shipgate.errors import PlanningError
+from shipgate.paths import relative_if_under
 from shipgate.planning.utils.incremental import (
+    file_matches_changed,
     git_changed_files,
-    relative_under_root,
     tool_paths_after_incremental,
 )
 
@@ -71,11 +72,18 @@ def test_dashed_since_raises_planning_error(tmp_path):
         git_changed_files(tmp_path, "--output=/tmp/x")
 
 
-def test_relative_under_root_drops_outside_paths(tmp_path):
+def test_relative_if_under_drops_outside_paths(tmp_path):
     inside = tmp_path / "src" / "a.py"
     outside = tmp_path.parent / "escape.py"
-    assert relative_under_root(inside, tmp_path) == Path("src/a.py")
-    assert relative_under_root(outside, tmp_path) is None
+    assert relative_if_under(inside, tmp_path) == Path("src/a.py")
+    assert relative_if_under(outside, tmp_path) is None
+
+
+def test_file_matches_changed_false_outside_root(tmp_path):
+    outside = tmp_path.parent / "escape.py"
+    outside.write_text("x = 1\n", encoding="utf-8")
+    changed = {outside.as_posix()}
+    assert file_matches_changed(outside, tmp_path, changed) is False
 
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")

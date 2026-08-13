@@ -219,9 +219,9 @@ class ShipGateApp:
         )
 
     def run_batch(self, project_root: Path, batch_path: Path) -> int:
-        from shipgate.batch import load_batch_file
+        from shipgate.batch import BatchFileLoader
 
-        requests = load_batch_file(batch_path)
+        requests = BatchFileLoader.load(batch_path)
         worst = 0
         for req in requests:
             cmd = RunCommand(
