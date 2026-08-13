@@ -15,7 +15,7 @@ from shipgate.normalize import get_normalizer
 from shipgate.planning.check_resolver import SKIPPED_NO_MATCHING_FILES
 from shipgate.runtime.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
-from shipgate.runtime.parallel import run_parallel
+from shipgate.runtime.parallel import FailFastError, run_parallel
 from shipgate.runtime.progressive_average import apply_progressive_average
 from shipgate.runtime.reports import write_raw_output
 from shipgate.runtime.session.check_resolver import prepare_run
@@ -43,16 +43,6 @@ class ExecutorProtocol(Protocol):
         cwd: Path,
         env: dict[str, str] | None = None,
     ) -> ProcessResult: ...
-
-
-class FailFastError(Exception):
-    def __init__(self, report: CheckReport) -> None:
-        super().__init__(report.check_id)
-        self.report = report
-        self.completed: list[CheckReport] = []
-
-    def attach_completed(self, reports: list[CheckReport]) -> None:
-        self.completed = list(reports)
 
 
 @dataclass(frozen=True)

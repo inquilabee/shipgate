@@ -10,7 +10,8 @@ from shipgate.domain.run_command import RunCommand
 from shipgate.planning.utils.incremental import RunScopeSession
 from shipgate.planning.workflow import SelectedTool
 from shipgate.runtime.environment import resolve_environment
-from shipgate.runtime.session.check_runner import CheckRunner, FailFastError
+from shipgate.runtime.parallel import FailFastError
+from shipgate.runtime.session.check_runner import CheckRunner
 from shipgate.runtime.session.context import RunContext, RunProgress
 
 
@@ -152,3 +153,41 @@ def test_parallel_cancel_keeps_completed_report(tmp_path: Path, monkeypatch):
     )
     assert [report.tool_id for report in reports] == ["ok.tool"]
     assert reports[0].status == "passed"
+
+
+def test_parallel_fail_fast_drains_two_completed_siblings(tmp_path: Path, monkeypatch):
+    catalog = CatalogLoader.load()
+    runner = CheckRunner(catalog=catalog, executor=MagicMock(), executor_is_default=False)
+    context = make_context(
+        tmp_path,
+        parallel=True,
+        tool_ids=("a.tool", "fail.tool", "b.tool"),
+        fail_fast=True,
+    )
+    first_done = threading.Event()
+    second_done = threading.Event()
+
+    def fake_run_selected_tool(self, *, selected, command, context, run_id):
+        del self, command, context, run_id
+        if selected.tool_id == "a.tool":
+            first_done.set()
+            return passed_report(selected.tool_id)
+        if selected.tool_id == "b.tool":
+            second_done.set()
+            return passed_report(selected.tool_id)
+        assert first_done.wait(timeout=5)
+        assert second_done.wait(timeout=5)
+        return failed_report(selected.tool_id)
+
+    monkeypatch.setattr(CheckRunner, "run_selected_tool", fake_run_selected_tool)
+    reports = runner.run_all_checks(
+        command=RunCommand(project_root=tmp_path),
+        context=context,
+        run_id="run-1",
+        on_progress=None,
+    )
+    assert {report.tool_id for report in reports} == {"a.tool", "b.tool", "fail.tool"}
+    by_id = {report.tool_id: report.status for report in reports}
+    assert by_id["a.tool"] == "passed"
+    assert by_id["b.tool"] == "passed"
+    assert by_id["fail.tool"] == "failed"
