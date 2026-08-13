@@ -115,7 +115,7 @@ uv run shipgate list checks
 | `tags` | Metadata labels (e.g. `security`); filter with `shipgate list tools --tag` |
 | `cache` | Optional result-cache policy (`results`, `ttl_seconds`). Keys include scoped file contents, tool version, config bytes, and check bindings (threshold / metric extras). `--no-cache` disables the cache; `--display-cli` prints `(cached)` on a hit. |
 | `suggest_if` | Additive init hints when matching files exist (does not change default suites) |
-| `require_if` | Skip the check (exit 0, skipped status) unless matching files exist; e.g. `files_present: ["pyproject.toml"]` or `src/*/__init__.py` for import-linter. Require-if skips print to stderr (the glob is in the reason). `no matching files in scope` stays silent unless `--display-cli`. |
+| `require_if` | Skip the check (exit 0, skipped status) unless prerequisites match: `files_present` globs and/or `importable_package` (layout-detected package with `__init__.py`, src or flat). Require-if skips print to stderr. `no matching files in scope` stays silent unless `--display-cli`. |
 
 Project overlays under `.shipgate/catalog/tools/` can replace or `extends:` a bundled tool without editing the package.
 

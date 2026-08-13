@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 
 from shipgate import __version__, load_catalog
@@ -37,4 +38,6 @@ def test_public_api_run(tmp_path: Path):
 
 
 def test_version_exported():
-    assert __version__ == "0.1.5"
+    root = Path(__file__).resolve().parents[2]
+    data = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    assert __version__ == data["project"]["version"]

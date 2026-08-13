@@ -68,9 +68,9 @@ def managed_environment(project_root: Path) -> ExecutionEnvironment:
 
 def apply_src_layout_pythonpath(env: dict[str, str], project_root: Path) -> None:
     """Prepend src/ onto PYTHONPATH when an importable src-layout package exists."""
-    from shipgate.project.config_setup import detect_importable_root_package
+    from shipgate.project.layout.packages import has_src_layout_package
 
-    if detect_importable_root_package(project_root) is None:
+    if not has_src_layout_package(project_root):
         return
     src = str((project_root / "src").resolve())
     parts = [part for part in env.get("PYTHONPATH", "").split(os.pathsep) if part]

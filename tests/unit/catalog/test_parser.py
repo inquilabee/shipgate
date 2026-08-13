@@ -63,6 +63,17 @@ def test_parse_tool_require_if():
     tool = catalog.get_tool("demo.tool")
     assert tool.require_if is not None
     assert tool.require_if.files_present == ("pyproject.toml",)
+    assert tool.require_if.importable_package is False
+
+
+def test_parse_tool_require_if_importable_package():
+    raw = demo_tool_raw()
+    raw["require_if"] = {"importable_package": True}
+    catalog = CatalogParser.parse({"tools": {"demo.tool": raw}, "suites": {}})
+    tool = catalog.get_tool("demo.tool")
+    assert tool.require_if is not None
+    assert tool.require_if.files_present == ()
+    assert tool.require_if.importable_package is True
 
 
 def test_parse_install_download_and_known_bad():

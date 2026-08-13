@@ -82,8 +82,6 @@ def test_display_cli_prints_subprocess_argv(tmp_path, capsys):
 
 
 def test_require_if_skip_prints_without_display_cli(tmp_path, capsys):
-    (tmp_path / "pkg").mkdir()
-    (tmp_path / "pkg" / "__init__.py").write_text("", encoding="utf-8")
     app = ShipGateApp(catalog=CatalogLoader.load(), executor=FakeExecutor())
     code = app.check(
         RunCommand(
@@ -94,10 +92,7 @@ def test_require_if_skip_prints_without_display_cli(tmp_path, capsys):
     )
     captured = capsys.readouterr()
     assert code == 0
-    assert (
-        "import-linter.check: (skipped: required files not present: src/*/__init__.py)"
-        in captured.err
-    )
+    assert "import-linter.check: (skipped: no importable package in project layout)" in captured.err
 
 
 def test_no_matching_files_skip_silent_without_display_cli(tmp_path, capsys):

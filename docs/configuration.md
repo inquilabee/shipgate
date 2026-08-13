@@ -10,9 +10,10 @@ threshold bindings. For suites, commands, and CI examples see
 Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`
 (see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
 `.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
-That includes an `importlinter.ini` starter when an importable `src/<pkg>/`
-package exists (src-layout only; flat-layout packages skip `import-linter.check`
-with a stderr line such as `required files not present: src/*/__init__.py`)
+That includes an `importlinter.ini` starter when layout detection finds an
+importable package (src-layout `src/<pkg>/` or a flat `pkg/` at the repo root).
+Trees with no importable package skip `import-linter.check` with a stderr line
+such as `no importable package in project layout`
 and a `[tool.deptry]` section in `pyproject.toml` when missing.
 Managed env prepends `src/` onto `PYTHONPATH` when that src-layout package
 exists, so `lint-imports` can import the package without a consumer `.pth`
