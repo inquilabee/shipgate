@@ -1,3 +1,4 @@
+import threading
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -9,11 +10,17 @@ from shipgate.domain.run_command import RunCommand
 from shipgate.planning.utils.incremental import RunScopeSession
 from shipgate.planning.workflow import SelectedTool
 from shipgate.runtime.environment import resolve_environment
-from shipgate.runtime.session.check_runner import CheckRunner
+from shipgate.runtime.session.check_runner import CheckRunner, FailFastError
 from shipgate.runtime.session.context import RunContext, RunProgress
 
 
-def make_context(tmp_path: Path, *, parallel: bool, tool_ids: tuple[str, ...]) -> RunContext:
+def make_context(
+    tmp_path: Path,
+    *,
+    parallel: bool,
+    tool_ids: tuple[str, ...],
+    fail_fast: bool = False,
+) -> RunContext:
     tools = tuple(SelectedTool(tool_id=tool_id, mode=RunMode.CHECK) for tool_id in tool_ids)
     return RunContext(
         project=ProjectConfig(env="system", target=Path()),
@@ -22,13 +29,21 @@ def make_context(tmp_path: Path, *, parallel: bool, tool_ids: tuple[str, ...]) -
         selected_tools=tools,
         environment=resolve_environment(tmp_path, "system"),
         parallel=parallel,
-        fail_fast=False,
+        fail_fast=fail_fast,
         scope_session=RunScopeSession(project_root=tmp_path, changed_only=False, since=None),
     )
 
 
 def passed_report(tool_id: str) -> CheckReport:
     return CheckReport(check_id=tool_id, tool_id=tool_id, status="passed", exit_code=0)
+
+
+def failed_report(tool_id: str) -> CheckReport:
+    return CheckReport(check_id=tool_id, tool_id=tool_id, status="failed", exit_code=1)
+
+
+def skipped_report(tool_id: str) -> CheckReport:
+    return CheckReport(check_id=tool_id, tool_id=tool_id, status="skipped", exit_code=0)
 
 
 def collect_progress(
@@ -76,3 +91,64 @@ def test_run_all_checks_emits_progress_parallel(tmp_path: Path, monkeypatch):
     assert events[-1].checks_completed == 3
     assert events[-1].checks_total == 3
     assert any(event.checks_completed > 0 and event.checks_completed < 3 for event in events)
+
+
+def test_parallel_fail_fast_keeps_completed_sibling(tmp_path: Path, monkeypatch):
+    catalog = CatalogLoader.load()
+    runner = CheckRunner(catalog=catalog, executor=MagicMock(), executor_is_default=False)
+    context = make_context(
+        tmp_path,
+        parallel=True,
+        tool_ids=("ok.tool", "fail.tool"),
+        fail_fast=True,
+    )
+    first_done = threading.Event()
+
+    def fake_run_selected_tool(self, *, selected, command, context, run_id):
+        del self, command, context, run_id
+        if selected.tool_id == "ok.tool":
+            first_done.set()
+            return passed_report(selected.tool_id)
+        assert first_done.wait(timeout=5)
+        return failed_report(selected.tool_id)
+
+    monkeypatch.setattr(CheckRunner, "run_selected_tool", fake_run_selected_tool)
+    reports = runner.run_all_checks(
+        command=RunCommand(project_root=tmp_path),
+        context=context,
+        run_id="run-1",
+        on_progress=None,
+    )
+    assert [report.tool_id for report in reports] == ["ok.tool", "fail.tool"]
+    assert reports[0].status == "passed"
+    assert reports[1].status == "failed"
+
+
+def test_parallel_cancel_keeps_completed_report(tmp_path: Path, monkeypatch):
+    catalog = CatalogLoader.load()
+    runner = CheckRunner(catalog=catalog, executor=MagicMock(), executor_is_default=False)
+    context = make_context(
+        tmp_path,
+        parallel=True,
+        tool_ids=("ok.tool", "late.tool"),
+        fail_fast=False,
+    )
+    first_done = threading.Event()
+
+    def fake_run_selected_tool(self, *, selected, command, context, run_id):
+        del self, command, context, run_id
+        if selected.tool_id == "ok.tool":
+            first_done.set()
+            return passed_report(selected.tool_id)
+        assert first_done.wait(timeout=5)
+        raise FailFastError(skipped_report(selected.tool_id))
+
+    monkeypatch.setattr(CheckRunner, "run_selected_tool", fake_run_selected_tool)
+    reports = runner.run_all_checks(
+        command=RunCommand(project_root=tmp_path),
+        context=context,
+        run_id="run-1",
+        on_progress=None,
+    )
+    assert [report.tool_id for report in reports] == ["ok.tool"]
+    assert reports[0].status == "passed"

@@ -47,7 +47,12 @@ class ExecutorProtocol(Protocol):
 
 class FailFastError(Exception):
     def __init__(self, report: CheckReport) -> None:
+        super().__init__(report.check_id)
         self.report = report
+        self.completed: list[CheckReport] = []
+
+    def attach_completed(self, reports: list[CheckReport]) -> None:
+        self.completed = list(reports)
 
 
 @dataclass(frozen=True)
@@ -232,7 +237,11 @@ class CheckRunner:
                 fail_fast=fail_fast or progress["cancelled"],
             )
         except FailFastError as exc:
-            return [] if exc.report.status == "skipped" else [exc.report]
+            return (
+                list(exc.completed)
+                if exc.report.status == "skipped"
+                else [*exc.completed, exc.report]
+            )
 
     def run_selected_tool(
         self,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
@@ -31,12 +31,18 @@ def run_parallel(
 
 
 def collect_parallel_results(
-    futures: dict,
+    futures: dict[Future[R], int],
     results: dict[int, R],
     *,
     fail_fast: bool,
 ) -> None:
     errors: list[BaseException] = []
+
+    def attach_finished(exc: BaseException) -> None:
+        attach = getattr(exc, "attach_completed", None)
+        if callable(attach):
+            attach([results[i] for i in sorted(results)])
+
     for future in as_completed(futures):
         index = futures[future]
         try:
@@ -46,6 +52,8 @@ def collect_parallel_results(
             if fail_fast:
                 for pending in futures:
                     pending.cancel()
+                attach_finished(exc)
                 raise
     if errors:
+        attach_finished(errors[0])
         raise errors[0]
