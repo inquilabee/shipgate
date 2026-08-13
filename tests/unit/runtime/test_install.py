@@ -213,7 +213,7 @@ def write_tar_xz(path: Path, binary_name: str, payload: bytes) -> None:
 def test_extract_binary_reads_tar_xz(tmp_path: Path) -> None:
     archive_path = tmp_path / "shellcheck-0.11.0-linux.x86_64.tar.xz"
     write_tar_xz(archive_path, "shellcheck", b"#!/bin/sh\n")
-    extracted = GitHubReleaseInstaller.extract_binary(archive_path, "shellcheck")
+    extracted = GitHubReleaseInstaller().extract_binary(archive_path, "shellcheck")
     assert extracted.read_bytes() == b"#!/bin/sh\n"
     assert extracted.name == "shellcheck"
 
@@ -222,7 +222,7 @@ def test_extract_from_tar_maps_errors_to_install_error(tmp_path: Path) -> None:
     archive_path = tmp_path / "broken.tar.xz"
     archive_path.write_bytes(b"not an xz tar")
     with pytest.raises(InstallError, match="failed to extract shellcheck"):
-        GitHubReleaseInstaller.extract_from_tar(archive_path, "shellcheck", xz=True)
+        GitHubReleaseInstaller().extract_from_tar(archive_path, "shellcheck", xz=True)
 
 
 def test_venv_called_process_error_is_install_error(

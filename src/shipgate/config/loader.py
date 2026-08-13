@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from shipgate.config.core import (
     ProjectConfigParser,
@@ -85,7 +85,7 @@ class ProjectConfigLoader:
         )
 
     @staticmethod
-    def _load_yaml_raw(yaml_path: Path | None) -> dict[str, Any] | None:
+    def _load_yaml_raw(yaml_path: Path | None) -> dict[str, object] | None:
         if yaml_path is None or not yaml_path.is_file():
             return None
         loaded = load_yaml_mapping(yaml_path, error_cls=ConfigError)
@@ -96,9 +96,9 @@ class ProjectConfigLoader:
         *,
         policy: str,
         yaml_path: Path | None,
-        yaml_raw: dict[str, Any] | None,
+        yaml_raw: dict[str, object] | None,
         pyproject_path: Path | None,
-        pyproject_raw: dict[str, Any] | None,
+        pyproject_raw: dict[str, object] | None,
     ) -> ProjectConfig:
         if yaml_raw and pyproject_raw:
             if policy == "pyproject":
@@ -128,7 +128,7 @@ class ProjectConfigLoader:
 
     def _parse_raw(
         self,
-        raw: dict[str, Any],
+        raw: dict[str, object],
         path: Path,
         *,
         pyproject_path: Path | None,
@@ -136,12 +136,13 @@ class ProjectConfigLoader:
         prepared = dict(raw)
         scopes_raw = prepared.get("scopes")
         if scopes_raw is not None and isinstance(scopes_raw, dict):
+            scopes_map = {str(key): item for key, item in scopes_raw.items()}
             prepared["scopes"] = ScopeSourceResolver(
                 project_root=self._project_root,
                 pyproject_path=pyproject_path,
                 config_path=path,
-            ).resolve(scopes_raw)
-        return ProjectConfigParser.parse(prepared, path)
+            ).resolve(scopes_map)
+        return ProjectConfigParser.parse(cast("dict[str, Any]", prepared), path)
 
     def _resolve_policy(self) -> str:
         cached = read_cached_policy(self._project_root / PROJECT_CACHE_ENV)

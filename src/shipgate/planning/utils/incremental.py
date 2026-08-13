@@ -166,7 +166,7 @@ def matched_changed_files(
     target = target if target.is_absolute() else (project_root / target).resolve()
 
     matched_files = (
-        ScopeResolver(project_root, scope_session=scope_session)._expand_scope(
+        ScopeResolver(project_root, scope_session=scope_session).expand_scope(
             target,
             include=scope.include,
             exclude=scope.exclude,

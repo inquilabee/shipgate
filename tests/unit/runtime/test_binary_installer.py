@@ -29,7 +29,7 @@ def tool_download(tool_id: str) -> BinaryDownloadSpec:
     ],
 )
 def test_release_arch_mapping(tool_id, arch, expected):
-    assert GitHubReleaseInstaller.release_arch(tool_download(tool_id), arch) == expected
+    assert GitHubReleaseInstaller().release_arch(tool_download(tool_id), arch) == expected
 
 
 @patch(
@@ -43,7 +43,7 @@ def test_release_arch_mapping(tool_id, arch, expected):
 def test_gitleaks_release_url_uses_x64_arch(mock_github_arch, mock_github_os):
     assert mock_github_arch.return_value == "x86_64"
     assert mock_github_os.return_value == "linux"
-    url, asset_name = GitHubReleaseInstaller.build_github_release_url(
+    url, asset_name = GitHubReleaseInstaller().build_github_release_url(
         tool_download("gitleaks.scan"),
         "v8.18.2",
     )
@@ -62,7 +62,7 @@ def test_gitleaks_release_url_uses_x64_arch(mock_github_arch, mock_github_os):
 def test_shfmt_release_url_uses_amd64_arch(mock_github_arch, mock_github_os):
     assert mock_github_arch.return_value == "x86_64"
     assert mock_github_os.return_value == "linux"
-    url, asset_name = GitHubReleaseInstaller.build_github_release_url(
+    url, asset_name = GitHubReleaseInstaller().build_github_release_url(
         tool_download("shfmt.apply"),
         "v3.8.0",
     )
@@ -90,7 +90,7 @@ def test_gitleaks_latest_release_url_resolves_tag(
     assert mock_github_arch.return_value == "x86_64"
     assert mock_github_os.return_value == "linux"
     assert mock_fetch_latest.return_value == "v8.30.1"
-    url, asset_name = GitHubReleaseInstaller.build_github_release_url(
+    url, asset_name = GitHubReleaseInstaller().build_github_release_url(
         tool_download("gitleaks.scan"),
         "latest",
     )
@@ -118,7 +118,7 @@ def test_shfmt_latest_release_url_resolves_tag(
     assert mock_github_arch.return_value == "x86_64"
     assert mock_github_os.return_value == "linux"
     assert mock_fetch_latest.return_value == "v3.13.1"
-    _url, asset_name = GitHubReleaseInstaller.build_github_release_url(
+    _url, asset_name = GitHubReleaseInstaller().build_github_release_url(
         tool_download("shfmt.apply"),
         "latest",
     )
@@ -136,7 +136,7 @@ def test_shfmt_latest_release_url_resolves_tag(
 def test_shellcheck_release_url_keeps_x86_64_arch(mock_github_arch, mock_github_os):
     assert mock_github_arch.return_value == "x86_64"
     assert mock_github_os.return_value == "linux"
-    _url, asset_name = GitHubReleaseInstaller.build_github_release_url(
+    _url, asset_name = GitHubReleaseInstaller().build_github_release_url(
         tool_download("shellcheck.check"),
         "v0.10.0",
     )
@@ -154,7 +154,7 @@ def test_shellcheck_release_url_keeps_x86_64_arch(mock_github_arch, mock_github_
 def test_hadolint_release_url(mock_github_arch, mock_github_os):
     assert mock_github_arch.return_value == "x86_64"
     assert mock_github_os.return_value == "linux"
-    url, asset_name = GitHubReleaseInstaller.build_github_release_url(
+    url, asset_name = GitHubReleaseInstaller().build_github_release_url(
         tool_download("hadolint.check"),
         "2.14.0",
     )

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from shipgate.domain.reports import CheckReport, Finding
 from shipgate.errors import NormalizationError
@@ -94,7 +94,7 @@ def decode_json_payload(
         return tool_exit_report(check_id, result)
 
 
-def dict_items_from_list(raw: object) -> list[dict[str, Any]]:
+def dict_items_from_list(raw: object) -> list[dict[str, object]]:
     return (
         [{str(key): value for key, value in item.items()} for item in raw if isinstance(item, dict)]
         if isinstance(raw, list)
@@ -107,7 +107,7 @@ def extract_items(
     *,
     items_key: str | None,
     invalid_message: str,
-) -> list[dict[str, Any]]:
+) -> list[dict[str, object]]:
     if items_key is None:
         if not isinstance(payload, list):
             raise NormalizationError(invalid_message)

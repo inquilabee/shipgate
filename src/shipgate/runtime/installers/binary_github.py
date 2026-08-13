@@ -51,17 +51,16 @@ class GitHubReleaseInstaller:
             shutil.copy2(extracted, destination)
             destination.chmod(destination.stat().st_mode | 0o100)
 
-    @staticmethod
-    def release_arch(download: BinaryDownloadSpec, arch: str) -> str:
+    def release_arch(self, download: BinaryDownloadSpec, arch: str) -> str:
+        _ = self
         return download.arch_map.get(arch, arch)
 
-    @staticmethod
-    def release_os(download: BinaryDownloadSpec) -> str:
-        system = GitHubReleaseInstaller.github_os()
+    def release_os(self, download: BinaryDownloadSpec) -> str:
+        system = self.github_os()
         return download.os_map.get(system, system)
 
-    @staticmethod
-    def github_os() -> str:
+    def github_os(self) -> str:
+        _ = self
         system = sys.platform
         if system == "darwin":
             return "darwin"
@@ -71,8 +70,8 @@ class GitHubReleaseInstaller:
             return "windows"
         raise InstallError(f"unsupported platform for binary install: {system}")
 
-    @staticmethod
-    def github_arch() -> str:
+    def github_arch(self) -> str:
+        _ = self
         machine = platform.machine().lower()
         if machine in {"x86_64", "amd64"}:
             return "x86_64"
@@ -80,8 +79,8 @@ class GitHubReleaseInstaller:
             return "arm64"
         raise InstallError(f"unsupported architecture for binary install: {machine}")
 
-    @staticmethod
-    def fetch_latest_release_tag(repo: str) -> str:
+    def fetch_latest_release_tag(self, repo: str) -> str:
+        _ = self
         url = f"https://api.github.com/repos/{repo}/releases/latest"
         try:
             data = get_github_url(
@@ -96,31 +95,28 @@ class GitHubReleaseInstaller:
             raise InstallError(f"could not resolve latest release for {repo}")
         return tag_name
 
-    @staticmethod
-    def resolve_release_version(repo: str, version: str) -> str:
+    def resolve_release_version(self, repo: str, version: str) -> str:
         return (
             version
             if version.startswith("v")
             else (
                 f"v{version.lstrip('v')}"
                 if version != "latest"
-                else GitHubReleaseInstaller.fetch_latest_release_tag(repo)
+                else self.fetch_latest_release_tag(repo)
             )
         )
 
-    @staticmethod
     def build_github_release_url(
+        self,
         download: BinaryDownloadSpec,
         version: str,
     ) -> tuple[str, str]:
         repo = download.repo
-        resolved_version = GitHubReleaseInstaller.resolve_release_version(repo, version)
+        resolved_version = self.resolve_release_version(repo, version)
         asset_name = download.asset_template.format(
             version=resolved_version.lstrip("v"),
-            os=GitHubReleaseInstaller.release_os(download),
-            arch=GitHubReleaseInstaller.release_arch(
-                download, GitHubReleaseInstaller.github_arch()
-            ),
+            os=self.release_os(download),
+            arch=self.release_arch(download, self.github_arch()),
         )
         url = (
             f"https://github.com/{repo}/releases/latest/download/{asset_name}"
@@ -129,8 +125,8 @@ class GitHubReleaseInstaller:
         )
         return url, asset_name
 
-    @staticmethod
-    def normalize_version(version: str) -> str:
+    def normalize_version(self, version: str) -> str:
+        _ = self
         cleaned = version.strip()
         if not cleaned:
             raise InstallError("binary install requires an exact version pin")
@@ -140,12 +136,12 @@ class GitHubReleaseInstaller:
             cleaned = cleaned[2:].strip()
         return cleaned
 
-    @staticmethod
-    def missing_archive_binary(binary_name: str) -> InstallError:
+    def missing_archive_binary(self, binary_name: str) -> InstallError:
+        _ = self
         return InstallError(f"could not find {binary_name} in downloaded archive")
 
-    @staticmethod
     def extract_from_tar(
+        self,
         archive_path: Path,
         binary_name: str,
         *,
@@ -168,10 +164,9 @@ class GitHubReleaseInstaller:
             raise InstallError(
                 f"failed to extract {binary_name} from {archive_path.name}: {exc}"
             ) from exc
-        raise GitHubReleaseInstaller.missing_archive_binary(binary_name)
+        raise self.missing_archive_binary(binary_name)
 
-    @staticmethod
-    def extract_from_zip(archive_path: Path, binary_name: str) -> Path:
+    def extract_from_zip(self, archive_path: Path, binary_name: str) -> Path:
         with zipfile.ZipFile(archive_path) as archive:
             for name in archive.namelist():
                 if Path(name).name != binary_name:
@@ -179,17 +174,16 @@ class GitHubReleaseInstaller:
                 extracted = archive_path.parent / binary_name
                 extracted.write_bytes(archive.read(name))
                 return extracted
-        raise GitHubReleaseInstaller.missing_archive_binary(binary_name)
+        raise self.missing_archive_binary(binary_name)
 
-    @staticmethod
-    def extract_binary(archive_path: Path, binary_name: str) -> Path:
+    def extract_binary(self, archive_path: Path, binary_name: str) -> Path:
         suffixes = "".join(archive_path.suffixes)
         if suffixes.endswith(".tar.xz"):
-            return GitHubReleaseInstaller.extract_from_tar(archive_path, binary_name, xz=True)
+            return self.extract_from_tar(archive_path, binary_name, xz=True)
         if suffixes.endswith(".tar.gz"):
-            return GitHubReleaseInstaller.extract_from_tar(archive_path, binary_name, gz=True)
+            return self.extract_from_tar(archive_path, binary_name, gz=True)
         if archive_path.suffix == ".zip":
-            return GitHubReleaseInstaller.extract_from_zip(archive_path, binary_name)
+            return self.extract_from_zip(archive_path, binary_name)
         if archive_path.name == binary_name or archive_path.name.startswith(binary_name):
             return archive_path
-        raise GitHubReleaseInstaller.missing_archive_binary(binary_name)
+        raise self.missing_archive_binary(binary_name)

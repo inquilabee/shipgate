@@ -28,8 +28,8 @@ class ScopeSourceResolver:
         self._pyproject_path = pyproject_path
         self._config_path = config_path
 
-    def resolve(self, raw_scopes: dict[str, Any]) -> dict[str, Any]:
-        resolved: dict[str, Any] = {}
+    def resolve(self, raw_scopes: dict[str, object]) -> dict[str, object]:
+        resolved: dict[str, object] = {}
         for name, value in raw_scopes.items():
             if not isinstance(value, dict):
                 resolved[str(name)] = value

@@ -111,7 +111,7 @@ class CheckRunner:
         checks_total = len(context.selected_tools)
         emit_progress(on_progress, "", 0, checks_total)
         return (
-            CheckRunner._run_parallel_checks(
+            self._run_parallel_checks(
                 context.selected_tools,
                 lambda selected: self._run_one_selected(selected, command, context, run_id),
                 fail_fast=context.fail_fast,
@@ -120,7 +120,7 @@ class CheckRunner:
                 should_cancel=should_cancel,
             )
             if context.parallel
-            else CheckRunner._run_sequential_checks(
+            else self._run_sequential_checks(
                 context.selected_tools,
                 lambda selected: self._run_one_selected(selected, command, context, run_id),
                 on_progress=on_progress,
@@ -129,8 +129,8 @@ class CheckRunner:
             )
         )
 
-    @staticmethod
     def _run_sequential_checks(
+        self,
         selected_tools: tuple[SelectedTool, ...] | list[SelectedTool],
         run_one: Callable[[SelectedTool], CheckReport],
         *,
@@ -138,6 +138,7 @@ class CheckRunner:
         checks_total: int,
         should_cancel: Callable[[], bool] | None = None,
     ) -> list[CheckReport]:
+        _ = self
         reports: list[CheckReport] = []
         for completed, selected in enumerate(selected_tools):
             if should_cancel is not None and should_cancel():
@@ -165,8 +166,8 @@ class CheckRunner:
             )
         return reports
 
-    @staticmethod
     def _run_one_with_progress(
+        self,
         selected: SelectedTool,
         *,
         run_one: Callable[[SelectedTool], CheckReport],
@@ -176,6 +177,7 @@ class CheckRunner:
         on_progress: Callable[..., None] | None,
         checks_total: int,
     ) -> CheckReport:
+        _ = self
         if should_cancel is not None and should_cancel():
             progress["cancelled"] = True
             raise FailFastError(
@@ -199,8 +201,8 @@ class CheckRunner:
             )
         return report
 
-    @staticmethod
     def _run_parallel_checks(
+        self,
         selected_tools: tuple[SelectedTool, ...] | list[SelectedTool],
         run_one: Callable[[SelectedTool], CheckReport],
         *,
@@ -215,7 +217,7 @@ class CheckRunner:
         try:
             return run_parallel(
                 list(selected_tools),
-                lambda selected: CheckRunner._run_one_with_progress(
+                lambda selected: self._run_one_with_progress(
                     selected,
                     run_one=run_one,
                     should_cancel=should_cancel,

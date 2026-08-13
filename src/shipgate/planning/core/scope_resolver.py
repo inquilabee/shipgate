@@ -176,7 +176,7 @@ class ScopeResolver:
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
             return self.delivery_paths_without_filter(scope, criteria)
 
-        matched_files = self._expand_scope(
+        matched_files = self.expand_scope(
             target,
             include=scope.include,
             exclude=scope.exclude,
@@ -224,7 +224,7 @@ class ScopeResolver:
             return (parent if parent.parts else Path(),)
         return (target,)
 
-    def _expand_scope(
+    def expand_scope(
         self,
         target: Path,
         *,

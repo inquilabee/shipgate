@@ -64,7 +64,7 @@ def test_scope_session_caches_expand_scope(tmp_path: Path):
     )
     target = tmp_path / "src"
     resolver = ScopeResolver(tmp_path, scope_session=session)
-    first = resolver._expand_scope(
+    first = resolver.expand_scope(
         target,
         extensions=(".py",),
         include=(),
@@ -72,7 +72,7 @@ def test_scope_session_caches_expand_scope(tmp_path: Path):
         globs=(),
         respect_gitignore=True,
     )
-    second = resolver._expand_scope(
+    second = resolver.expand_scope(
         target,
         extensions=(".py",),
         include=(),

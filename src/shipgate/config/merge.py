@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any
 
-
-def deep_merge_config(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+def deep_merge_config(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
     """Merge override onto base; override wins on conflicting keys."""
-    merged: dict[str, Any] = dict(base)
+    merged: dict[str, object] = dict(base)
     for key, value in override.items():
-        existing = merged.get(key)
-        merged[key] = (
-            deep_merge_config(existing, value)
-            if isinstance(existing, dict) and isinstance(value, dict)
-            else value
-        )
+        merged[key] = combine_config_value(merged.get(key), value)
     return merged
+
+
+def combine_config_value(existing: object, value: object) -> object:
+    return (
+        deep_merge_config(
+            {str(child): item for child, item in existing.items()},
+            {str(child): item for child, item in value.items()},
+        )
+        if isinstance(existing, dict) and isinstance(value, dict)
+        else value
+    )
