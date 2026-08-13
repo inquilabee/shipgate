@@ -70,6 +70,7 @@ def run_parallel(
         take_finished_results(futures, results)
         attach_fail_fast_completed(exc, results)
         raise
+    take_finished_results(futures, results)
     return [results[i] for i in range(len(items)) if i in results]
 
 

@@ -97,3 +97,29 @@ def test_run_parallel_should_cancel_stops_pending():
     )
     assert 0 in result
     assert len(ran) < 10
+
+
+def test_run_parallel_cancel_keeps_two_finished_results():
+    lock = threading.Lock()
+    finished: list[int] = []
+
+    def work(item: int) -> int:
+        if item in {0, 1}:
+            with lock:
+                finished.append(item)
+            return item
+        time.sleep(0.05)
+        return item
+
+    def should_cancel() -> bool:
+        with lock:
+            return len(finished) >= 2
+
+    result = run_parallel(
+        list(range(10)),
+        work,
+        fail_fast=False,
+        should_cancel=should_cancel,
+    )
+    assert 0 in result
+    assert 1 in result
