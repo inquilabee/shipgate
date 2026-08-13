@@ -84,8 +84,14 @@ def decode_json_payload(
     decode_error: str | None,
     allow_empty_on_success: bool,
 ) -> object | CheckReport:
+    if not stdout.strip():
+        return (
+            ([] if items_key is None else {})
+            if result.exit_code == 0
+            else tool_exit_report(check_id, result)
+        )
     try:
-        return json.loads(stdout) if stdout.strip() else ([] if items_key is None else {})
+        return json.loads(stdout)
     except json.JSONDecodeError as exc:
         if allow_empty_on_success and result.exit_code == 0:
             return empty_pass_report(check_id)

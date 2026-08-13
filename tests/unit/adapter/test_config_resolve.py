@@ -104,3 +104,16 @@ def test_auto_mode_skips_pyproject_without_tool_section(tmp_path: Path):
     project = ProjectConfigLoader.load(project_root=tmp_path)
     paths = resolve_config_paths(catalog.get_tool("ruff.lint"), project, tmp_path)
     assert paths == (tmp_path / ".ruff.toml",)
+
+
+def test_ty_does_not_pass_pyproject_as_config_file(tmp_path: Path):
+    catalog = CatalogLoader.load()
+    scaffold_project_layout(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nversion = "0.1.0"\n\n[tool.ty]\n',
+        encoding="utf-8",
+    )
+    project = ProjectConfigLoader.load(project_root=tmp_path)
+    paths = resolve_config_paths(catalog.get_tool("ty.check"), project, tmp_path)
+    assert paths == ()
+    assert catalog.get_tool("ty.check").configuration.pass_pyproject_as_file is False

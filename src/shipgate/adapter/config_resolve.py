@@ -50,11 +50,26 @@ class ConfigPathResolver:
 
     def _resolve_auto(self) -> tuple[Path, ...]:
         config = self._tool.configuration
+        if self._use_cwd_pyproject():
+            return ()
         if path := self._discover_repo_native(config.discover):
             return (path,)
         if path := self._first_discover_match(config.discover):
             return (path,)
         return self._bundled_fallback()
+
+    def _use_cwd_pyproject(self) -> bool:
+        config = self._tool.configuration
+        if config.pass_pyproject_as_file or not config.pyproject_section:
+            return False
+        pyproject = self._project_root / "pyproject.toml"
+        if not pyproject.is_file():
+            return False
+        try:
+            PyprojectPolicyLoader.load_section(pyproject, config.pyproject_section)
+        except (KeyError, TypeError):
+            return False
+        return True
 
     def _discover_repo_native(self, patterns: tuple[str, ...]) -> Path | None:
         for pattern in patterns:
@@ -88,7 +103,7 @@ class ConfigPathResolver:
 
     def _match_pyproject(self, path: Path) -> Path | None:
         section = self._tool.configuration.pyproject_section
-        if not section:
+        if not section or not self._tool.configuration.pass_pyproject_as_file:
             return None
         try:
             PyprojectPolicyLoader.load_section(path, section)

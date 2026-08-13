@@ -3,6 +3,8 @@ gitleaks.scan:
   subcommand:
     - detect
     - --no-banner
+    - --report-format
+    - json
   modes:
     - check
   normalizer: gitleaks
