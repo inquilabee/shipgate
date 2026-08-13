@@ -1,3 +1,5 @@
+import io
+import tarfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -13,6 +15,7 @@ from shipgate.runtime.install import (
     install_suite,
     read_manifest,
 )
+from shipgate.runtime.installers.binary_github import GitHubReleaseInstaller
 from shipgate.runtime.installers.registry import INSTALLER_REGISTRY, get_installer
 
 
@@ -195,3 +198,27 @@ def test_python_installer_refuses_option_spec_and_uses_double_dash(
                 )
             },
         )
+
+
+def write_tar_xz(path: Path, binary_name: str, payload: bytes) -> None:
+    buffer = io.BytesIO()
+    info = tarfile.TarInfo(name=binary_name)
+    info.size = len(payload)
+    with tarfile.open(fileobj=buffer, mode="w:xz") as archive:
+        archive.addfile(info, io.BytesIO(payload))
+    path.write_bytes(buffer.getvalue())
+
+
+def test_extract_binary_reads_tar_xz(tmp_path: Path) -> None:
+    archive_path = tmp_path / "shellcheck-0.11.0-linux.x86_64.tar.xz"
+    write_tar_xz(archive_path, "shellcheck", b"#!/bin/sh\n")
+    extracted = GitHubReleaseInstaller.extract_binary(archive_path, "shellcheck")
+    assert extracted.read_bytes() == b"#!/bin/sh\n"
+    assert extracted.name == "shellcheck"
+
+
+def test_extract_from_tar_maps_errors_to_install_error(tmp_path: Path) -> None:
+    archive_path = tmp_path / "broken.tar.xz"
+    archive_path.write_bytes(b"not an xz tar")
+    with pytest.raises(InstallError, match="failed to extract shellcheck"):
+        GitHubReleaseInstaller.extract_from_tar(archive_path, "shellcheck", xz=True)

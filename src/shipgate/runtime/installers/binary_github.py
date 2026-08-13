@@ -150,18 +150,29 @@ class GitHubReleaseInstaller:
         return InstallError(f"could not find {binary_name} in downloaded archive")
 
     @staticmethod
-    def extract_from_tar(archive_path: Path, binary_name: str, *, gz: bool) -> Path:
-        mode = "r:gz" if gz else "r"
-        with tarfile.open(archive_path, mode) as archive:
-            for member in archive.getmembers():
-                if not member.isfile() or Path(member.name).name != binary_name:
-                    continue
-                handle = archive.extractfile(member)
-                if handle is None:
-                    continue
-                extracted = archive_path.parent / binary_name
-                extracted.write_bytes(handle.read())
-                return extracted
+    def extract_from_tar(
+        archive_path: Path,
+        binary_name: str,
+        *,
+        xz: bool = False,
+        gz: bool = False,
+    ) -> Path:
+        mode = "r:xz" if xz else "r:gz" if gz else "r"
+        try:
+            with tarfile.open(archive_path, mode) as archive:
+                for member in archive.getmembers():
+                    if not member.isfile() or Path(member.name).name != binary_name:
+                        continue
+                    handle = archive.extractfile(member)
+                    if handle is None:
+                        continue
+                    extracted = archive_path.parent / binary_name
+                    extracted.write_bytes(handle.read())
+                    return extracted
+        except (OSError, tarfile.TarError) as exc:
+            raise InstallError(
+                f"failed to extract {binary_name} from {archive_path.name}: {exc}"
+            ) from exc
         raise GitHubReleaseInstaller.missing_archive_binary(binary_name)
 
     @staticmethod
@@ -178,10 +189,10 @@ class GitHubReleaseInstaller:
     @staticmethod
     def extract_binary(archive_path: Path, binary_name: str) -> Path:
         suffixes = "".join(archive_path.suffixes)
-        if suffixes.endswith((".tar.gz", ".tar.xz")):
-            return GitHubReleaseInstaller.extract_from_tar(
-                archive_path, binary_name, gz=suffixes.endswith(".tar.gz")
-            )
+        if suffixes.endswith(".tar.xz"):
+            return GitHubReleaseInstaller.extract_from_tar(archive_path, binary_name, xz=True)
+        if suffixes.endswith(".tar.gz"):
+            return GitHubReleaseInstaller.extract_from_tar(archive_path, binary_name, gz=True)
         if archive_path.suffix == ".zip":
             return GitHubReleaseInstaller.extract_from_zip(archive_path, binary_name)
         if archive_path.name == binary_name or archive_path.name.startswith(binary_name):
