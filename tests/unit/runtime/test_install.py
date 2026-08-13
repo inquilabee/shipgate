@@ -242,17 +242,43 @@ def test_venv_called_process_error_is_install_error(
 
 
 def test_get_github_url_refuses_offsite_redirect(monkeypatch: pytest.MonkeyPatch) -> None:
-    response = MagicMock()
-    response.url = "https://evil.example/payload"
-    response.raise_for_status.return_value = None
+    fetched: list[str] = []
 
-    def fake_get(*args, **kwargs):
+    def fake_get(url: str, *args, **kwargs):
         del args, kwargs
+        fetched.append(url)
+        response = MagicMock()
+        response.status_code = 302
+        response.headers = {"Location": "https://evil.example/payload"}
+        response.url = url
         return response
 
     monkeypatch.setattr("shipgate.runtime.installers.base.requests.get", fake_get)
     with pytest.raises(InstallError, match="refusing redirect off github"):
         get_github_url("https://github.com/owner/repo/releases/download/x", timeout=1)
+    assert fetched == ["https://github.com/owner/repo/releases/download/x"]
+
+
+def test_get_github_url_follows_github_redirect(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_get(url: str, *args, **kwargs):
+        del args, kwargs
+        response = MagicMock()
+        if url.endswith("/x"):
+            response.status_code = 302
+            response.headers = {
+                "Location": "https://github.com/owner/repo/releases/download/y",
+            }
+            response.url = url
+            return response
+        response.status_code = 200
+        response.headers = {}
+        response.url = url
+        response.raise_for_status.return_value = None
+        return response
+
+    monkeypatch.setattr("shipgate.runtime.installers.base.requests.get", fake_get)
+    result = get_github_url("https://github.com/owner/repo/releases/download/x", timeout=1)
+    assert result.url == "https://github.com/owner/repo/releases/download/y"
 
 
 def test_download_https_file_refuses_non_github(tmp_path: Path) -> None:
