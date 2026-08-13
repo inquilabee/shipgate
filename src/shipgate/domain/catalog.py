@@ -21,6 +21,7 @@ class CliOptionDefinition:
     required: bool = False
     default: str | None = None
     aggregate: str | None = None
+    false_flag: str | None = None
 
     def aggregate_value(self, value: object, project_root: Path) -> object | None:
         return (
@@ -41,6 +42,7 @@ class ConfigurationDefinition:
     pyproject_section: str | None = None
     precedence: tuple[str, ...] = ("cli", "repo", "bundled")
     merge: bool = False
+    pass_pyproject_as_file: bool = True
 
 
 @dataclass(frozen=True)

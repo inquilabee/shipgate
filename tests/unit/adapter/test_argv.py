@@ -25,6 +25,7 @@ def test_ruff_lint_argv(tmp_path):
     assert argv[0] == "ruff"
     assert "check" in argv
     assert "--fix" not in argv
+    assert "--no-fix" in argv
     assert "--output-format" in argv
     assert str(tmp_path / "src") in argv
 
@@ -44,6 +45,7 @@ def test_ruff_lint_apply_argv(tmp_path):
     assert argv[0] == "ruff"
     assert "check" in argv
     assert "--fix" in argv
+    assert "--no-fix" not in argv
     assert str(tmp_path / "src") in argv
 
 

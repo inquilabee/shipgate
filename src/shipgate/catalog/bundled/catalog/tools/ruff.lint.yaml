@@ -24,6 +24,7 @@ ruff.lint:
       style: repeated
     fix:
       flag: --fix
+      false_flag: --no-fix
       style: boolean
     output:
       flag: --output-file

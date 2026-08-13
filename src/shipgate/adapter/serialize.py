@@ -38,7 +38,8 @@ class CliSerializer:
 
     @staticmethod
     def _serialize_boolean(definition: CliOptionDefinition, value: object) -> list[str]:
-        return ([definition.flag] if definition.flag else []) if value else []
+        flag = definition.flag if value else definition.false_flag
+        return [flag] if flag else []
 
     @staticmethod
     def _serialize_positional(value: object) -> list[str]:

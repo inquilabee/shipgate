@@ -278,6 +278,9 @@ class OptionResolver:
         if fix is None and mode == RunMode.APPLY:
             fix = True
             sources["fix"] = "shipgate_default"
+        elif fix is None and mode == RunMode.CHECK:
+            fix = False
+            sources["fix"] = "shipgate_default"
         return fix, sources
 
     @staticmethod

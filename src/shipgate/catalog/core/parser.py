@@ -97,6 +97,7 @@ class CatalogParser:
                 required=option.get("required", False),
                 default=option.get("default"),
                 aggregate=option.get("aggregate"),
+                false_flag=option.get("false_flag"),
             )
             for name, option in raw.items()
         }
@@ -109,6 +110,7 @@ class CatalogParser:
             pyproject_section=raw.get("pyproject_section"),
             precedence=tuple(raw.get("precedence", ["cli", "repo", "bundled"])),
             merge=raw.get("merge", False),
+            pass_pyproject_as_file=raw.get("pass_pyproject_as_file", True),
         )
 
     def _parse_install(self, raw: dict | None) -> InstallDefinition | None:

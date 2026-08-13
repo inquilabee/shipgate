@@ -53,6 +53,12 @@ def test_boolean_false():
     assert serialize_option(opt, value=False) == []
 
 
+def test_boolean_false_flag():
+    opt = CliOptionDefinition(flag="--fix", false_flag="--no-fix", style="boolean")
+    assert serialize_option(opt, value=True) == ["--fix"]
+    assert serialize_option(opt, value=False) == ["--no-fix"]
+
+
 def test_positional():
     opt = CliOptionDefinition(style="positional")
     assert serialize_option(opt, ("src", "tests")) == ["src", "tests"]
