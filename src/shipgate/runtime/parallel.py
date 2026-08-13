@@ -25,11 +25,30 @@ class FailFastError(Exception):
         self.completed = list(reports)
 
 
+def parallel_should_stop(
+    *,
+    fail_fast: bool,
+    should_cancel: Callable[[], bool] | None,
+    exc: BaseException | None = None,
+) -> bool:
+    return (
+        fail_fast
+        or isinstance(exc, FailFastError)
+        or (should_cancel is not None and should_cancel())
+    )
+
+
+def cancel_futures(futures: dict[Future[R], int]) -> None:
+    for pending in futures:
+        pending.cancel()
+
+
 def run_parallel(
     items: list[T],
     fn: Callable[[T], R],
     *,
     fail_fast: bool = False,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> list[R]:
     if not items:
         return []
@@ -37,10 +56,21 @@ def run_parallel(
         return [fn(items[0])]
 
     results: dict[int, R] = {}
-    with ThreadPoolExecutor(max_workers=min(len(items), 8)) as pool:
-        futures = {pool.submit(fn, item): index for index, item in enumerate(items)}
-        collect_parallel_results(futures, results, fail_fast=fail_fast)
-    return [results[i] for i in range(len(items))]
+    futures: dict[Future[R], int] = {}
+    try:
+        with ThreadPoolExecutor(max_workers=min(len(items), 8)) as pool:
+            futures = {pool.submit(fn, item): index for index, item in enumerate(items)}
+            collect_parallel_results(
+                futures,
+                results,
+                fail_fast=fail_fast,
+                should_cancel=should_cancel,
+            )
+    except FailFastError as exc:
+        take_finished_results(futures, results)
+        attach_fail_fast_completed(exc, results)
+        raise
+    return [results[i] for i in range(len(items)) if i in results]
 
 
 def take_finished_results(
@@ -72,6 +102,7 @@ def collect_parallel_results(
     results: dict[int, R],
     *,
     fail_fast: bool,
+    should_cancel: Callable[[], bool] | None = None,
 ) -> None:
     errors: list[BaseException] = []
     for future in as_completed(futures):
@@ -80,12 +111,14 @@ def collect_parallel_results(
             results[index] = future.result()
         except BaseException as exc:
             errors.append(exc)
-            if fail_fast:
-                for pending in futures:
-                    pending.cancel()
+            if parallel_should_stop(fail_fast=fail_fast, should_cancel=should_cancel, exc=exc):
+                cancel_futures(futures)
                 take_finished_results(futures, results, skip=future)
                 attach_fail_fast_completed(exc, results)
                 raise
+        if parallel_should_stop(fail_fast=False, should_cancel=should_cancel):
+            cancel_futures(futures)
+            break
     if errors:
         take_finished_results(futures, results)
         attach_fail_fast_completed(errors[0], results)

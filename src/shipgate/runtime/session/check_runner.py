@@ -226,7 +226,8 @@ class CheckRunner:
                     on_progress=on_progress,
                     checks_total=checks_total,
                 ),
-                fail_fast=fail_fast or progress["cancelled"],
+                fail_fast=fail_fast,
+                should_cancel=should_cancel,
             )
         except FailFastError as exc:
             return (

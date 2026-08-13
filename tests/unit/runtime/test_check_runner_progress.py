@@ -191,3 +191,40 @@ def test_parallel_fail_fast_drains_two_completed_siblings(tmp_path: Path, monkey
     assert by_id["a.tool"] == "passed"
     assert by_id["b.tool"] == "passed"
     assert by_id["fail.tool"] == "failed"
+
+
+def test_parallel_cancel_without_fail_fast_cancels_pending(tmp_path: Path, monkeypatch):
+    catalog = CatalogLoader.load()
+    runner = CheckRunner(catalog=catalog, executor=MagicMock(), executor_is_default=False)
+    tool_ids = tuple(f"t{index}.tool" for index in range(10))
+    context = make_context(
+        tmp_path,
+        parallel=True,
+        tool_ids=tool_ids,
+        fail_fast=False,
+    )
+    ran: list[str] = []
+    lock = threading.Lock()
+    first_done = threading.Event()
+
+    def fake_run_selected_tool(self, *, selected, command, context, run_id):
+        del self, command, context, run_id
+        with lock:
+            ran.append(selected.tool_id)
+            first = len(ran) == 1
+        if first:
+            first_done.set()
+            return passed_report(selected.tool_id)
+        first_done.wait(timeout=5)
+        return passed_report(selected.tool_id)
+
+    monkeypatch.setattr(CheckRunner, "run_selected_tool", fake_run_selected_tool)
+    reports = runner.run_all_checks(
+        command=RunCommand(project_root=tmp_path),
+        context=context,
+        run_id="run-1",
+        on_progress=None,
+        should_cancel=first_done.is_set,
+    )
+    assert any(report.tool_id == "t0.tool" for report in reports)
+    assert len(ran) < 10
