@@ -2,40 +2,26 @@
 
 from __future__ import annotations
 
-import os
-from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import libcst as cst
-import pathspec
 
 from refactor.detector import check_rules, detect_file
 from refactor.inventory import load_inventory
 from refactor.protocol import ApplyMode
 from refactor.registry import RULES
+from refactor.scan.gitignore import (
+    load_gitignore,
+    resolved_under_roots,
+    walk_python_files,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
     from refactor.inventory import InventoryEntry
     from refactor.protocol import Hit, RefactorRule
-
-IGNORED_DIR_NAMES = frozenset(
-    {
-        "__pycache__",
-        ".git",
-        ".hg",
-        ".mypy_cache",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".shipgate",
-        ".tox",
-        ".venv",
-        "node_modules",
-        "venv",
-    }
-)
 
 FIX_FIXED_POINT_LIMIT = 100
 
@@ -56,70 +42,6 @@ def collect_python(path: Path) -> list[Path]:
     )
 
 
-@dataclass(frozen=True)
-class GitignoreLayer:
-    base: Path
-    spec: pathspec.PathSpec
-
-    def matches(self, path: Path, *, is_dir: bool) -> bool:
-        try:
-            relative = path.relative_to(self.base).as_posix()
-        except ValueError:
-            return False
-        return self.spec.match_file(f"{relative}/" if is_dir else relative)
-
-
-def walk_python_files(root: Path, layers: tuple[GitignoreLayer, ...]) -> list[Path]:
-    files: list[Path] = []
-    for current_root, dirnames, filenames in os.walk(root):
-        current_path = Path(current_root)
-        dirnames[:] = filter_walk_dirnames(dirnames, current_path, layers)
-        for filename in sorted(filenames):
-            candidate = current_path / filename
-            if candidate.suffix != ".py":
-                continue
-            if should_ignore_path(candidate, layers, is_dir=False):
-                continue
-            files.append(candidate.resolve())
-    return files
-
-
-def filter_walk_dirnames(
-    dirnames: list[str],
-    current_path: Path,
-    layers: tuple[GitignoreLayer, ...],
-) -> list[str]:
-    return [
-        dirname
-        for dirname in sorted(dirnames)
-        if not should_ignore_path(current_path / dirname, layers, is_dir=True)
-    ]
-
-
-def load_gitignore(root: Path) -> tuple[GitignoreLayer, ...]:
-    current = root.resolve()
-    ancestors: list[Path] = []
-    for candidate in (current, *current.parents):
-        ancestors.append(candidate)
-        if (candidate / ".git").exists():
-            break
-    layers: list[GitignoreLayer] = []
-    for candidate in reversed(ancestors):
-        ignore_path = candidate / ".gitignore"
-        if not ignore_path.is_file():
-            continue
-        layers.append(
-            GitignoreLayer(
-                base=candidate,
-                spec=pathspec.PathSpec.from_lines(
-                    "gitignore",
-                    ignore_path.read_text(encoding="utf-8").splitlines(),
-                ),
-            )
-        )
-    return tuple(layers)
-
-
 def discover_project_root(start: Path) -> Path | None:
     current = start.resolve()
     current = current.parent if current.is_file() else current
@@ -129,35 +51,21 @@ def discover_project_root(start: Path) -> Path | None:
     return None
 
 
-def resolved_under_roots(path: Path, roots: Sequence[Path]) -> bool:
-    resolved = path.resolve()
-    return any(resolved == root or resolved.is_relative_to(root) for root in roots)
-
-
-def should_ignore_path(
-    path: Path,
-    layers: tuple[GitignoreLayer, ...],
-    *,
-    is_dir: bool,
-) -> bool:
-    return (
-        True
-        if path.name in IGNORED_DIR_NAMES
-        else any(layer.matches(path, is_dir=is_dir) for layer in layers)
-    )
-
-
 FILE_SKIP_ERRORS = (
     OSError,
     UnicodeDecodeError,
     cst.ParserSyntaxError,
     cst.CSTValidationError,
-    IndexError,
-    TypeError,
-    ValueError,
-    AttributeError,
-    RuntimeError,
 )
+
+
+def python_files_under_supplied_roots(paths: Sequence[Path]) -> list[Path]:
+    supplied = tuple(path.resolve() for path in paths)
+    return [
+        file_path
+        for file_path in iter_python_files(paths)
+        if resolved_under_roots(file_path, supplied)
+    ]
 
 
 def check_paths(
@@ -168,7 +76,7 @@ def check_paths(
 ) -> list[Hit]:
     selected = check_rules(rules, enable=enable)
     hits: list[Hit] = []
-    for file_path in iter_python_files(paths):
+    for file_path in python_files_under_supplied_roots(paths):
         try:
             source = file_path.read_text(encoding="utf-8")
             hits.extend(detect_file(source, str(file_path), selected))
@@ -207,9 +115,8 @@ def fix_paths(
     project_root = discover_project_root(supplied[0]) if supplied else None
     return [
         file_path
-        for file_path in iter_python_files(paths)
-        if resolved_under_roots(file_path, supplied)
-        and project_root is not None
+        for file_path in python_files_under_supplied_roots(paths)
+        if project_root is not None
         and resolved_under_roots(file_path, (project_root,))
         and fix_file(file_path, auto_rules)
     ]
