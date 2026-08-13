@@ -25,7 +25,7 @@ class AugAssignRule:
     rule_id = "aug-assign"
     kind = RuleKind.REFACTOR
     summary = "Replace `x = x + y` with `x += y` for simple names"
-    apply_mode = ApplyMode.AUTO
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

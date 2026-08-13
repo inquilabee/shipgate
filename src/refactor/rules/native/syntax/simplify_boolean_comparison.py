@@ -26,7 +26,7 @@ class SimplifyBooleanComparisonRule:
     rule_id = "simplify-boolean-comparison"
     kind = RuleKind.REFACTOR
     summary = "Replace `x == True` with `x`"
-    apply_mode = ApplyMode.AUTO
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

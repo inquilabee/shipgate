@@ -81,16 +81,11 @@ class HintStubRule:
 def test_registered_auto_rules_match_former_safe_apply() -> None:
     auto_ids = {rule.rule_id for rule in RULES if rule.apply_mode is ApplyMode.AUTO}
     assert auto_ids == {
-        "aug-assign",
         "bin-op-identity",
-        "boolean-if-exp-identity",
         "collection-into-set",
-        "default-get",
         "dict-literal",
         "min-max-identity",
-        "none-compare",
         "remove-redundant-pass",
-        "simplify-boolean-comparison",
         "tuple-literal",
         "use-len",
         "yield-from",

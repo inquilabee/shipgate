@@ -20,10 +20,9 @@ SAFE_APPLY_TRUE_IDS = (
     "remove-redundant-pass",
     "use-len",
     "min-max-identity",
-    "aug-assign",
 )
 
-SAFE_APPLY_FALSE_IDS: tuple[str, ...] = ()
+SAFE_APPLY_FALSE_IDS: tuple[str, ...] = ("aug-assign",)
 
 
 @pytest.fixture
@@ -87,3 +86,9 @@ def test_literals_len_minmax_augassign_safe_apply_false(
 ) -> None:
     rule = rules_by_id[rule_id]
     assert rule.apply_mode is not ApplyMode.AUTO
+
+
+def test_use_len_skips_empty_and_starred_calls(rules_by_id: dict[str, RefactorRule]) -> None:
+    rule = rules_by_id["use-len"]
+    assert not rule.detect("if len() == 0:\n    pass\n", "sample.py")
+    assert not rule.detect("if len(*items) == 0:\n    pass\n", "sample.py")

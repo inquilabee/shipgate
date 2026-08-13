@@ -16,13 +16,10 @@ RULE_IDS = (
     "identity-comprehension",
 )
 
-SAFE_APPLY_TRUE_IDS = (
+SAFE_APPLY_FALSE_IDS = (
     "none-compare",
     "boolean-if-exp-identity",
     "simplify-boolean-comparison",
-)
-
-SAFE_APPLY_FALSE_IDS = (
     "merge-nested-ifs",
     "inline-immediately-returned-variable",
     "use-next",
@@ -106,15 +103,6 @@ def test_simplify_boolean_comparison_detects_false(
     assert len(hits) >= 1
     assert hits[0].suggestion is not None
     assert "not x" in hits[0].suggestion.after
-
-
-@pytest.mark.parametrize("rule_id", SAFE_APPLY_TRUE_IDS)
-def test_compare_boolean_flow_safe_apply_true(
-    rules_by_id: dict[str, RefactorRule],
-    rule_id: str,
-) -> None:
-    rule = rules_by_id[rule_id]
-    assert rule.apply_mode is ApplyMode.AUTO
 
 
 @pytest.mark.parametrize("rule_id", SAFE_APPLY_FALSE_IDS)

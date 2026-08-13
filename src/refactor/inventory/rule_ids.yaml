@@ -14,7 +14,7 @@
 - id: aug-assign
   kind: refactor
   status: native
-  apply_mode: auto
+  apply_mode: hint
   note: null
 - id: avoid-builtin-shadow
   kind: comment
@@ -98,7 +98,7 @@
 - id: boolean-if-exp-identity
   kind: refactor
   status: native
-  apply_mode: auto
+  apply_mode: hint
   note: null
 - id: break-or-continue-outside-loop
   kind: refactor
@@ -189,7 +189,7 @@
 - id: default-get
   kind: refactor
   status: native
-  apply_mode: auto
+  apply_mode: hint
   note: null
   rationale: Use dict.get for membership-plus-subscript fallbacks.
   example_bad: |
@@ -749,7 +749,7 @@
 - id: none-compare
   kind: refactor
   status: native
-  apply_mode: auto
+  apply_mode: hint
   note: null
 - id: or-if-exp-identity
   kind: refactor
@@ -1015,7 +1015,7 @@
 - id: simplify-boolean-comparison
   kind: refactor
   status: native
-  apply_mode: auto
+  apply_mode: hint
   note: null
 - id: simplify-constant-sum
   kind: refactor

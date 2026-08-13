@@ -8,9 +8,6 @@ from refactor.registry import RULES
 SAFE_APPLY_RULE_IDS = (
     "use-len",
     "min-max-identity",
-    "none-compare",
-    "boolean-if-exp-identity",
-    "simplify-boolean-comparison",
     "collection-into-set",
     "yield-from",
 )
@@ -26,13 +23,6 @@ def rules_by_id() -> dict[str, RefactorRule]:
     [
         ("use-len", "if len(items) == 0:\n    pass\n", "if not items:\n    pass\n"),
         ("min-max-identity", "z = a if a < b else b\n", "z = min(a, b)\n"),
-        ("none-compare", "if x == None:\n    pass\n", "if x is None:\n    pass\n"),
-        ("boolean-if-exp-identity", "y = True if cond else False\n", "y = cond\n"),
-        (
-            "simplify-boolean-comparison",
-            "if x == True:\n    pass\n",
-            "if x:\n    pass\n",
-        ),
         (
             "collection-into-set",
             "if x in [1, 2, 3]:\n    pass\n",

@@ -75,7 +75,13 @@ class UseLenRule:
 
     @staticmethod
     def is_len_call(node: cst.Call) -> bool:
-        return isinstance(node.func, cst.Name) and node.func.value == "len"
+        return (
+            isinstance(node.func, cst.Name)
+            and node.func.value == "len"
+            and len(node.args) == 1
+            and node.args[0].keyword is None
+            and not node.args[0].star
+        )
 
     @staticmethod
     def is_zero(node: cst.BaseExpression) -> bool:

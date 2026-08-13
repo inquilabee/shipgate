@@ -25,7 +25,7 @@ class NoneCompareRule:
     rule_id = "none-compare"
     kind = RuleKind.REFACTOR
     summary = "Replace `== None` with `is None`"
-    apply_mode = ApplyMode.AUTO
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

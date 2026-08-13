@@ -7,6 +7,14 @@ entries:
     reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
   - path: src/refactor/rules/native/builtins/default_mutable_arg.py:DefaultMutableArgRule.Finder.visit_FunctionDef
     reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/syntax/control/yield_from.py:YieldFromRule.Finder.leave_FunctionDef
+    reason: libcst visitor dispatch calls leave_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/syntax/control/yield_from.py:YieldFromRule.Finder.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/syntax/control/yield_from.py:YieldFromRule.Transformer.leave_FunctionDef
+    reason: libcst visitor dispatch calls leave_FunctionDef by protocol, not by name reference
+  - path: src/refactor/rules/native/syntax/control/yield_from.py:YieldFromRule.Transformer.visit_FunctionDef
+    reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
   - path: src/refactor/rules/native/gpsg/annotations.py:RequireParameterAnnotationRule.Finder.visit_FunctionDef
     reason: libcst visitor dispatch calls visit_FunctionDef by protocol, not by name reference
   - path: src/refactor/rules/native/gpsg/annotations.py:RequireReturnAnnotationRule.Finder.visit_FunctionDef

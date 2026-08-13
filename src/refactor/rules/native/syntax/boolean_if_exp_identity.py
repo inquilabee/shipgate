@@ -26,7 +26,7 @@ class BooleanIfExpIdentityRule:
     rule_id = "boolean-if-exp-identity"
     kind = RuleKind.REFACTOR
     summary = "Simplify `True if cond else False` to `cond`"
-    apply_mode = ApplyMode.AUTO
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

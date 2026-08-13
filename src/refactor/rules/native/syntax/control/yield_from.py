@@ -40,12 +40,31 @@ class YieldFromRule:
         return apply_with_transformer(source, YieldFromRule.Transformer())
 
     class Transformer(cst.CSTTransformer):
+        def __init__(self) -> None:
+            super().__init__()
+            self._async_stack: list[bool] = []
+
+        def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
+            self._async_stack.append(node.asynchronous is not None)
+            return True
+
+        def leave_FunctionDef(
+            self,
+            original_node: cst.FunctionDef,
+            updated_node: cst.FunctionDef,
+        ) -> cst.FunctionDef:
+            _ = original_node
+            self._async_stack.pop()
+            return updated_node
+
         def leave_IndentedBlock(
             self,
             original_node: cst.IndentedBlock,
             updated_node: cst.IndentedBlock,
         ) -> cst.IndentedBlock:
-            _ = self, original_node
+            _ = original_node
+            if self._async_stack and self._async_stack[-1]:
+                return updated_node
             transformed = YieldFromRule.transform_body(updated_node.body)
             return (
                 updated_node if transformed is None else updated_node.with_changes(body=transformed)
@@ -54,6 +73,22 @@ class YieldFromRule:
     class Finder(IndentedBlockCollector):
         def __init__(self, *, path: str) -> None:
             super().__init__(path=path, checker=YieldFromRule.check_body)
+            self._async_stack: list[bool] = []
+
+        def visit_FunctionDef(self, node: cst.FunctionDef) -> bool:
+            self._async_stack.append(node.asynchronous is not None)
+            return True
+
+        def leave_FunctionDef(self, original_node: cst.FunctionDef) -> None:
+            _ = original_node
+            self._async_stack.pop()
+
+        def visit_IndentedBlock(self, node: cst.IndentedBlock) -> bool:
+            return (
+                True
+                if self._async_stack and self._async_stack[-1]
+                else super().visit_IndentedBlock(node)
+            )
 
     @staticmethod
     def check_body(

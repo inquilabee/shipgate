@@ -8,7 +8,6 @@ from refactor.registry import RULES
 SAFE_APPLY_RULE_IDS = (
     "dict-literal",
     "tuple-literal",
-    "aug-assign",
     "bin-op-identity",
     "remove-redundant-pass",
 )
@@ -24,7 +23,6 @@ def rules_by_id() -> dict[str, RefactorRule]:
     [
         ("dict-literal", "x = dict()\n", "x = {}\n"),
         ("tuple-literal", "x = tuple()\n", "x = ()\n"),
-        ("aug-assign", "x = x + 1\n", "x += 1\n"),
         ("bin-op-identity", "y = x + 0\n", "y = x\n"),
         (
             "remove-redundant-pass",
@@ -72,11 +70,6 @@ def test_bin_op_identity_skips_multi_target_assign(
             "tuple-literal",
             "a = tuple()\nb = tuple()\n",
             "a = ()\nb = ()\n",
-        ),
-        (
-            "aug-assign",
-            "x = x + 1\ny = y - 2\n",
-            "x += 1\ny -= 2\n",
         ),
         (
             "bin-op-identity",

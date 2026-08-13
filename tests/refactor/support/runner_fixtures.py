@@ -9,16 +9,22 @@ NON_AUTO_RULE_IDS = frozenset(
     rule.rule_id for rule in RULES if rule.apply_mode is not ApplyMode.AUTO
 )
 
-BEFORE = """\
+DEFAULT_GET_SOURCE = """\
 def pick(d: dict[str, int], key: str) -> int:
     value = d[key] if key in d else 0
     return value
 """
 
+BEFORE = """\
+def pick() -> dict:
+    cache = dict()
+    return cache
+"""
+
 AFTER = """\
-def pick(d: dict[str, int], key: str) -> int:
-    value = d.get(key, 0)
-    return value
+def pick() -> dict:
+    cache = {}
+    return cache
 """
 
 MULTI_BEFORE = """\

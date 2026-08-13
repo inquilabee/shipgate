@@ -122,5 +122,5 @@ class DefaultMutableArgRule:
         return (
             cst.List(elements=[])
             if kind == "list"
-            else (cst.Dict(elements=[]) if kind == "dict" else cst.Set(elements=[]))
+            else (cst.Dict(elements=[]) if kind == "dict" else cst.Call(func=cst.Name("set")))
         )

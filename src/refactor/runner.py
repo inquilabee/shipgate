@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import libcst as cst
 import pathspec
 
 from refactor.detector import check_rules, detect_file
@@ -83,15 +84,22 @@ def filter_walk_dirnames(
 
 
 def load_gitignore(root: Path) -> pathspec.PathSpec:
-    ignore_path = root / ".gitignore"
-    return (
-        pathspec.PathSpec.from_lines(
-            "gitignore",
-            ignore_path.read_text(encoding="utf-8").splitlines(),
-        )
-        if ignore_path.is_file()
-        else pathspec.PathSpec.from_lines("gitignore", [])
-    )
+    current = root.resolve()
+    for candidate in (current, *current.parents):
+        ignore_path = candidate / ".gitignore"
+        if ignore_path.is_file():
+            return pathspec.PathSpec.from_lines(
+                "gitignore",
+                ignore_path.read_text(encoding="utf-8").splitlines(),
+            )
+        if (candidate / ".git").exists():
+            break
+    return pathspec.PathSpec.from_lines("gitignore", [])
+
+
+def resolved_under_roots(path: Path, roots: Sequence[Path]) -> bool:
+    resolved = path.resolve()
+    return any(resolved == root or resolved.is_relative_to(root) for root in roots)
 
 
 def should_ignore_path(
@@ -118,8 +126,11 @@ def check_paths(
     selected = check_rules(rules, enable=enable)
     hits: list[Hit] = []
     for file_path in iter_python_files(paths):
-        source = file_path.read_text(encoding="utf-8")
-        hits.extend(detect_file(source, str(file_path), selected))
+        try:
+            source = file_path.read_text(encoding="utf-8")
+            hits.extend(detect_file(source, str(file_path), selected))
+        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
+            continue
     return hits
 
 
@@ -149,19 +160,30 @@ def fix_paths(
 ) -> list[Path]:
     selected = check_rules(rules, enable=enable)
     auto_rules = tuple(rule for rule in selected if rule.apply_mode is ApplyMode.AUTO)
-    return [file_path for file_path in iter_python_files(paths) if fix_file(file_path, auto_rules)]
+    roots = tuple(path.resolve() for path in paths)
+    return [
+        file_path
+        for file_path in iter_python_files(paths)
+        if resolved_under_roots(file_path, roots) and fix_file(file_path, auto_rules)
+    ]
 
 
 def fix_file(file_path: Path, rules: Sequence[RefactorRule]) -> bool:
-    source = file_path.read_text(encoding="utf-8")
+    try:
+        source = file_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return False
     original = source
-    for _ in range(FIX_FIXED_POINT_LIMIT):
-        updated = source
-        for rule in rules:
-            updated = apply_auto_rule(rule, updated, file_path)
-        if updated == source:
-            break
-        source = updated
+    try:
+        for _ in range(FIX_FIXED_POINT_LIMIT):
+            updated = source
+            for rule in rules:
+                updated = apply_auto_rule(rule, updated, file_path)
+            if updated == source:
+                break
+            source = updated
+    except cst.ParserSyntaxError:
+        return False
     if source == original:
         return False
     file_path.write_text(source, encoding="utf-8")

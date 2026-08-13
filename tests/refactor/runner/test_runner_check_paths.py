@@ -3,6 +3,7 @@ from __future__ import annotations
 from tests.refactor.support.runner_fixtures import (
     AFTER,
     BEFORE,
+    DEFAULT_GET_SOURCE,
     MULTI_AFTER,
     MULTI_BEFORE,
     NON_AUTO_RULE_IDS,
@@ -14,14 +15,14 @@ from refactor.runner import check_paths, check_rules, fix_paths, iter_python_fil
 
 def test_check_paths_finds_default_get(tmp_path) -> None:
     src = tmp_path / "sample.py"
-    src.write_text(BEFORE, encoding="utf-8")
+    src.write_text(DEFAULT_GET_SOURCE, encoding="utf-8")
     hits = check_paths([tmp_path])
     assert any(h.rule_id == "default-get" for h in hits)
 
 
 def test_check_paths_populates_hit_location(tmp_path) -> None:
     src = tmp_path / "sample.py"
-    src.write_text(BEFORE, encoding="utf-8")
+    src.write_text(DEFAULT_GET_SOURCE, encoding="utf-8")
     hit = next(h for h in check_paths([tmp_path]) if h.rule_id == "default-get")
     assert hit.location.line == 2
     assert hit.location.column is not None
@@ -63,7 +64,7 @@ def test_fix_paths_rewrites_safe_rules(tmp_path) -> None:
     assert src in changed
     assert src.read_text(encoding="utf-8") == AFTER
     hits = check_paths([tmp_path])
-    assert all(hit.rule_id != "default-get" for hit in hits)
+    assert all(hit.rule_id != "dict-literal" for hit in hits)
 
 
 def test_fix_paths_applies_only_safe_rules(tmp_path) -> None:
@@ -77,3 +78,51 @@ def test_fix_paths_applies_only_safe_rules(tmp_path) -> None:
     assert any(hit.rule_id == "default-mutable-arg" for hit in hits)
     assert hits
     assert all(hit.rule_id in NON_AUTO_RULE_IDS for hit in hits)
+
+
+def test_check_paths_skips_syntax_invalid_sibling(tmp_path) -> None:
+    good = tmp_path / "good.py"
+    bad = tmp_path / "bad.py"
+    good.write_text("x = dict()\n", encoding="utf-8")
+    bad.write_text("def (\n", encoding="utf-8")
+    hits = check_paths([tmp_path])
+    assert any(hit.rule_id == "dict-literal" for hit in hits)
+
+
+def test_fix_paths_skips_syntax_invalid_sibling(tmp_path) -> None:
+    good = tmp_path / "good.py"
+    bad = tmp_path / "bad.py"
+    good.write_text("x = dict()\n", encoding="utf-8")
+    bad.write_text("def (\n", encoding="utf-8")
+    changed = fix_paths([tmp_path])
+    assert good in changed
+    assert good.read_text(encoding="utf-8") == "x = {}\n"
+    assert bad.read_text(encoding="utf-8") == "def (\n"
+
+
+def test_collect_python_honors_parent_gitignore(tmp_path) -> None:
+    (tmp_path / ".gitignore").write_text("skipme.py\n", encoding="utf-8")
+    nested = tmp_path / "src"
+    nested.mkdir()
+    skipped = nested / "skipme.py"
+    kept = nested / "keep.py"
+    skipped.write_text("x = 1\n", encoding="utf-8")
+    kept.write_text("x = 1\n", encoding="utf-8")
+    assert iter_python_files([nested]) == [kept.resolve()]
+
+
+def test_fix_paths_refuses_write_outside_supplied_root(tmp_path, monkeypatch) -> None:
+    root = tmp_path / "root"
+    outside = tmp_path / "outside.py"
+    root.mkdir()
+    (root / "inside.py").write_text("x = dict()\n", encoding="utf-8")
+    outside.write_text("y = dict()\n", encoding="utf-8")
+
+    def fake_iter(_paths):
+        return [root / "inside.py", outside]
+
+    monkeypatch.setattr("refactor.runner.iter_python_files", fake_iter)
+    changed = fix_paths([root])
+    assert (root / "inside.py").read_text(encoding="utf-8") == "x = {}\n"
+    assert outside.read_text(encoding="utf-8") == "y = dict()\n"
+    assert all(path.resolve().is_relative_to(root.resolve()) for path in changed)

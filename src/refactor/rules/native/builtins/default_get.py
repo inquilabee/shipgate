@@ -33,7 +33,7 @@ class DefaultGetRule:
     rule_id = "default-get"
     kind = RuleKind.REFACTOR
     summary = "Replace `d[k] if k in d else v` with `d.get(k, v)`"
-    apply_mode = ApplyMode.AUTO
+    apply_mode = ApplyMode.HINT
 
     def detect(self, source: str, path: str) -> list[Hit]:
         _ = self

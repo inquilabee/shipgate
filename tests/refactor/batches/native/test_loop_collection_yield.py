@@ -134,6 +134,23 @@ def test_loop_collection_yield_safe_apply_false(
     assert rule.apply_mode is not ApplyMode.AUTO
 
 
+def test_yield_from_skips_async_functions(rules_by_id: dict[str, RefactorRule]) -> None:
+    rule = rules_by_id["yield-from"]
+    source = "async def f():\n    for x in ys:\n        yield x\n"
+    assert not rule.detect(source, "sample.py")
+    assert rule.apply(source, []) in (None, source)
+
+
+def test_default_mutable_arg_set_literal_does_not_raise(
+    rules_by_id: dict[str, RefactorRule],
+) -> None:
+    rule = rules_by_id["default-mutable-arg"]
+    hits = rule.detect("def f(xs={1}):\n    pass\n", "sample.py")
+    assert len(hits) == 1
+    assert hits[0].suggestion is not None
+    assert "set()" in hits[0].suggestion.after
+
+
 @pytest.mark.parametrize("rule_id", RULE_IDS)
 def test_loop_collection_yield_inventory_native(rule_id: str) -> None:
     by_id = {entry.id: entry for entry in load_inventory()}
