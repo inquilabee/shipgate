@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 from shipgate.frontend.domain.models import (
     FindingCategory,
@@ -286,7 +287,11 @@ def docs_url_from_raw(raw: Mapping[str, object]) -> str | None:
 
 
 def normalize_docs_url(docs_url: object) -> str | None:
-    return docs_url.strip() if isinstance(docs_url, str) and docs_url.strip() else None
+    if not isinstance(docs_url, str) or not docs_url.strip():
+        return None
+    stripped = docs_url.strip()
+    scheme = urlparse(stripped).scheme.lower()
+    return stripped if scheme in {"http", "https"} else None
 
 
 def normalize_suggested_commands(commands_raw: object) -> list[str]:

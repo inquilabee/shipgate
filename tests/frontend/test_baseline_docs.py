@@ -4,7 +4,7 @@ from shipgate.frontend.domain.baseline import (
     fingerprints_from_report,
     fixed_fingerprints,
 )
-from shipgate.frontend.services.ingest import docs_from_extra, finding_to_record
+from shipgate.frontend.services.ingest import docs_from_extra, finding_to_record, normalize_docs_url
 
 
 def test_fixed_fingerprints_are_baseline_minus_current():
@@ -18,6 +18,12 @@ def test_fixed_fingerprints_are_baseline_minus_current():
     fixed = fixed_fingerprints(baseline, current)
     assert len(fixed) == 1
     assert next(iter(fixed))[2] == "b.py"
+
+
+def test_normalize_docs_url_allows_only_http_https():
+    assert normalize_docs_url("https://example.com/docs") == "https://example.com/docs"
+    assert normalize_docs_url("javascript:alert(1)") is None
+    assert normalize_docs_url("data:text/html,hi") is None
 
 
 def test_docs_from_extra_reads_raw_url():

@@ -7,6 +7,7 @@ pytest.importorskip("fastapi")
 
 from shipgate.frontend.web.app import contained_file, create_app
 from shipgate.frontend.web.security import (
+    require_bind_safety,
     validate_run_submit_tokens,
     warn_if_non_loopback,
 )
@@ -34,9 +35,10 @@ def test_validate_run_submit_tokens_requires_ui_token_when_set():
 
 def test_new_run_rejects_missing_token_when_configured(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
-    client = TestClient(create_app(tmp_path))
+    client = TestClient(create_app(tmp_path, require_ui_token=True))
     page = client.get("/runs/new")
     assert page.status_code == 200
+    assert "expected" not in page.text
     assert 'name="csrf_token"' in page.text
     start = page.text.index('name="csrf_token"')
     value_idx = page.text.index('value="', start) + len('value="')
@@ -53,6 +55,28 @@ def test_new_run_rejects_missing_token_when_configured(tmp_path: Path, monkeypat
         follow_redirects=False,
     )
     assert response.status_code == 403
+
+
+def test_new_run_accepts_ui_token_header(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
+    client = TestClient(create_app(tmp_path, require_ui_token=True))
+    page = client.get("/runs/new")
+    start = page.text.index('name="csrf_token"')
+    value_idx = page.text.index('value="', start) + len('value="')
+    end = page.text.index('"', value_idx)
+    csrf = page.text[value_idx:end]
+    response = client.post(
+        "/runs/new",
+        data={
+            "branch": "main",
+            "suite_id": "standard",
+            "csrf_token": csrf,
+            "acknowledge_requirements": "1",
+        },
+        headers={"X-ShipGate-UI-Token": "expected"},
+        follow_redirects=False,
+    )
+    assert response.status_code != 403
 
 
 def test_resolved_log_path_rejects_traversal(tmp_path: Path):
@@ -75,3 +99,9 @@ def test_contained_file_returns_existing_file(tmp_path: Path):
 def test_serve_warns_on_non_loopback_host(capsys):
     warn_if_non_loopback("0.0.0.0")  # ruff:ignore[hardcoded-bind-all-interfaces]
     assert "0.0.0.0" in capsys.readouterr().err  # ruff:ignore[hardcoded-bind-all-interfaces]
+
+
+def test_require_bind_safety_exits_without_token(monkeypatch):
+    monkeypatch.delenv("SHIPGATE_UI_TOKEN", raising=False)
+    with pytest.raises(SystemExit, match="SHIPGATE_UI_TOKEN"):
+        require_bind_safety("0.0.0.0")  # ruff:ignore[hardcoded-bind-all-interfaces]

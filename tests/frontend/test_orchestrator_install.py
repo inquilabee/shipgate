@@ -53,3 +53,29 @@ def test_perform_run_installs_into_worktree(tmp_path: Path, monkeypatch):
     )
     command = app.run_suite.call_args.args[0]
     assert command.project_root == worktree
+
+
+def test_prune_failure_does_not_clobber_success(tmp_path: Path, monkeypatch):
+    primary = tmp_path / "primary"
+    primary.mkdir()
+    storage = MagicMock()
+    storage.list_runs.return_value = []
+    storage.prune_old_runs.side_effect = RuntimeError("disk full")
+    app = MagicMock()
+    orch = RunOrchestrator(primary, storage, app=app)
+    monkeypatch.setattr(orch, "_perform_run", lambda *_args, **_kwargs: None)
+    orch._execute_run(
+        "run-1",
+        "feature",
+        "standard",
+        None,
+        changed_only=False,
+        since=None,
+    )
+    failed = [
+        call
+        for call in storage.update_run.call_args_list
+        if call.kwargs.get("status") is RunStatus.FAILED
+        or (call.args and len(call.args) > 1 and call.args[1] == RunStatus.FAILED)
+    ]
+    assert not failed

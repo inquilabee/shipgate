@@ -31,9 +31,6 @@
         {% if run.status.value in ("queued", "running") %}
             <form method="post" action="/runs/{{ run.id }}/cancel">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                {% if ui_token %}
-                    <input type="hidden" name="ui_token" value="{{ ui_token }}">
-                {% endif %}
                 <button type="submit"
                         class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-800 hover:bg-red-100">
                     Cancel

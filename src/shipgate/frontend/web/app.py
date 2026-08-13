@@ -62,7 +62,7 @@ def contained_file(root: Path, rel_path: str) -> Path:
     return path
 
 
-def create_app(primary_root: Path) -> FastAPI:
+def create_app(primary_root: Path, *, require_ui_token: bool = False) -> FastAPI:
     primary = Path(primary_root).resolve()
     storage = SqliteStorage(primary / PROJECT_SERVER_DIR / SERVER_DB_FILENAME)
     backfill_from_report_store(primary, storage)
@@ -91,6 +91,7 @@ def create_app(primary_root: Path) -> FastAPI:
     fastapi_app.state.worktrees = worktrees
     fastapi_app.state.templates = templates
     fastapi_app.state.csrf_token = new_csrf_token()
+    fastapi_app.state.require_ui_token = require_ui_token
     register_routes(fastapi_app)
     return fastapi_app
 
@@ -140,6 +141,15 @@ def register_run_list_routes(app: FastAPI) -> None:
         )
 
 
+def submitted_ui_token(request: Request, form_token: str | None) -> str | None:
+    header = request.headers.get("X-ShipGate-UI-Token")
+    return form_token or header
+
+
+def expected_ui_token(request: Request) -> str | None:
+    return ui_token_from_env() if request.app.state.require_ui_token else None
+
+
 def require_run_submit_tokens(
     request: Request,
     *,
@@ -150,8 +160,8 @@ def require_run_submit_tokens(
         validate_run_submit_tokens(
             csrf_expected=request.app.state.csrf_token,
             csrf_submitted=csrf_token,
-            ui_token_expected=ui_token_from_env(),
-            ui_token_submitted=ui_token,
+            ui_token_expected=expected_ui_token(request),
+            ui_token_submitted=submitted_ui_token(request, ui_token),
         )
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
@@ -247,7 +257,6 @@ def register_run_detail_routes(app: FastAPI) -> None:
                 "request": request,
                 "run": run,
                 "csrf_token": request.app.state.csrf_token,
-                "ui_token": ui_token_from_env() or "",
             },
         )
 

@@ -13,9 +13,6 @@
               method="post"
               action="/runs/new">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            {% if ui_token %}
-                <input type="hidden" name="ui_token" value="{{ ui_token }}">
-            {% endif %}
             <div>
                 <label class="mb-1 block text-sm font-semibold" for="branch">Branch</label>
                 {% if branches %}

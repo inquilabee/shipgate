@@ -19,7 +19,6 @@ from shipgate.frontend.domain.models import (
     RunRecord,
     RunSummaryRecord,
 )
-from shipgate.frontend.web.security import ui_token_from_env
 
 if TYPE_CHECKING:
     from fastapi import Request
@@ -55,7 +54,6 @@ def overview_context(
         "baseline_fixed_count": None,
         "baseline_fixed_rows": [],
         "csrf_token": request.app.state.csrf_token,
-        "ui_token": ui_token_from_env() or "",
     }
     if run is None:
         return context

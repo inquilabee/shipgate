@@ -125,6 +125,8 @@ class RunOrchestrator:
                 changed_only=changed_only,
                 since=since,
             )
+            with suppress(Exception):
+                self._storage.prune_old_runs(keep=MAX_RUNS)
         except Exception as exc:  # ruff: ignore[blind-except] — persist any run failure
             message = str(exc) or exc.__class__.__name__
             self._persist_failure(run_id, message)
@@ -182,7 +184,6 @@ class RunOrchestrator:
             from shipgate.runtime.report_store import ReportStore
 
             ReportStore(worktree).merge_metadata(run_id, {"branch": branch})
-        self._storage.prune_old_runs(keep=MAX_RUNS)
 
     def _resolve_worktree(self, branch: str) -> Path:
         try:

@@ -21,11 +21,11 @@ def serve(
         ) from exc
 
     from shipgate.frontend.web.app import create_app
-    from shipgate.frontend.web.security import warn_if_non_loopback
+    from shipgate.frontend.web.security import is_loopback_host, require_bind_safety
 
-    warn_if_non_loopback(host)
+    require_bind_safety(host)
     primary = Path(project_root).resolve()
-    app = create_app(primary)
+    app = create_app(primary, require_ui_token=not is_loopback_host(host))
     url = f"http://{host}:{port}/"
     print(f"ShipGate report server at {url}")
     if open_browser:

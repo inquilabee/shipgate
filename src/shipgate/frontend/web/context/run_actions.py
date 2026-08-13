@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
@@ -43,7 +42,6 @@ def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
         "requirements_text": requirements_text(),
         "error": error,
         "csrf_token": request.app.state.csrf_token,
-        "ui_token": os.environ.get("SHIPGATE_UI_TOKEN") or "",
     }
 
 
