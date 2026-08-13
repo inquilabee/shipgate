@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import stat
-import urllib.parse
-import urllib.request
 from typing import TYPE_CHECKING, Protocol
+from urllib.parse import urlparse
+
+import requests
 
 from shipgate.errors import InstallError
 
@@ -13,6 +14,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from shipgate.domain.catalog import InstallDefinition
+
+GITHUB_HOSTS = frozenset({"github.com", "api.github.com", "githubusercontent.com"})
+GITHUB_HOST_SUFFIXES = (".github.com", ".githubusercontent.com")
 
 
 class Installer(Protocol):
@@ -40,11 +44,30 @@ def link_binary(source: Path, destination: Path) -> None:
         destination.chmod(destination.stat().st_mode | stat.S_IXUSR)
 
 
-def download_https_file(url: str, destination: Path) -> None:
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme != "https" or parsed.netloc != "github.com":
+def is_github_netloc(netloc: str) -> bool:
+    host = netloc.lower().split(":")[0]
+    return host in GITHUB_HOSTS or host.endswith(GITHUB_HOST_SUFFIXES)
+
+
+def get_github_url(
+    url: str,
+    *,
+    timeout: float,
+    headers: dict[str, str] | None = None,
+) -> requests.Response:
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not is_github_netloc(parsed.netloc):
         raise InstallError(f"refusing untrusted download URL: {url}")
-    request = urllib.request.Request(url, method="GET")  # ruff:ignore[suspicious-url-open-usage]
-    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # ruff:ignore[commented-out-code]
-    with urllib.request.urlopen(request, timeout=120) as response:  # ruff:ignore[suspicious-url-open-usage]  # nosec B310
-        destination.write_bytes(response.read())
+    try:
+        response = requests.get(url, timeout=timeout, allow_redirects=True, headers=headers)
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        raise InstallError(f"failed to fetch {url}: {exc}") from exc
+    final = urlparse(response.url)
+    if final.scheme != "https" or not is_github_netloc(final.netloc):
+        raise InstallError(f"refusing redirect off github.com: {response.url}")
+    return response
+
+
+def download_https_file(url: str, destination: Path) -> None:
+    destination.write_bytes(get_github_url(url, timeout=120).content)

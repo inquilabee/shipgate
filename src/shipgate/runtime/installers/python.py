@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 import sys
 from typing import TYPE_CHECKING
 
@@ -29,10 +30,13 @@ class PythonInstaller:
         del force  # pip install always refreshes to the requested pin
         venv = project_root / PROJECT_MANAGED_PYTHON_ENV
         if not venv.exists():
-            run_command(
-                [sys.executable, "-m", "venv", str(venv)],
-                check=True,
-            )
+            try:
+                run_command(
+                    [sys.executable, "-m", "venv", str(venv)],
+                    check=True,
+                )
+            except subprocess.CalledProcessError as exc:
+                raise InstallError(f"failed to create venv at {venv}: {exc}") from exc
         pip = venv / "Scripts" / "pip" if sys.platform == "win32" else venv / "bin" / "pip"
         for package, install_def in sorted(packages.items()):
             self._refuse_known_bad(install_def)

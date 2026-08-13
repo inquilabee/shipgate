@@ -35,6 +35,7 @@ dependencies = [
     "libcst>=1.4",
     "pathspec>=0.12",
     "typer>=0.27.0",
+    "requests>=2.32",
 ]
 
 [project.optional-dependencies]

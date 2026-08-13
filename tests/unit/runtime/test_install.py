@@ -1,4 +1,5 @@
 import io
+import subprocess
 import tarfile
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -15,7 +16,9 @@ from shipgate.runtime.install import (
     install_suite,
     read_manifest,
 )
+from shipgate.runtime.installers.base import download_https_file, get_github_url
 from shipgate.runtime.installers.binary_github import GitHubReleaseInstaller
+from shipgate.runtime.installers.python import PythonInstaller
 from shipgate.runtime.installers.registry import INSTALLER_REGISTRY, get_installer
 
 
@@ -161,8 +164,6 @@ def test_python_installer_refuses_option_spec_and_uses_double_dash(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    from shipgate.runtime.installers.python import PythonInstaller
-
     pip_dir = tmp_path / PROJECT_MANAGED_PYTHON_ENV / "bin"
     pip_dir.mkdir(parents=True)
     (pip_dir / "pip").write_text("", encoding="utf-8")
@@ -222,3 +223,38 @@ def test_extract_from_tar_maps_errors_to_install_error(tmp_path: Path) -> None:
     archive_path.write_bytes(b"not an xz tar")
     with pytest.raises(InstallError, match="failed to extract shellcheck"):
         GitHubReleaseInstaller.extract_from_tar(archive_path, "shellcheck", xz=True)
+
+
+def test_venv_called_process_error_is_install_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_run(*args, **kwargs):
+        del args, kwargs
+        raise subprocess.CalledProcessError(1, ["python", "-m", "venv"])
+
+    monkeypatch.setattr("shipgate.runtime.installers.python.run_command", fake_run)
+    with pytest.raises(InstallError, match="failed to create venv"):
+        PythonInstaller().install_packages(
+            tmp_path,
+            {"ruff": InstallDefinition(manager="python", package="ruff", version="0.15.22")},
+        )
+
+
+def test_get_github_url_refuses_offsite_redirect(monkeypatch: pytest.MonkeyPatch) -> None:
+    response = MagicMock()
+    response.url = "https://evil.example/payload"
+    response.raise_for_status.return_value = None
+
+    def fake_get(*args, **kwargs):
+        del args, kwargs
+        return response
+
+    monkeypatch.setattr("shipgate.runtime.installers.base.requests.get", fake_get)
+    with pytest.raises(InstallError, match="refusing redirect off github"):
+        get_github_url("https://github.com/owner/repo/releases/download/x", timeout=1)
+
+
+def test_download_https_file_refuses_non_github(tmp_path: Path) -> None:
+    with pytest.raises(InstallError, match="refusing untrusted download URL"):
+        download_https_file("https://evil.example/x", tmp_path / "out.bin")

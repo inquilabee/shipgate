@@ -2,20 +2,18 @@
 
 from __future__ import annotations
 
-import json
 import platform
 import shutil
 import sys
 import tarfile
 import tempfile
-import urllib.request
 import zipfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.errors import InstallError
 from shipgate.paths import contained_child
-from shipgate.runtime.installers.base import download_https_file
+from shipgate.runtime.installers.base import download_https_file, get_github_url
 
 if TYPE_CHECKING:
     from shipgate.domain.catalog import BinaryDownloadSpec, InstallDefinition
@@ -85,16 +83,13 @@ class GitHubReleaseInstaller:
     @staticmethod
     def fetch_latest_release_tag(repo: str) -> str:
         url = f"https://api.github.com/repos/{repo}/releases/latest"
-        request = urllib.request.Request(
-            url,
-            method="GET",
-            headers={"Accept": "application/vnd.github+json"},
-        )
         try:
-            # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected  # ruff:ignore[line-too-long,commented-out-code]
-            with urllib.request.urlopen(request, timeout=30) as response:  # ruff:ignore[suspicious-url-open-usage]  # nosec B310
-                data = json.loads(response.read())
-        except OSError as exc:
+            data = get_github_url(
+                url,
+                timeout=30,
+                headers={"Accept": "application/vnd.github+json"},
+            ).json()
+        except (InstallError, ValueError) as exc:
             raise InstallError(f"failed to resolve latest release for {repo}: {exc}") from exc
         tag_name = data.get("tag_name") if isinstance(data, dict) else None
         if not isinstance(tag_name, str) or not tag_name:
