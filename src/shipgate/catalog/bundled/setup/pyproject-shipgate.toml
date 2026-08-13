@@ -11,6 +11,9 @@ mode = "auto"
 [tool.shipgate.checks."semgrep.scan"]
 scope = "semgrep"
 
+[tool.shipgate.checks."ty.check"]
+scope = "ty-src"
+
 [tool.shipgate.checks."radon.cc"]
 # Letter rank is per-block. Median / p95 gate typical and tail complexity.
 threshold = "B"

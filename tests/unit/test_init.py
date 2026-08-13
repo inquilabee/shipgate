@@ -71,7 +71,10 @@ def test_init_pyproject_writes_layout_scopes(tmp_path, monkeypatch):
     assert main(["init", "pyproject"]) == 0
     content = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert "[tool.shipgate.scopes.python-src]" in content
+    assert "[tool.shipgate.scopes.ty-src]" in content
     assert 'target = "src"' in content
+    assert '[tool.shipgate.checks."ty.check"]' in content
+    assert 'scope = "ty-src"' in content
     assert "src/shipgate/frontend/templates/" not in content
 
 
