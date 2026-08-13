@@ -12,6 +12,7 @@ from shipgate.paths import (
     PROJECT_MANAGED_BIN_DIR,
     PROJECT_MANAGED_PYTHON_ENV,
     PROJECT_TOOLS_DIR,
+    contained_child,
 )
 
 if TYPE_CHECKING:
@@ -117,11 +118,14 @@ def resolve_executable(
 def find_in_bin_dir(bin_dir: Path, name: str) -> str | None:
     if not bin_dir.is_dir():
         return None
+    try:
+        candidate = contained_child(bin_dir, name)
+    except ValueError:
+        return None
     if sys.platform == "win32":
-        candidate = bin_dir / f"{name}.exe"
-        if candidate.is_file():
-            return str(candidate)
-    candidate = bin_dir / name
+        exe = candidate.with_suffix(".exe")
+        if exe.is_file():
+            return str(exe)
     return str(candidate) if candidate.is_file() else None
 
 

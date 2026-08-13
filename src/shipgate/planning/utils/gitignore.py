@@ -95,7 +95,16 @@ def matches_tool_criteria(
 
 
 def include_allowed(rel: str, include: tuple[str, ...]) -> bool:
-    return any(rel.startswith(inc.rstrip("/")) for inc in include) if include else True
+    if not include:
+        return True
+    normalized = rel.replace("\\", "/")
+    for raw in include:
+        prefix = raw.replace("\\", "/").rstrip("/")
+        if not prefix:
+            continue
+        if normalized == prefix or normalized.startswith(f"{prefix}/"):
+            return True
+    return False
 
 
 def consider_scope_file(

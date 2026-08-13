@@ -6,7 +6,7 @@ import sys
 from typing import TYPE_CHECKING, Protocol
 
 from shipgate.errors import InstallError
-from shipgate.paths import PROJECT_MANAGED_BIN_DIR
+from shipgate.paths import PROJECT_MANAGED_BIN_DIR, contained_child
 from shipgate.runtime.installers.binary_github import GitHubReleaseInstaller
 from shipgate.runtime.installers.binary_npm import NpmInstaller
 from shipgate.runtime.installers.binary_path import PathBinaryInstaller
@@ -62,11 +62,13 @@ class BinaryInstaller:
         for _name, install_def in sorted(packages.items()):
             self._refuse_known_bad(install_def)
             binary_name = install_def.binary or install_def.package
-            destination = (
-                (bin_dir / binary_name).with_suffix(".exe")
-                if sys.platform == "win32"
-                else bin_dir / binary_name
-            )
+            try:
+                leaf = contained_child(bin_dir, binary_name)
+            except ValueError as exc:
+                raise InstallError(
+                    f"binary {binary_name!r} escapes managed bin dir",
+                ) from exc
+            destination = leaf.with_suffix(".exe") if sys.platform == "win32" else leaf
             if destination.is_file() and not force:
                 continue
             if destination.is_file() and force:

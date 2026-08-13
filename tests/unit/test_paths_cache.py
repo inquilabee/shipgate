@@ -2,11 +2,15 @@
 
 from pathlib import Path
 
+import pytest
+
 from shipgate.paths import (
     PROJECT_CACHE_ENV,
     SHIPGATE_DIR,
+    contained_child,
     find_cached_project_root,
     find_project_root,
+    normalize_finding_path,
     parse_env_file,
     read_cached_project_root,
 )
@@ -84,6 +88,39 @@ def test_reset_radon_cache_env_drops_radon_keys_only(tmp_path: Path) -> None:
     assert RADON_MI_MEDIAN_CACHE_ENV not in values
     assert RADON_CC_P95_CACHE_ENV not in values
     assert not any(key.startswith("SHIPGATE_RADON_") for key in values)
+
+
+def test_contained_child_rejects_escape(tmp_path: Path) -> None:
+    nested = contained_child(tmp_path, "configs/ruff.toml")
+    assert nested.is_relative_to(tmp_path.resolve())
+    with pytest.raises(ValueError, match="escapes"):
+        contained_child(tmp_path, "../x")
+    with pytest.raises(ValueError, match="escapes"):
+        contained_child(tmp_path, "/etc/passwd")
+    with pytest.raises(ValueError, match="escapes"):
+        contained_child(tmp_path, "")
+
+
+def test_contained_child_does_not_follow_leaf_symlink(tmp_path: Path) -> None:
+    outside = tmp_path / "outside"
+    outside.write_text("x", encoding="utf-8")
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "gitleaks").symlink_to(outside)
+    result = contained_child(bin_dir, "gitleaks")
+    assert result == bin_dir.resolve() / "gitleaks"
+    assert result.is_relative_to(bin_dir.resolve())
+
+
+def test_normalize_finding_path_joins_project_root(tmp_path: Path, monkeypatch) -> None:
+    other = tmp_path / "cwd"
+    other.mkdir()
+    project = tmp_path / "proj"
+    project.mkdir()
+    (project / "foo.py").write_text("x = 1\n", encoding="utf-8")
+    monkeypatch.chdir(other)
+    assert normalize_finding_path("foo.py", project_root=project) == "foo.py"
+    assert normalize_finding_path("../secret.py", project_root=project) is None
 
 
 def test_reset_radon_cache_env_missing_file_is_noop(tmp_path: Path) -> None:

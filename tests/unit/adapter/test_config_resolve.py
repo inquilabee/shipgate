@@ -62,6 +62,37 @@ def test_auto_mode_prefers_root_ruff_toml_over_shipgate_scaffold(tmp_path: Path)
     assert paths == (tmp_path / ".ruff.toml",)
 
 
+def test_absolute_discover_pattern_is_ignored(tmp_path: Path):
+    catalog = CatalogLoader.load()
+    tool = replace(
+        catalog.get_tool("ruff.lint"),
+        configuration=replace(
+            catalog.get_tool("ruff.lint").configuration,
+            discover=("/etc/passwd",),
+            bundled=None,
+        ),
+    )
+    project = replace(ProjectConfigLoader.load(project_root=tmp_path), config_mode="repo")
+    assert resolve_config_paths(tool, project, tmp_path) == ()
+
+
+def test_parent_discover_pattern_is_ignored(tmp_path: Path):
+    project = tmp_path / "proj"
+    project.mkdir()
+    (tmp_path / "secret.toml").write_text("[lint]\n", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    tool = replace(
+        catalog.get_tool("ruff.lint"),
+        configuration=replace(
+            catalog.get_tool("ruff.lint").configuration,
+            discover=("../secret.toml",),
+            bundled=None,
+        ),
+    )
+    project_cfg = replace(ProjectConfigLoader.load(project_root=project), config_mode="repo")
+    assert resolve_config_paths(tool, project_cfg, project) == ()
+
+
 def test_auto_mode_skips_pyproject_without_tool_section(tmp_path: Path):
     catalog = CatalogLoader.load()
     scaffold_project_layout(tmp_path)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.catalog.core.python_spec import PythonVersionSpec
@@ -17,6 +18,9 @@ def validate_tool_install(tool: ToolDefinition) -> None:
         return
     if install.manager not in ("python", "binary"):
         raise CatalogError(f"tool {tool.id!r} has unsupported install manager")
+    validate_install_basename(tool, install.package, label="install.package")
+    if install.binary:
+        validate_install_basename(tool, install.binary, label="install.binary")
     validate_exact_pin(tool)
     validate_known_bad(tool)
     validate_download(tool)
@@ -59,6 +63,10 @@ def validate_download(tool: ToolDefinition) -> None:
         raise CatalogError(f"tool {tool.id!r} install.download.asset_template is required")
     if not download.binary_name.strip():
         raise CatalogError(f"tool {tool.id!r} install.download.binary_name is required")
+    validate_install_basename(
+        tool, download.asset_template, label="install.download.asset_template"
+    )
+    validate_install_basename(tool, download.binary_name, label="install.download.binary_name")
 
 
 def validate_requires_python(tool: ToolDefinition) -> None:
@@ -71,6 +79,12 @@ def validate_requires_python(tool: ToolDefinition) -> None:
         raise CatalogError(
             f"tool {tool.id!r} install.requires_python is invalid: {install.requires_python!r}"
         ) from exc
+
+
+def validate_install_basename(tool: ToolDefinition, raw: str, *, label: str) -> None:
+    candidate = Path(raw)
+    if not raw or raw in {".", ".."} or candidate.name != raw or "/" in raw or "\\" in raw:
+        raise CatalogError(f"tool {tool.id!r} {label} must be a basename, got {raw!r}")
 
 
 def normalized_pin(version: str) -> str:

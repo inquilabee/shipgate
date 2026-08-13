@@ -3,6 +3,7 @@ import pytest
 from shipgate.catalog.core import CatalogValidator
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.domain.catalog import (
+    BinaryDownloadSpec,
     Catalog,
     CliOptionDefinition,
     InstallDefinition,
@@ -140,6 +141,53 @@ def test_bundled_deadcode_and_semgrep_declare_requires_python():
     assert semgrep.install is not None
     assert deadcode.install.requires_python == ">=3.11,<3.14"
     assert semgrep.install.requires_python == ">=3.11,<3.14"
+
+
+def test_validator_rejects_install_path_separators():
+    catalog = Catalog(
+        tools={
+            "bad.tool": ToolDefinition(
+                id="bad.tool",
+                executable="bad",
+                modes=(RunMode.CHECK,),
+                install=InstallDefinition(
+                    manager="binary",
+                    package="../evil",
+                    version="1.0.0",
+                    binary="../evil",
+                ),
+            )
+        },
+        suites={},
+    )
+    with pytest.raises(CatalogError, match="basename"):
+        CatalogValidator.validate(catalog)
+
+
+def test_validator_rejects_asset_template_path_separators():
+    catalog = Catalog(
+        tools={
+            "bad.tool": ToolDefinition(
+                id="bad.tool",
+                executable="bad",
+                modes=(RunMode.CHECK,),
+                install=InstallDefinition(
+                    manager="binary",
+                    package="evil",
+                    version="1.0.0",
+                    binary="evil",
+                    download=BinaryDownloadSpec(
+                        repo="org/evil",
+                        asset_template="../../evil.tar.gz",
+                        binary_name="evil",
+                    ),
+                ),
+            )
+        },
+        suites={},
+    )
+    with pytest.raises(CatalogError, match="basename"):
+        CatalogValidator.validate(catalog)
 
 
 def test_security_tools_are_tagged():

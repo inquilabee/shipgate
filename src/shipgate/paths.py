@@ -182,6 +182,47 @@ def find_project_root(start: Path | None = None) -> Path:
     return current
 
 
+CONTAINMENT_ESCAPE = "name escapes containment root: "
+
+
+def contained_child(root: Path, name: str) -> Path:
+    """Join ``name`` under ``root``; reject empty, absolute, and ``..`` segments.
+
+    Does not follow a pre-existing leaf symlink, so a managed binary that
+    already points outside ``root`` still counts as contained.
+    """
+    candidate = Path(name)
+    if (
+        not name
+        or name in {".", ".."}
+        or candidate.is_absolute()
+        or candidate.anchor
+        or any(part in {"", ".", ".."} for part in candidate.parts)
+    ):
+        raise ValueError(f"{CONTAINMENT_ESCAPE}{name!r}")
+    resolved_root = root.resolve()
+    destination = resolved_root.joinpath(*candidate.parts)
+    if not destination.is_relative_to(resolved_root):
+        raise ValueError(f"{CONTAINMENT_ESCAPE}{name!r}")
+    return destination
+
+
+def contained_child_or_none(root: Path, name: str) -> Path | None:
+    try:
+        return contained_child(root, name)
+    except ValueError:
+        return None
+
+
+def relative_if_under(path: Path, root: Path) -> Path | None:
+    """Return ``path`` relative to ``root``, or ``None`` if it is outside."""
+    try:
+        rel = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return None
+    return rel if rel.parts else Path()
+
+
 def normalize_finding_path(
     path: str | None,
     *,
@@ -191,7 +232,10 @@ def normalize_finding_path(
         return None
     normalized = path.replace("\\", "/")
     if project_root is not None:
+        candidate = Path(normalized)
+        joined = candidate if candidate.is_absolute() else project_root / candidate
         with suppress(ValueError):
-            rel = Path(normalized).resolve().relative_to(project_root.resolve())
+            rel = joined.resolve().relative_to(project_root.resolve())
             return rel.as_posix()
+        return None
     return normalized[2:] if normalized.startswith("./") else normalized

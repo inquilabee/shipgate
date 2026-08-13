@@ -5,6 +5,7 @@ from pathlib import Path
 from shipgate.config.core.pyproject import PyprojectPolicyLoader
 from shipgate.domain.catalog import ToolDefinition
 from shipgate.domain.project import ProjectConfig
+from shipgate.paths import contained_child_or_none
 
 
 class ConfigPathResolver:
@@ -37,7 +38,8 @@ class ConfigPathResolver:
     def _resolve(self) -> tuple[Path, ...]:
         config = self._tool.configuration
         if self._project.config_mode == "bundled" and config.bundled:
-            return (self._bundled / config.bundled,)
+            bundled = contained_child_or_none(self._bundled, config.bundled)
+            return (bundled,) if bundled is not None else ()
 
         if self._project.config_mode == "auto":
             return self._resolve_auto()
@@ -74,12 +76,15 @@ class ConfigPathResolver:
         return normalized.startswith(".shipgate/configs/")
 
     def _match_candidate(self, pattern: str) -> Path | None:
-        candidate = self._project_root / pattern
+        candidate = contained_child_or_none(self._project_root, pattern)
         return (
-            (self._match_pyproject(candidate) if candidate.name == "pyproject.toml" else candidate)
-            if candidate.is_file()
-            else None
+            None
+            if candidate is None or not candidate.is_file()
+            else self._file_or_pyproject(candidate)
         )
+
+    def _file_or_pyproject(self, candidate: Path) -> Path | None:
+        return self._match_pyproject(candidate) if candidate.name == "pyproject.toml" else candidate
 
     def _match_pyproject(self, path: Path) -> Path | None:
         section = self._tool.configuration.pyproject_section
@@ -93,11 +98,10 @@ class ConfigPathResolver:
 
     def _bundled_fallback(self) -> tuple[Path, ...]:
         config = self._tool.configuration
-        return (
-            (self._bundled / config.bundled,)
-            if self._project.config_mode == "auto" and config.bundled
-            else ()
-        )
+        if self._project.config_mode != "auto" or not config.bundled:
+            return ()
+        bundled = contained_child_or_none(self._bundled, config.bundled)
+        return (bundled,) if bundled is not None else ()
 
 
 def resolve_config_paths(

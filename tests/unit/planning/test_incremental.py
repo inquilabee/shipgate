@@ -10,6 +10,7 @@ from shipgate.domain.project import Scope
 from shipgate.errors import PlanningError
 from shipgate.planning.utils.incremental import (
     git_changed_files,
+    relative_under_root,
     tool_paths_after_incremental,
 )
 
@@ -63,6 +64,18 @@ def test_git_changed_files_includes_staged_changes(tmp_path):
     git_add(tmp_path, changed_file)
     changed = git_changed_files(tmp_path, "HEAD")
     assert "src/b.py" in changed
+
+
+def test_dashed_since_raises_planning_error(tmp_path):
+    with pytest.raises(PlanningError, match="since"):
+        git_changed_files(tmp_path, "--output=/tmp/x")
+
+
+def test_relative_under_root_drops_outside_paths(tmp_path):
+    inside = tmp_path / "src" / "a.py"
+    outside = tmp_path.parent / "escape.py"
+    assert relative_under_root(inside, tmp_path) == Path("src/a.py")
+    assert relative_under_root(outside, tmp_path) is None
 
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")

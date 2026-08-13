@@ -4,7 +4,9 @@ from unittest.mock import MagicMock
 import pytest
 
 from shipgate.catalog.loader import CatalogLoader
+from shipgate.domain.catalog import InstallDefinition
 from shipgate.errors import InstallError
+from shipgate.paths import PROJECT_MANAGED_PYTHON_ENV
 from shipgate.runtime.environment import tools_manifest_path
 from shipgate.runtime.install import (
     collect_install_requirements,
@@ -132,3 +134,64 @@ def test_install_suite_skips_requires_python_mismatch(
     captured = capsys.readouterr()
     assert "deadcode does not support Python 3.14" in captured.err
     assert "semgrep does not support Python 3.14" in captured.err
+
+
+def test_binary_installer_rejects_escaped_name(tmp_path: Path):
+    from shipgate.runtime.installers.binary import BinaryInstaller
+
+    with pytest.raises(InstallError, match="escapes"):
+        BinaryInstaller().install_packages(
+            tmp_path,
+            {
+                "evil": InstallDefinition(
+                    manager="binary",
+                    package="../evil",
+                    version="1.0.0",
+                    binary="../evil",
+                    allow_path=False,
+                )
+            },
+        )
+
+
+def test_python_installer_refuses_option_spec_and_uses_double_dash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from shipgate.runtime.installers.python import PythonInstaller
+
+    pip_dir = tmp_path / PROJECT_MANAGED_PYTHON_ENV / "bin"
+    pip_dir.mkdir(parents=True)
+    (pip_dir / "pip").write_text("", encoding="utf-8")
+    calls: list[list[str]] = []
+
+    def fake_run(argv, **_kwargs):
+        calls.append(list(argv))
+
+        class Result:
+            returncode = 0
+            stderr = ""
+
+        return Result()
+
+    monkeypatch.setattr("shipgate.runtime.installers.python.run_command", fake_run)
+    installer = PythonInstaller()
+    installer.install_packages(
+        tmp_path,
+        {"ruff": InstallDefinition(manager="python", package="ruff", version="0.15.22")},
+    )
+    assert calls
+    assert calls[0][1:3] == ["install", "--"]
+    assert calls[0][-1] == "ruff==0.15.22"
+
+    with pytest.raises(InstallError, match="pip option"):
+        installer.install_packages(
+            tmp_path,
+            {
+                "evil": InstallDefinition(
+                    manager="python",
+                    package="--index-url",
+                    version="1.0.0",
+                )
+            },
+        )

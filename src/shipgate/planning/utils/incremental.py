@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import shutil
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.core.process import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
+from shipgate.paths import relative_if_under
 from shipgate.planning.core.scope_resolver import ExpandScopeKey, ScopeResolver
 from shipgate.planning.utils.gitignore import expand_scope, minimize_covering_dirs
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from shipgate.domain.catalog import ToolDefinition
     from shipgate.domain.project import ProjectConfig, Scope
     from shipgate.domain.run_command import RunCommand
@@ -198,16 +200,17 @@ def matched_changed_files(
     filtered_files = tuple(
         path for path in matched_files if file_matches_changed(path, project_root, changed)
     )
-    return tuple(relative_under_root(path, project_root) for path in filtered_files)
+    return relatives_under_root(filtered_files, project_root)
 
 
-def relative_under_root(path: Path, project_root: Path) -> Path:
-    resolved = path.resolve()
-    try:
-        rel = resolved.relative_to(project_root.resolve())
-    except ValueError:
-        return path
-    return rel if rel.parts else Path()
+def relatives_under_root(paths: tuple[Path, ...], project_root: Path) -> tuple[Path, ...]:
+    return tuple(
+        rel for path in paths if (rel := relative_under_root(path, project_root)) is not None
+    )
+
+
+def relative_under_root(path: Path, project_root: Path) -> Path | None:
+    return relative_if_under(path, project_root)
 
 
 def git_executable() -> str:
@@ -215,23 +218,33 @@ def git_executable() -> str:
     return "git" if git is None else git
 
 
+def require_git_ref(since: str) -> str:
+    if not since or since.startswith("-"):
+        raise PlanningError(
+            f"invalid or unresolvable --since ref {since!r}",
+            hint="refs must not start with '-'",
+        )
+    return since
+
+
 def git_changed_files(project_root: Path, since: str) -> set[str]:
+    ref = require_git_ref(since)
     if not (project_root / ".git").exists():
         raise PlanningError(
             "changed-only/--since requires a git repository",
             path=str(project_root),
             hint="run from a git checkout or disable changed-only",
         )
-    if since == "HEAD":
+    if ref == "HEAD":
         return git_changed_against_head(project_root)
     git = git_executable()
     result = run_command(
-        [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, since],
+        [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, ref, "--"],
         cwd=project_root,
     )
     if result.returncode != 0:
         result = run_command(
-            [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, f"{since}..HEAD"],
+            [git, "diff", GIT_NAME_ONLY, GIT_RELATIVE, f"{ref}..HEAD", "--"],
             cwd=project_root,
         )
         if result.returncode != 0:

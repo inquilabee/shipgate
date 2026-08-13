@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
+from shipgate.paths import relative_if_under
 from shipgate.planning.utils.gitignore import (
     expand_scope,
     minimize_covering_dirs,
@@ -15,6 +16,8 @@ from shipgate.planning.utils.gitignore import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
     from shipgate.domain.project import ProjectConfig
     from shipgate.planning.utils.incremental import RunScopeSession
@@ -188,21 +191,20 @@ class ScopeResolver:
         )
 
     def _paths_for_root_delivery(self, scope: Scope, target: Path) -> tuple[Path, ...]:
-        if scope.include:
-            entries = self._scope_included_dirs(scope)
-            return tuple(self.relative_under_root(path) for path in entries)
-        return (self.relative_under_root(target),)
+        return (
+            self._relatives(self._scope_included_dirs(scope))
+            if scope.include
+            else self._relatives((target,))
+        )
 
     def resolve_scope_target(self, scope: Scope) -> Path:
         return self._resolve_against_project_root(scope.target)
 
-    def relative_under_root(self, path: Path) -> Path:
-        resolved = path.resolve()
-        try:
-            rel = resolved.relative_to(self.project_root)
-        except ValueError:
-            return path
-        return rel if rel.parts else Path()
+    def relative_under_root(self, path: Path) -> Path | None:
+        return relative_if_under(path, self.project_root)
+
+    def _relatives(self, paths: Sequence[Path]) -> tuple[Path, ...]:
+        return tuple(rel for path in paths if (rel := self.relative_under_root(path)) is not None)
 
     def delivery_paths_without_filter(
         self,
@@ -210,6 +212,8 @@ class ScopeResolver:
         criteria: ScopeCriteria,
     ) -> tuple[Path, ...]:
         target = self.relative_under_root(self.resolve_scope_target(scope))
+        if target is None:
+            return ()
         if criteria.delivery == "root":
             return (target,)
         if criteria.delivery == "dirs":
@@ -269,11 +273,11 @@ class ScopeResolver:
         target: Path,
     ) -> tuple[Path, ...]:
         if criteria.delivery == "root":
-            return (self.relative_under_root(target),)
+            return self._relatives((target,))
         if not matched_files:
             return ()
         delivered = (
-            tuple(self.relative_under_root(path) for path in matched_files)
+            self._relatives(matched_files)
             if criteria.delivery == "files"
             else minimize_covering_dirs(matched_files, self.project_root)
         )

@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from shipgate.errors import InstallError
+from shipgate.paths import contained_child
 from shipgate.runtime.installers.base import download_https_file
 
 if TYPE_CHECKING:
@@ -39,7 +40,10 @@ class GitHubReleaseInstaller:
         version = self.normalize_version(install_def.version)
         url, asset_name = self.build_github_release_url(download, version)
         with tempfile.TemporaryDirectory() as tmp:
-            archive_path = Path(tmp) / asset_name
+            try:
+                archive_path = contained_child(Path(tmp), asset_name)
+            except ValueError as exc:
+                raise InstallError(f"asset name escapes download dir: {asset_name!r}") from exc
             try:
                 download_https_file(url, archive_path)
             except OSError as exc:

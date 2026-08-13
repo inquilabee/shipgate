@@ -1,6 +1,6 @@
 import os
 
-from shipgate.runtime.environment import filter_environ
+from shipgate.runtime.environment import filter_environ, find_in_bin_dir
 
 
 def test_managed_environment_prepends_src_on_src_layout(tmp_path, monkeypatch):
@@ -36,6 +36,16 @@ def test_managed_environment_flat_layout_does_not_set_src_pythonpath(tmp_path, m
     (pkg / "__init__.py").write_text("", encoding="utf-8")
     environment = managed_environment(tmp_path)
     assert "PYTHONPATH" not in environment.env
+
+
+def test_find_in_bin_dir_rejects_parent_escape(tmp_path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "ruff").write_text("", encoding="utf-8")
+    (tmp_path / "evil").write_text("", encoding="utf-8")
+    assert find_in_bin_dir(bin_dir, "ruff") == str((bin_dir / "ruff").resolve())
+    assert find_in_bin_dir(bin_dir, "../evil") is None
+    assert find_in_bin_dir(bin_dir, "/etc/passwd") is None
 
 
 def test_filter_environ_drops_secret_like_keys(monkeypatch):

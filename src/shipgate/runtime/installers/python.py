@@ -36,10 +36,13 @@ class PythonInstaller:
         pip = venv / "Scripts" / "pip" if sys.platform == "win32" else venv / "bin" / "pip"
         for package, install_def in sorted(packages.items()):
             self._refuse_known_bad(install_def)
-            specs = [pip_package_spec(package, install_def.version)]
+            name = install_def.package or package
+            specs = [pip_package_spec(name, install_def.version)]
             specs.extend(install_def.requires)
             for spec in specs:
-                result = run_command([str(pip), "install", spec])
+                if spec.startswith("-"):
+                    raise InstallError(f"refusing pip option as package spec: {spec!r}")
+                result = run_command([str(pip), "install", "--", spec])
                 if result.returncode != 0:
                     raise InstallError(
                         f"failed to install {spec}: {result.stderr.strip()}",

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from shipgate.planning.utils.gitignore import (
     expand_scope,
+    include_allowed,
     matches_tool_criteria,
     should_ignore,
 )
@@ -33,6 +34,25 @@ def test_expand_scope_respects_gitignore(tmp_path: Path):
     names = {p.name for p in paths}
     assert "ok.py" in names
     assert "bad.py" not in names
+
+
+def test_include_allowed_uses_path_prefix():
+    assert include_allowed("src/a.py", ("src",))
+    assert include_allowed("src", ("src",))
+    assert not include_allowed("src_backup/a.py", ("src",))
+    assert not include_allowed("src_backup/a.py", ("src/",))
+
+
+def test_expand_scope_include_does_not_match_prefix_sibling(tmp_path: Path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src" / "ok.py").write_text("x = 1\n", encoding="utf-8")
+    backup = tmp_path / "src_backup"
+    backup.mkdir()
+    (backup / "no.py").write_text("y = 2\n", encoding="utf-8")
+    paths = expand_scope(tmp_path, tmp_path, include=("src",))
+    names = {p.name for p in paths}
+    assert "ok.py" in names
+    assert "no.py" not in names
 
 
 def test_matches_tool_criteria_glob():
