@@ -268,16 +268,26 @@ class ScopeResolver:
         *,
         target: Path,
     ) -> tuple[Path, ...]:
-        return (
-            (self.relative_under_root(target),)
-            if criteria.delivery == "root"
-            else (
-                (
-                    tuple(self.relative_under_root(path) for path in matched_files)
-                    if criteria.delivery == "files"
-                    else minimize_covering_dirs(matched_files, self.project_root)
-                )
-                if matched_files
-                else ()
-            )
+        if criteria.delivery == "root":
+            return (self.relative_under_root(target),)
+        if not matched_files:
+            return ()
+        delivered = (
+            tuple(self.relative_under_root(path) for path in matched_files)
+            if criteria.delivery == "files"
+            else minimize_covering_dirs(matched_files, self.project_root)
         )
+        return self._drop_excluded_delivery_paths(delivered)
+
+    def _drop_excluded_delivery_paths(self, paths: tuple[Path, ...]) -> tuple[Path, ...]:
+        kept: list[Path] = []
+        for path in paths:
+            absolute = path if path.is_absolute() else self.project_root / path
+            if should_ignore(
+                self.project_root,
+                absolute,
+                extra_excludes=self.default_excludes,
+            ):
+                continue
+            kept.append(path)
+        return tuple(kept)

@@ -226,6 +226,9 @@ class CliSession:
             raise typer.Exit(exc.exit_code) from None
         self.write_text(text)
 
+    def radon_reset(self) -> None:
+        self.write_text(self.app.radon_reset(self.project_root()))
+
     def install_like(
         self,
         *,

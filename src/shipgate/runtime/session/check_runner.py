@@ -11,6 +11,7 @@ from shipgate.adapter.executable import build_tool_argv
 from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
+from shipgate.planning.check_resolver import SKIPPED_NO_MATCHING_FILES
 from shipgate.runtime.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
 from shipgate.runtime.parallel import run_parallel
@@ -222,8 +223,8 @@ class CheckRunner:
             catalog=self._catalog,
         )
         if prepared.report is not None:
-            if command.display_cli:
-                reason = prepared.report.extra.get("skipped", "skipped")
+            reason = prepared.report.extra.get("skipped", "skipped")
+            if command.display_cli or reason != SKIPPED_NO_MATCHING_FILES:
                 sys.stderr.write(f"{selected.tool_id}: (skipped: {reason})\n")
             return prepared.report
         if prepared.request is None:

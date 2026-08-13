@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from shipgate.catalog.core.python_spec import PythonVersionSpec
 from shipgate.errors import CatalogError
 
 if TYPE_CHECKING:
@@ -19,6 +20,7 @@ def validate_tool_install(tool: ToolDefinition) -> None:
     validate_exact_pin(tool)
     validate_known_bad(tool)
     validate_download(tool)
+    validate_requires_python(tool)
 
 
 def validate_exact_pin(tool: ToolDefinition) -> None:
@@ -57,6 +59,18 @@ def validate_download(tool: ToolDefinition) -> None:
         raise CatalogError(f"tool {tool.id!r} install.download.asset_template is required")
     if not download.binary_name.strip():
         raise CatalogError(f"tool {tool.id!r} install.download.binary_name is required")
+
+
+def validate_requires_python(tool: ToolDefinition) -> None:
+    install = tool.install
+    if install is None or not install.requires_python:
+        return
+    try:
+        PythonVersionSpec.parse(install.requires_python)
+    except ValueError as exc:
+        raise CatalogError(
+            f"tool {tool.id!r} install.requires_python is invalid: {install.requires_python!r}"
+        ) from exc
 
 
 def normalized_pin(version: str) -> str:

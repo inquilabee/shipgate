@@ -4,6 +4,31 @@
 
 ## Unreleased
 
+## v0.1.8
+
+### Fixed
+
+- Check-result cache keys now include scoped file contents and check bindings
+  (threshold / metric extras), so `shipgate check` no longer replays stale
+  failures after source or policy edits ([#1](https://github.com/inquilabee/shipgate/issues/1)).
+- `delivery: dirs` no longer passes `.` when a named scope includes a root-level
+  `.py` file, so vulture/deadcode/radon do not walk `.shipgate/tools`.
+- Managed env prepends `src/` onto `PYTHONPATH` when `src/<pkg>/__init__.py`
+  exists, so import-linter can import src-layout packages without a consumer
+  `.pth` script.
+- `deadcode.check` and `semgrep.scan` declare `install.requires_python: ">=3.11,<3.14"`
+  and skip with that reason on Python 3.14 instead of `TOOL_EXIT`.
+- Policy-gate gitignore patterns with a trailing slash now match the directory
+  itself (`notes/` matches `notes`), so folder-breadth no longer scans ignored trees.
+
+### Added
+
+- Require-if skips print the missing glob to stderr (flat-layout import-linter
+  is no longer silent). `no matching files in scope` stays quiet unless
+  `--display-cli`.
+- `shipgate radon reset` deletes progressive `SHIPGATE_RADON_*` keys from
+  `.shipgate/cache/.env` so floors can re-seed after a refactor.
+
 ## v0.1.6
 
 ### Added

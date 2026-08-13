@@ -2,8 +2,8 @@
 # `shipgate init` scaffolds configs/importlinter.ini with optional starter layers
 # only when an importable src-layout package exists (`src/<pkg>/__init__.py`).
 # Customize contracts for your architecture. The package under test must be
-# importable (src-layout: PYTHONPATH=src, or install the package editable).
-# Skipped when no src-layout package is present (require_if).
+# importable. Managed env prepends src/ onto PYTHONPATH when src/<pkg>/__init__.py
+# exists. Skipped when no src-layout package is present (require_if).
 import-linter.check:
   executable: lint-imports
   display_name: import-linter

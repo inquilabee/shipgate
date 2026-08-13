@@ -74,3 +74,12 @@ def test_parse_install_download_and_known_bad():
     assert tool.install.download is not None
     assert tool.install.download.repo == "org/demo"
     assert tool.install.download.arch_map["x86_64"] == "amd64"
+
+
+def test_parse_install_requires_python():
+    raw = demo_tool_raw()
+    raw["install"]["requires_python"] = ">=3.11,<3.14"
+    catalog = CatalogParser.parse({"tools": {"demo.tool": raw}, "suites": {}})
+    tool = catalog.get_tool("demo.tool")
+    assert tool.install is not None
+    assert tool.install.requires_python == ">=3.11,<3.14"

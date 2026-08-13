@@ -16,6 +16,7 @@ semgrep.scan:
     manager: python
     package: semgrep
     version: 1.170.1
+    requires_python: ">=3.11,<3.14"
   tags:
     - security
   cache:

@@ -138,6 +138,91 @@ def test_check_result_cache_honors_ttl(tmp_path: Path, monkeypatch):
     assert cache.lookup(resolved) is None
 
 
+def test_check_result_cache_invalidates_on_file_edit(tmp_path: Path):
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text("x: 1\n", encoding="utf-8")
+    resolved = make_resolved_request(tmp_path, "yamllint.check", paths=(Path("cfg.yaml"),))
+    cache = CheckResultCache(tmp_path)
+    report = CheckReport(
+        check_id=resolved.tool.id,
+        tool_id=resolved.tool.id,
+        status="failed",
+        exit_code=1,
+    )
+    cache.store(resolved, report)
+    assert cache.lookup(resolved) is not None
+    cfg.write_text("x: 2\n", encoding="utf-8")
+    assert cache.lookup(resolved) is None
+
+
+def test_check_result_cache_invalidates_on_dir_file_edit(tmp_path: Path):
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    source = pkg / "a.py"
+    source.write_text("x = 1\n", encoding="utf-8")
+    resolved = make_resolved_request(tmp_path, "vulture.check", paths=(Path("pkg"),))
+    cache = CheckResultCache(tmp_path)
+    report = CheckReport(
+        check_id=resolved.tool.id,
+        tool_id=resolved.tool.id,
+        status="failed",
+        exit_code=1,
+    )
+    cache.store(resolved, report)
+    assert cache.lookup(resolved) is not None
+    source.write_text("x = 2\n", encoding="utf-8")
+    assert cache.lookup(resolved) is None
+
+
+def test_check_result_cache_invalidates_on_threshold_change(tmp_path: Path):
+    from dataclasses import replace
+
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text("x: 1\n", encoding="utf-8")
+    base = make_resolved_request(tmp_path, "yamllint.check", paths=(Path("cfg.yaml"),))
+    with_b = replace(base, options=replace(base.options, threshold="B"))
+    with_a = replace(base, options=replace(base.options, threshold="A"))
+    cache = CheckResultCache(tmp_path)
+    report = CheckReport(
+        check_id=base.tool.id,
+        tool_id=base.tool.id,
+        status="failed",
+        exit_code=1,
+    )
+    cache.store(with_b, report)
+    assert cache.lookup(with_b) is not None
+    assert cache.lookup(with_a) is None
+
+
+def test_check_result_cache_invalidates_on_metric_extra_change(tmp_path: Path):
+    from dataclasses import replace
+
+    cfg = tmp_path / "cfg.yaml"
+    cfg.write_text("x: 1\n", encoding="utf-8")
+    base = make_resolved_request(tmp_path, "yamllint.check", paths=(Path("cfg.yaml"),))
+    progressive = replace(
+        base,
+        options=replace(base.options, extra={"median_mode": "progressive"}),
+    )
+    absolute = replace(
+        base,
+        options=replace(
+            base.options,
+            extra={"median_mode": "threshold", "median_threshold": 50.0},
+        ),
+    )
+    cache = CheckResultCache(tmp_path)
+    report = CheckReport(
+        check_id=base.tool.id,
+        tool_id=base.tool.id,
+        status="failed",
+        exit_code=1,
+    )
+    cache.store(progressive, report)
+    assert cache.lookup(progressive) is not None
+    assert cache.lookup(absolute) is None
+
+
 def test_check_result_cache_results_false(tmp_path: Path):
     from dataclasses import replace
 

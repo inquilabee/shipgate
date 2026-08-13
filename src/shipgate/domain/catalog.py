@@ -62,6 +62,7 @@ class InstallDefinition:
     allow_path: bool = True
     known_bad: tuple[str, ...] = ()
     download: BinaryDownloadSpec | None = None
+    requires_python: str | None = None
 
 
 @dataclass(frozen=True)

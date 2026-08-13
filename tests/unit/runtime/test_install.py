@@ -109,3 +109,26 @@ def test_install_suite_records_successful_binaries_on_partial_failure(
     installed = set(manifest.get("binaries", {}))
     assert "gitleaks" not in installed
     assert len(installed) >= 1
+
+
+def test_install_suite_skips_requires_python_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    catalog = CatalogLoader.load()
+    python_installer = MagicMock()
+    binary_installer = MagicMock()
+    monkeypatch.setitem(INSTALLER_REGISTRY, "python", python_installer)
+    monkeypatch.setitem(INSTALLER_REGISTRY, "binary", binary_installer)
+    monkeypatch.setattr("shipgate.runtime.install.host_python_minor", lambda: (3, 14))
+
+    install_suite(tmp_path, "full", catalog)
+
+    installed = python_installer.install_packages.call_args.args[1]
+    assert "deadcode" not in installed
+    assert "semgrep" not in installed
+    assert "ruff" in installed
+    captured = capsys.readouterr()
+    assert "deadcode does not support Python 3.14" in captured.err
+    assert "semgrep does not support Python 3.14" in captured.err

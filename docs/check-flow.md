@@ -111,11 +111,11 @@ uv run shipgate list checks
 | `scope` | Which paths (or root) are passed; extensions matter most for incremental/`--changed-only` |
 | `normalizer` | Which parser turns tool output into findings |
 | `modes` | Whether the tool may run under `check` and/or `format` (`apply`) |
-| `install` | Exact version pin + optional `download` / `known_bad`; used by `shipgate install` and `shipgate update` |
+| `install` | Exact version pin + optional `download` / `known_bad` / `requires_python`; used by `shipgate install` and `shipgate update`. `requires_python` is a comma-separated major.minor spec (`>=3.11,<3.14`). Checks skip with that reason instead of `TOOL_EXIT`; install skips the package and continues. |
 | `tags` | Metadata labels (e.g. `security`); filter with `shipgate list tools --tag` |
-| `cache` | Optional result-cache policy (`results`, `ttl_seconds`) |
+| `cache` | Optional result-cache policy (`results`, `ttl_seconds`). Keys include scoped file contents, tool version, config bytes, and check bindings (threshold / metric extras). `--no-cache` disables the cache; `--display-cli` prints `(cached)` on a hit. |
 | `suggest_if` | Additive init hints when matching files exist (does not change default suites) |
-| `require_if` | Skip the check (exit 0, skipped status) unless matching files exist; e.g. `files_present: ["pyproject.toml"]` or `src/*/__init__.py` for import-linter |
+| `require_if` | Skip the check (exit 0, skipped status) unless matching files exist; e.g. `files_present: ["pyproject.toml"]` or `src/*/__init__.py` for import-linter. Require-if skips print to stderr (the glob is in the reason). `no matching files in scope` stays silent unless `--display-cli`. |
 
 Project overlays under `.shipgate/catalog/tools/` can replace or `extends:` a bundled tool without editing the package.
 

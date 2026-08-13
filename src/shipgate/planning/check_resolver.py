@@ -7,6 +7,7 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from shipgate.adapter.config_resolve import resolve_config_paths
+from shipgate.catalog.core.python_spec import PythonVersionSpec, host_python_minor
 from shipgate.core.files_present import any_files_present
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
@@ -35,6 +36,9 @@ if TYPE_CHECKING:
     from shipgate.domain.run_command import RunCommand
     from shipgate.planning.utils.incremental import RunScopeSession
     from shipgate.planning.workflow import SelectedTool
+
+
+SKIPPED_NO_MATCHING_FILES = "no matching files in scope"
 
 
 @dataclass(frozen=True)
@@ -70,6 +74,9 @@ class CheckResolver:
         require_skip = self._require_if_skip_reason(tool)
         if require_skip is not None:
             return self._skipped(selected.tool_id, reason=require_skip)
+        python_skip = self._requires_python_skip_reason(tool)
+        if python_skip is not None:
+            return self._skipped(selected.tool_id, reason=python_skip)
 
         scope = resolve_scope(
             self.project_root,
@@ -138,7 +145,16 @@ class CheckResolver:
             return None
         if any_files_present(self.project_root, tool.require_if.files_present):
             return None
-        return "required files not present"
+        patterns = ", ".join(tool.require_if.files_present)
+        return f"required files not present: {patterns}"
+
+    @staticmethod
+    def _requires_python_skip_reason(tool: ToolDefinition) -> str | None:
+        install = tool.install
+        if install is None or not install.requires_python:
+            return None
+        spec = PythonVersionSpec.parse(install.requires_python)
+        return spec.unsupported_message(tool.id, host_python_minor())
 
     @staticmethod
     def _mode_enabled(selected: SelectedTool, mode: RunMode, tool: ToolDefinition) -> bool:
@@ -213,7 +229,7 @@ class CheckResolver:
     def _skipped(
         tool_id: str,
         *,
-        reason: str = "no matching files in scope",
+        reason: str = SKIPPED_NO_MATCHING_FILES,
     ) -> PreparedRun:
         return PreparedRun(
             report=CheckReport(
