@@ -73,6 +73,23 @@ def test_prepare_run_apply_mode_sets_check_false(tmp_path: Path):
     assert prepared.request.options.check is False
 
 
+def test_prepare_run_skips_unsupported_apply_mode(tmp_path: Path):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+    catalog = CatalogLoader.load()
+    selected = SelectedTool(tool_id="bandit.scan", mode=RunMode.APPLY)
+    command = RunCommand(project_root=tmp_path, target=tmp_path, check="bandit.scan")
+    prepared = prepare_run(
+        selected=selected,
+        command=command,
+        context=make_run_context(tmp_path, selected),
+        catalog=catalog,
+    )
+    assert prepared.request is None
+    assert prepared.report is not None
+    assert prepared.report.status == "skipped"
+    assert prepared.report.extra["skipped"] == "tool does not support mode apply"
+
+
 def test_prepare_run_skips_when_no_matching_files(tmp_path: Path):
     catalog = CatalogLoader.load()
     selected = SelectedTool(tool_id="yamllint.check", mode=RunMode.CHECK)

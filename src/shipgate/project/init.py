@@ -31,6 +31,8 @@ from shipgate.project.python import (
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from shipgate.domain.catalog import Catalog
+
 INIT_MODES = frozenset({"yaml", "pyproject"})
 
 
@@ -39,19 +41,20 @@ def scaffold_project_layout(
     *,
     policy: str = "yaml",
     project_env: Path | None = None,
+    catalog: Catalog | None = None,
 ) -> list[Path]:
     """Create .shipgate/ directories and copy missing bundled configs."""
     root = project_root.resolve()
-    catalog = CatalogLoader.load()
+    loaded = catalog if catalog is not None else CatalogLoader.load(project_root=root)
     (root / PROJECT_REPORTS_DIR).mkdir(parents=True, exist_ok=True)
     (root / PROJECT_GATES_DIR).mkdir(parents=True, exist_ok=True)
     (root / PROJECT_CONFIGS_DIR).mkdir(parents=True, exist_ok=True)
-    created = scaffold_bundled_configs(root, catalog)
+    created = scaffold_bundled_configs(root, loaded)
     created.extend(sync_catalog(root))
     gitignore = scaffold_shipgate_gitignore(root)
     if gitignore is not None:
         created.append(gitignore)
-    setup_bundled_gates(root, catalog)
+    setup_bundled_gates(root, loaded)
     created.append(write_project_root_cache(root, policy=policy))
     if project_env is not None:
         persist_project_python(root, project_env)

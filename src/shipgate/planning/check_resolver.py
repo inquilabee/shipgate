@@ -72,6 +72,11 @@ class CheckResolver:
             return self._skipped(selected.tool_id)
 
         tool = self.catalog.get_tool(selected.tool_id)
+        if selected.mode not in tool.modes:
+            return self._skipped(
+                selected.tool_id,
+                reason=f"tool does not support mode {selected.mode.value}",
+            )
         require_skip = self._require_if_skip_reason(tool)
         if require_skip is not None:
             return self._skipped(selected.tool_id, reason=require_skip)
@@ -127,7 +132,7 @@ class CheckResolver:
 
         request = build_execution_request(
             runnable=selected.tool_id,
-            mode=selected.mode if selected.mode in tool.modes else RunMode.CHECK,
+            mode=selected.mode,
             project_root=self.project_root,
             options=tool_options,
             extra_args=command.extra_args,

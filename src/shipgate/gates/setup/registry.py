@@ -15,9 +15,9 @@ if TYPE_CHECKING:
     from shipgate.domain.catalog import Catalog
 
 
-def make_setup(gate_id: str) -> Callable[[Path], None]:
+def make_setup(gate_id: str, catalog: Catalog | None = None) -> Callable[[Path], None]:
     def setup(project_root: Path) -> None:
-        tool = CatalogLoader.load().get_tool(gate_id)
+        tool = (catalog or CatalogLoader.load()).get_tool(gate_id)
         scaffold_from_gate_config(
             project_root,
             load_bundled_gate_config(tool),
@@ -43,7 +43,7 @@ SETUPS: dict[str, Callable[[Path], None]] = {
 
 def setup_bundled_gates(project_root: Path, catalog: Catalog) -> None:
     """Run per-gate setup for bundled policy gates that register scaffolding."""
-    for tool_id, setup in SETUPS.items():
+    for tool_id in SETUPS:
         if not catalog.is_tool(tool_id):
             continue
-        setup(project_root.resolve())
+        make_setup(tool_id, catalog)(project_root.resolve())

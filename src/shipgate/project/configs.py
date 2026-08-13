@@ -16,10 +16,10 @@ if TYPE_CHECKING:
     from shipgate.domain.project import ProjectConfig
 
 
-def sync_configs(project_root: Path, _catalog: Catalog) -> list[Path]:
+def sync_configs(project_root: Path, catalog: Catalog) -> list[Path]:
     from shipgate.project.init import scaffold_project_layout
 
-    return scaffold_project_layout(project_root)
+    return scaffold_project_layout(project_root, catalog=catalog)
 
 
 def display_config_path(project_root: Path, path: Path) -> Path:

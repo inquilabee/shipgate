@@ -20,6 +20,23 @@ def test_configs_list_shows_resolved_paths(tmp_path: Path, monkeypatch):
     assert code == 0
 
 
+def test_sync_configs_forwards_catalog(tmp_path: Path, monkeypatch):
+    from shipgate.catalog.loader import CatalogLoader
+    from shipgate.project.configs import sync_configs
+
+    catalog = CatalogLoader.load()
+    seen: list[object] = []
+
+    def fake_scaffold(project_root, *, catalog=None, **_kwargs):
+        seen.append(catalog)
+        return [project_root / "created"]
+
+    monkeypatch.setattr("shipgate.project.init.scaffold_project_layout", fake_scaffold)
+    created = sync_configs(tmp_path, catalog)
+    assert seen == [catalog]
+    assert created == [tmp_path / "created"]
+
+
 def test_configs_diff_reports_no_differences_after_sync(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     main(["configs", "sync"])

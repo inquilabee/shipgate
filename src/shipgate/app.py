@@ -12,6 +12,7 @@ from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.modes import RunMode
 from shipgate.domain.reports import RunReport, report_json_schema
 from shipgate.domain.run_command import RunCommand
+from shipgate.errors import ConfigError
 from shipgate.gates.core import GateCatalogMerger
 from shipgate.gates.init import init_gate
 from shipgate.gates.paths import gates_lib_path
@@ -227,7 +228,16 @@ class ShipGateApp:
                 target=req.target,
                 extra_args=req.extra_args,
             )
-            code = self.format(cmd) if req.mode == RunMode.APPLY else self.check(cmd)
+            match req.mode:
+                case RunMode.APPLY:
+                    code = self.format(cmd)
+                case RunMode.CHECK:
+                    code = self.check(cmd)
+                case _:
+                    raise ConfigError(
+                        f"batch mode {req.mode.value!r} is not supported",
+                        path=str(batch_path),
+                    )
             worst = max(worst, code)
         return worst
 
@@ -254,7 +264,6 @@ class ShipGateApp:
             mode=mode,
             project_env=project_env,
         )
-        suggestions = suggest_tools(project_root, self._catalog_for(project_root))
         suggestions = suggest_tools(project_root, self._catalog_for(project_root))
         suggestion_text = "\n".join(suggestions) + "\n" if suggestions else ""
         return (
