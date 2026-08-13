@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## v0.1.9
+
 ### Fixed
 
 - `shipgate.__version__` follows the installed package metadata (`pyproject.toml`),
