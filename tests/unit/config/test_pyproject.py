@@ -343,3 +343,26 @@ def test_policy_pyproject_wins_when_both_exist(tmp_path: Path):
     )
     config = ProjectConfigLoader.load(project_root=tmp_path)
     assert config.suite == "full"
+
+
+def test_policy_pyproject_ignores_yaml_only_keys(tmp_path: Path):
+    write_pyproject(
+        tmp_path,
+        """\
+[project]
+name = "demo"
+
+[tool.shipgate]
+suite = "full"
+""",
+    )
+    (tmp_path / SHIPGATE_YAML).parent.mkdir(parents=True)
+    (tmp_path / SHIPGATE_YAML).write_text("fail_fast: true\n", encoding="utf-8")
+    env_path = tmp_path / PROJECT_CACHE_ENV
+    env_path.parent.mkdir(parents=True)
+    env_path.write_text(
+        f"SHIPGATE_ROOT={tmp_path.resolve()}\nSHIPGATE_POLICY=pyproject\n",
+        encoding="utf-8",
+    )
+    config = ProjectConfigLoader.load(project_root=tmp_path)
+    assert config.fail_fast is not True

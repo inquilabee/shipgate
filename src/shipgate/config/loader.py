@@ -101,12 +101,16 @@ class ProjectConfigLoader:
         pyproject_raw: dict[str, Any] | None,
     ) -> ProjectConfig:
         if yaml_raw and pyproject_raw:
-            merged = (
-                deep_merge_config(yaml_raw, pyproject_raw)
-                if policy == "pyproject"
-                else deep_merge_config(pyproject_raw, yaml_raw)
-            )
-            config_path = pyproject_path if policy == "pyproject" else yaml_path
+            if policy == "pyproject":
+                return (
+                    ProjectConfig()
+                    if pyproject_path is None
+                    else self._parse_raw(
+                        pyproject_raw, pyproject_path, pyproject_path=pyproject_path
+                    )
+                )
+            merged = deep_merge_config(pyproject_raw, yaml_raw)
+            config_path = yaml_path
             return (
                 ProjectConfig()
                 if config_path is None
