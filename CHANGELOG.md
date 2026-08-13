@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+## v0.1.8
+
 ### Fixed
 
 - Check-result cache keys now include scoped file contents and check bindings
