@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from shipgate.config.schema import (
     ALLOWED_CONFIG_MODES,
@@ -21,12 +20,12 @@ class ProjectConfigParser:
     Expects scope ``source`` refs to be resolved before parsing; performs schema checks only.
     """
 
-    def __init__(self, raw: dict[str, Any], path: Path) -> None:
+    def __init__(self, raw: dict[str, object], path: Path) -> None:
         self._raw = raw
         self._path = path
 
     @classmethod
-    def parse(cls, raw: dict[str, Any], path: Path) -> ProjectConfig:
+    def parse(cls, raw: dict[str, object], path: Path) -> ProjectConfig:
         return cls(raw, path)._parse()
 
     def _parse(self) -> ProjectConfig:
@@ -52,19 +51,22 @@ class ProjectConfigParser:
         allowlists = self._parse_allowlists(self._raw.get("allowlists"))
         suite_raw = self._raw.get("suite", "standard")
         suite = str(suite_raw) if suite_raw is not None else "standard"
+        target_raw = self._raw.get("target", ".")
+        if not isinstance(target_raw, (str, Path)):
+            raise ConfigError("target must be a string", path=str(self._path))
         return ProjectConfig(
             suite=suite,
             env=env,
-            target=Path(self._raw.get("target", ".")),
+            target=Path(target_raw),
             error_format=error_format,
             config_mode=config_mode,
             checks=checks,
             check_bindings=check_bindings,
             scopes=scopes,
-            auto_install=self._raw.get("auto-install", False),
-            parallel=self._raw.get("parallel", False),
-            fail_fast=self._raw.get("fail-fast", False),
-            changed_only=self._raw.get("changed-only", False),
+            auto_install=self._bool_field("auto-install"),
+            parallel=self._bool_field("parallel"),
+            fail_fast=self._bool_field("fail-fast"),
+            changed_only=self._bool_field("changed-only"),
             since=(str(self._raw["since"]) if self._raw.get("since") is not None else None),
             allowlists=allowlists,
         )
@@ -85,6 +87,12 @@ class ProjectConfigParser:
         if value not in allowed:
             raise ConfigError(f"invalid {label}: {value!r}", path=str(self._path))
         return str(value)
+
+    def _bool_field(self, key: str, *, default: bool = False) -> bool:
+        raw = self._raw.get(key, default)
+        if isinstance(raw, bool):
+            return raw
+        raise ConfigError(f"{key} must be a boolean", path=str(self._path))
 
     def _parse_checks(self) -> tuple[tuple[str, ...], tuple[CheckBinding, ...]]:
         checks_raw = self._raw.get("checks", []) or []
@@ -115,7 +123,7 @@ class ProjectConfigParser:
         p95_mode = None
         p95_threshold = None
         if isinstance(value, dict):
-            binding: dict[str, Any] = {str(k): v for k, v in value.items()}
+            binding: dict[str, object] = {str(k): v for k, v in value.items()}
             scope_raw = binding.get("scope")
             scope_name = str(scope_raw) if scope_raw is not None else None
             threshold_raw = binding.get("threshold")
@@ -179,7 +187,7 @@ class ProjectConfigParser:
     def _parse_metric_gate(
         self,
         runnable_id: str,
-        value: dict[str, Any],
+        value: dict[str, object],
         *,
         field: str,
     ) -> tuple[str | None, float | None]:
@@ -195,7 +203,7 @@ class ProjectConfigParser:
     def _parse_metric_mode(
         self,
         runnable_id: str,
-        value: dict[str, Any],
+        value: dict[str, object],
         *,
         field: str,
     ) -> str | None:
@@ -213,16 +221,21 @@ class ProjectConfigParser:
     def _parse_metric_threshold(
         self,
         runnable_id: str,
-        value: dict[str, Any],
+        value: dict[str, object],
         *,
         field: str,
     ) -> float | None:
         raw = value.get(f"{field}-threshold", value.get(f"{field}_threshold"))
         if raw is None:
             return None
+        if isinstance(raw, bool) or not isinstance(raw, (int, float, str)):
+            raise ConfigError(
+                f"checks.{runnable_id}: {field}-threshold must be a number",
+                path=str(self._path),
+            )
         try:
             return float(raw)
-        except (TypeError, ValueError) as exc:
+        except ValueError as exc:
             raise ConfigError(
                 f"checks.{runnable_id}: {field}-threshold must be a number",
                 path=str(self._path),

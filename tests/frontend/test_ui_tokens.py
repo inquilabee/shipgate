@@ -7,6 +7,7 @@ pytest.importorskip("fastapi")
 
 from shipgate.frontend.web.app import contained_file, create_app
 from shipgate.frontend.web.security import (
+    is_loopback_host,
     require_bind_safety,
     validate_run_submit_tokens,
     warn_if_non_loopback,
@@ -140,3 +141,14 @@ def test_require_bind_safety_exits_without_token(monkeypatch):
     monkeypatch.delenv("SHIPGATE_UI_TOKEN", raising=False)
     with pytest.raises(SystemExit, match="SHIPGATE_UI_TOKEN"):
         require_bind_safety("0.0.0.0")  # ruff:ignore[hardcoded-bind-all-interfaces]
+
+
+def test_bracketed_ipv6_loopback_is_loopback():
+    assert is_loopback_host("[::1]")
+    assert is_loopback_host("::1")
+    assert is_loopback_host("127.0.0.1")
+
+
+def test_require_bind_safety_allows_bracketed_ipv6_loopback(monkeypatch):
+    monkeypatch.delenv("SHIPGATE_UI_TOKEN", raising=False)
+    require_bind_safety("[::1]")

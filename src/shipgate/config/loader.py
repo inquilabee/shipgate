@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 from shipgate.config.core import (
     ProjectConfigParser,
@@ -142,7 +142,7 @@ class ProjectConfigLoader:
                 pyproject_path=pyproject_path,
                 config_path=path,
             ).resolve(scopes_map)
-        return ProjectConfigParser.parse(cast("dict[str, Any]", prepared), path)
+        return ProjectConfigParser.parse(prepared, path)
 
     def _resolve_policy(self) -> str:
         cached = read_cached_policy(self._project_root / PROJECT_CACHE_ENV)

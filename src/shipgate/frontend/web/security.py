@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+import ipaddress
 import os
 import secrets
 import sys
 
-LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 UI_SESSION_COOKIE = "shipgate_ui_session"
 
 
 def is_loopback_host(host: str) -> bool:
-    return host in LOOPBACK_HOSTS
+    stripped = host.strip()
+    if stripped.casefold() == "localhost":
+        return True
+    candidate = stripped[1:-1] if stripped.startswith("[") and stripped.endswith("]") else stripped
+    try:
+        return ipaddress.ip_address(candidate).is_loopback
+    except ValueError:
+        return False
 
 
 def warn_if_non_loopback(host: str) -> None:
