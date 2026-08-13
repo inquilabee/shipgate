@@ -12,9 +12,29 @@ DEFAULT_IGNORED = (
     ".shipgate/",
     ".venv/",
     "venv/",
+    ".review-venv/",
+    ".direnv/",
+    ".nox/",
+    ".tox/",
+    "site-packages/",
     "reports/",
     "__pycache__/",
     ".git/",
+)
+
+IGNORED_DIR_NAMES = frozenset(
+    {
+        ".venv",
+        "venv",
+        ".review-venv",
+        ".direnv",
+        ".nox",
+        ".tox",
+        "site-packages",
+        "__pycache__",
+        ".git",
+        ".shipgate",
+    }
 )
 
 
@@ -22,20 +42,42 @@ def default_ignores() -> tuple[str, ...]:
     return DEFAULT_IGNORED
 
 
+class IgnoreFile:
+    """One gitignore-style file under the project root."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def patterns(self) -> tuple[str, ...]:
+        return (
+            tuple(
+                stripped
+                for line in self.path.read_text(encoding="utf-8").splitlines()
+                if (stripped := line.strip()) and not stripped.startswith("#")
+            )
+            if self.path.is_file()
+            else ()
+        )
+
+
 def load_gitignore_lines(project_root: Path) -> tuple[str, ...]:
-    gitignore = project_root / ".gitignore"
-    if not gitignore.is_file():
-        return ()
-    patterns: list[str] = []
-    for line in gitignore.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped and not stripped.startswith("#"):
-            patterns.append(stripped)
-    return tuple(patterns)
+    return IgnoreFile(project_root / ".gitignore").patterns()
+
+
+def load_git_exclude_lines(project_root: Path) -> tuple[str, ...]:
+    return IgnoreFile(project_root / ".git" / "info" / "exclude").patterns()
+
+
+def load_ignore_patterns(project_root: Path) -> tuple[str, ...]:
+    return (
+        *default_ignores(),
+        *load_gitignore_lines(project_root),
+        *load_git_exclude_lines(project_root),
+    )
 
 
 def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
-    patterns = list(load_gitignore_lines(project_root))
+    patterns = list(load_ignore_patterns(project_root))
     return pathspec.PathSpec.from_lines("gitignore", patterns) if patterns else None
 
 
@@ -52,6 +94,10 @@ def is_ignored_by_git(project_root: Path, path: Path) -> bool:
     return result.returncode == 0
 
 
+def ignored_path_part(rel_str: str) -> bool:
+    return any(part in IGNORED_DIR_NAMES or part.endswith("venv") for part in rel_str.split("/"))
+
+
 def should_ignore(
     project_root: Path,
     path: Path,
@@ -64,11 +110,14 @@ def should_ignore(
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
+    if ignored_path_part(rel_str):
+        return True
     for pattern in (*default_ignores(), *extra_excludes):
         pat = pattern.rstrip("/")
         if rel_str == pat or rel_str.startswith(f"{pat}/"):
             return True
-    if spec is not None and spec.match_file(rel_str):
+    active_spec = spec if spec is not None else load_gitignore_spec(project_root)
+    if active_spec is not None and active_spec.match_file(rel_str):
         return True
     git_dir = project_root / ".git"
     return is_ignored_by_git(project_root, path) if git_dir.is_dir() else False

@@ -82,3 +82,15 @@ def test_ignore_env_includes_gitignore(tmp_path: Path):
     patterns = env["SHIPGATE_IGNORE_PATHS"].splitlines()
     assert "vendor/" in patterns
     assert ".shipgate/" in patterns
+    assert ".review-venv/" in patterns
+
+
+def test_ignore_env_includes_git_exclude(tmp_path: Path):
+    git_dir = tmp_path / ".git" / "info"
+    git_dir.mkdir(parents=True)
+    (git_dir / "exclude").write_text(".review-venv/\n", encoding="utf-8")
+    env = ignore_env(tmp_path)
+    patterns = env["SHIPGATE_IGNORE_PATHS"].splitlines()
+    assert ".review-venv/" in patterns
+    ignores = EffectiveIgnores(path_patterns=tuple(patterns))
+    assert ignores.is_ignored(".review-venv/lib/python3.13/site-packages/rich/__init__.py")

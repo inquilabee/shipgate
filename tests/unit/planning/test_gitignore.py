@@ -22,8 +22,21 @@ def test_should_ignore_venv_dirs(tmp_path: Path):
     dot_venv.mkdir(parents=True)
     plain_venv = tmp_path / "venv" / "lib"
     plain_venv.mkdir(parents=True)
+    review_venv = tmp_path / ".review-venv" / "lib" / "python3.13" / "site-packages" / "rich"
+    review_venv.mkdir(parents=True)
     assert should_ignore(tmp_path, dot_venv)
     assert should_ignore(tmp_path, plain_venv)
+    assert should_ignore(tmp_path, review_venv)
+
+
+def test_should_ignore_git_info_exclude(tmp_path: Path):
+    git_dir = tmp_path / ".git" / "info"
+    git_dir.mkdir(parents=True)
+    (git_dir / "exclude").write_text("scratch/\n", encoding="utf-8")
+    leaked = tmp_path / "scratch" / "notes.py"
+    leaked.parent.mkdir()
+    leaked.write_text("y = 1\n", encoding="utf-8")
+    assert should_ignore(tmp_path, leaked)
 
 
 def test_expand_scope_respects_gitignore(tmp_path: Path):

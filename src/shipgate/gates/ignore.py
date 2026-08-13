@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pathspec
 
-from shipgate.planning.utils.gitignore import default_ignores, load_gitignore_lines
+from shipgate.planning.utils.gitignore import ignored_path_part, load_ignore_patterns
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,8 @@ class EffectiveIgnores:
     def is_ignored(self, rel_path: str) -> bool:
         normalized = rel_path.replace("\\", "/")
         normalized = normalized[2:] if normalized.startswith("./") else normalized
+        if ignored_path_part(normalized):
+            return True
         if not self.path_patterns:
             return False
         matcher = pathspec.PathSpec.from_lines("gitignore", self.path_patterns)
@@ -50,8 +52,7 @@ def ignores_from_env(_project_root: Path | None = None) -> EffectiveIgnores:
 
 def ignore_env(project_root: Path, extra_patterns: tuple[str, ...] = ()) -> dict[str, str]:
     patterns = [
-        *default_ignores(),
-        *load_gitignore_lines(project_root),
+        *load_ignore_patterns(project_root),
         *extra_patterns,
     ]
     return {"SHIPGATE_IGNORE_PATHS": "\n".join(patterns)} if patterns else {}
