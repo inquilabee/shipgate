@@ -39,6 +39,7 @@ def test_default_check_rules_include_ruff_bridges() -> None:
 
 
 def test_iter_python_files_skips_gitignored_and_tool_dirs(tmp_path) -> None:
+    (tmp_path / ".git").mkdir()
     (tmp_path / ".gitignore").write_text("ignored.py\nignored_dir/\n", encoding="utf-8")
     visible = tmp_path / "visible.py"
     ignored_file = tmp_path / "ignored.py"
@@ -101,12 +102,28 @@ def test_fix_paths_skips_syntax_invalid_sibling(tmp_path) -> None:
 
 
 def test_collect_python_honors_parent_gitignore(tmp_path) -> None:
-    (tmp_path / ".gitignore").write_text("skipme.py\n", encoding="utf-8")
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".gitignore").write_text("src/generated.py\n", encoding="utf-8")
     nested = tmp_path / "src"
     nested.mkdir()
-    skipped = nested / "skipme.py"
+    skipped = nested / "generated.py"
     kept = nested / "keep.py"
     skipped.write_text("x = 1\n", encoding="utf-8")
+    kept.write_text("x = 1\n", encoding="utf-8")
+    assert iter_python_files([nested]) == [kept.resolve()]
+
+
+def test_collect_python_merges_nested_and_root_gitignore(tmp_path) -> None:
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".gitignore").write_text("src/generated.py\n", encoding="utf-8")
+    nested = tmp_path / "src"
+    nested.mkdir()
+    (nested / ".gitignore").write_text("local.py\n", encoding="utf-8")
+    generated = nested / "generated.py"
+    local = nested / "local.py"
+    kept = nested / "keep.py"
+    generated.write_text("x = 1\n", encoding="utf-8")
+    local.write_text("x = 1\n", encoding="utf-8")
     kept.write_text("x = 1\n", encoding="utf-8")
     assert iter_python_files([nested]) == [kept.resolve()]
 

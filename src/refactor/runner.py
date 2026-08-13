@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -55,16 +56,29 @@ def collect_python(path: Path) -> list[Path]:
     )
 
 
-def walk_python_files(root: Path, ignore_spec: pathspec.PathSpec) -> list[Path]:
+@dataclass(frozen=True)
+class GitignoreLayer:
+    base: Path
+    spec: pathspec.PathSpec
+
+    def matches(self, path: Path, *, is_dir: bool) -> bool:
+        try:
+            relative = path.relative_to(self.base).as_posix()
+        except ValueError:
+            return False
+        return self.spec.match_file(f"{relative}/" if is_dir else relative)
+
+
+def walk_python_files(root: Path, layers: tuple[GitignoreLayer, ...]) -> list[Path]:
     files: list[Path] = []
     for current_root, dirnames, filenames in os.walk(root):
         current_path = Path(current_root)
-        dirnames[:] = filter_walk_dirnames(dirnames, current_path, root, ignore_spec)
+        dirnames[:] = filter_walk_dirnames(dirnames, current_path, layers)
         for filename in sorted(filenames):
             candidate = current_path / filename
             if candidate.suffix != ".py":
                 continue
-            if should_ignore_path(candidate, root, ignore_spec, is_dir=False):
+            if should_ignore_path(candidate, layers, is_dir=False):
                 continue
             files.append(candidate.resolve())
     return files
@@ -73,28 +87,37 @@ def walk_python_files(root: Path, ignore_spec: pathspec.PathSpec) -> list[Path]:
 def filter_walk_dirnames(
     dirnames: list[str],
     current_path: Path,
-    root: Path,
-    ignore_spec: pathspec.PathSpec,
+    layers: tuple[GitignoreLayer, ...],
 ) -> list[str]:
     return [
         dirname
         for dirname in sorted(dirnames)
-        if not should_ignore_path(current_path / dirname, root, ignore_spec, is_dir=True)
+        if not should_ignore_path(current_path / dirname, layers, is_dir=True)
     ]
 
 
-def load_gitignore(root: Path) -> pathspec.PathSpec:
+def load_gitignore(root: Path) -> tuple[GitignoreLayer, ...]:
     current = root.resolve()
+    ancestors: list[Path] = []
     for candidate in (current, *current.parents):
-        ignore_path = candidate / ".gitignore"
-        if ignore_path.is_file():
-            return pathspec.PathSpec.from_lines(
-                "gitignore",
-                ignore_path.read_text(encoding="utf-8").splitlines(),
-            )
+        ancestors.append(candidate)
         if (candidate / ".git").exists():
             break
-    return pathspec.PathSpec.from_lines("gitignore", [])
+    layers: list[GitignoreLayer] = []
+    for candidate in reversed(ancestors):
+        ignore_path = candidate / ".gitignore"
+        if not ignore_path.is_file():
+            continue
+        layers.append(
+            GitignoreLayer(
+                base=candidate,
+                spec=pathspec.PathSpec.from_lines(
+                    "gitignore",
+                    ignore_path.read_text(encoding="utf-8").splitlines(),
+                ),
+            )
+        )
+    return tuple(layers)
 
 
 def resolved_under_roots(path: Path, roots: Sequence[Path]) -> bool:
@@ -104,17 +127,15 @@ def resolved_under_roots(path: Path, roots: Sequence[Path]) -> bool:
 
 def should_ignore_path(
     path: Path,
-    root: Path,
-    ignore_spec: pathspec.PathSpec,
+    layers: tuple[GitignoreLayer, ...],
     *,
     is_dir: bool,
 ) -> bool:
-    if path.name in IGNORED_DIR_NAMES:
-        return True
-    relative = (
-        f"{path.relative_to(root).as_posix()}/" if is_dir else path.relative_to(root).as_posix()
+    return (
+        True
+        if path.name in IGNORED_DIR_NAMES
+        else any(layer.matches(path, is_dir=is_dir) for layer in layers)
     )
-    return ignore_spec.match_file(relative)
 
 
 def check_paths(
