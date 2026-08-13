@@ -57,6 +57,41 @@ def test_new_run_rejects_missing_token_when_configured(tmp_path: Path, monkeypat
     assert response.status_code == 403
 
 
+def test_new_run_accepts_ui_token_cookie_after_unlock(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
+    client = TestClient(create_app(tmp_path, require_ui_token=True))
+    unlock_page = client.get("/ui-token")
+    assert unlock_page.status_code == 200
+    assert "expected" not in unlock_page.text
+    start = unlock_page.text.index('name="csrf_token"')
+    value_idx = unlock_page.text.index('value="', start) + len('value="')
+    end = unlock_page.text.index('"', value_idx)
+    unlock_csrf = unlock_page.text[value_idx:end]
+    unlock = client.post(
+        "/ui-token",
+        data={"csrf_token": unlock_csrf, "token": "expected"},
+        follow_redirects=False,
+    )
+    assert unlock.status_code == 303
+    page = client.get("/runs/new")
+    assert "expected" not in page.text
+    start = page.text.index('name="csrf_token"')
+    value_idx = page.text.index('value="', start) + len('value="')
+    end = page.text.index('"', value_idx)
+    csrf = page.text[value_idx:end]
+    response = client.post(
+        "/runs/new",
+        data={
+            "branch": "main",
+            "suite_id": "standard",
+            "csrf_token": csrf,
+            "acknowledge_requirements": "1",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code != 403
+
+
 def test_new_run_accepts_ui_token_header(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
     client = TestClient(create_app(tmp_path, require_ui_token=True))

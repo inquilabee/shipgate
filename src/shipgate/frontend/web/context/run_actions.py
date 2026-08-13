@@ -42,6 +42,7 @@ def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
         "requirements_text": requirements_text(),
         "error": error,
         "csrf_token": request.app.state.csrf_token,
+        "require_ui_token": request.app.state.require_ui_token,
     }
 
 

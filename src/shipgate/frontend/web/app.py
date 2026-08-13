@@ -33,8 +33,10 @@ from shipgate.frontend.web.context import (
 )
 from shipgate.frontend.web.context.overview import overview_payload, trends_payload
 from shipgate.frontend.web.security import (
+    UI_SESSION_COOKIE,
     new_csrf_token,
     ui_token_from_env,
+    ui_token_matches,
     validate_run_submit_tokens,
 )
 from shipgate.paths import (
@@ -49,6 +51,7 @@ TEMPLATES_DIR = FRONTEND_ROOT / "templates"
 STATIC_DIR = FRONTEND_ROOT / "static"
 RUN_NOT_FOUND = "run not found"
 GITHUB_REPO_URL = "https://github.com/inquilabee/shipgate"
+NEW_RUN_PATH = "/runs/new"
 
 
 def contained_file(root: Path, rel_path: str) -> Path:
@@ -102,6 +105,7 @@ def create_app(primary_root: Path, *, require_ui_token: bool = False) -> FastAPI
 def register_routes(app: FastAPI) -> None:
     register_health_routes(app)
     register_overview_routes(app)
+    register_ui_token_routes(app)
     register_run_routes(app)
     register_run_log_routes(app)
     register_tool_routes(app)
@@ -144,34 +148,81 @@ def register_run_list_routes(app: FastAPI) -> None:
         )
 
 
-def submitted_ui_token(request: Request, form_token: str | None) -> str | None:
-    header = request.headers.get("X-ShipGate-UI-Token")
-    return form_token or header
+def submitted_ui_token(request: Request) -> str | None:
+    return request.headers.get("X-ShipGate-UI-Token") or request.cookies.get(UI_SESSION_COOKIE)
 
 
 def expected_ui_token(request: Request) -> str | None:
     return ui_token_from_env() if request.app.state.require_ui_token else None
 
 
-def require_run_submit_tokens(
-    request: Request,
-    *,
-    csrf_token: str | None,
-    ui_token: str | None,
-) -> None:
+def require_run_submit_tokens(request: Request, *, csrf_token: str | None) -> None:
     try:
         validate_run_submit_tokens(
             csrf_expected=request.app.state.csrf_token,
             csrf_submitted=csrf_token,
             ui_token_expected=expected_ui_token(request),
-            ui_token_submitted=submitted_ui_token(request, ui_token),
+            ui_token_submitted=submitted_ui_token(request),
         )
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
+def require_csrf_token(request: Request, csrf_token: str | None) -> None:
+    try:
+        validate_run_submit_tokens(
+            csrf_expected=request.app.state.csrf_token,
+            csrf_submitted=csrf_token,
+            ui_token_expected=None,
+            ui_token_submitted=None,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+
+def set_ui_token_cookie(response: RedirectResponse, token: str) -> RedirectResponse:
+    response.set_cookie(
+        UI_SESSION_COOKIE,
+        token,
+        httponly=True,
+        samesite="strict",
+        path="/",
+    )
+    return response
+
+
+def register_ui_token_routes(app: FastAPI) -> None:
+    @app.get("/ui-token", response_class=HTMLResponse)
+    def ui_token_form(request: Request, error: str | None = None) -> HTMLResponse:
+        if not request.app.state.require_ui_token:
+            raise HTTPException(status_code=404, detail="ui token is not required")
+        return request.app.state.templates.TemplateResponse(
+            request,
+            "ui_token.html",
+            {
+                "request": request,
+                "error": error,
+                "csrf_token": request.app.state.csrf_token,
+            },
+        )
+
+    @app.post("/ui-token")
+    def ui_token_submit(
+        request: Request,
+        csrf_token: str | None = Form(None),
+        token: str | None = Form(None),
+    ) -> RedirectResponse:
+        if not request.app.state.require_ui_token:
+            raise HTTPException(status_code=404, detail="ui token is not required")
+        require_csrf_token(request, csrf_token)
+        expected = ui_token_from_env()
+        if expected is None or not ui_token_matches(token, expected):
+            raise HTTPException(status_code=403, detail="invalid UI token")
+        return set_ui_token_cookie(RedirectResponse(url=NEW_RUN_PATH, status_code=303), expected)
+
+
 def register_new_run_routes(app: FastAPI) -> None:
-    @app.get("/runs/new", response_class=HTMLResponse)
+    @app.get(NEW_RUN_PATH, response_class=HTMLResponse)
     def new_run_form(request: Request, error: str | None = None) -> HTMLResponse:
         return request.app.state.templates.TemplateResponse(
             request,
@@ -179,7 +230,7 @@ def register_new_run_routes(app: FastAPI) -> None:
             new_run_context(request, error),
         )
 
-    @app.post("/runs/new")
+    @app.post(NEW_RUN_PATH)
     def new_run_submit(
         request: Request,
         branch: str = Form(...),
@@ -188,10 +239,9 @@ def register_new_run_routes(app: FastAPI) -> None:
         changed_only: str | None = Form(None),
         since: str | None = Form(None),
         csrf_token: str | None = Form(None),
-        ui_token: str | None = Form(None),
         acknowledge_requirements: str | None = Form(None),
     ) -> RedirectResponse:
-        require_run_submit_tokens(request, csrf_token=csrf_token, ui_token=ui_token)
+        require_run_submit_tokens(request, csrf_token=csrf_token)
         return start_new_run(
             request.app.state.primary_root,
             request.app.state.orchestrator,
@@ -210,9 +260,8 @@ def register_cancel_routes(app: FastAPI) -> None:
         request: Request,
         run_id: str,
         csrf_token: str | None = Form(None),
-        ui_token: str | None = Form(None),
     ) -> RedirectResponse:
-        require_run_submit_tokens(request, csrf_token=csrf_token, ui_token=ui_token)
+        require_run_submit_tokens(request, csrf_token=csrf_token)
         orchestrator: RunOrchestrator = request.app.state.orchestrator
         if not orchestrator.request_cancel(run_id):
             raise HTTPException(status_code=404, detail="run not cancellable")

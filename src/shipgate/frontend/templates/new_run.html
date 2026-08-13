@@ -13,6 +13,13 @@
               method="post"
               action="/runs/new">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% if require_ui_token %}
+                <p class="text-sm text-muted">
+                    This server requires a UI token.
+                    <a class="text-brand hover:underline" href="/ui-token">Unlock this browser</a>
+                    or send the <code>X-ShipGate-UI-Token</code> header.
+                </p>
+            {% endif %}
             <div>
                 <label class="mb-1 block text-sm font-semibold" for="branch">Branch</label>
                 {% if branches %}
@@ -63,9 +70,7 @@
                             {% endfor %}
                         </optgroup>
                     {% else %}
-                        {% for check_id in check_options | default([]) %}
-                            <option value="{{ check_id }}">{{ check_id }}</option>
-                        {% endfor %}
+                        {% for check_id in check_options | default([]) %}<option value="{{ check_id }}">{{ check_id }}</option>{% endfor %}
                     {% endfor %}
                 </select>
                 <p class="mt-1 text-xs text-muted">Leave empty to run the whole suite. Options update when you change suite.</p>

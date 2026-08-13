@@ -7,6 +7,7 @@ import secrets
 import sys
 
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+UI_SESSION_COOKIE = "shipgate_ui_session"
 
 
 def is_loopback_host(host: str) -> bool:
@@ -39,6 +40,12 @@ def new_csrf_token() -> str:
 def ui_token_from_env() -> str | None:
     value = os.environ.get("SHIPGATE_UI_TOKEN")
     return None if value is None or value == "" else value
+
+
+def ui_token_matches(submitted: str | None, expected: str | None) -> bool:
+    return (
+        False if expected is None or not submitted else secrets.compare_digest(submitted, expected)
+    )
 
 
 def validate_run_submit_tokens(
