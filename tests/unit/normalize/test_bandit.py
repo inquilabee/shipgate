@@ -65,6 +65,7 @@ def test_bandit_normalizer_reads_json_from_output_file_with_progress_stdout(
         exit_code=1,
         stdout="Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00\n",
         stderr="[json]\tINFO\tJSON output written to file",
+        output_files=(output_path,),
     )
     report = BanditNormalizer().normalize(resolved, result)
     assert report.status == "failed"

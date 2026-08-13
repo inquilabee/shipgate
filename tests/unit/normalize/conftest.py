@@ -57,6 +57,7 @@ def make_process_result(tmp_path: Path):
         stderr: str = "",
         exit_code: int = 0,
         cwd: Path | None = None,
+        output_files: tuple[Path, ...] = (),
     ) -> ProcessResult:
         return ProcessResult(
             argv=(),
@@ -65,6 +66,7 @@ def make_process_result(tmp_path: Path):
             stdout=stdout,
             stderr=stderr,
             duration_ms=1,
+            output_files=output_files,
         )
 
     return _make

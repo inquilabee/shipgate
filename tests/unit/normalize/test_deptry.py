@@ -58,6 +58,7 @@ def test_deptry_normalizer_reads_json_output_file(
     result = make_process_result(
         exit_code=1,
         stdout="Found 1 dependency issue.\n",
+        output_files=(output_path,),
     )
     report = DeptryNormalizer().normalize(resolved, result)
     assert report.status == "failed"

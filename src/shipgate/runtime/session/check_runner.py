@@ -5,6 +5,7 @@ from __future__ import annotations
 import shlex
 import sys
 import threading
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Protocol
 
 from shipgate.adapter.executable import build_tool_argv
@@ -47,6 +48,31 @@ class ExecutorProtocol(Protocol):
 class FailFastError(Exception):
     def __init__(self, report: CheckReport) -> None:
         self.report = report
+
+
+@dataclass(frozen=True)
+class OutputFileSnapshot:
+    """mtime/size of a tool output path captured before the subprocess."""
+
+    path: Path | None
+    mtime_ns: int | None
+    size: int | None
+
+    @classmethod
+    def capture(cls, path: Path | None) -> OutputFileSnapshot:
+        if path is None or not path.is_file():
+            return cls(path=path, mtime_ns=None, size=None)
+        stat = path.stat()
+        return cls(path=path, mtime_ns=stat.st_mtime_ns, size=stat.st_size)
+
+    def written_paths(self) -> tuple[Path, ...]:
+        path = self.path
+        if path is None or not path.is_file():
+            return ()
+        if self.mtime_ns is None:
+            return (path,)
+        stat = path.stat()
+        return (path,) if stat.st_mtime_ns != self.mtime_ns or stat.st_size != self.size else ()
 
 
 class CheckRunner:
@@ -274,7 +300,12 @@ class CheckRunner:
             env = dict(resolved.environment.env)
         if display_cli:
             sys.stderr.write(f"{resolved.tool.id}: {shlex.join(argv)}\n")
-        result = self._executor.run(argv, cwd=resolved.project_root, env=env)
+        output_path = resolved.options.output or resolved.output_path
+        snapshot = OutputFileSnapshot.capture(output_path)
+        result = replace(
+            self._executor.run(argv, cwd=resolved.project_root, env=env),
+            output_files=snapshot.written_paths(),
+        )
         stdout_path, stderr_path, _ = write_raw_output(
             resolved.project_root,
             run_id,

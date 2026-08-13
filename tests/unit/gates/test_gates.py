@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from shipgate.gates.runtime import (
 )
 from shipgate.normalize.core import GateJsonNormalizer
 from shipgate.runtime.executor import Executor, ProcessResult
+from shipgate.runtime.session.check_runner import OutputFileSnapshot
 
 
 def gate_request(
@@ -41,7 +43,11 @@ def gate_request(
 
 def run_gate_check(tmp_path: Path, request: ResolvedRequest) -> tuple[ProcessResult, CheckReport]:
     argv, env = prepare_gate_execution(request)
-    result = Executor().run(argv, cwd=tmp_path, env=env)
+    snapshot = OutputFileSnapshot.capture(request.output_path)
+    result = replace(
+        Executor().run(argv, cwd=tmp_path, env=env),
+        output_files=snapshot.written_paths(),
+    )
     report = GateJsonNormalizer().normalize(request, result)
     return result, report
 
@@ -74,6 +80,7 @@ def process_result(
     exit_code: int,
     stdout: str,
     stderr: str = "",
+    output_files: tuple[Path, ...] = (),
 ) -> ProcessResult:
     return ProcessResult(
         argv=(),
@@ -82,6 +89,7 @@ def process_result(
         stdout=stdout,
         stderr=stderr,
         duration_ms=1,
+        output_files=output_files,
     )
 
 
@@ -133,7 +141,13 @@ def test_gate_json_normalizer_reads_output_file(tmp_path: Path):
         encoding="utf-8",
     )
     gate_request = make_gate_request("gate.folder-breadth", report_path)
-    result = process_result(tmp_path, exit_code=1, stdout="", stderr="gate failed")
+    result = process_result(
+        tmp_path,
+        exit_code=1,
+        stdout="",
+        stderr="gate failed",
+        output_files=(report_path,),
+    )
     report = GateJsonNormalizer().normalize(gate_request, result)
     assert report.status == "failed"
     assert report.findings[0].message == "too many files"

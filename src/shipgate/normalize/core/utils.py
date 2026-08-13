@@ -21,10 +21,11 @@ def looks_like_json(text: str) -> bool:
 def read_tool_output(request: ResolvedRequest, result: ProcessResult) -> str:
     stdout = result.stdout
     output_path = request.options.output or request.output_path
+    wrote_this_run = output_path is not None and output_path in result.output_files
     return (
         output_path.read_text(encoding="utf-8")
         if (
-            output_path is not None
+            wrote_this_run
             and output_path.is_file()
             and (not stdout.strip() or not looks_like_json(stdout))
         )

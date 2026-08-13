@@ -72,7 +72,11 @@ def test_pip_audit_normalizer_reads_output_file(
         stdout_path=output_path,
         options=NormalizedOptions(output=output_path, format="json"),
     )
-    result = make_process_result(exit_code=1, stdout="No known vulnerabilities found\n")
+    result = make_process_result(
+        exit_code=1,
+        stdout="No known vulnerabilities found\n",
+        output_files=(output_path,),
+    )
     report = PipAuditNormalizer().normalize(resolved, result)
     assert report.status == "failed"
     assert report.findings[0].rule_id == "VULN-1"
