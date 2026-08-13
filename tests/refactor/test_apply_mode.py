@@ -110,6 +110,7 @@ def test_former_applier_whitelist_stays_hint() -> None:
 
 
 def test_fix_paths_applies_only_auto_not_hint(tmp_path: Path) -> None:
+    (tmp_path / ".git").mkdir()
     src = tmp_path / "sample.py"
     src.write_text("AUTO_MARK\nHINT_MARK\n", encoding="utf-8")
     rules = cast("tuple[RefactorRule, ...]", (AutoStubRule(), HintStubRule()))

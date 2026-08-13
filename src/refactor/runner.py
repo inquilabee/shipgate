@@ -120,6 +120,15 @@ def load_gitignore(root: Path) -> tuple[GitignoreLayer, ...]:
     return tuple(layers)
 
 
+def discover_project_root(start: Path) -> Path | None:
+    current = start.resolve()
+    current = current.parent if current.is_file() else current
+    for candidate in (current, *current.parents):
+        if (candidate / ".git").exists() or (candidate / "pyproject.toml").is_file():
+            return candidate
+    return None
+
+
 def resolved_under_roots(path: Path, roots: Sequence[Path]) -> bool:
     resolved = path.resolve()
     return any(resolved == root or resolved.is_relative_to(root) for root in roots)
@@ -138,6 +147,19 @@ def should_ignore_path(
     )
 
 
+FILE_SKIP_ERRORS = (
+    OSError,
+    UnicodeDecodeError,
+    cst.ParserSyntaxError,
+    cst.CSTValidationError,
+    IndexError,
+    TypeError,
+    ValueError,
+    AttributeError,
+    RuntimeError,
+)
+
+
 def check_paths(
     paths: Sequence[Path],
     *,
@@ -150,7 +172,7 @@ def check_paths(
         try:
             source = file_path.read_text(encoding="utf-8")
             hits.extend(detect_file(source, str(file_path), selected))
-        except (OSError, UnicodeDecodeError, cst.ParserSyntaxError):
+        except FILE_SKIP_ERRORS:
             continue
     return hits
 
@@ -181,11 +203,15 @@ def fix_paths(
 ) -> list[Path]:
     selected = check_rules(rules, enable=enable)
     auto_rules = tuple(rule for rule in selected if rule.apply_mode is ApplyMode.AUTO)
-    roots = tuple(path.resolve() for path in paths)
+    supplied = tuple(path.resolve() for path in paths)
+    project_root = discover_project_root(supplied[0]) if supplied else None
     return [
         file_path
         for file_path in iter_python_files(paths)
-        if resolved_under_roots(file_path, roots) and fix_file(file_path, auto_rules)
+        if resolved_under_roots(file_path, supplied)
+        and project_root is not None
+        and resolved_under_roots(file_path, (project_root,))
+        and fix_file(file_path, auto_rules)
     ]
 
 
@@ -203,7 +229,7 @@ def fix_file(file_path: Path, rules: Sequence[RefactorRule]) -> bool:
             if updated == source:
                 break
             source = updated
-    except cst.ParserSyntaxError:
+    except FILE_SKIP_ERRORS:
         return False
     if source == original:
         return False
