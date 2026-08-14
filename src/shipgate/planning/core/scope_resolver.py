@@ -71,7 +71,7 @@ class ScopeResolver:
         if mode == RunMode.APPLY:
             return self._relatives((self.resolve_scope_target(scope),))
         if not scope.respect_gitignore and not scope.include and not scope.exclude:
-            return (self.resolve_scope_target(scope),)
+            return self._relatives((self.resolve_scope_target(scope),))
         paths = self._scope_entry_paths(scope)
         return tuple(paths) if paths else self._unfiltered_target(scope)
 
@@ -101,7 +101,13 @@ class ScopeResolver:
         rel = self.relative_under_root(target)
         return (
             []
-            if rel is None or should_ignore(self.project_root, target, extra_excludes=scope.exclude)
+            if rel is None
+            or should_ignore(
+                self.project_root,
+                target,
+                extra_excludes=scope.exclude,
+                respect_gitignore=scope.respect_gitignore,
+            )
             else (
                 []
                 if scope.include
@@ -129,7 +135,12 @@ class ScopeResolver:
         for child in sorted(self.project_root.iterdir()):
             if not child.is_dir():
                 continue
-            if should_ignore(self.project_root, child, extra_excludes=scope.exclude):
+            if should_ignore(
+                self.project_root,
+                child,
+                extra_excludes=scope.exclude,
+                respect_gitignore=scope.respect_gitignore,
+            ):
                 continue
             entries.append(child)
         return entries
@@ -139,7 +150,12 @@ class ScopeResolver:
             False
             if self.relative_under_root(path) is None
             else (
-                not should_ignore(self.project_root, path, extra_excludes=scope.exclude)
+                not should_ignore(
+                    self.project_root,
+                    path,
+                    extra_excludes=scope.exclude,
+                    respect_gitignore=scope.respect_gitignore,
+                )
                 if path.exists()
                 else False
             )
@@ -178,6 +194,7 @@ class ScopeResolver:
             criteria,
             matched_files,
             target=target,
+            scope=scope,
         )
 
     def _paths_for_root_delivery(self, scope: Scope, target: Path) -> tuple[Path, ...]:
@@ -261,6 +278,7 @@ class ScopeResolver:
         matched_files: tuple[Path, ...],
         *,
         target: Path,
+        scope: Scope,
     ) -> tuple[Path, ...]:
         if criteria.delivery == "root":
             return self._relatives((target,))
@@ -271,16 +289,19 @@ class ScopeResolver:
             if criteria.delivery == "files"
             else minimize_covering_dirs(matched_files, self.project_root)
         )
-        return self._drop_excluded_delivery_paths(delivered)
+        return self._drop_excluded_delivery_paths(delivered, scope)
 
-    def _drop_excluded_delivery_paths(self, paths: tuple[Path, ...]) -> tuple[Path, ...]:
+    def _drop_excluded_delivery_paths(
+        self, paths: tuple[Path, ...], scope: Scope
+    ) -> tuple[Path, ...]:
         kept: list[Path] = []
         for path in paths:
             absolute = path if path.is_absolute() else self.project_root / path
             if should_ignore(
                 self.project_root,
                 absolute,
-                extra_excludes=self.default_excludes,
+                extra_excludes=scope.exclude,
+                respect_gitignore=scope.respect_gitignore,
             ):
                 continue
             kept.append(path)

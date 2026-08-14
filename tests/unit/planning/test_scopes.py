@@ -144,7 +144,7 @@ def test_scope_paths_returns_target_when_disabled(tmp_path: Path):
     target = tmp_path / "src"
     target.mkdir()
     scope = Scope(target=target, respect_gitignore=False)
-    assert scope_paths(scope, tmp_path, mode=RunMode.CHECK) == (target,)
+    assert scope_paths(scope, tmp_path, mode=RunMode.CHECK) == (Path("src"),)
 
 
 def test_scope_paths_for_tool_delivery_root(tmp_path: Path):

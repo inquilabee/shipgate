@@ -7,6 +7,7 @@ from pathlib import Path
 import pathspec
 
 from shipgate.core.process import run_command
+from shipgate.paths import relative_if_under
 
 ANYWHERE_IGNORED = (
     ".shipgate/",
@@ -103,13 +104,14 @@ def should_ignore(
     *,
     extra_excludes: tuple[str, ...] = (),
     spec: pathspec.PathSpec | None = None,
+    respect_gitignore: bool = True,
 ) -> bool:
     return skip_scope_entry(
         project_root,
         path,
         extra_excludes=extra_excludes,
         spec=spec,
-        respect_gitignore=True,
+        respect_gitignore=respect_gitignore,
     )
 
 
@@ -181,7 +183,10 @@ def consider_scope_file(
     extensions: tuple[str, ...],
     globs: tuple[str, ...],
 ) -> None:
-    rel = str(path.relative_to(project_root)).replace("\\", "/")
+    rel_path = relative_if_under(path, project_root)
+    if rel_path is None:
+        return
+    rel = rel_path.as_posix()
     if not include_allowed(rel, include):
         return
     if not matches_tool_criteria(rel, extensions=extensions, globs=globs):
@@ -204,6 +209,11 @@ def walk_scope_dir(
     if not directory.is_dir():
         return
     for child in sorted(directory.iterdir()):
+        if child.is_dir():
+            from shipgate.project.layout.types import SKIP_DIR_NAMES
+
+            if child.name in SKIP_DIR_NAMES:
+                continue
         if skip_scope_entry(
             project_root,
             child,

@@ -72,15 +72,64 @@ def test_expand_scope_respects_gitignore(tmp_path: Path):
     assert "bad.py" not in names
 
 
-def test_expand_scope_exclude_applies_without_gitignore(tmp_path: Path):
-    venv = tmp_path / ".venv" / "lib"
-    venv.mkdir(parents=True)
-    (venv / "site.py").write_text("x = 1\n", encoding="utf-8")
+def test_expand_scope_skips_node_modules_without_gitignore(tmp_path: Path):
+    nested = tmp_path / "node_modules" / "pkg"
+    nested.mkdir(parents=True)
+    (nested / "x.py").write_text("x = 1\n", encoding="utf-8")
     (tmp_path / "ok.py").write_text("y = 1\n", encoding="utf-8")
-    paths = expand_scope(tmp_path, tmp_path, exclude=(".venv/",), respect_gitignore=False)
+    paths = expand_scope(tmp_path, tmp_path, respect_gitignore=False)
+    names = {p.name for p in paths}
+    assert "ok.py" in names
+    assert "x.py" not in names
+
+
+def test_expand_scope_exclude_applies_without_gitignore(tmp_path: Path):
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    (scratch / "site.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "ok.py").write_text("y = 1\n", encoding="utf-8")
+    paths = expand_scope(tmp_path, tmp_path, exclude=("scratch/",), respect_gitignore=False)
     names = {p.name for p in paths}
     assert "ok.py" in names
     assert "site.py" not in names
+
+
+def test_scope_paths_for_tool_respect_gitignore_false_keeps_gitignored(
+    tmp_path: Path,
+):
+    from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
+    from shipgate.planning.core.scopes import scope_paths_for_tool
+
+    (tmp_path / ".gitignore").write_text("scratch/\n", encoding="utf-8")
+    scratch = tmp_path / "scratch"
+    scratch.mkdir()
+    (scratch / "a.md").write_text("x\n", encoding="utf-8")
+    venv = tmp_path / ".venv"
+    venv.mkdir()
+    (venv / "x.md").write_text("y\n", encoding="utf-8")
+    (tmp_path / "kept.md").write_text("z\n", encoding="utf-8")
+    tool = ToolDefinition(
+        id="md.format",
+        executable="mdformat",
+        scope=ScopeCriteria(extensions=(".md",), delivery="files"),
+    )
+    scope = Scope(
+        target=tmp_path,
+        exclude=(".venv/",),
+        respect_gitignore=False,
+    )
+    paths = scope_paths_for_tool(scope, tool, tmp_path, mode=RunMode.CHECK)
+    names = {Path(p).name for p in paths}
+    assert "a.md" in names
+    assert "kept.md" in names
+    assert "x.md" not in names
+
+
+def test_scope_paths_check_outside_root_is_empty(tmp_path: Path):
+    outside = tmp_path.parent / f"outside-check-{tmp_path.name}"
+    outside.mkdir()
+    scope = Scope(target=outside, respect_gitignore=False, exclude=(), include=())
+    assert scope_paths(scope, tmp_path, mode=RunMode.CHECK) == ()
 
 
 def test_include_allowed_uses_path_prefix():
