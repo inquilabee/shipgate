@@ -4,6 +4,39 @@
 
 ## Unreleased
 
+## v0.1.11
+
+### Added
+
+- `docs/quickstart.md` and a Quick start nav entry; product `docs/product/vision.md`.
+- Optional `sha256` on GitHub binary downloads; install fails on digest mismatch.
+- `--full-tree` on `check` / `format` to ignore `changed-only` / `--since` for one run.
+- Opaque report-UI session cookie after unlock (env secret never stored in the cookie).
+
+### Fixed
+
+- Non-loopback report UI gates GETs until unlock; bad unlock redirects with an error.
+- `respect_gitignore=false` no longer re-applies gitignore on delivery paths;
+  check-mode paths outside the project become relatives/`()` like apply mode.
+- Scope walks prune layout skip dirs (`node_modules`, `dist`, `build`, …).
+- Shared ignore list for `reports/` as a root-only segment; honor exclude without
+  relying on gitignore alone; skip ignored venvs during walks.
+- UI `CatalogLoader` loads the primary project overlay; worktree branches cannot
+  start with `-`.
+- Refactor CLI on Typer; `fix` fails loudly without a project root; skipped
+  parse/I/O files emit hits instead of looking clean.
+- Init: do not write consumer `pyproject.toml` or root `mdformat.toml`; bind
+  `ty.check` to `ty-src`; keep examples, benchmarks, and namespace packages
+  without `__init__.py` out of `python-src`.
+- Stop treating `pyproject.toml` as a ty `--config-file`; surface empty-stdout
+  tool exits; gitleaks JSON via `--report-path -`.
+- Pass `--no-fix` in check mode so project ruff fix cannot rewrite files.
+
+### Changed
+
+- User docs lead with quickstart; usage/refactor pages emphasize exit codes and
+  how to read outputs.
+
 ## v0.1.10
 
 ### Fixed
