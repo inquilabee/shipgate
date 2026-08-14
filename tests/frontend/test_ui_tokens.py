@@ -7,11 +7,19 @@ pytest.importorskip("fastapi")
 
 from shipgate.frontend.web.app import contained_file, create_app
 from shipgate.frontend.web.security import (
+    UI_SESSION_COOKIE,
     is_loopback_host,
     require_bind_safety,
     validate_run_submit_tokens,
     warn_if_non_loopback,
 )
+
+
+def csrf_from_html(text: str) -> str:
+    start = text.index('name="csrf_token"')
+    value_idx = text.index('value="', start) + len('value="')
+    end = text.index('"', value_idx)
+    return text[value_idx:end]
 
 
 def test_validate_run_submit_tokens_requires_csrf():
@@ -34,17 +42,24 @@ def test_validate_run_submit_tokens_requires_ui_token_when_set():
         )
 
 
+def test_require_ui_token_blocks_get_without_unlock(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
+    client = TestClient(create_app(tmp_path, require_ui_token=True))
+    response = client.get("/", headers={"Accept": "application/json"})
+    assert response.status_code == 403
+    api = client.get("/api/runs")
+    assert api.status_code == 403
+    health = client.get("/health")
+    assert health.status_code == 200
+
+
 def test_new_run_rejects_missing_token_when_configured(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
     client = TestClient(create_app(tmp_path, require_ui_token=True))
-    page = client.get("/runs/new")
+    page = client.get("/ui-token")
     assert page.status_code == 200
     assert "expected" not in page.text
-    assert 'name="csrf_token"' in page.text
-    start = page.text.index('name="csrf_token"')
-    value_idx = page.text.index('value="', start) + len('value="')
-    end = page.text.index('"', value_idx)
-    csrf = page.text[value_idx:end]
+    csrf = csrf_from_html(page.text)
     response = client.post(
         "/runs/new",
         data={
@@ -58,28 +73,26 @@ def test_new_run_rejects_missing_token_when_configured(tmp_path: Path, monkeypat
     assert response.status_code == 403
 
 
-def test_new_run_accepts_ui_token_cookie_after_unlock(tmp_path: Path, monkeypatch):
+def test_new_run_accepts_ui_session_cookie_after_unlock(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
     client = TestClient(create_app(tmp_path, require_ui_token=True))
     unlock_page = client.get("/ui-token")
     assert unlock_page.status_code == 200
     assert "expected" not in unlock_page.text
-    start = unlock_page.text.index('name="csrf_token"')
-    value_idx = unlock_page.text.index('value="', start) + len('value="')
-    end = unlock_page.text.index('"', value_idx)
-    unlock_csrf = unlock_page.text[value_idx:end]
+    unlock_csrf = csrf_from_html(unlock_page.text)
     unlock = client.post(
         "/ui-token",
         data={"csrf_token": unlock_csrf, "token": "expected"},
         follow_redirects=False,
     )
     assert unlock.status_code == 303
+    session_cookie = unlock.cookies.get(UI_SESSION_COOKIE)
+    assert session_cookie
+    assert session_cookie != "expected"
     page = client.get("/runs/new")
+    assert page.status_code == 200
     assert "expected" not in page.text
-    start = page.text.index('name="csrf_token"')
-    value_idx = page.text.index('value="', start) + len('value="')
-    end = page.text.index('"', value_idx)
-    csrf = page.text[value_idx:end]
+    csrf = csrf_from_html(page.text)
     response = client.post(
         "/runs/new",
         data={
@@ -93,14 +106,25 @@ def test_new_run_accepts_ui_token_cookie_after_unlock(tmp_path: Path, monkeypatc
     assert response.status_code != 403
 
 
+def test_ui_token_mismatch_redirects_with_error(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
+    client = TestClient(create_app(tmp_path, require_ui_token=True))
+    unlock_page = client.get("/ui-token")
+    unlock_csrf = csrf_from_html(unlock_page.text)
+    unlock = client.post(
+        "/ui-token",
+        data={"csrf_token": unlock_csrf, "token": "wrong"},
+        follow_redirects=False,
+    )
+    assert unlock.status_code == 303
+    assert "error=" in unlock.headers["location"]
+
+
 def test_new_run_accepts_ui_token_header(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("SHIPGATE_UI_TOKEN", "expected")
     client = TestClient(create_app(tmp_path, require_ui_token=True))
-    page = client.get("/runs/new")
-    start = page.text.index('name="csrf_token"')
-    value_idx = page.text.index('value="', start) + len('value="')
-    end = page.text.index('"', value_idx)
-    csrf = page.text[value_idx:end]
+    page = client.get("/ui-token")
+    csrf = csrf_from_html(page.text)
     response = client.post(
         "/runs/new",
         data={

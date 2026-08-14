@@ -5,7 +5,7 @@
         <div>
             <h1 class="text-2xl font-bold tracking-tight">Unlock this browser</h1>
             <p class="mt-1 text-sm text-muted">
-                Enter <code>SHIPGATE_UI_TOKEN</code>. It is stored in an HttpOnly cookie and is never written into the page.
+                Enter <code>SHIPGATE_UI_TOKEN</code>. Unlock issues an opaque HttpOnly session cookie; the env secret is never written into the page or cookie.
             </p>
         </div>
         {% if error %}

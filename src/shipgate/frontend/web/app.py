@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import cast
 
 from fastapi import FastAPI, Form, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -32,11 +32,17 @@ from shipgate.frontend.web.context import (
     start_new_run,
 )
 from shipgate.frontend.web.context.overview import overview_payload, trends_payload
+from shipgate.frontend.web.context.run_actions import query_escape
 from shipgate.frontend.web.security import (
+    UI_AUTH_HEADER,
     UI_SESSION_COOKIE,
+    UI_UNLOCK_PATH,
+    UiSessionStore,
+    is_public_ui_path,
     new_csrf_token,
     ui_token_from_env,
     ui_token_matches,
+    validate_csrf_token,
     validate_run_submit_tokens,
 )
 from shipgate.paths import (
@@ -98,8 +104,29 @@ def create_app(primary_root: Path, *, require_ui_token: bool = False) -> FastAPI
     fastapi_app.state.templates = templates
     fastapi_app.state.csrf_token = new_csrf_token()
     fastapi_app.state.require_ui_token = require_ui_token
+    fastapi_app.state.ui_sessions = UiSessionStore()
+    register_ui_access_middleware(fastapi_app)
     register_routes(fastapi_app)
     return fastapi_app
+
+
+def denied_ui_response(request: Request) -> RedirectResponse | JSONResponse:
+    return (
+        RedirectResponse(url=UI_UNLOCK_PATH, status_code=303)
+        if request.method == "GET" and "text/html" in request.headers.get("accept", "*/*")
+        else JSONResponse({"detail": "UI token required"}, status_code=403)
+    )
+
+
+def register_ui_access_middleware(app: FastAPI) -> None:
+    @app.middleware("http")
+    async def require_ui_access(request: Request, call_next):
+        return (
+            await call_next(request)
+            if (not request.app.state.require_ui_token or is_public_ui_path(request.url.path))
+            or ui_access_allowed(request)
+            else denied_ui_response(request)
+        )
 
 
 def register_routes(app: FastAPI) -> None:
@@ -148,21 +175,35 @@ def register_run_list_routes(app: FastAPI) -> None:
         )
 
 
-def submitted_ui_token(request: Request) -> str | None:
-    return request.headers.get("X-ShipGate-UI-Token") or request.cookies.get(UI_SESSION_COOKIE)
-
-
-def expected_ui_token(request: Request) -> str | None:
-    return ui_token_from_env() if request.app.state.require_ui_token else None
+def ui_access_allowed(request: Request) -> bool:
+    if not request.app.state.require_ui_token:
+        return True
+    expected = ui_token_from_env()
+    header = request.headers.get(UI_AUTH_HEADER)
+    if ui_token_matches(header, expected):
+        return True
+    sessions: UiSessionStore = request.app.state.ui_sessions
+    return sessions.is_unlocked(request.cookies.get(UI_SESSION_COOKIE))
 
 
 def require_run_submit_tokens(request: Request, *, csrf_token: str | None) -> None:
+    sessions: UiSessionStore = request.app.state.ui_sessions
+    cookie = request.cookies.get(UI_SESSION_COOKIE)
+    if sessions.is_unlocked(cookie):
+        try:
+            validate_csrf_token(
+                csrf_expected=request.app.state.csrf_token,
+                csrf_submitted=csrf_token,
+            )
+        except PermissionError as exc:
+            raise HTTPException(status_code=403, detail=str(exc)) from exc
+        return
     try:
         validate_run_submit_tokens(
             csrf_expected=request.app.state.csrf_token,
             csrf_submitted=csrf_token,
-            ui_token_expected=expected_ui_token(request),
-            ui_token_submitted=submitted_ui_token(request),
+            ui_token_expected=ui_token_from_env(),
+            ui_token_submitted=request.headers.get(UI_AUTH_HEADER),
         )
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
@@ -170,20 +211,18 @@ def require_run_submit_tokens(request: Request, *, csrf_token: str | None) -> No
 
 def require_csrf_token(request: Request, csrf_token: str | None) -> None:
     try:
-        validate_run_submit_tokens(
+        validate_csrf_token(
             csrf_expected=request.app.state.csrf_token,
             csrf_submitted=csrf_token,
-            ui_token_expected=None,
-            ui_token_submitted=None,
         )
     except PermissionError as exc:
         raise HTTPException(status_code=403, detail=str(exc)) from exc
 
 
-def set_ui_token_cookie(response: RedirectResponse, token: str) -> RedirectResponse:
+def set_ui_session_cookie(response: RedirectResponse, session_id: str) -> RedirectResponse:
     response.set_cookie(
         UI_SESSION_COOKIE,
-        token,
+        session_id,
         httponly=True,
         samesite="strict",
         path="/",
@@ -192,7 +231,7 @@ def set_ui_token_cookie(response: RedirectResponse, token: str) -> RedirectRespo
 
 
 def register_ui_token_routes(app: FastAPI) -> None:
-    @app.get("/ui-token", response_class=HTMLResponse)
+    @app.get(UI_UNLOCK_PATH, response_class=HTMLResponse)
     def ui_token_form(request: Request, error: str | None = None) -> HTMLResponse:
         if not request.app.state.require_ui_token:
             raise HTTPException(status_code=404, detail="ui token is not required")
@@ -206,7 +245,7 @@ def register_ui_token_routes(app: FastAPI) -> None:
             },
         )
 
-    @app.post("/ui-token")
+    @app.post(UI_UNLOCK_PATH)
     def ui_token_submit(
         request: Request,
         csrf_token: str | None = Form(None),
@@ -217,8 +256,15 @@ def register_ui_token_routes(app: FastAPI) -> None:
         require_csrf_token(request, csrf_token)
         expected = ui_token_from_env()
         if expected is None or not ui_token_matches(token, expected):
-            raise HTTPException(status_code=403, detail="invalid UI token")
-        return set_ui_token_cookie(RedirectResponse(url=NEW_RUN_PATH, status_code=303), expected)
+            return RedirectResponse(
+                url=f"{UI_UNLOCK_PATH}?error={query_escape('invalid UI token')}",
+                status_code=303,
+            )
+        sessions: UiSessionStore = request.app.state.ui_sessions
+        return set_ui_session_cookie(
+            RedirectResponse(url=NEW_RUN_PATH, status_code=303),
+            sessions.issue(),
+        )
 
 
 def register_new_run_routes(app: FastAPI) -> None:
