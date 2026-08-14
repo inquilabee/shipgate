@@ -23,8 +23,9 @@ __all__ = [
 def default_scopes(layout: ProjectLayout) -> dict[str, ScopeBody]:
     """Build named scopes from a detected layout.
 
-    Always includes ``semgrep`` at repo root. Adds ``python-src``,
-    ``python-test-src``, and ``docs`` when corresponding roots exist.
+    Always includes ``semgrep`` at repo root. Adds ``python-src`` and a
+    matching ``ty-src`` copy, plus ``python-test-src`` and ``docs`` when
+    those roots exist.
     """
     return ScopeFragments(layout).default_scopes()
 

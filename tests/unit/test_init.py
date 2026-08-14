@@ -43,6 +43,17 @@ def assert_default_yaml_policy(content: str) -> None:
     assert "allowlists:" in content, "allowlists section missing"
 
 
+def assert_yaml_layout_scopes(content: str) -> None:
+    assert "python-src:" in content
+    assert "target: src" in content
+    assert "python-test-src:" in content
+    assert "target: tests" in content
+    assert "semgrep:" in content
+    assert "ty-src:" in content
+    assert "ty.check:" in content
+    assert "scope: ty-src" in content
+
+
 def test_init_yaml_writes_layout_scopes(tmp_path, monkeypatch, capsys):
     (tmp_path / "src" / "demo").mkdir(parents=True)
     (tmp_path / "src" / "demo" / "__init__.py").write_text("", encoding="utf-8")
@@ -53,12 +64,7 @@ def test_init_yaml_writes_layout_scopes(tmp_path, monkeypatch, capsys):
     )
     monkeypatch.chdir(tmp_path)
     assert main(["init"]) == 0
-    content = (tmp_path / SHIPGATE_YAML).read_text(encoding="utf-8")
-    assert "python-src:" in content
-    assert "target: src" in content
-    assert "python-test-src:" in content
-    assert "target: tests" in content
-    assert "semgrep:" in content
+    assert_yaml_layout_scopes((tmp_path / SHIPGATE_YAML).read_text(encoding="utf-8"))
     captured = capsys.readouterr()
     assert "shipgate check --suite full --full-tree" in captured.out
 
