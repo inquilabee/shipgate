@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pathspec
@@ -15,17 +15,27 @@ from shipgate.planning.utils.gitignore import ignored_path_part, load_ignore_pat
 @dataclass(frozen=True)
 class EffectiveIgnores:
     path_patterns: tuple[str, ...] = ()
+    matcher: pathspec.PathSpec | None = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        compiled = (
+            pathspec.PathSpec.from_lines("gitignore", self.path_patterns)
+            if self.path_patterns
+            else None
+        )
+        object.__setattr__(self, "matcher", compiled)
 
     def is_ignored(self, rel_path: str) -> bool:
         normalized = rel_path.replace("\\", "/")
         normalized = normalized[2:] if normalized.startswith("./") else normalized
         if ignored_path_part(normalized):
             return True
-        if not self.path_patterns:
-            return False
-        matcher = pathspec.PathSpec.from_lines("gitignore", self.path_patterns)
-        return matcher.match_file(normalized) or (
-            not normalized.endswith("/") and matcher.match_file(f"{normalized}/")
+        matcher = self.matcher
+        return (
+            False
+            if matcher is None
+            else matcher.match_file(normalized)
+            or (not normalized.endswith("/") and matcher.match_file(f"{normalized}/"))
         )
 
 

@@ -10,6 +10,7 @@ from shipgate.planning.utils.gitignore import ignored_path_part
 from shipgate.policy.core.config import load_gate_mapping
 from shipgate.policy.core.finding import FindingLocation, PolicyFinding
 from shipgate.policy.core.gate import PolicyGate
+from shipgate.project.layout.types import SKIP_DIR_NAMES
 
 if TYPE_CHECKING:
     import argparse
@@ -250,7 +251,11 @@ class FolderBreadthGate(PolicyGate):
         if self._root is None:
             return True
         rel = directory.relative_to(self._root).as_posix()
-        return ignored_path_part(rel) if self._ignores is None else self._ignores.is_ignored(rel)
+        return (
+            True
+            if directory.name in SKIP_DIR_NAMES or ignored_path_part(rel)
+            else (False if self._ignores is None else self._ignores.is_ignored(rel))
+        )
 
     def _count_direct_files(self, directory: Path) -> int:
         count = 0

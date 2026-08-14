@@ -104,14 +104,33 @@ def should_ignore(
     extra_excludes: tuple[str, ...] = (),
     spec: pathspec.PathSpec | None = None,
 ) -> bool:
+    return skip_scope_entry(
+        project_root,
+        path,
+        extra_excludes=extra_excludes,
+        spec=spec,
+        respect_gitignore=True,
+    )
+
+
+def skip_scope_entry(
+    project_root: Path,
+    path: Path,
+    *,
+    extra_excludes: tuple[str, ...] = (),
+    spec: pathspec.PathSpec | None = None,
+    respect_gitignore: bool,
+) -> bool:
     try:
         rel = path.resolve().relative_to(project_root.resolve())
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
-    if ignored_path_part(rel_str):
+    if ignored_path_part(rel_str) or matches_ignore_prefix(rel_str, extra_excludes):
         return True
-    if matches_ignore_prefix(rel_str, (*default_ignores(), *extra_excludes)):
+    if not respect_gitignore:
+        return False
+    if matches_ignore_prefix(rel_str, default_ignores()):
         return True
     active_spec = spec if spec is not None else load_gitignore_spec(project_root)
     if active_spec is not None and active_spec.match_file(rel_str):
@@ -185,8 +204,12 @@ def walk_scope_dir(
     if not directory.is_dir():
         return
     for child in sorted(directory.iterdir()):
-        if respect_gitignore and should_ignore(
-            project_root, child, extra_excludes=exclude, spec=spec
+        if skip_scope_entry(
+            project_root,
+            child,
+            extra_excludes=exclude,
+            spec=spec,
+            respect_gitignore=respect_gitignore,
         ):
             continue
         if child.is_file():
@@ -229,8 +252,12 @@ def expand_scope(
     paths: list[Path] = []
 
     if target.is_file():
-        if respect_gitignore and should_ignore(
-            project_root, target, extra_excludes=exclude, spec=spec
+        if skip_scope_entry(
+            project_root,
+            target,
+            extra_excludes=exclude,
+            spec=spec,
+            respect_gitignore=respect_gitignore,
         ):
             return ()
         consider_scope_file(

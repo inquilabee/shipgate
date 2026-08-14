@@ -72,6 +72,17 @@ def test_expand_scope_respects_gitignore(tmp_path: Path):
     assert "bad.py" not in names
 
 
+def test_expand_scope_exclude_applies_without_gitignore(tmp_path: Path):
+    venv = tmp_path / ".venv" / "lib"
+    venv.mkdir(parents=True)
+    (venv / "site.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "ok.py").write_text("y = 1\n", encoding="utf-8")
+    paths = expand_scope(tmp_path, tmp_path, exclude=(".venv/",), respect_gitignore=False)
+    names = {p.name for p in paths}
+    assert "ok.py" in names
+    assert "site.py" not in names
+
+
 def test_include_allowed_uses_path_prefix():
     assert include_allowed("src/a.py", ("src",))
     assert include_allowed("src", ("src",))

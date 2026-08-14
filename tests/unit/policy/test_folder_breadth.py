@@ -70,3 +70,25 @@ def test_does_not_walk_review_venv_site_packages(tmp_path, monkeypatch) -> None:
     extra = gate.report_extra(findings)
     assert extra is not None
     assert extra["leaf_dirs_scanned"] == 1
+
+
+def test_does_not_walk_node_modules(tmp_path, monkeypatch) -> None:
+    write_py_files(tmp_path / "pkg", 2)
+    write_py_files(tmp_path / "node_modules" / "pkg", 20)
+    monkeypatch.delenv("SHIPGATE_SCOPE_PATHS", raising=False)
+    gate = FolderBreadthGate()
+    findings = gate.collect_findings(
+        root=tmp_path,
+        config={
+            "scan_roots": ["."],
+            "max_allowed": 3,
+            "extensions": [".py"],
+            "strict": True,
+        },
+        allowlist=set(),
+        ignores=None,
+    )
+    assert findings == []
+    extra = gate.report_extra(findings)
+    assert extra is not None
+    assert extra["leaf_dirs_scanned"] == 1

@@ -20,6 +20,14 @@ def test_effective_ignores_matches_gitignore_patterns():
     assert not ignores.is_ignored("src/module.py")
 
 
+def test_effective_ignores_compiles_matcher_once():
+    ignores = EffectiveIgnores(path_patterns=("build/",))
+    matcher = ignores.matcher
+    assert matcher is not None
+    assert ignores.is_ignored("build/out.txt")
+    assert ignores.matcher is matcher
+
+
 def test_effective_ignores_matches_directory_gitignore_prefix():
     ignores = EffectiveIgnores(path_patterns=("notes/", ".cursor/"))
     assert ignores.is_ignored("notes")
