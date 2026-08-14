@@ -30,7 +30,6 @@ ty.check:
     discover:
       - .shipgate/configs/ty.toml
       - ty.toml
-      - pyproject.toml
     pyproject_section: tool.ty
     pass_pyproject_as_file: false
     precedence:

@@ -117,3 +117,16 @@ def test_ty_does_not_pass_pyproject_as_config_file(tmp_path: Path):
     paths = resolve_config_paths(catalog.get_tool("ty.check"), project, tmp_path)
     assert paths == ()
     assert catalog.get_tool("ty.check").configuration.pass_pyproject_as_file is False
+
+
+def test_ty_without_tool_section_uses_scaffold_not_pyproject(tmp_path: Path):
+    catalog = CatalogLoader.load()
+    scaffold_project_layout(tmp_path)
+    (tmp_path / "pyproject.toml").write_text(
+        '[build-system]\nrequires = ["hatchling"]\nbuild-backend = "hatchling.build"\n',
+        encoding="utf-8",
+    )
+    project = ProjectConfigLoader.load(project_root=tmp_path)
+    paths = resolve_config_paths(catalog.get_tool("ty.check"), project, tmp_path)
+    assert paths == (tmp_path / ".shipgate/configs/ty.toml",)
+    assert catalog.get_tool("ty.check").configuration.pass_pyproject_as_file is False
