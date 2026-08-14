@@ -15,7 +15,7 @@ Policy-first quality gates for Python projects.
 One policy, one catalog, three commands — plus refactor. Linters, formatters,
 scanners, metric gates, and structural Python rules without hand-rolled CI glue.
 
-[Usage guide](usage.md){ .md-button .md-button--primary }
+[Quick start](quickstart.md){ .md-button .md-button--primary }
 [View on GitHub](https://github.com/inquilabee/shipgate){ .md-button }
 
 </div>
@@ -23,16 +23,16 @@ scanners, metric gates, and structural Python rules without hand-rolled CI glue.
 ## Where to start
 
 | You want… | Start here |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Install and run in minutes | [README on GitHub](https://github.com/inquilabee/shipgate/blob/main/README.md) — quick commands only |
-| Suites, CI, error formats, gates | [Usage guide](usage.md) |
+| --- | --- |
+| Install and run in minutes | [Quick start](quickstart.md) |
+| Suites, CI, error formats, report UI | [Usage](usage.md) |
 | Structural Python refactor rules | [Refactor](refactor.md) |
 | Policy files and thresholds | [Configuration](configuration.md) |
 | What each bundled tool does | [Tools](tools.md) |
 | How ShipGate is built | [Architecture](architecture.md) |
 
-The README stays short so you can copy-paste `init` / `install` / `format` /
-`check` / `refactor` and move on. This site is the reference for everything else.
+Copy-paste the five commands on the quick start page, then come back here for
+suites and CI.
 
 ## Why ShipGate?
 
@@ -62,17 +62,10 @@ Refactor is separate from catalog suites — see [Refactor](refactor.md).
 
 ## Try it in minutes
 
-Install:
-
 ```bash
 pip install shipgate
 shipgate init
 shipgate install
-```
-
-Check:
-
-```bash
 shipgate check --target .
 ```
 
@@ -87,13 +80,15 @@ shipgate serve --open
 
 ![ShipGate report UI](images/report-ui-overview.png)
 
-Browse suite runs and findings at `http://127.0.0.1:8765/`.
+Browse suite runs and findings at `http://127.0.0.1:8765/`. Non-loopback binds
+need `SHIPGATE_UI_TOKEN` — see [Usage — Report UI](usage.md#report-ui).
 
 ## Learn more
 
 | Guide | Contents |
-| --------------------------------- | ----------------------------------------------------------- |
-| [Usage](usage.md) | Commands, suites, error formats, CI, gates |
+| --- | --- |
+| [Quick start](quickstart.md) | Init → install → format → check → refactor |
+| [Usage](usage.md) | Suites, error formats, CI, pre-commit, serve |
 | [Refactor](refactor.md) | Structural Python rules (`check`, `fix`, `list`, `explain`) |
 | [Configuration](configuration.md) | Policy, scopes, Radon metric gates |
 | [Tools](tools.md) | Bundled catalog and extensions |

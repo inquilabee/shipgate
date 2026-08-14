@@ -1,24 +1,12 @@
 # Refactor
 
-ShipGate ships a **refactor** tool in the same wheel: AST-based rules for
-structural Python cleanup (imports, naming, test patterns, optional GPSG packs).
-It is separate from the catalog — no `shipgate check` tool entry, no PolicyGate
-coupling.
+AST rules for structural Python cleanup (imports, naming, test patterns, optional
+packs). Same wheel as ShipGate, separate from catalog suites — not part of
+`shipgate check`.
 
-Invoke it as `shipgate refactor …` or `python -m refactor …` (same CLI; the
-module form is handy in src-layout dogfood and pre-commit hooks).
+Use `shipgate refactor …` or `python -m refactor …` (same CLI).
 
-## Mental model
-
-- **`check`** — detect issues; print JSON hits to stdout; exit `1` when hits exist
-- **`fix`** — apply rules with `apply_mode=auto`; print changed file paths
-- **`list`** — tab-separated inventory of registered rules
-- **`explain`** — human-readable rule detail with catalog examples
-
-Default `check` reports **auto** (blocking) rules only. Pass `--strict` to include
-**hint** rules as well.
-
-## Commands
+## Try this
 
 ```bash
 shipgate refactor check .
@@ -28,45 +16,35 @@ shipgate refactor list
 shipgate refactor explain default-get
 ```
 
-Equivalent module invocation:
+Module form (handy in src-layout dogfood and hooks):
 
 ```bash
 python -m refactor check --strict src tests/refactor
 python -m refactor fix src
 ```
 
-### Check
+## What you should see
 
-```bash
-shipgate refactor check
-shipgate refactor check --strict .
-shipgate refactor check src app/
+| Command | Success | Failure / notes |
+| --- | --- | --- |
+| `check` | Exit `0`; stdout is `[]` or an empty hit list | Exit `1`; indented JSON hits (rule id, path, line, message) |
+| `check --strict` | Same, but includes **hint** rules | Default `check` reports **auto** (blocking) rules only |
+| `fix` | Prints changed file paths; exit `0` when done | Only **auto** rules apply; hints need a manual edit or another auto rule |
+| `list` | One rule per line (id, kind, apply mode, …) | Use `--enable` to include optional packs |
+| `explain <id>` | Summary, rationale, before/after examples | Unknown id → non-zero / error text |
+
+Example hit shape (fields vary by rule):
+
+```json
+[
+  {
+    "rule_id": "duplicate-import",
+    "path": "src/pkg/mod.py",
+    "line": 3,
+    "message": "…"
+  }
+]
 ```
-
-Output is indented JSON (rule id, path, line, message, and related fields).
-Exit `0` when clean; `1` when hits remain.
-
-### Fix
-
-```bash
-shipgate refactor fix src
-shipgate refactor fix app/models.py
-```
-
-Only **auto** rules run. Hint-only findings require manual edits or a different
-rule with `apply_mode=auto`.
-
-### List and explain
-
-```bash
-shipgate refactor list
-shipgate refactor list --enable gpsg
-shipgate refactor explain duplicate-import
-```
-
-`list` prints one rule per line (id, kind, inventory status, apply mode, optional
-pack/tag columns). `explain` prints summary, rationale, and before/after examples
-from the rule inventory.
 
 ## Paths and scope
 
@@ -95,8 +73,7 @@ shipgate refactor check --enable gpsg-import,gpsg-naming src
 
 ## CI and pre-commit
 
-Refactor is not part of `shipgate check` suites. Add it explicitly when you want
-structural rules alongside catalog gates:
+Refactor is not part of `shipgate check` suites. Add it explicitly:
 
 ```yaml
 repos:
@@ -112,7 +89,7 @@ repos:
 For src-layout projects, `python -m refactor check --strict src tests/refactor`
 matches the ShipGate maintainer gate (`make check-commit`).
 
-## See also
+## Next
 
-- [Usage](usage.md) — catalog commands (`install`, `format`, `check`)
-- [Architecture](architecture.md) — refactor is outside the catalog pipeline
+- Catalog commands → [Usage](usage.md)
+- First install → [Quick start](quickstart.md)

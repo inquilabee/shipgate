@@ -1,8 +1,7 @@
 # Tools
 
-ShipGate runs tools through catalog metadata — each entry describes how to
-install, invoke, and normalize one check id. For how YAML becomes argv and
-reports, see [Check flow](check-flow.md).
+What each bundled check id does, and how to add your own. First run? See
+[Quick start](quickstart.md). Suite selection lives in [Usage](usage.md).
 
 ## List the catalog
 
@@ -10,6 +9,13 @@ reports, see [Check flow](check-flow.md).
 shipgate list tools
 shipgate list tools --tag security
 shipgate list checks    # alias
+```
+
+Run one tool without changing project policy:
+
+```bash
+shipgate check --check ruff.lint --target src
+shipgate check --check gitleaks.scan --target .
 ```
 
 ## Bundled tools
@@ -39,13 +45,6 @@ shipgate list checks    # alias
 | [yamlfmt](https://github.com/google/yamlfmt) | YAML formatter |
 | [yamllint](https://yamllint.readthedocs.io/) | YAML syntax and style linter |
 
-Run one tool without changing project policy:
-
-```bash
-shipgate check --check ruff.lint --target src
-shipgate check --check gitleaks.scan --target .
-```
-
 ## Project extensions
 
 When the bundled catalog is not enough:
@@ -58,4 +57,4 @@ When the bundled catalog is not enough:
 
 Tool configs live under `.shipgate/configs/`. Project-specific allowlists go in
 `.shipgate/allowlists/`. See [Usage — project-local gates](usage.md#project-local-gates)
-and [Contributing](contributing.md) for maintainer-oriented detail.
+and [Check flow](check-flow.md) for how YAML becomes a check run.

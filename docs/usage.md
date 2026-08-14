@@ -1,8 +1,7 @@
-# ShipGate usage guide
+# Usage
 
-Day-to-day commands, suites, and integration patterns. For policy files and
-threshold bindings see [Configuration](configuration.md). For the bundled
-catalog see [Tools](tools.md).
+Day-to-day suites, error formats, CI, and the report UI. First install? Start at
+[Quick start](quickstart.md). Policy fields live in [Configuration](configuration.md).
 
 ## Mental model
 
@@ -16,19 +15,19 @@ catalog see [Tools](tools.md).
 Pick a suite once in project policy; run the same three commands everywhere.
 Override with `--suite` only for one-offs.
 
-## Commands
+## Common commands
 
 ```bash
 shipgate install
-shipgate format
-shipgate check
+shipgate format --target .
+shipgate check --target .
+shipgate check --check ruff.lint --target .
 shipgate list suites
 shipgate list tools
-shipgate check --check ruff.lint --target .
 shipgate schema > failure-report.schema.json
 ```
 
-### Check examples
+### One tool, one file
 
 ```bash
 shipgate check --check ruff.lint --target app.py --error-format compact
@@ -39,23 +38,24 @@ app.py:1: error: F401 `os` imported but unused
 app.py:3: error: E302 Expected 2 blank lines, found 1
 ```
 
+### Suites and targets
+
 ```bash
 shipgate check
 shipgate check --suite security
 shipgate check --target src
 shipgate check --error-format github   # CI / PR annotations
+shipgate check --changed-only          # incremental when policy allows
+shipgate check --full-tree             # ignore changed-only / --since for this run
 ```
 
-### Format
-
-```bash
-shipgate format --target .
-```
+Exit `0` on a clean run. Failures are non-zero; stderr follows `error-format`.
+Canonical JSON always lands under `.shipgate/reports/` regardless of format.
 
 ## Suites
 
 | Suite | Use it for |
-| --------------------- | --------------------------------------------------------- |
+| --- | --- |
 | `python-quality` | Core Python lint + type check (`ruff.lint`, `ty.check`) |
 | `format` | Formatter/autofix tools that write files |
 | `security` | Bandit, Gitleaks, Semgrep, pip-audit |
@@ -70,8 +70,6 @@ shipgate format --target .
 | `nightly` / `release` | Full coverage wrappers |
 | `pre-commit` | Format + python-quality |
 
-Examples:
-
 ```yaml
 # Local Python repo
 suite: python-quality
@@ -85,17 +83,17 @@ error-format: github
 ```
 
 ```yaml
-# Max coverage while developing shipgate itself
+# Max coverage while developing ShipGate itself
 suite: full
 error-format: compact
 ```
 
-List live names anytime: `shipgate list suites`.
+Live names: `shipgate list suites`.
 
 ## Error formats
 
 | Format | Role |
-| --------- | ------------------------------------------- |
+| --- | --- |
 | `json` | Pretty JSON report, including `report_path` |
 | `log` | Timestamped finding lines |
 | `text` | Bullet-style finding lines |
@@ -127,6 +125,8 @@ pre-commit install
 This repository's own dogfood hooks are richer (see `.pre-commit-config.yaml` and
 `make install-hooks`).
 
+Add structural rules separately — see [Refactor](refactor.md#ci-and-pre-commit).
+
 ## Report UI
 
 ```bash
@@ -135,7 +135,20 @@ shipgate serve
 shipgate serve --port 8765 --open
 ```
 
-Browse suite runs and findings at `http://127.0.0.1:8765/`.
+Default bind is loopback: open `http://127.0.0.1:8765/`. No unlock step.
+
+Non-loopback hosts (`0.0.0.0`, a private network address, …) require
+`SHIPGATE_UI_TOKEN` or serve refuses to start. Unlock once in the browser at
+`/ui-token` (or send the token in the `X-ShipGate-UI-Token` header). Unlock sets
+an opaque session cookie — the env secret is not stored in the cookie.
+
+```bash
+export SHIPGATE_UI_TOKEN='long-random-secret'
+shipgate serve --host 0.0.0.0 --port 8765
+```
+
+Prefer HTTPS termination in front of non-loopback binds; the UI itself is plain
+HTTP.
 
 ## Refactor
 
@@ -147,15 +160,14 @@ shipgate refactor fix src
 shipgate refactor list
 ```
 
-See [Refactor](refactor.md) for `explain`, `--strict`, optional packs, and
-`python -m refactor`.
+See [Refactor](refactor.md).
 
 ## Project-local gates
 
 Scaffold under `.shipgate/gates/` and extend the project catalog under
 `.shipgate/catalog/` when the bundled catalog is not enough. See
-[Tools — project extensions](tools.md#project-extensions),
-[Check flow](check-flow.md), and [Contributing](contributing.md).
+[Tools — project extensions](tools.md#project-extensions) and
+[Check flow](check-flow.md).
 
 ## CI
 

@@ -1,29 +1,9 @@
 # Configuration
 
-Project policy tells ShipGate which suite to run, how to install tools, where
-to look, and how to format failures. This page covers policy files and
-threshold bindings. For suites, commands, and CI examples see
+Edit project policy after [Quick start](quickstart.md). Suites and CI live in
 [Usage](usage.md).
 
-## Policy files
-
-Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`
-(see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
-`.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
-That includes an `importlinter.ini` starter when layout detection finds an
-importable package (src-layout `src/<pkg>/` or a flat `pkg/` at the repo root).
-Trees with no importable package skip `import-linter.check` with a stderr line
-such as `no importable package in project layout`
-and a `[tool.deptry]` section in `pyproject.toml` when missing.
-Managed env prepends `src/` onto `PYTHONPATH` when that src-layout package
-exists, so `lint-imports` can import the package without a consumer `.pth`
-script. Flat-layout packages at the repo root stay importable on the default
-path and do not get a `PYTHONPATH=src` injection.
-`known_first_party` is filled only for a real importable package — otherwise the
-commented placeholder stays. Customize contracts for your layout; pip-audit needs
-no project config file. If an older init left a broken `importlinter.ini`
-(`root_package` set to the directory name), delete it and re-run
-`shipgate configs sync` after you have a real package.
+## Try this
 
 ```yaml
 # .shipgate/shipgate.yaml
@@ -36,13 +16,32 @@ configs:
 ```
 
 ```bash
-shipgate check --suite extended
 shipgate install --suite standard
+shipgate check --suite extended
 ```
 
-Path delivery respects `.gitignore`. Failures write canonical JSON under
-`.shipgate/reports/`; `error-format` controls stderr only. Success is silent
-(exit `0`).
+Success is exit `0` with little stderr. Failures write findings to stderr in
+`error-format` and always store canonical JSON under `.shipgate/reports/`.
+
+## Policy files
+
+Policy lives in `.shipgate/shipgate.yaml` or `[tool.shipgate]` in `pyproject.toml`
+(see `.shipgate/pyproject.toml.example` after init). `shipgate init` also scaffolds
+`.shipgate/catalog/`, `.shipgate/gates/`, `.shipgate/configs/`, and cache metadata.
+
+When layout detection finds an importable package (`src/<pkg>/` or flat `pkg/` at
+the repo root), init may add an `importlinter.ini` starter and a `[tool.deptry]`
+section if missing. Trees with no importable package skip `import-linter.check`
+with a stderr line such as `no importable package in project layout`. Managed env
+prepends `src/` onto `PYTHONPATH` only for that src-layout package; flat packages
+at the repo root stay on the default path. `known_first_party` is filled only for
+a real package — otherwise the commented placeholder stays.
+
+If an older init left a broken `importlinter.ini` (`root_package` set to the
+directory name), delete it and re-run `shipgate configs sync` after you have a
+real package. pip-audit needs no project config file.
+
+Path delivery respects `.gitignore` unless a scope sets `respect_gitignore: false`.
 
 Python support: **3.11–3.14**. Prefer **3.13** when running suites that include
 Semgrep or deadcode. On 3.14 those tools skip with `requires_python: >=3.11,<3.14`

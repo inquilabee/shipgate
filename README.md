@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://inquilabee.github.io/shipgate/">Documentation</a> ·
+  <a href="https://inquilabee.github.io/shipgate/quickstart/">Quick start</a> ·
   <a href="https://inquilabee.github.io/shipgate/usage/">Usage guide</a> ·
   <a href="CHANGELOG.md">Changelog</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -56,11 +57,13 @@ for `fix`, `list`, `explain`, and optional rule packs.
 
 This README is the shortest path to a working project. For suites, policy,
 error formats, CI, gates, and the full tool catalog, use the
-[documentation site](https://inquilabee.github.io/shipgate/).
+[documentation site](https://inquilabee.github.io/shipgate/) — start at
+[Quick start](https://inquilabee.github.io/shipgate/quickstart/).
 
 | Guide | Contents |
 | --------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [Usage](https://inquilabee.github.io/shipgate/usage/) | Commands, suites, error formats, CI, pre-commit |
+| [Quick start](https://inquilabee.github.io/shipgate/quickstart/) | Init → install → format → check → refactor |
+| [Usage](https://inquilabee.github.io/shipgate/usage/) | Suites, error formats, CI, pre-commit, report UI |
 | [Refactor](https://inquilabee.github.io/shipgate/refactor/) | Structural Python rules (`check`, `fix`, `list`, `explain`) |
 | [Configuration](https://inquilabee.github.io/shipgate/configuration/) | Policy files, scopes, Radon metric gates |
 | [Tools](https://inquilabee.github.io/shipgate/tools/) | Bundled catalog and project extensions |
