@@ -8,7 +8,7 @@ import pathspec
 
 from shipgate.core.process import run_command
 
-DEFAULT_IGNORED = (
+ANYWHERE_IGNORED = (
     ".shipgate/",
     ".venv/",
     "venv/",
@@ -17,10 +17,11 @@ DEFAULT_IGNORED = (
     ".nox/",
     ".tox/",
     "site-packages/",
-    "reports/",
     "__pycache__/",
     ".git/",
 )
+ROOT_ONLY_IGNORED = ("/reports/",)
+DEFAULT_IGNORED = (*ANYWHERE_IGNORED, *ROOT_ONLY_IGNORED)
 
 
 def default_ignores() -> tuple[str, ...]:
@@ -28,7 +29,15 @@ def default_ignores() -> tuple[str, ...]:
 
 
 def ignored_dir_names() -> frozenset[str]:
-    return frozenset(item.strip("/") for item in DEFAULT_IGNORED)
+    return frozenset(item.strip("/") for item in ANYWHERE_IGNORED)
+
+
+def matches_ignore_prefix(rel_str: str, patterns: tuple[str, ...]) -> bool:
+    return any(
+        rel_str == pat or rel_str.startswith(f"{pat}/")
+        for pattern in patterns
+        if (pat := pattern.strip("/"))
+    )
 
 
 class IgnoreFile:
@@ -102,10 +111,8 @@ def should_ignore(
     rel_str = str(rel).replace("\\", "/")
     if ignored_path_part(rel_str):
         return True
-    for pattern in (*default_ignores(), *extra_excludes):
-        pat = pattern.rstrip("/")
-        if rel_str == pat or rel_str.startswith(f"{pat}/"):
-            return True
+    if matches_ignore_prefix(rel_str, (*default_ignores(), *extra_excludes)):
+        return True
     active_spec = spec if spec is not None else load_gitignore_spec(project_root)
     if active_spec is not None and active_spec.match_file(rel_str):
         return True

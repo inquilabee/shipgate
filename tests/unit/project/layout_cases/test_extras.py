@@ -35,3 +35,10 @@ def test_pep420_namespace_under_src(tmp_path: Path) -> None:
     layout = detect_layout(tmp_path)
     assert layout.python_dirs == ("src",)
     assert detect_importable_packages(tmp_path) == ("zope.interface",)
+
+
+def test_nested_reports_package_stays_in_src_layout(tmp_path: Path) -> None:
+    write_file(tmp_path / "src" / "pkg" / "reports" / "__init__.py", "x = 1\n")
+    write_file(tmp_path / "src" / "pkg" / "reports" / "mod.py", "x = 1\n")
+    layout = detect_layout(tmp_path)
+    assert layout.python_dirs == ("src",)

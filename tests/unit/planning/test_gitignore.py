@@ -31,6 +31,17 @@ def test_should_ignore_venv_dirs(tmp_path: Path):
     assert should_ignore(tmp_path, review_venv)
 
 
+def test_should_ignore_root_reports_not_nested_package(tmp_path: Path):
+    root_report = tmp_path / "reports" / "out.txt"
+    root_report.parent.mkdir()
+    root_report.write_text("x\n", encoding="utf-8")
+    nested = tmp_path / "src" / "pkg" / "reports" / "mod.py"
+    nested.parent.mkdir(parents=True)
+    nested.write_text("x = 1\n", encoding="utf-8")
+    assert should_ignore(tmp_path, root_report)
+    assert not should_ignore(tmp_path, nested)
+
+
 def test_should_not_ignore_prevenv_package_dir(tmp_path: Path):
     path = tmp_path / "src" / "prevenv" / "mod.py"
     path.parent.mkdir(parents=True)
