@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from fastapi.responses import RedirectResponse
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from shipgate.frontend.services.worktree import WorktreeManager
 
 
-def new_run_context(request: Request, error: str | None) -> dict[str, Any]:
+def new_run_context(request: Request, error: str | None) -> dict[str, object]:
     primary: Path = request.app.state.primary_root
     catalog = request.app.state.catalog
     worktrees: WorktreeManager = request.app.state.worktrees

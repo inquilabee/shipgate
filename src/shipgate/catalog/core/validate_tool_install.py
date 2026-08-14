@@ -67,6 +67,12 @@ def validate_download(tool: ToolDefinition) -> None:
         tool, download.asset_template, label="install.download.asset_template"
     )
     validate_install_basename(tool, download.binary_name, label="install.download.binary_name")
+    if download.sha256 is not None:
+        digest = download.sha256.strip().casefold()
+        if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+            raise CatalogError(
+                f"tool {tool.id!r} install.download.sha256 must be a 64-char hex digest"
+            )
 
 
 def validate_requires_python(tool: ToolDefinition) -> None:

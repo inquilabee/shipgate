@@ -79,7 +79,7 @@ def create_app(primary_root: Path, *, require_ui_token: bool = False) -> FastAPI
     storage = SqliteStorage(primary / PROJECT_SERVER_DIR / SERVER_DB_FILENAME)
     backfill_from_report_store(primary, storage)
     repair_misclassified_tool_findings(storage)
-    catalog = CatalogLoader.load()
+    catalog = CatalogLoader.load(project_root=primary)
     from shipgate.app import ShipGateApp
 
     app_instance = ShipGateApp(catalog=catalog)

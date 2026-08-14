@@ -349,7 +349,7 @@ def main(argv: list[str] | None = None) -> int:
     except typer.Exit as exc:
         return CliSession.exit_code_from(exc)
     except ShipGateError as exc:
-        CliSession.write_error(exc)
+        CliSession().write_error(exc)
         return exc.exit_code
     except Exception as exc:  # ruff: ignore[blind-except] — CLI catch-all exit path
         sys.stderr.write(f"shipgate: internal error: {exc}\n")

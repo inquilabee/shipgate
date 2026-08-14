@@ -52,6 +52,7 @@ class BinaryDownloadSpec:
     binary_name: str
     arch_map: Mapping[str, str] = field(default_factory=dict)
     os_map: Mapping[str, str] = field(default_factory=dict)
+    sha256: str | None = None
 
 
 @dataclass(frozen=True)

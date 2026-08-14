@@ -322,3 +322,23 @@ def test_get_github_url_refuses_userinfo_redirect(monkeypatch: pytest.MonkeyPatc
     with pytest.raises(InstallError, match="refusing redirect off github"):
         get_github_url("https://github.com/owner/repo/releases/download/x", timeout=1)
     assert fetched == ["https://github.com/owner/repo/releases/download/x"]
+
+
+def test_verify_sha256_accepts_match(tmp_path: Path) -> None:
+    path = tmp_path / "asset.bin"
+    path.write_bytes(b"payload")
+    digest = __import__("hashlib").sha256(b"payload").hexdigest()
+    GitHubReleaseInstaller.verify_sha256(path, digest)
+
+
+def test_verify_sha256_rejects_mismatch(tmp_path: Path) -> None:
+    path = tmp_path / "asset.bin"
+    path.write_bytes(b"payload")
+    with pytest.raises(InstallError, match="sha256 mismatch"):
+        GitHubReleaseInstaller.verify_sha256(path, "0" * 64)
+
+
+def test_verify_sha256_skips_when_missing(tmp_path: Path) -> None:
+    path = tmp_path / "asset.bin"
+    path.write_bytes(b"payload")
+    GitHubReleaseInstaller.verify_sha256(path, None)

@@ -132,18 +132,16 @@ class CatalogParser:
 
     @staticmethod
     def _parse_download(raw: dict | None) -> BinaryDownloadSpec | None:
-        return (
-            BinaryDownloadSpec(
-                repo=str(raw["repo"]),
-                asset_template=str(raw["asset_template"]),
-                binary_name=str(raw.get("binary_name") or raw.get("binary") or ""),
-                arch_map={
-                    str(key): str(value) for key, value in (raw.get("arch_map") or {}).items()
-                },
-                os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
-            )
-            if raw
-            else None
+        if not raw:
+            return None
+        digest = raw.get("sha256")
+        return BinaryDownloadSpec(
+            repo=str(raw["repo"]),
+            asset_template=str(raw["asset_template"]),
+            binary_name=str(raw.get("binary_name") or raw.get("binary") or ""),
+            arch_map={str(key): str(value) for key, value in (raw.get("arch_map") or {}).items()},
+            os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
+            sha256=str(digest) if digest else None,
         )
 
     @staticmethod

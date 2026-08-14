@@ -11,7 +11,7 @@ from shipgate.errors import ShipGateError
 
 def test_build_run_command_maps_options(tmp_path: Path):
     opts = CliRunOptions(suite="full", check="ruff.lint", verbose=True, extra_arg=["--x"])
-    command = CliSession.build_run_command(tmp_path, opts)
+    command = CliSession().build_run_command(tmp_path, opts)
     assert command == RunCommand(
         project_root=tmp_path,
         suite="full",

@@ -8,7 +8,7 @@ import libcst as cst
 
 from refactor.detector import check_rules, detect_file
 from refactor.inventory import load_inventory
-from refactor.protocol import ApplyMode
+from refactor.protocol import ApplyMode, Hit, Location
 from refactor.registry import RULES
 from refactor.scan.gitignore import (
     load_gitignore,
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from refactor.inventory import InventoryEntry
-    from refactor.protocol import Hit, RefactorRule
+    from refactor.protocol import RefactorRule
 
 FIX_FIXED_POINT_LIMIT = 100
 
@@ -80,8 +80,14 @@ def check_paths(
         try:
             source = file_path.read_text(encoding="utf-8")
             hits.extend(detect_file(source, str(file_path), selected))
-        except FILE_SKIP_ERRORS:
-            continue
+        except FILE_SKIP_ERRORS as exc:
+            hits.append(
+                Hit(
+                    rule_id="file-skip",
+                    message=f"skipped {file_path.name}: {exc.__class__.__name__}",
+                    location=Location(path=str(file_path)),
+                )
+            )
     return hits
 
 
@@ -95,6 +101,9 @@ def filter_hits_by_policy(
     allowed = {ApplyMode.AUTO, ApplyMode.HINT} if strict else {ApplyMode.AUTO}
     filtered: list[Hit] = []
     for hit in hits:
+        if hit.rule_id == "file-skip":
+            filtered.append(hit)
+            continue
         rule = rules_by_id.get(hit.rule_id)
         if rule is None:
             continue
@@ -112,14 +121,20 @@ def fix_paths(
     selected = check_rules(rules, enable=enable)
     auto_rules = tuple(rule for rule in selected if rule.apply_mode is ApplyMode.AUTO)
     supplied = tuple(path.resolve() for path in paths)
-    project_root = discover_project_root(supplied[0]) if supplied else None
     return [
         file_path
         for file_path in python_files_under_supplied_roots(paths)
-        if project_root is not None
-        and resolved_under_roots(file_path, (project_root,))
-        and fix_file(file_path, auto_rules)
+        if write_allowed_for_fix(file_path, supplied) and fix_file(file_path, auto_rules)
     ]
+
+
+def write_allowed_for_fix(file_path: Path, supplied: tuple[Path, ...]) -> bool:
+    roots: list[Path] = []
+    for path in supplied:
+        discovered = discover_project_root(path)
+        root = discovered if discovered is not None else (path if path.is_dir() else path.parent)
+        roots.append(root)
+    return resolved_under_roots(file_path, tuple(roots))
 
 
 def fix_file(file_path: Path, rules: Sequence[RefactorRule]) -> bool:

@@ -34,6 +34,7 @@ class WorktreeManager:
 
     def ensure_worktree(self, branch: str) -> Path:
         self._require_git_repo()
+        self.require_safe_branch(branch)
         target = (
             self._primary_root / PROJECT_WORKTREES_DIR / self.safe_branch_name(branch)
         ).resolve()
@@ -51,6 +52,7 @@ class WorktreeManager:
 
     def resolve_run_root(self, branch: str) -> Path:
         self._require_git_repo()
+        self.require_safe_branch(branch)
         current = self._current_branch()
         return (
             self._primary_root
@@ -99,6 +101,15 @@ class WorktreeManager:
             raise self.git_error(exc, f"git {' '.join(args)} failed") from exc
         except FileNotFoundError as exc:
             raise WorktreeError("git executable not found") from exc
+
+    @staticmethod
+    def require_safe_branch(branch: str) -> str:
+        cleaned = branch.strip()
+        if not cleaned or cleaned.startswith("-"):
+            raise WorktreeError(
+                f"invalid branch name {branch!r}",
+            )
+        return cleaned
 
     @staticmethod
     def git_error(exc: subprocess.CalledProcessError, fallback: str) -> WorktreeError:

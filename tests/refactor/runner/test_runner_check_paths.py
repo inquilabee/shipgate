@@ -105,14 +105,25 @@ def test_fix_paths_skips_syntax_invalid_sibling(tmp_path) -> None:
     assert bad.read_text(encoding="utf-8") == "def (\n"
 
 
-def test_fix_paths_refuses_absolute_file_outside_project(tmp_path) -> None:
+def test_fix_paths_allows_orphan_tree_without_project_markers(tmp_path) -> None:
+    outside = tmp_path / "outside.py"
+    outside.write_text("y = dict()\n", encoding="utf-8")
+    changed = fix_paths([outside])
+    assert outside in changed
+    assert outside.read_text(encoding="utf-8") == "y = {}\n"
+
+
+def test_fix_paths_does_not_write_sibling_outside_supplied_roots(tmp_path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()
     (repo / ".git").mkdir()
-    (repo / "inside.py").write_text("x = dict()\n", encoding="utf-8")
+    inside = repo / "inside.py"
+    inside.write_text("x = dict()\n", encoding="utf-8")
     outside = tmp_path / "outside.py"
     outside.write_text("y = dict()\n", encoding="utf-8")
-    assert not fix_paths([outside])
+    changed = fix_paths([repo])
+    assert inside in changed
+    assert outside not in changed
     assert outside.read_text(encoding="utf-8") == "y = dict()\n"
 
 
@@ -139,6 +150,6 @@ def test_check_paths_skips_detect_crash_on_sibling(tmp_path) -> None:
             return source
 
     hits = check_paths([tmp_path], rules=(Recorder(),))
-    assert not hits
+    assert any(hit.rule_id == "file-skip" and hit.location.path.endswith("boom.py") for hit in hits)
     assert any(path.endswith("keep.py") for path in seen)
     assert all(not path.endswith("boom.py") for path in seen)

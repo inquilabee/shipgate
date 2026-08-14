@@ -7,7 +7,7 @@ from typing import cast
 
 import pytest
 
-from refactor.cli import main, parse_args
+from refactor.cli import main
 from refactor.inventory import load_inventory
 from refactor.protocol import ApplyMode, Hit, Location, RefactorRule, RuleKind
 from refactor.registry import RULES
@@ -167,8 +167,10 @@ def test_cli_explain_prints_examples(capsys) -> None:
 
 
 def test_fix_has_no_strict_flag() -> None:
-    with pytest.raises(SystemExit):
-        parse_args(["fix", "--strict", "."])
+    from typer._click.exceptions import NoSuchOption
+
+    with pytest.raises(NoSuchOption):
+        main(["fix", "--strict", "."])
 
 
 def test_strict_json_fills_catalog_examples_when_suggestion_absent(

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
+
+import typer
 
 from refactor.config_enable import resolve_enable
 from refactor.inventory import inventory_by_id, load_inventory, rule_pack_selected
@@ -25,8 +26,6 @@ if TYPE_CHECKING:
     from refactor.inventory import InventoryEntry
     from refactor.protocol import RefactorRule
 
-# Supported dogfood scope: product code + refactor rule fixtures.
-# Fixture-heavy trees (tests/unit, tests/ui, …) trip test-only rules by design.
 DOGFOOD_PATHS = (Path("src"), Path("tests/refactor"))
 DEFAULT_PROG = "python -m refactor"
 PATHS_HELP = (
@@ -34,22 +33,19 @@ PATHS_HELP = (
     "'.' maps to that dogfood scope). Pass tests/unit explicitly to scan fixture trees."
 )
 
+app = typer.Typer(add_completion=False, no_args_is_help=True)
+
 
 def main(argv: list[str] | None = None, *, prog: str = DEFAULT_PROG) -> int:
-    args = parse_args(argv, prog=prog)
-    enable = resolve_enable(getattr(args, "enable", None), project_root=Path())
-    if args.command == "list":
-        return cmd_list(enable=enable)
-    if args.command == "explain":
-        return cmd_explain(args.rule_id)
-    paths = resolve_cli_paths(list(args.paths), prog=prog)
-    return (
-        cmd_check(paths, strict=args.strict, enable=enable)
-        if args.command == "check"
-        else cmd_fix(paths, enable=enable)
-        if args.command == "fix"
-        else 2
-    )
+    args = sys.argv[1:] if argv is None else list(argv)
+    try:
+        result = app(args=args, prog_name=prog, standalone_mode=False)
+    except SystemExit as exc:
+        code = exc.code
+        return code if isinstance(code, int) else 1
+    except typer.Exit as exc:
+        return exc.exit_code if isinstance(exc.exit_code, int) else 1
+    return result if isinstance(result, int) else 0
 
 
 def resolve_cli_paths(
@@ -83,38 +79,56 @@ def is_project_root_only(paths: Sequence[Path], *, root: Path) -> bool:
     return candidate == Path() or candidate.resolve() == root.resolve()
 
 
-def parse_args(argv: list[str] | None, *, prog: str = DEFAULT_PROG) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog=prog)
-    sub = parser.add_subparsers(dest="command", required=True)
-    list_parser = sub.add_parser("list", help="List registered rules")
-    add_enable_argument(list_parser)
-    explain_parser = sub.add_parser("explain", help="Explain a rule with catalog examples")
-    explain_parser.add_argument("rule_id", help="Rule id to explain")
-    check_parser = sub.add_parser("check", help="Detect issues and print JSON hits")
-    check_parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Report auto + hint rules (default: auto/blocking rules only)",
-    )
-    add_enable_argument(check_parser)
-    check_parser.add_argument("paths", nargs="*", type=Path, default=[], help=PATHS_HELP)
-    fix_parser = sub.add_parser("fix", help="Apply auto (apply_mode=auto) rules")
-    add_enable_argument(fix_parser)
-    fix_parser.add_argument("paths", nargs="*", type=Path, default=[], help=PATHS_HELP)
-    return parser.parse_args(argv)
-
-
-def add_enable_argument(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument(
+EnableOpt = Annotated[
+    list[str] | None,
+    typer.Option(
         "--enable",
-        action="append",
-        default=[],
-        metavar="TAG_OR_PACK",
         help=(
             "Enable optional packs/tags (comma-separated or repeatable). "
             "Example: --enable gpsg or --enable gpsg-import,gpsg-naming"
         ),
+    ),
+]
+
+
+def enable_set(raw: list[str] | None) -> frozenset[str]:
+    return resolve_enable(raw or [], project_root=Path())
+
+
+@app.command("list")
+def list_cmd(enable: EnableOpt = None) -> None:
+    raise typer.Exit(cmd_list(enable=enable_set(enable)))
+
+
+@app.command("explain")
+def explain_cmd(rule_id: Annotated[str, typer.Argument()]) -> None:
+    raise typer.Exit(cmd_explain(rule_id))
+
+
+@app.command("check")
+def check_cmd(
+    paths: Annotated[list[Path] | None, typer.Argument(help=PATHS_HELP)] = None,
+    *,
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Report auto + hint rules"),
+    ] = False,
+    enable: EnableOpt = None,
+) -> None:
+    resolved = resolve_cli_paths(list(paths or []), prog=app.info.name or DEFAULT_PROG)
+    raise typer.Exit(
+        cmd_check(resolved, strict=strict, enable=enable_set(enable)),
     )
+
+
+@app.command("fix")
+def fix_cmd(
+    paths: Annotated[list[Path] | None, typer.Argument(help=PATHS_HELP)] = None,
+    *,
+    enable: EnableOpt = None,
+) -> None:
+    resolved = resolve_cli_paths(list(paths or []), prog=app.info.name or DEFAULT_PROG)
+    raise typer.Exit(cmd_fix(resolved, enable=enable_set(enable)))
 
 
 def cmd_list(*, enable: frozenset[str]) -> int:

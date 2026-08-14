@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import platform
 import shutil
 import sys
@@ -47,10 +48,21 @@ class GitHubReleaseInstaller:
                 download_https_file(url, archive_path)
             except OSError as exc:
                 raise InstallError(f"failed to download {binary_name}: {exc}") from exc
+            self.verify_sha256(archive_path, download.sha256)
             extracted = self.extract_binary(archive_path, download.binary_name)
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(extracted, destination)
             destination.chmod(destination.stat().st_mode | 0o100)
+
+    @staticmethod
+    def verify_sha256(path: Path, expected: str | None) -> None:
+        if expected is None:
+            return
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        if digest.casefold() != expected.casefold():
+            raise InstallError(
+                f"sha256 mismatch for {path.name}: expected {expected}, got {digest}"
+            )
 
     @staticmethod
     def release_arch(download: BinaryDownloadSpec, arch: str) -> str:

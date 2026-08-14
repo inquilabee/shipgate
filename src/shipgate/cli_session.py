@@ -41,9 +41,10 @@ class CliSession:
 
     def __init__(self, app: ShipGateApp | None = None) -> None:
         self.app = app or ShipGateApp()
+        self._project_root: Path | None = None
 
-    @staticmethod
-    def build_run_command(project_root: Path, opts: CliRunOptions) -> RunCommand:
+    def build_run_command(self, project_root: Path, opts: CliRunOptions) -> RunCommand:
+        _ = self.app
         return RunCommand(
             project_root=project_root,
             config_path=opts.config,
@@ -70,21 +71,22 @@ class CliSession:
         code = getattr(exc, "code", None)
         return code if isinstance(code, int) else 1
 
-    @staticmethod
-    def write_error(exc: ShipGateError) -> None:
+    def write_error(self, exc: ShipGateError) -> None:
+        _ = self.app
         sys.stderr.write(exc.format() + "\n")
 
-    @staticmethod
-    def persist_project_env(project_root: Path, project_env: Path | None) -> None:
+    def persist_project_env(self, project_root: Path, project_env: Path | None) -> None:
+        _ = self.app
         if project_env is not None:
             persist_project_python(project_root, project_env)
 
-    @staticmethod
-    def project_root() -> Path:
-        return find_project_root()
+    def project_root(self) -> Path:
+        if self._project_root is None:
+            self._project_root = find_project_root()
+        return self._project_root
 
-    @staticmethod
-    def write_text(text: str) -> None:
+    def write_text(self, text: str) -> None:
+        _ = self.app
         sys.stdout.write(text)
         raise typer.Exit(0)
 

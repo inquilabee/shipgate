@@ -176,3 +176,12 @@ def test_bracketed_ipv6_loopback_is_loopback():
 def test_require_bind_safety_allows_bracketed_ipv6_loopback(monkeypatch):
     monkeypatch.delenv("SHIPGATE_UI_TOKEN", raising=False)
     require_bind_safety("[::1]")
+
+
+def test_require_safe_branch_rejects_dashed_names():
+    from shipgate.frontend.services.worktree import WorktreeError, WorktreeManager
+
+    with pytest.raises(WorktreeError, match="invalid branch"):
+        WorktreeManager.require_safe_branch("--help")
+    with pytest.raises(WorktreeError, match="invalid branch"):
+        WorktreeManager.require_safe_branch("")
