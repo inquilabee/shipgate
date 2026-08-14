@@ -22,24 +22,13 @@ DEFAULT_IGNORED = (
     ".git/",
 )
 
-IGNORED_DIR_NAMES = frozenset(
-    {
-        ".venv",
-        "venv",
-        ".review-venv",
-        ".direnv",
-        ".nox",
-        ".tox",
-        "site-packages",
-        "__pycache__",
-        ".git",
-        ".shipgate",
-    }
-)
-
 
 def default_ignores() -> tuple[str, ...]:
     return DEFAULT_IGNORED
+
+
+def ignored_dir_names() -> frozenset[str]:
+    return frozenset(item.strip("/") for item in DEFAULT_IGNORED)
 
 
 class IgnoreFile:
@@ -95,7 +84,8 @@ def is_ignored_by_git(project_root: Path, path: Path) -> bool:
 
 
 def ignored_path_part(rel_str: str) -> bool:
-    return any(part in IGNORED_DIR_NAMES or part.endswith("venv") for part in rel_str.split("/"))
+    names = ignored_dir_names()
+    return any(part in names or part.endswith("-venv") for part in rel_str.split("/") if part)
 
 
 def should_ignore(

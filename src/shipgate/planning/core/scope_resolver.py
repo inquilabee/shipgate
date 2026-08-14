@@ -10,6 +10,7 @@ from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
 from shipgate.paths import relative_if_under
 from shipgate.planning.utils.gitignore import (
+    default_ignores,
     expand_scope,
     include_allowed,
     minimize_covering_dirs,
@@ -34,14 +35,7 @@ class ExpandScopeKey:
     respect_gitignore: bool
 
 
-DEFAULT_EXCLUDES = (
-    ".shipgate/",
-    ".venv/",
-    "venv/",
-    "build/",
-    "reports/",
-    "__pycache__/",
-)
+DEFAULT_EXCLUDES = (*default_ignores(), "build/")
 
 
 class ScopeResolver:

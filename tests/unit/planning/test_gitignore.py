@@ -2,8 +2,10 @@ from pathlib import Path
 
 from shipgate.domain.modes import RunMode
 from shipgate.domain.project import Scope
+from shipgate.planning.core.scope_resolver import DEFAULT_EXCLUDES
 from shipgate.planning.core.scopes import scope_paths
 from shipgate.planning.utils.gitignore import (
+    default_ignores,
     expand_scope,
     include_allowed,
     matches_tool_criteria,
@@ -27,6 +29,13 @@ def test_should_ignore_venv_dirs(tmp_path: Path):
     assert should_ignore(tmp_path, dot_venv)
     assert should_ignore(tmp_path, plain_venv)
     assert should_ignore(tmp_path, review_venv)
+
+
+def test_should_not_ignore_prevenv_package_dir(tmp_path: Path):
+    path = tmp_path / "src" / "prevenv" / "mod.py"
+    path.parent.mkdir(parents=True)
+    path.write_text("x = 1\n", encoding="utf-8")
+    assert not should_ignore(tmp_path, path)
 
 
 def test_should_ignore_git_info_exclude(tmp_path: Path):
@@ -57,6 +66,12 @@ def test_include_allowed_uses_path_prefix():
     assert include_allowed("src", ("src",))
     assert not include_allowed("src_backup/a.py", ("src",))
     assert not include_allowed("src_backup/a.py", ("src/",))
+
+
+def test_default_excludes_reuse_default_ignores_plus_build():
+    assert (*default_ignores(), "build/") == DEFAULT_EXCLUDES
+    assert ".review-venv/" in DEFAULT_EXCLUDES
+    assert "site-packages/" in DEFAULT_EXCLUDES
 
 
 def test_expand_scope_include_does_not_match_prefix_sibling(tmp_path: Path):

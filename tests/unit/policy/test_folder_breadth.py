@@ -48,3 +48,25 @@ def test_allowlisted_path_skipped(tmp_path, monkeypatch) -> None:
 def test_respects_max_allowed_threshold(tmp_path, monkeypatch) -> None:
     findings = collect_breadth_findings(tmp_path, monkeypatch, file_count=3)
     assert findings == []
+
+
+def test_does_not_walk_review_venv_site_packages(tmp_path, monkeypatch) -> None:
+    write_py_files(tmp_path / "pkg", 2)
+    write_py_files(tmp_path / ".review-venv" / "lib" / "python3.13" / "site-packages" / "rich", 20)
+    monkeypatch.delenv("SHIPGATE_SCOPE_PATHS", raising=False)
+    gate = FolderBreadthGate()
+    findings = gate.collect_findings(
+        root=tmp_path,
+        config={
+            "scan_roots": ["."],
+            "max_allowed": 3,
+            "extensions": [".py"],
+            "strict": True,
+        },
+        allowlist=set(),
+        ignores=None,
+    )
+    assert findings == []
+    extra = gate.report_extra(findings)
+    assert extra is not None
+    assert extra["leaf_dirs_scanned"] == 1

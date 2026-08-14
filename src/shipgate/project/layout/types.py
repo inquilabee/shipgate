@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from shipgate.planning.utils.gitignore import ignored_dir_names
+
 DOC_BASENAMES = frozenset({"docs", "doc", "documentation", "sphinx"})
 TEST_DIR_BASENAMES = frozenset({"test", "tests"})
 DOC_EXTENSIONS = frozenset({".md", ".rst", ".adoc"})
@@ -25,16 +27,11 @@ UTILITY_PY_BASENAMES = frozenset(
         "sphinx",
     }
 )
-SKIP_DIR_NAMES = frozenset(
+LAYOUT_SKIP_EXTRA = frozenset(
     {
-        ".git",
         ".hg",
         ".svn",
-        ".venv",
-        "venv",
-        "__pycache__",
         "node_modules",
-        ".tox",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
@@ -46,11 +43,6 @@ SKIP_DIR_NAMES = frozenset(
         ".eggs",
         ".idea",
         ".vscode",
-        ".shipgate",
-        ".review-venv",
-        ".direnv",
-        ".nox",
-        "site-packages",
         "mlruns",
         "mutants",
         ".next",
@@ -58,6 +50,7 @@ SKIP_DIR_NAMES = frozenset(
         "vendor",
     }
 )
+SKIP_DIR_NAMES = ignored_dir_names() | LAYOUT_SKIP_EXTRA
 SKIP_DIR_SUFFIXES = (".egg-info",)
 
 

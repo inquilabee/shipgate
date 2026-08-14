@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from shipgate.gates.scope_paths import scope_paths_from_env
+from shipgate.planning.utils.gitignore import ignored_path_part
 from shipgate.policy.core.config import load_gate_mapping
 from shipgate.policy.core.finding import FindingLocation, PolicyFinding
 from shipgate.policy.core.gate import PolicyGate
@@ -42,9 +43,6 @@ class FolderBreadthReport:
             "worst_leaf_dir": self.worst_leaf_dir,
             "worst_leaf_count": self.worst_leaf_count,
         }
-
-
-SKIP_DIR_NAMES = frozenset({"__pycache__"})
 
 
 class FolderBreadthGate(PolicyGate):
@@ -174,7 +172,7 @@ class FolderBreadthGate(PolicyGate):
         violations: list[DirBreadthViolation] = []
         dirs_scanned = 0
         base = self._root / scan_root
-        for directory in self._iter_scan_directories(base):
+        for directory in self._scan_directories(base):
             outcome = self._directory_breadth_outcome(directory)
             if outcome is None:
                 continue
@@ -230,17 +228,29 @@ class FolderBreadthGate(PolicyGate):
             )
         )
 
-    @staticmethod
-    def _iter_scan_directories(base: Path) -> list[Path]:
+    def _scan_directories(self, base: Path) -> list[Path]:
         if not base.is_dir():
             return []
-        directories = [base]
-        directories.extend(
-            path
-            for path in sorted(base.rglob("*"))
-            if path.is_dir() and path.name not in SKIP_DIR_NAMES
+        found: list[Path] = []
+        pending = [base]
+        while pending:
+            current = pending.pop()
+            found.append(current)
+            pending.extend(self._walkable_children(current))
+        return found
+
+    def _walkable_children(self, directory: Path) -> list[Path]:
+        return sorted(
+            child
+            for child in directory.iterdir()
+            if child.is_dir() and not self._should_prune_walk(child)
         )
-        return directories
+
+    def _should_prune_walk(self, directory: Path) -> bool:
+        if self._root is None:
+            return True
+        rel = directory.relative_to(self._root).as_posix()
+        return ignored_path_part(rel) if self._ignores is None else self._ignores.is_ignored(rel)
 
     def _count_direct_files(self, directory: Path) -> int:
         count = 0
