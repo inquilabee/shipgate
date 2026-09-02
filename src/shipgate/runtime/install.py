@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from typing import TYPE_CHECKING
 
@@ -13,13 +12,24 @@ from shipgate.planning.core.suites import expand_suite
 from shipgate.runtime.environment import tools_manifest_path
 from shipgate.runtime.installers.registry import get_installer
 from shipgate.runtime.lockfile import write_lockfile
+from shipgate.runtime.tool_manifest import ManagedToolState, read_manifest, write_manifest
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from shipgate.domain.catalog import Catalog, InstallDefinition
 
-MANIFEST_SCHEMA = "shipgate.install.v1"
+__all__ = [
+    "ManagedToolState",
+    "collect_install_requirements",
+    "collect_install_requirements_for_tools",
+    "install_binaries",
+    "install_suite",
+    "partition_python_packages",
+    "read_manifest",
+    "write_install_lockfile",
+    "write_manifest",
+]
 
 
 def collect_install_requirements(
@@ -76,35 +86,6 @@ def partition_python_packages(
     return kept, tuple(skipped)
 
 
-def write_manifest(
-    project_root: Path,
-    *,
-    python_packages: dict[str, InstallDefinition],
-    binary_packages: dict[str, InstallDefinition],
-) -> Path:
-    manifest = read_manifest(project_root)
-    manifest |= {
-        "schema_version": MANIFEST_SCHEMA,
-        "python": f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-        "packages": {
-            **manifest.get("packages", {}),
-            **{
-                pkg: install_def.version or "latest" for pkg, install_def in python_packages.items()
-            },
-        },
-        "binaries": {
-            **manifest.get("binaries", {}),
-            **{
-                name: install_def.version or "latest"
-                for name, install_def in binary_packages.items()
-            },
-        },
-    }
-    manifest_path = tools_manifest_path(project_root)
-    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    return manifest_path
-
-
 def write_install_lockfile(
     project_root: Path,
     *,
@@ -131,6 +112,9 @@ def install_suite(
     python_packages, skipped = partition_python_packages(python_packages)
     for reason in skipped:
         sys.stderr.write(f"{reason}\n")
+    if not force and ManagedToolState(project_root).satisfies(python_packages, binary_packages):
+        sys.stderr.write("shipgate install: managed tools already satisfied\n")
+        return tools_manifest_path(project_root)
     (project_root / PROJECT_TOOLS_DIR).mkdir(parents=True, exist_ok=True)
     if python_packages:
         get_installer("python").install_packages(project_root, python_packages, force=force)
@@ -139,41 +123,18 @@ def install_suite(
         python_packages=python_packages,
         binary_packages={},
     )
-    if not binary_packages:
-        write_install_lockfile(
-            project_root,
-            python_packages=python_packages,
-            binary_packages={},
-        )
-        return manifest_path
-
-    binary_installer = get_installer("binary")
-    installed_binaries: dict[str, InstallDefinition] = {}
-    errors: list[str] = []
-    for name, install_def in sorted(binary_packages.items()):
-        try:
-            binary_installer.install_packages(
-                project_root,
-                {name: install_def},
-                force=force,
-            )
-            installed_binaries[name] = install_def
-        except InstallError as exc:
-            errors.append(f"{name}: {exc.message}")
-
+    installed_binaries, errors = install_binaries(project_root, binary_packages, force=force)
     if installed_binaries:
         write_manifest(
             project_root,
             python_packages={},
             binary_packages=installed_binaries,
         )
-
     write_install_lockfile(
         project_root,
         python_packages=python_packages,
         binary_packages=installed_binaries,
     )
-
     if errors:
         summary = "; ".join(errors)
         raise InstallError(
@@ -183,9 +144,22 @@ def install_suite(
     return manifest_path
 
 
-def read_manifest(project_root: Path) -> dict:
-    manifest_path = tools_manifest_path(project_root)
-    if not manifest_path.is_file():
-        return {}
-    data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    return data if isinstance(data, dict) else {}
+def install_binaries(
+    project_root: Path,
+    binary_packages: dict[str, InstallDefinition],
+    *,
+    force: bool,
+) -> tuple[dict[str, InstallDefinition], list[str]]:
+    """Install each managed binary independently; collect per-tool errors."""
+    if not binary_packages:
+        return {}, []
+    binary_installer = get_installer("binary")
+    installed: dict[str, InstallDefinition] = {}
+    errors: list[str] = []
+    for name, install_def in sorted(binary_packages.items()):
+        try:
+            binary_installer.install_packages(project_root, {name: install_def}, force=force)
+            installed[name] = install_def
+        except InstallError as exc:
+            errors.append(f"{name}: {exc.message}")
+    return installed, errors

@@ -1,4 +1,5 @@
 from shipgate.domain.reports import (
+    SCHEMA_VERSION,
     CheckReport,
     Finding,
     FindingLocation,
@@ -6,6 +7,7 @@ from shipgate.domain.reports import (
 )
 from shipgate.domain.run_command import RunCommand
 from shipgate.runtime.report_store import ReportStore
+from shipgate.runtime.reports import generate_run_id
 from shipgate.runtime.session.finalizer import finalize_failed_run
 
 
@@ -69,6 +71,42 @@ def test_report_store_rejects_traversal_run_id(tmp_path):
 
 
 def test_validate_run_id_accepts_generated_ids():
-    from shipgate.runtime.reports import generate_run_id, validate_run_id
+    from shipgate.runtime.reports import validate_run_id
 
     assert validate_run_id(generate_run_id())
+
+
+def test_schema_version_in_output():
+    report = RunReport(run_id="test", suite="standard", mode="check", status="passed")
+    assert report.to_dict()["schema_version"] == SCHEMA_VERSION
+
+
+def test_write_failure_report_via_store(tmp_path):
+    report = RunReport(
+        run_id=generate_run_id(),
+        suite="standard",
+        mode="check",
+        status="failed",
+        reports=(
+            CheckReport(
+                check_id="ruff.lint",
+                tool_id="ruff.lint",
+                status="failed",
+                exit_code=1,
+                findings=(
+                    Finding(
+                        check_id="ruff.lint",
+                        rule_id="F401",
+                        severity="error",
+                        message="unused",
+                        location=FindingLocation(path="a.py", line=1),
+                    ),
+                ),
+            ),
+        ),
+    )
+    finalized = ReportStore(tmp_path).save_final(report)
+    assert finalized.report_path is not None
+    path = tmp_path / finalized.report_path
+    assert path.is_file()
+    assert "failures" in path.parts
