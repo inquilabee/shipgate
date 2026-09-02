@@ -4,6 +4,20 @@
 
 ## Unreleased
 
+## v0.1.12
+
+### Changed
+
+- `shipgate install` now no-ops when the managed tool set already matches the
+  recorded manifest (managed venv present, host `major.minor` unchanged, every
+  suite tool recorded at its pin and present on disk). A satisfied run prints
+  `managed tools already satisfied` and returns in ~0.2s instead of re-running
+  `pip install` for every tool (~3.5s warm, ~23s cold). `shipgate update` still
+  forces a full reinstall.
+- Manifest read/write moved to `runtime/tool_manifest.py` alongside the new
+  `ManagedToolState`; `read_manifest` / `write_manifest` stay importable from
+  `runtime.install`.
+
 ## v0.1.11
 
 ### Added
