@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.refactor.support.still_detecting_rule import apply_still_detecting_rule
-
 from refactor.runner import check_paths
+from tests.refactor.support.still_detecting_rule import apply_still_detecting_rule
 
 
 def test_custom_detect_path_filter_not_bypassed_by_combined_visitor(

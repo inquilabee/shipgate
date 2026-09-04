@@ -6,7 +6,11 @@ from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
 from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
-from shipgate.gates.scope_paths import gate_scope_entry, gate_scope_paths, gate_scope_rel_path
+from shipgate.gates.scope_paths import (
+    gate_scope_entry,
+    gate_scope_paths,
+    gate_scope_rel_path,
+)
 
 
 def make_resolved(tmp_path: Path, paths: tuple[Path, ...], *, delivery: str) -> ResolvedRequest:

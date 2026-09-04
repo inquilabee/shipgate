@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from tests.unit.support.python_env import PythonEnvFixture
-
 from shipgate.paths import (
     PROJECT_CACHE_ENV,
     PROJECT_ENV_CACHE_KEY,
@@ -14,6 +12,7 @@ from shipgate.runtime.project_python import (
     persist_project_python,
     read_cached_project_python,
 )
+from tests.unit.support.python_env import PythonEnvFixture
 
 
 def test_discover_prefers_dot_venv(tmp_path):

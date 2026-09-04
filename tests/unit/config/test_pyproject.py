@@ -3,6 +3,11 @@
 from pathlib import Path
 
 import pytest
+
+from shipgate.config.loader import ProjectConfigLoader
+from shipgate.errors import ConfigError
+from shipgate.paths import PROJECT_CACHE_ENV, SHIPGATE_YAML
+from shipgate.project.init import init_project
 from tests.unit.support.pyproject_config import (
     FULL_PYPROJECT,
     assert_config_error,
@@ -12,11 +17,6 @@ from tests.unit.support.pyproject_config import (
     assert_yaml_merge_overrides,
     write_pyproject,
 )
-
-from shipgate.config.loader import ProjectConfigLoader
-from shipgate.errors import ConfigError
-from shipgate.paths import PROJECT_CACHE_ENV, SHIPGATE_YAML
-from shipgate.project.init import init_project
 
 
 def test_pyproject_only_loads_full_config(tmp_path: Path):

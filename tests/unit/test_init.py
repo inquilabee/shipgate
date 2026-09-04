@@ -2,7 +2,12 @@ import shutil
 
 from shipgate.cli import main
 from shipgate.core import run_command
-from shipgate.paths import PROJECT_CACHE_ENV, SHIPGATE_DIR, SHIPGATE_YAML, find_project_root
+from shipgate.paths import (
+    PROJECT_CACHE_ENV,
+    SHIPGATE_DIR,
+    SHIPGATE_YAML,
+    find_project_root,
+)
 
 GIT = shutil.which("git")
 

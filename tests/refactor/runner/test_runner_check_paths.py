@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from refactor.protocol import ApplyMode, RuleKind
+from refactor.registry import RULES
+from refactor.runner import check_paths, check_rules, fix_paths, iter_python_files
 from tests.refactor.support.runner_fixtures import (
     AFTER,
     BEFORE,
@@ -8,10 +11,6 @@ from tests.refactor.support.runner_fixtures import (
     MULTI_BEFORE,
     NON_AUTO_RULE_IDS,
 )
-
-from refactor.protocol import ApplyMode, RuleKind
-from refactor.registry import RULES
-from refactor.runner import check_paths, check_rules, fix_paths, iter_python_files
 
 
 def test_check_paths_finds_default_get(tmp_path) -> None:

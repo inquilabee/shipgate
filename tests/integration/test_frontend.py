@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+
 from tests.frontend.support.seed import DEFAULT_RUN_ID, make_seeded_client
 
 if TYPE_CHECKING:

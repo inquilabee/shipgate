@@ -5,7 +5,11 @@ from shipgate.frontend.domain.baseline import (
     fixed_fingerprints,
 )
 from shipgate.frontend.domain.models import FindingRecord
-from shipgate.frontend.services.ingest import docs_from_extra, finding_to_record, normalize_docs_url
+from shipgate.frontend.services.ingest import (
+    docs_from_extra,
+    finding_to_record,
+    normalize_docs_url,
+)
 from shipgate.frontend.web.context.serialize import finding_to_api
 
 

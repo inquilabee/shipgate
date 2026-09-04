@@ -5,7 +5,11 @@ from concurrent.futures import Future
 import pytest
 
 from shipgate.domain.reports import CheckReport
-from shipgate.runtime.parallel import FailFastError, collect_parallel_results, run_parallel
+from shipgate.runtime.parallel import (
+    FailFastError,
+    collect_parallel_results,
+    run_parallel,
+)
 
 
 def passed_report(tool_id: str) -> CheckReport:
