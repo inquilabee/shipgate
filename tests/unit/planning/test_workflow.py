@@ -5,7 +5,7 @@ from shipgate.domain.modes import RunMode
 from shipgate.domain.project import CheckBinding, ProjectConfig
 from shipgate.errors import PlanningError
 from shipgate.planning.core.suites import expand_suite
-from shipgate.planning.workflow import resolve_runnables
+from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 
 
 @pytest.fixture
@@ -125,3 +125,23 @@ def test_check_bindings_do_not_replace_suite(catalog):
     assert suite_id == "full"
     assert "semgrep.scan" in [item.tool_id for item in selected]
     assert "radon.cc" in [item.tool_id for item in selected]
+
+
+@pytest.mark.parametrize("suite_id", ["pre-commit", "standard", "python-quality"])
+def test_commit_time_suites_run_checks_in_parallel(catalog, suite_id):
+    parallel, _ = suite_execution_flags(catalog, suite_id, ProjectConfig(), RunMode.CHECK)
+    assert parallel
+
+
+def test_apply_mode_is_never_parallel_because_formatters_share_files(catalog):
+    parallel, fail_fast = suite_execution_flags(
+        catalog, "pre-commit", ProjectConfig(), RunMode.APPLY
+    )
+    assert not parallel
+    assert fail_fast
+
+
+def test_only_the_invoked_suites_flags_apply_to_nested_suites(catalog):
+    # `policy` declares fail_fast, but inside `full` the outer suite's flags win.
+    assert suite_execution_flags(catalog, "policy", ProjectConfig(), RunMode.CHECK)[1]
+    assert not suite_execution_flags(catalog, "full", ProjectConfig(), RunMode.CHECK)[1]

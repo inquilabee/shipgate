@@ -1,9 +1,12 @@
 suites:
+  # A suite is flattened to its tool list, so only the *invoked* suite's `parallel` and
+  # `fail_fast` apply: `full` runs `policy` with full's flags, not policy's own. Apply
+  # mode (`shipgate format`) always runs one tool at a time; formatters share files.
   python-quality:
     members:
       - ruff.lint
       - ty.check
-    parallel: false
+    parallel: true
     fail_fast: false
   format:
     members:
@@ -40,7 +43,7 @@ suites:
   standard:
     members:
       - python-quality
-    parallel: false
+    parallel: true
     fail_fast: false
   full:
     members:
@@ -102,5 +105,5 @@ suites:
     members:
       - format
       - python-quality
-    parallel: false
+    parallel: true
     fail_fast: true

@@ -90,6 +90,12 @@ error-format: compact
 
 Live names: `shipgate list suites`.
 
+A suite runs as one flat list of tools, so only the suite you invoke sets
+`parallel` and `fail_fast`: `shipgate check --suite full` runs the `policy`
+members with `full`'s flags, not `policy`'s own. Checks run in parallel when the
+suite says so; `shipgate format` (apply mode) always runs one tool at a time
+because formatters write files.
+
 ## Error formats
 
 | Format | Role |

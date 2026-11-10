@@ -114,8 +114,12 @@ def suite_execution_flags(
     catalog: Catalog,
     suite_id: str,
     project: ProjectConfig,
+    mode: RunMode,
 ) -> tuple[bool, bool]:
-    if catalog.is_suite(suite_id):
-        suite = catalog.get_suite(suite_id)
-        return suite.parallel, suite.fail_fast
-    return project.parallel, project.fail_fast
+    """``(parallel, fail_fast)`` for the invoked suite; apply mode is never parallel.
+
+    Formatters write files, and the members of an apply run can share them, so
+    only read-only (check) runs fan out.
+    """
+    suite = catalog.get_suite(suite_id) if catalog.is_suite(suite_id) else project
+    return suite.parallel and mode != RunMode.APPLY, suite.fail_fast

@@ -71,7 +71,7 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
         suite_override=command.suite,
         check_override=command.check,
     )
-    parallel, fail_fast = suite_execution_flags(catalog, suite_id, project)
+    parallel, fail_fast = suite_execution_flags(catalog, suite_id, project, mode)
     environment = resolve_environment(project_root, project.env)
     changed_only, since = effective_incremental(command, project)
     scope_session = RunScopeSession(
