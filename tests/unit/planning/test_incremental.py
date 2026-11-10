@@ -10,12 +10,13 @@ from shipgate.domain.project import ProjectConfig, Scope
 from shipgate.domain.run_command import RunCommand
 from shipgate.errors import PlanningError
 from shipgate.paths import relative_if_under
+from shipgate.planning.utils.gitignore import expand_scope
 from shipgate.planning.utils.incremental import (
     effective_incremental,
-    file_matches_changed,
     git_changed_files,
     tool_paths_after_incremental,
 )
+from shipgate.planning.utils.scope_filter import filter_scope_files
 
 GIT = shutil.which("git")
 GIT_LEAK_PREFIXES = (
@@ -79,13 +80,6 @@ def test_relative_if_under_drops_outside_paths(tmp_path):
     outside = tmp_path.parent / "escape.py"
     assert relative_if_under(inside, tmp_path) == Path("src/a.py")
     assert relative_if_under(outside, tmp_path) is None
-
-
-def test_file_matches_changed_false_outside_root(tmp_path):
-    outside = tmp_path.parent / "escape.py"
-    outside.write_text("x = 1\n", encoding="utf-8")
-    changed = {outside.as_posix()}
-    assert file_matches_changed(outside, tmp_path, changed) is False
 
 
 @pytest.mark.skipif(GIT is None, reason="git not on PATH")
@@ -168,3 +162,50 @@ def test_effective_incremental_or_keeps_project_changed_only(tmp_path):
     command = RunCommand(project_root=tmp_path)
     project = ProjectConfig(changed_only=True, since="main")
     assert effective_incremental(command, project) == (True, "main")
+
+
+@pytest.mark.skipif(GIT is None, reason="git not on PATH")
+@pytest.mark.parametrize(
+    "options",
+    [
+        {},
+        {"exclude": ("src/pkg/legacy",)},
+        {"include": ("src/pkg", "docs")},
+        {"extensions": (".py",)},
+        {"respect_gitignore": False},
+    ],
+    ids=["plain", "exclude", "include", "extension", "no-gitignore"],
+)
+def test_filter_scope_files_equals_walk_intersected_with_changed(tmp_path, options):
+    """Starting from git's changed set must give exactly what walking the tree would."""
+    files = {
+        ".gitignore": "ignored_dir/\n*.tmp\n",
+        "src/pkg/__init__.py": "",
+        "src/pkg/a.py": "x = 1\n",
+        "src/pkg/legacy/old.py": "x = 1\n",
+        "src/pkg-extra/z.py": "x = 1\n",
+        "src/pkg/data.txt": "d\n",
+        "docs/guide.md": "g\n",
+        "ignored_dir/skip.py": "x = 1\n",
+        "scratch.tmp": "t\n",
+        "node_modules/lib/index.js": "x\n",
+    }
+    for rel, content in files.items():
+        target = tmp_path / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+    git_init_commit(tmp_path)
+    for rel in ("src/pkg/a.py", "src/pkg/legacy/old.py", "src/pkg-extra/z.py", "docs/guide.md"):
+        (tmp_path / rel).write_text("changed = True\n", encoding="utf-8")
+    (tmp_path / "ignored_dir" / "new.py").write_text("x = 2\n", encoding="utf-8")
+    (tmp_path / "src" / "pkg" / "fresh.py").write_text("x = 3\n", encoding="utf-8")
+
+    changed = git_changed_files(tmp_path, "HEAD")
+    assert "src/pkg/fresh.py" in changed
+    walked = tuple(
+        path
+        for path in expand_scope(tmp_path, tmp_path, **options)
+        if path.relative_to(tmp_path).as_posix() in changed
+    )
+    assert walked
+    assert filter_scope_files(tmp_path, tmp_path, changed, **options) == walked
