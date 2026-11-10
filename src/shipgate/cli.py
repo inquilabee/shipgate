@@ -70,6 +70,7 @@ DisplayCliOpt = Annotated[
 ]
 CiOpt = Annotated[bool, typer.Option("--ci", help="CI mode")]
 NoCacheOpt = Annotated[bool, typer.Option("--no-cache", help="Disable check result cache")]
+TimingsOpt = Annotated[bool, typer.Option("--timings", help="Print how long each check took")]
 ChangedOnlyOpt = Annotated[bool, typer.Option("--changed-only", help="Incremental checks")]
 FullTreeOpt = Annotated[
     bool,
@@ -125,6 +126,7 @@ def register_run_command(typer_app: typer.Typer, name: str, *, mode: str) -> Non
         full_tree: FullTreeOpt = False,
         since: SinceOpt = None,
         project_env: ProjectEnvOpt = None,
+        timings: TimingsOpt = False,
     ) -> None:
         session().run(
             mode,
@@ -144,6 +146,7 @@ def register_run_command(typer_app: typer.Typer, name: str, *, mode: str) -> Non
                 full_tree=full_tree,
                 since=since,
                 project_env=project_env,
+                timings=timings,
             ),
         )
 

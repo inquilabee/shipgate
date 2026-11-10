@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 from shipgate.domain.run_command import RunCommand
@@ -56,6 +57,7 @@ class RunSession:
     ) -> tuple[int, RunReport]:
         context = prepare_context(command, mode, self._catalog)
         run_id = run_id or generate_run_id()
+        started = time.perf_counter()
         check_reports = self._runner.run_all_checks(
             command=command,
             context=context,
@@ -63,6 +65,7 @@ class RunSession:
             on_progress=on_progress,
             should_cancel=should_cancel,
         )
+        context.timings.emit(command, time.perf_counter() - started)
         FileDigestIndex.for_root(context.project_root).save()
         report = build_run_report(
             run_id=run_id,

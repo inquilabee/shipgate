@@ -34,6 +34,7 @@ class CliRunOptions:
     full_tree: bool = False
     since: str | None = None
     project_env: Path | None = None
+    timings: bool = False
 
 
 class CliSession:
@@ -61,6 +62,7 @@ class CliSession:
             changed_only=opts.changed_only,
             full_tree=opts.full_tree,
             since=opts.since,
+            timings=opts.timings,
         )
 
     @staticmethod

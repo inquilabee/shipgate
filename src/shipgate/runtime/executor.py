@@ -25,9 +25,25 @@ class ProcessResult:
     output_files: tuple[Path, ...] = ()
 
 
+class CheckTimeoutError(ExecutionError):
+    """One tool outlived its time limit; carries whatever it had printed."""
+
+    def __init__(
+        self, argv: tuple[str, ...], timeout_seconds: int, *, stdout: str = "", stderr: str = ""
+    ) -> None:
+        super().__init__(f"command timed out after {timeout_seconds}s: {' '.join(argv)}")
+        self.timeout_seconds = timeout_seconds
+        self.stdout = stdout
+        self.stderr = stderr
+
+
 class Executor:
     def __init__(self, timeout_seconds: int = 600) -> None:
         self.timeout_seconds = timeout_seconds
+
+    @staticmethod
+    def captured_text(value: str | bytes | None) -> str:
+        return value.decode(errors="replace") if isinstance(value, bytes) else value or ""
 
     def run(
         self,
@@ -35,18 +51,19 @@ class Executor:
         *,
         cwd: Path,
         env: dict[str, str] | None = None,
+        timeout_seconds: int | None = None,
     ) -> ProcessResult:
+        """Run *argv*; *timeout_seconds* overrides the executor's default for this call."""
+        limit = timeout_seconds or self.timeout_seconds
         start = time.monotonic()
         try:
-            completed = run_command(
-                argv,
-                cwd=cwd,
-                env=env,
-                timeout=self.timeout_seconds,
-            )
+            completed = run_command(argv, cwd=cwd, env=env, timeout=limit)
         except subprocess.TimeoutExpired as exc:
-            raise ExecutionError(
-                f"command timed out after {self.timeout_seconds}s: {' '.join(argv)}"
+            raise CheckTimeoutError(
+                argv,
+                limit,
+                stdout=self.captured_text(exc.stdout),
+                stderr=self.captured_text(exc.stderr),
             ) from exc
         except OSError as exc:
             raise ExecutionError(f"failed to run command: {exc}") from exc

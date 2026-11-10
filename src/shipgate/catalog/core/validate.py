@@ -12,6 +12,7 @@ from shipgate.catalog.core.validate_tool_assets import (
     validate_tool_cache,
     validate_tool_module,
     validate_tool_script,
+    validate_tool_timeout,
 )
 from shipgate.catalog.core.validate_tool_cli_scope import (
     validate_tool_cli,
@@ -66,5 +67,6 @@ class CatalogValidator:
         validate_tool_module(tool)
         validate_tool_install(tool)
         validate_tool_cache(tool)
+        validate_tool_timeout(tool)
         validate_suggest_if(tool)
         validate_require_if(tool)

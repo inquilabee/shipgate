@@ -26,3 +26,4 @@ class RunCommand:
     changed_only: bool = False
     full_tree: bool = False
     since: str | None = None
+    timings: bool = False

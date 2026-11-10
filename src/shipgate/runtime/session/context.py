@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from shipgate.ci import apply_ci_defaults, is_ci_environment
@@ -12,6 +12,7 @@ from shipgate.paths import forget_resolved_dirs
 from shipgate.planning.utils.incremental import RunScopeSession, effective_incremental
 from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment
+from shipgate.runtime.session.timings import CheckTimings
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -50,6 +51,7 @@ class RunContext:
     parallel: bool
     fail_fast: bool
     scope_session: RunScopeSession
+    timings: CheckTimings = field(default_factory=CheckTimings)
 
 
 def resolve_error_format(command: RunCommand, project: ProjectConfig) -> str:

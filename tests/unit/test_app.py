@@ -4,7 +4,7 @@ from shipgate.runtime.executor import Executor, ProcessResult
 
 
 class FakeExecutor(Executor):
-    def run(self, argv, *, cwd, env=None):
+    def run(self, argv, *, cwd, env=None, timeout_seconds=None):
         if "check" in argv:
             return ProcessResult(
                 argv=argv,
@@ -14,12 +14,12 @@ class FakeExecutor(Executor):
                 stderr="",
                 duration_ms=1,
             )
-        return super().run(argv, cwd=cwd, env=env)
+        return super().run(argv, cwd=cwd, env=env, timeout_seconds=timeout_seconds)
 
 
 class FailExecutor(Executor):
-    def run(self, argv, *, cwd, env=None):  # ruff:ignore[no-self-use]
-        _ = env
+    def run(self, argv, *, cwd, env=None, timeout_seconds=None):  # ruff:ignore[no-self-use]
+        _ = env, timeout_seconds
         import json
 
         return ProcessResult(

@@ -74,6 +74,7 @@ class CatalogParser:
             scope=scope,
             tags=tags,
             cache=cache,
+            timeout_seconds=self._parse_timeout(raw.get("timeout_seconds")),
             suggest_if=suggest_if,
             require_if=require_if,
             display_name=str(raw.get("display_name") or ""),
@@ -143,6 +144,10 @@ class CatalogParser:
             os_map={str(key): str(value) for key, value in (raw.get("os_map") or {}).items()},
             sha256=str(digest) if digest else None,
         )
+
+    @staticmethod
+    def _parse_timeout(raw: int | str | None) -> int | None:
+        return int(raw) if raw is not None else None
 
     @staticmethod
     def _parse_cache(raw: dict | None) -> CacheDefinition | None:

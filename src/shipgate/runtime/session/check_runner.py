@@ -5,6 +5,7 @@ from __future__ import annotations
 import shlex
 import sys
 import threading
+import time
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Protocol
 
@@ -15,11 +16,13 @@ from shipgate.normalize import get_normalizer
 from shipgate.planning.check_resolver import SKIPPED_NO_MATCHING_FILES
 from shipgate.runtime.cache.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
+from shipgate.runtime.executor import CheckTimeoutError
 from shipgate.runtime.parallel import FailFastError, run_parallel
 from shipgate.runtime.progressive_average import apply_progressive_average
 from shipgate.runtime.reports import write_raw_output
 from shipgate.runtime.session.check_resolver import prepare_run
 from shipgate.runtime.session.finalizer import emit_progress
+from shipgate.runtime.session.timeout_report import timed_out_report
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -43,6 +46,7 @@ class ExecutorProtocol(Protocol):
         *,
         cwd: Path,
         env: dict[str, str] | None = None,
+        timeout_seconds: int | None = None,
     ) -> ProcessResult: ...
 
 
@@ -90,12 +94,14 @@ class CheckRunner:
         context: RunContext,
         run_id: str,
     ) -> CheckReport:
+        started = time.perf_counter()
         report = self.run_selected_tool(
             selected=selected,
             command=command,
             context=context,
             run_id=run_id,
         )
+        context.timings.record(selected.tool_id, time.perf_counter() - started)
         if context.fail_fast and report.status == "failed":
             raise FailFastError(report)
         return report
@@ -307,10 +313,18 @@ class CheckRunner:
             sys.stderr.write(f"{resolved.tool.id}: {shlex.join(argv)}\n")
         output_path = resolved.options.output or resolved.output_path
         snapshot = OutputFileSnapshot.capture(output_path)
-        result = replace(
-            self._executor.run(argv, cwd=resolved.project_root, env=env),
-            output_files=snapshot.written_paths(),
-        )
+        try:
+            result = replace(
+                self._executor.run(
+                    argv,
+                    cwd=resolved.project_root,
+                    env=env,
+                    timeout_seconds=resolved.tool.timeout_seconds,
+                ),
+                output_files=snapshot.written_paths(),
+            )
+        except CheckTimeoutError as exc:
+            return timed_out_report(resolved, exc, run_id)
         stdout_path, stderr_path, _ = write_raw_output(
             resolved.project_root,
             run_id,

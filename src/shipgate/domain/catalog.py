@@ -110,6 +110,7 @@ class ToolDefinition:
     scope: ScopeCriteria = field(default_factory=ScopeCriteria)
     tags: tuple[str, ...] = ()
     cache: CacheDefinition | None = None
+    timeout_seconds: int | None = None
     suggest_if: SuggestIfDefinition | None = None
     require_if: RequireIfDefinition | None = None
     display_name: str = ""
