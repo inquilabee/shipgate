@@ -240,6 +240,9 @@ class CliSession:
             raise typer.Exit(exc.exit_code) from None
         self.write_text(text)
 
+    def reports_prune(self, keep: int) -> None:
+        self.write_text(self.app.prune_reports(self.project_root(), keep))
+
     def radon_reset(self) -> None:
         self.write_text(self.app.radon_reset(self.project_root()))
 

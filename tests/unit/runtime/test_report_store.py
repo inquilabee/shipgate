@@ -1,3 +1,7 @@
+import os
+
+import pytest
+
 from shipgate.domain.reports import (
     SCHEMA_VERSION,
     CheckReport,
@@ -6,6 +10,7 @@ from shipgate.domain.reports import (
     RunReport,
 )
 from shipgate.domain.run_command import RunCommand
+from shipgate.errors import ExecutionError
 from shipgate.runtime.report_store import ReportStore
 from shipgate.runtime.reports import generate_run_id
 from shipgate.runtime.session.finalizer import finalize_failed_run
@@ -110,3 +115,56 @@ def test_write_failure_report_via_store(tmp_path):
     path = tmp_path / finalized.report_path
     assert path.is_file()
     assert "failures" in path.parts
+
+
+def seed_run(root, run_id: str, age_rank: int) -> None:
+    """A stored run in runs/, raw/ and failures/, ``age_rank`` seconds after the epoch."""
+    store = ReportStore(root)
+    store.save(RunReport(run_id=run_id, suite="standard", mode="check", status="passed"))
+    (store.root / "raw" / run_id / "ruff.lint").mkdir(parents=True)
+    (store.root / "failures" / run_id).mkdir(parents=True)
+    for base in store.run_roots():
+        os.utime(base / run_id, (age_rank, age_rank))
+
+
+RUN_IDS = [f"20260101T00000{n}Z-aaaaaa" for n in range(5)]
+
+
+@pytest.fixture
+def pruned_store(tmp_path):
+    for rank, run_id in enumerate(RUN_IDS, start=1):
+        seed_run(tmp_path, run_id, rank)
+    store = ReportStore(tmp_path)
+    (store.root / "raw" / "ruff.lint.json").write_text("{}", encoding="utf-8")
+    (store.root / "raw" / "not a run id").mkdir()
+    assert store.prune(keep=2) == 3
+    return store
+
+
+def stored_in(store, run_id) -> list[bool]:
+    return [(base / run_id).exists() for base in store.run_roots()]
+
+
+def test_prune_drops_old_runs_from_every_directory_and_the_index(pruned_store):
+    assert [stored_in(pruned_store, run_id) for run_id in RUN_IDS] == [
+        [False, False, False],
+        [False, False, False],
+        [False, False, False],
+        [True, True, True],
+        [True, True, True],
+    ]
+    assert {entry["run_id"] for entry in pruned_store.list_runs()} == set(RUN_IDS[3:])
+
+
+def test_prune_leaves_files_and_dirs_that_are_not_run_ids_alone(pruned_store):
+    assert (pruned_store.root / "raw" / "ruff.lint.json").is_file()
+    assert (pruned_store.root / "raw" / "not a run id").is_dir()
+
+
+def test_prune_is_a_noop_under_the_limit_and_rejects_a_zero_keep(tmp_path):
+    seed_run(tmp_path, "20260101T000000Z-aaaaaa", 1)
+    store = ReportStore(tmp_path)
+    assert store.prune(keep=5) == 0
+    assert len(store.list_runs()) == 1
+    with pytest.raises(ExecutionError):
+        store.prune(keep=0)

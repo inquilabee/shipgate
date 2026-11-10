@@ -62,3 +62,12 @@ def test_list_suites(capsys):
     captured = capsys.readouterr()
     assert code == 0
     assert "standard" in captured.out
+
+
+def test_reports_is_a_command_not_a_check_target():
+    assert normalize_argv(["reports", "prune", "--keep", "5"]) == [
+        "reports",
+        "prune",
+        "--keep",
+        "5",
+    ]

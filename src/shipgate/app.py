@@ -162,6 +162,13 @@ class ShipGateApp:
         return f"Reset progressive radon baselines in {PROJECT_CACHE_ENV}\n"
 
     @staticmethod
+    def prune_reports(project_root: Path, keep: int) -> str:
+        from shipgate.runtime.report_store import ReportStore
+
+        removed = ReportStore(project_root).prune(keep)
+        return f"Removed {removed} old run(s); kept the newest {keep}\n"
+
+    @staticmethod
     def schema() -> str:
         return json.dumps(report_json_schema(), indent=2) + "\n"
 
