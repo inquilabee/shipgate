@@ -4,9 +4,12 @@
 
 ## Unreleased
 
+## v0.1.13
+
 Performance and diagnosability for the commit loop (issue #4). Measured on this
-repository (809 tracked files, Windows Subsystem for Linux): an uncached `full` run 18.1s -> ~5.5s, a
-cached `full` run 23.3s -> ~6s, the `pre-commit` suite 3.1s -> ~0.6s.
+repository (809 tracked files, Windows Subsystem for Linux): an uncached `full`
+run 18.1s -> ~5.5s, a cached `full` run 23.3s -> ~6s, the `pre-commit` suite
+3.1s -> ~0.6s.
 
 ### Added
 
