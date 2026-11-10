@@ -46,6 +46,7 @@ def resolve_request(
     target: Path,
     project: ProjectConfig | None = None,
     option_sources: dict[str, str] | None = None,
+    respect_gitignore: bool = True,
 ) -> ResolvedRequest:
     if request.mode not in tool.modes:
         raise PlanningError(
@@ -87,4 +88,5 @@ def resolve_request(
         project_root=request.project_root,
         output_path=output_path,
         environment=environment,
+        respect_gitignore=respect_gitignore,
     )

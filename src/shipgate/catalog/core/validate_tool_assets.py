@@ -57,6 +57,11 @@ def validate_tool_cache(tool: ToolDefinition) -> None:
         raise CatalogError(f"tool {tool.id!r} cache.ttl_seconds must be >= 0")
 
 
+def validate_tool_timeout(tool: ToolDefinition) -> None:
+    if tool.timeout_seconds is not None and tool.timeout_seconds <= 0:
+        raise CatalogError(f"tool {tool.id!r} timeout_seconds must be > 0")
+
+
 def validate_suggest_if(tool: ToolDefinition) -> None:
     if tool.suggest_if is None:
         return

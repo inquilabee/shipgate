@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.refactor.support.runner_fixtures import BEFORE
-
 from refactor.cli import main, resolve_cli_paths
+from tests.refactor.support.runner_fixtures import BEFORE
 
 
 def test_cli_list_includes_default_get(capsys) -> None:

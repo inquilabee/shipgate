@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import threading
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -10,8 +11,9 @@ from shipgate.core.process import run_command
 from shipgate.domain.modes import RunMode
 from shipgate.errors import PlanningError
 from shipgate.paths import relative_if_under
-from shipgate.planning.core.scope_resolver import ExpandScopeKey, ScopeResolver
+from shipgate.planning.utils.git_visible import GitVisibleFiles
 from shipgate.planning.utils.gitignore import expand_scope, minimize_covering_dirs
+from shipgate.planning.utils.scope_filter import filter_scope_files
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -25,6 +27,16 @@ GIT_NAME_ONLY = "--name-only"
 GIT_RELATIVE = "--relative"
 
 
+@dataclass(frozen=True)
+class ExpandScopeKey:
+    target: str
+    include: tuple[str, ...]
+    exclude: tuple[str, ...]
+    extensions: tuple[str, ...]
+    globs: tuple[str, ...]
+    respect_gitignore: bool
+
+
 @dataclass
 class RunScopeSession:
     """Caches git change sets and incremental clean state for one run session."""
@@ -35,6 +47,51 @@ class RunScopeSession:
     _git_changed_cache: dict[str, set[str]] = field(default_factory=dict)
     expand_cache: dict[ExpandScopeKey, tuple[Path, ...]] = field(default_factory=dict)
     _incremental_clean: bool | None = None
+    _git_visible: GitVisibleFiles | None = None
+    _git_visible_loaded: bool = False
+    _git_visible_lock: threading.Lock = field(default_factory=threading.Lock)
+
+    def git_visible(self) -> GitVisibleFiles | None:
+        """One ``git ls-files`` shared by every scope expansion in this run."""
+        with self._git_visible_lock:
+            if not self._git_visible_loaded:
+                self._git_visible = GitVisibleFiles.load(self.project_root)
+                self._git_visible_loaded = True
+            return self._git_visible
+
+    def expand(
+        self,
+        project_root: Path,
+        target: Path,
+        *,
+        include: tuple[str, ...],
+        exclude: tuple[str, ...],
+        extensions: tuple[str, ...],
+        globs: tuple[str, ...],
+        respect_gitignore: bool,
+        git_visible: GitVisibleFiles | None,
+    ) -> tuple[Path, ...]:
+        """``expand_scope`` memoised for this run (same scope, same files)."""
+        key = ExpandScopeKey(
+            target=str(target.resolve()),
+            include=include,
+            exclude=exclude,
+            extensions=extensions,
+            globs=globs,
+            respect_gitignore=respect_gitignore,
+        )
+        if key not in self.expand_cache:
+            self.expand_cache[key] = expand_scope(
+                project_root,
+                target,
+                include=include,
+                exclude=exclude,
+                extensions=extensions,
+                globs=globs,
+                respect_gitignore=respect_gitignore,
+                git_visible=git_visible,
+            )
+        return self.expand_cache[key]
 
     def _compute_incremental_clean(self) -> bool:
         return (
@@ -163,46 +220,31 @@ def matched_changed_files(
     since: str | None,
     scope_session: RunScopeSession | None = None,
 ) -> tuple[Path, ...]:
+    """Changed files this tool's scope covers, found without walking the tree."""
     criteria = tool.scope
     target = scope.target.resolve()
     target = target if target.is_absolute() else (project_root / target).resolve()
 
-    matched_files = (
-        ScopeResolver(project_root, scope_session=scope_session).expand_scope(
-            target,
-            include=scope.include,
-            exclude=scope.exclude,
-            extensions=criteria.extensions,
-            globs=criteria.globs,
-            respect_gitignore=scope.respect_gitignore,
-        )
-        if scope_session is not None
-        else expand_scope(
-            project_root,
-            target,
-            include=scope.include,
-            exclude=scope.exclude,
-            extensions=criteria.extensions,
-            globs=criteria.globs,
-            respect_gitignore=scope.respect_gitignore,
-        )
-    )
-    if not matched_files:
-        return ()
-
-    ref = since or "HEAD"
     changed = (
         scope_session.changed_files(since)
         if scope_session is not None
-        else git_changed_files(project_root, ref)
+        else git_changed_files(project_root, since or "HEAD")
     )
     if not changed:
         return ()
 
-    filtered_files = tuple(
-        path for path in matched_files if file_matches_changed(path, project_root, changed)
+    matched_files = filter_scope_files(
+        project_root,
+        target,
+        changed,
+        include=scope.include,
+        exclude=scope.exclude,
+        extensions=criteria.extensions,
+        globs=criteria.globs,
+        respect_gitignore=scope.respect_gitignore,
+        git_visible=scope_session.git_visible() if scope_session is not None else None,
     )
-    return relatives_under_root(filtered_files, project_root)
+    return relatives_under_root(matched_files, project_root)
 
 
 def relatives_under_root(paths: tuple[Path, ...], project_root: Path) -> tuple[Path, ...]:
@@ -275,11 +317,3 @@ def git_changed_against_head(project_root: Path) -> set[str]:
             path=str(project_root),
         )
     return changed
-
-
-def file_matches_changed(path: Path, project_root: Path, changed: set[str]) -> bool:
-    try:
-        rel = path.resolve().relative_to(project_root.resolve()).as_posix()
-    except ValueError:
-        return False
-    return rel in changed

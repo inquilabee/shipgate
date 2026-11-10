@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import functools
 from pathlib import Path
 
 import pathspec
 
 from shipgate.core.process import run_command
-from shipgate.paths import relative_if_under
+from shipgate.paths import relative_if_under, resolve_entry, resolved_dir
+from shipgate.planning.utils.git_visible import GitVisibleFiles
 
 ANYWHERE_IGNORED = (
     ".shipgate/",
@@ -75,14 +77,36 @@ def load_ignore_patterns(project_root: Path) -> tuple[str, ...]:
     )
 
 
-def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
-    patterns = list(load_ignore_patterns(project_root))
+def ignore_files_signature(project_root: Path) -> tuple[tuple[int, int] | None, ...]:
+    """(mtime_ns, size) of each ignore file, so an edit invalidates the cached spec."""
+    signature: list[tuple[int, int] | None] = []
+    for path in (project_root / ".gitignore", project_root / ".git" / "info" / "exclude"):
+        try:
+            stat = path.stat()
+        except OSError:
+            signature.append(None)
+        else:
+            signature.append((stat.st_mtime_ns, stat.st_size))
+    return tuple(signature)
+
+
+@functools.lru_cache(maxsize=16)
+def compile_ignore_spec(
+    root: str, signature: tuple[tuple[int, int] | None, ...]
+) -> pathspec.PathSpec | None:
+    del signature  # part of the cache key only
+    patterns = list(load_ignore_patterns(Path(root)))
     return pathspec.PathSpec.from_lines("gitignore", patterns) if patterns else None
+
+
+def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
+    """The compiled ignore spec, rebuilt only when an ignore file changes."""
+    return compile_ignore_spec(str(project_root), ignore_files_signature(project_root))
 
 
 def is_ignored_by_git(project_root: Path, path: Path) -> bool:
     try:
-        rel = path.resolve().relative_to(project_root.resolve())
+        rel = resolve_entry(path).relative_to(resolved_dir(project_root))
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
@@ -91,6 +115,20 @@ def is_ignored_by_git(project_root: Path, path: Path) -> bool:
         cwd=project_root,
     )
     return result.returncode == 0
+
+
+def ignored_by_git(
+    project_root: Path,
+    path: Path,
+    rel_str: str,
+    git_visible: GitVisibleFiles | None,
+) -> bool:
+    """Git's verdict for *path*: the shared ls-files set, else one ``check-ignore``."""
+    return (project_root / ".git").is_dir() and (
+        git_visible.is_ignored(rel_str)
+        if git_visible is not None
+        else is_ignored_by_git(project_root, path)
+    )
 
 
 def ignored_path_part(rel_str: str) -> bool:
@@ -105,6 +143,7 @@ def should_ignore(
     extra_excludes: tuple[str, ...] = (),
     spec: pathspec.PathSpec | None = None,
     respect_gitignore: bool = True,
+    git_visible: GitVisibleFiles | None = None,
 ) -> bool:
     return skip_scope_entry(
         project_root,
@@ -112,6 +151,62 @@ def should_ignore(
         extra_excludes=extra_excludes,
         spec=spec,
         respect_gitignore=respect_gitignore,
+        git_visible=git_visible,
+    )
+
+
+def config_exclusion(rel_str: str, extra_excludes: tuple[str, ...]) -> str | None:
+    return (
+        "ignored directory name (.venv, .git, site-packages, ...)"
+        if ignored_path_part(rel_str)
+        else None
+    ) or (
+        "excluded by the scope's exclude list"
+        if matches_ignore_prefix(rel_str, extra_excludes)
+        else None
+    )
+
+
+def gitignore_exclusion(
+    project_root: Path,
+    path: Path,
+    rel_str: str,
+    spec: pathspec.PathSpec | None,
+    git_visible: GitVisibleFiles | None,
+) -> str | None:
+    if matches_ignore_prefix(rel_str, default_ignores()):
+        return "ShipGate default ignore"
+    active_spec = spec if spec is not None else load_gitignore_spec(project_root)
+    return (
+        "matched by .gitignore or .git/info/exclude"
+        if active_spec is not None and active_spec.match_file(rel_str)
+        else None
+    ) or (
+        "ignored by git (nested .gitignore or global excludes)"
+        if ignored_by_git(project_root, path, rel_str, git_visible)
+        else None
+    )
+
+
+def exclusion_reason(
+    project_root: Path,
+    path: Path,
+    *,
+    extra_excludes: tuple[str, ...] = (),
+    spec: pathspec.PathSpec | None = None,
+    respect_gitignore: bool,
+    git_visible: GitVisibleFiles | None = None,
+) -> str | None:
+    """Why scope expansion skips *path*, or ``None`` when it is in scope."""
+    try:
+        rel = resolve_entry(path).relative_to(resolved_dir(project_root))
+    except ValueError:
+        return "outside the project"
+    rel_str = str(rel).replace("\\", "/")
+    return config_exclusion(rel_str, extra_excludes) or (
+        gitignore_exclusion(project_root, path, rel_str, spec, git_visible)
+        if respect_gitignore
+        else None
     )
 
 
@@ -122,23 +217,19 @@ def skip_scope_entry(
     extra_excludes: tuple[str, ...] = (),
     spec: pathspec.PathSpec | None = None,
     respect_gitignore: bool,
+    git_visible: GitVisibleFiles | None = None,
 ) -> bool:
-    try:
-        rel = path.resolve().relative_to(project_root.resolve())
-    except ValueError:
-        return True
-    rel_str = str(rel).replace("\\", "/")
-    if ignored_path_part(rel_str) or matches_ignore_prefix(rel_str, extra_excludes):
-        return True
-    if not respect_gitignore:
-        return False
-    if matches_ignore_prefix(rel_str, default_ignores()):
-        return True
-    active_spec = spec if spec is not None else load_gitignore_spec(project_root)
-    if active_spec is not None and active_spec.match_file(rel_str):
-        return True
-    git_dir = project_root / ".git"
-    return is_ignored_by_git(project_root, path) if git_dir.is_dir() else False
+    return (
+        exclusion_reason(
+            project_root,
+            path,
+            extra_excludes=extra_excludes,
+            spec=spec,
+            respect_gitignore=respect_gitignore,
+            git_visible=git_visible,
+        )
+        is not None
+    )
 
 
 def matches_tool_criteria(
@@ -205,6 +296,7 @@ def walk_scope_dir(
     globs: tuple[str, ...],
     respect_gitignore: bool,
     spec: pathspec.PathSpec | None,
+    git_visible: GitVisibleFiles | None = None,
 ) -> None:
     if not directory.is_dir():
         return
@@ -220,6 +312,7 @@ def walk_scope_dir(
             extra_excludes=exclude,
             spec=spec,
             respect_gitignore=respect_gitignore,
+            git_visible=git_visible,
         ):
             continue
         if child.is_file():
@@ -242,6 +335,7 @@ def walk_scope_dir(
                 globs=globs,
                 respect_gitignore=respect_gitignore,
                 spec=spec,
+                git_visible=git_visible,
             )
 
 
@@ -254,11 +348,19 @@ def expand_scope(
     extensions: tuple[str, ...] = (),
     globs: tuple[str, ...] = (),
     respect_gitignore: bool = True,
+    git_visible: GitVisibleFiles | None = None,
 ) -> tuple[Path, ...]:
-    """Expand a scope target into concrete file paths."""
+    """Expand a scope target into concrete file paths.
+
+    *git_visible* lets a run session share one ``git ls-files`` across every
+    expansion; without it one is loaded here (still one subprocess, not one
+    per path).
+    """
     project_root = project_root.resolve()
     target = target.resolve() if target.is_absolute() else (project_root / target).resolve()
     spec = load_gitignore_spec(project_root) if respect_gitignore else None
+    if respect_gitignore and git_visible is None:
+        git_visible = GitVisibleFiles.load(project_root)
     paths: list[Path] = []
 
     if target.is_file():
@@ -268,6 +370,7 @@ def expand_scope(
             extra_excludes=exclude,
             spec=spec,
             respect_gitignore=respect_gitignore,
+            git_visible=git_visible,
         ):
             return ()
         consider_scope_file(
@@ -289,6 +392,7 @@ def expand_scope(
             globs=globs,
             respect_gitignore=respect_gitignore,
             spec=spec,
+            git_visible=git_visible,
         )
     return tuple(paths)
 

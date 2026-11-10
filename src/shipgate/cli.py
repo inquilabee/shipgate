@@ -10,6 +10,7 @@ import typer
 
 from shipgate.cli_session import CliRunOptions, CliSession
 from shipgate.errors import ShipGateError
+from shipgate.runtime.report_store import DEFAULT_KEEP_RUNS
 
 TOP_LEVEL_COMMANDS = frozenset(
     {
@@ -28,6 +29,9 @@ TOP_LEVEL_COMMANDS = frozenset(
         "gates",
         "radon",
         "refactor",
+        "reports",
+        "doctor",
+        "precommit",
     }
 )
 
@@ -45,6 +49,7 @@ list_app = typer.Typer(help="List catalog metadata")
 baseline_app = typer.Typer(help="Baseline management")
 gates_app = typer.Typer(help="Local gates")
 radon_app = typer.Typer(help="Radon metric helpers")
+reports_app = typer.Typer(help="Stored report housekeeping")
 
 app.add_typer(init_app, name="init")
 app.add_typer(configs_app, name="configs")
@@ -52,6 +57,7 @@ app.add_typer(list_app, name="list")
 app.add_typer(baseline_app, name="baseline")
 app.add_typer(gates_app, name="gates")
 app.add_typer(radon_app, name="radon")
+app.add_typer(reports_app, name="reports")
 
 ConfigOpt = Annotated[Path | None, typer.Option("--config", help="Path to shipgate.yaml")]
 SuiteOpt = Annotated[str | None, typer.Option("--suite", help="Suite to run")]
@@ -70,6 +76,7 @@ DisplayCliOpt = Annotated[
 ]
 CiOpt = Annotated[bool, typer.Option("--ci", help="CI mode")]
 NoCacheOpt = Annotated[bool, typer.Option("--no-cache", help="Disable check result cache")]
+TimingsOpt = Annotated[bool, typer.Option("--timings", help="Print how long each check took")]
 ChangedOnlyOpt = Annotated[bool, typer.Option("--changed-only", help="Incremental checks")]
 FullTreeOpt = Annotated[
     bool,
@@ -125,6 +132,7 @@ def register_run_command(typer_app: typer.Typer, name: str, *, mode: str) -> Non
         full_tree: FullTreeOpt = False,
         since: SinceOpt = None,
         project_env: ProjectEnvOpt = None,
+        timings: TimingsOpt = False,
     ) -> None:
         session().run(
             mode,
@@ -144,6 +152,7 @@ def register_run_command(typer_app: typer.Typer, name: str, *, mode: str) -> Non
                 full_tree=full_tree,
                 since=since,
                 project_env=project_env,
+                timings=timings,
             ),
         )
 
@@ -186,6 +195,7 @@ def update_cmd(
 
 register_run_command(app, "format", mode="format")
 register_run_command(app, "check", mode="check")
+register_run_command(app, "precommit", mode="precommit")
 register_run_command(baseline_app, "update", mode="baseline")
 
 
@@ -325,6 +335,23 @@ def radon_calibrate(
 def radon_reset() -> None:
     """Delete progressive radon baselines from .shipgate/cache/.env."""
     session().radon_reset()
+
+
+@app.command("doctor")
+def doctor_cmd() -> None:
+    """Show the resolved suite, what is in scope and why, policy files and tool versions."""
+    session().doctor()
+
+
+@reports_app.command("prune")
+def reports_prune(
+    *,
+    keep: Annotated[
+        int, typer.Option("--keep", help="Newest runs to keep", min=1)
+    ] = DEFAULT_KEEP_RUNS,
+) -> None:
+    """Delete stored runs (and their raw output) older than the newest --keep."""
+    session().reports_prune(keep)
 
 
 @app.command(

@@ -1,8 +1,6 @@
 from pathlib import Path
 
 import pytest
-from tests.unit.support.radon import normalize_payload
-from tests.unit.support.radon_assertions import assert_mi_median_p95_failure
 
 from shipgate.normalize.radon import RadonNormalizer
 from shipgate.paths import (
@@ -13,6 +11,8 @@ from shipgate.paths import (
     RADON_MI_P10_CACHE_ENV,
     RADON_MI_P95_CACHE_ENV,
 )
+from tests.unit.support.radon import normalize_payload
+from tests.unit.support.radon_assertions import assert_mi_median_p95_failure
 
 
 def test_radon_mi_fails_rank_below_c(tmp_path: Path):

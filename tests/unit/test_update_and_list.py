@@ -1,7 +1,12 @@
 from unittest.mock import MagicMock
 
 from shipgate.app import InstallCommand, ShipGateApp
-from shipgate.domain.catalog import Catalog, InstallDefinition, SuiteDefinition, ToolDefinition
+from shipgate.domain.catalog import (
+    Catalog,
+    InstallDefinition,
+    SuiteDefinition,
+    ToolDefinition,
+)
 from shipgate.domain.modes import RunMode
 
 

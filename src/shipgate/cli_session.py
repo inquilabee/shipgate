@@ -34,6 +34,7 @@ class CliRunOptions:
     full_tree: bool = False
     since: str | None = None
     project_env: Path | None = None
+    timings: bool = False
 
 
 class CliSession:
@@ -61,6 +62,7 @@ class CliSession:
             changed_only=opts.changed_only,
             full_tree=opts.full_tree,
             since=opts.since,
+            timings=opts.timings,
         )
 
     @staticmethod
@@ -238,6 +240,12 @@ class CliSession:
             raise typer.Exit(exc.exit_code) from None
         self.write_text(text)
 
+    def doctor(self) -> None:
+        self.write_text(self.app.doctor(self.project_root()))
+
+    def reports_prune(self, keep: int) -> None:
+        self.write_text(self.app.prune_reports(self.project_root(), keep))
+
     def radon_reset(self) -> None:
         self.write_text(self.app.radon_reset(self.project_root()))
 
@@ -263,10 +271,9 @@ class CliSession:
         raise typer.Exit(code)
 
     def dispatch_run(self, mode: str, command: RunCommand) -> int:
-        return (
-            self.app.format(command)
-            if mode == "format"
-            else (
-                self.app.baseline_update(command) if mode == "baseline" else self.app.check(command)
-            )
-        )
+        handlers = {
+            "format": self.app.format,
+            "precommit": self.app.precommit,
+            "baseline": self.app.baseline_update,
+        }
+        return handlers.get(mode, self.app.check)(command)

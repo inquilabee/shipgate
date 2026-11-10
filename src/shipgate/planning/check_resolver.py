@@ -143,6 +143,7 @@ class CheckResolver:
             self.environment,
             target=scope.target,
             project=self.project,
+            respect_gitignore=scope.respect_gitignore,
         )
         return PreparedRun(request=resolved)
 

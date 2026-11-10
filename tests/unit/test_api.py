@@ -7,8 +7,8 @@ from shipgate.runtime.executor import Executor, ProcessResult
 
 
 class FakeExecutor(Executor):
-    def run(self, argv, *, cwd, env=None):  # ruff:ignore[no-self-use]
-        _ = env
+    def run(self, argv, *, cwd, env=None, timeout_seconds=None):  # ruff:ignore[no-self-use]
+        _ = env, timeout_seconds
         return ProcessResult(
             argv=argv,
             cwd=cwd,

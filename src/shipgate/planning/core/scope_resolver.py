@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import functools
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,21 +18,12 @@ from shipgate.planning.utils.gitignore import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     from shipgate.domain.catalog import ScopeCriteria, ToolDefinition
     from shipgate.domain.project import ProjectConfig
+    from shipgate.planning.utils.git_visible import GitVisibleFiles
     from shipgate.planning.utils.incremental import RunScopeSession
-
-
-@dataclass(frozen=True)
-class ExpandScopeKey:
-    target: str
-    include: tuple[str, ...]
-    exclude: tuple[str, ...]
-    extensions: tuple[str, ...]
-    globs: tuple[str, ...]
-    respect_gitignore: bool
 
 
 DEFAULT_EXCLUDES = (*default_ignores(), "build/")
@@ -49,6 +40,9 @@ class ScopeResolver:
         self.project_root = project_root.resolve()
         self.default_excludes = default_excludes
         self._scope_session = scope_session
+        self._visible: Callable[[], GitVisibleFiles | None] = (
+            scope_session.git_visible if scope_session else lambda: None
+        )
 
     def resolve(
         self,
@@ -101,13 +95,7 @@ class ScopeResolver:
         rel = self.relative_under_root(target)
         return (
             []
-            if rel is None
-            or should_ignore(
-                self.project_root,
-                target,
-                extra_excludes=scope.exclude,
-                respect_gitignore=scope.respect_gitignore,
-            )
+            if rel is None or self._ignored(target, scope)
             else (
                 []
                 if scope.include
@@ -135,12 +123,7 @@ class ScopeResolver:
         for child in sorted(self.project_root.iterdir()):
             if not child.is_dir():
                 continue
-            if should_ignore(
-                self.project_root,
-                child,
-                extra_excludes=scope.exclude,
-                respect_gitignore=scope.respect_gitignore,
-            ):
+            if self._ignored(child, scope):
                 continue
             entries.append(child)
         return entries
@@ -149,16 +132,7 @@ class ScopeResolver:
         return (
             False
             if self.relative_under_root(path) is None
-            else (
-                not should_ignore(
-                    self.project_root,
-                    path,
-                    extra_excludes=scope.exclude,
-                    respect_gitignore=scope.respect_gitignore,
-                )
-                if path.exists()
-                else False
-            )
+            else (not self._ignored(path, scope) if path.exists() else False)
         )
 
     def paths_for_tool(
@@ -204,6 +178,15 @@ class ScopeResolver:
             else self._relatives((target,))
         )
 
+    def _ignored(self, path: Path, scope: Scope) -> bool:
+        return should_ignore(
+            self.project_root,
+            path,
+            extra_excludes=scope.exclude,
+            respect_gitignore=scope.respect_gitignore,
+            git_visible=self._visible(),
+        )
+
     def resolve_scope_target(self, scope: Scope) -> Path:
         return self._resolve_against_project_root(scope.target)
 
@@ -241,36 +224,20 @@ class ScopeResolver:
         globs: tuple[str, ...],
         respect_gitignore: bool,
     ) -> tuple[Path, ...]:
-        if self._scope_session is None:
-            return expand_scope(
-                self.project_root,
-                target,
-                include=include,
-                exclude=exclude,
-                extensions=extensions,
-                globs=globs,
-                respect_gitignore=respect_gitignore,
-            )
-        key = ExpandScopeKey(
-            target=str(target.resolve()),
+        expand = (
+            expand_scope
+            if self._scope_session is None
+            else functools.partial(self._scope_session.expand, git_visible=self._visible())
+        )
+        return expand(
+            self.project_root,
+            target,
             include=include,
             exclude=exclude,
             extensions=extensions,
             globs=globs,
             respect_gitignore=respect_gitignore,
         )
-        cache = self._scope_session.expand_cache
-        if key not in cache:
-            cache[key] = expand_scope(
-                self.project_root,
-                target,
-                include=include,
-                exclude=exclude,
-                extensions=extensions,
-                globs=globs,
-                respect_gitignore=respect_gitignore,
-            )
-        return cache[key]
 
     def paths_for_delivery(
         self,
@@ -297,12 +264,7 @@ class ScopeResolver:
         kept: list[Path] = []
         for path in paths:
             absolute = path if path.is_absolute() else self.project_root / path
-            if should_ignore(
-                self.project_root,
-                absolute,
-                extra_excludes=scope.exclude,
-                respect_gitignore=scope.respect_gitignore,
-            ):
+            if self._ignored(absolute, scope):
                 continue
             kept.append(path)
         return tuple(kept)

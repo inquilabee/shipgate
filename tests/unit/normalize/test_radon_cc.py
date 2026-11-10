@@ -1,8 +1,6 @@
 from pathlib import Path
 
 import pytest
-from tests.unit.support.radon import normalize_payload
-from tests.unit.support.radon_assertions import assert_cc_median_p95_failure
 
 from shipgate.paths import (
     RADON_CC_AVG_CACHE_ENV,
@@ -10,6 +8,8 @@ from shipgate.paths import (
     RADON_CC_MEDIAN_CACHE_ENV,
     RADON_CC_P95_CACHE_ENV,
 )
+from tests.unit.support.radon import normalize_payload
+from tests.unit.support.radon_assertions import assert_cc_median_p95_failure
 
 
 def test_radon_cc_allows_rank_a(tmp_path: Path):

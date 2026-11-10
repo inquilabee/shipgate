@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from shipgate.domain.catalog import Catalog, ToolDefinition
+    from shipgate.domain.execution import ExecutionEnvironment
 
 VERSION_ATTEMPTS = ("--version", "-version", "-V", "version")
 TIMEOUT_S = 3.0
@@ -80,10 +81,30 @@ def installed_version(tool: ToolDefinition, primary_root: Path) -> str | None:
             )
         except InstallError:
             return None
+    return version_of_binary(binary, tool.executable)
+
+
+def version_of_binary(binary: str, name: str) -> str | None:
     for flag in VERSION_ATTEMPTS:
-        if parsed := run_version_command(binary, flag, tool.executable):
+        if parsed := run_version_command(binary, flag, name):
             return parsed
     return None
+
+
+def version_a_run_would_use(
+    tool: ToolDefinition, project_root: Path, environment: ExecutionEnvironment
+) -> str | None:
+    """Version of the executable a run launches: managed bin, then the env, then PATH."""
+    try:
+        binary = resolve_executable(
+            tool.executable,
+            environment,
+            install_binary=tool.install.binary if tool.install else None,
+            project_root=project_root,
+        )
+    except InstallError:
+        return None
+    return version_of_binary(binary, tool.executable)
 
 
 def run_version_command(binary: str, flag: str, binary_name: str) -> str | None:

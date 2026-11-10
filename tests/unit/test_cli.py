@@ -62,3 +62,8 @@ def test_list_suites(capsys):
     captured = capsys.readouterr()
     assert code == 0
     assert "standard" in captured.out
+
+
+@pytest.mark.parametrize("command", ["reports", "doctor", "precommit"])
+def test_new_commands_are_not_rewritten_into_check_targets(command):
+    assert normalize_argv([command, "x"]) == [command, "x"]

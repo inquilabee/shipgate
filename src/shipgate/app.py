@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from shipgate.baseline import load_baseline, save_baseline
@@ -83,6 +83,23 @@ class ShipGateApp:
         install_suite(command.project_root, suite_id, catalog, force=force)
         return 0
 
+    def precommit(self, command: RunCommand) -> int:
+        """install -> format -> check in one process; the first non-zero code wins.
+
+        Install is a no-op when the managed tools are already satisfied. Format
+        always runs the formatter suite; the suite on *command* selects the check.
+        """
+        install = InstallCommand(
+            project_root=command.project_root,
+            config_path=command.config_path,
+            suite=command.suite,
+        )
+        return (
+            self.install(install)
+            or self.format(replace(command, suite=None, check=None))
+            or self.check(command)
+        )
+
     def check(self, command: RunCommand) -> int:
         exit_code, _report = self.run_suite(command, RunMode.CHECK)
         return exit_code
@@ -160,6 +177,33 @@ class ShipGateApp:
 
         reset_radon_cache_env(project_root)
         return f"Reset progressive radon baselines in {PROJECT_CACHE_ENV}\n"
+
+    def doctor(self, project_root: Path) -> str:
+        from shipgate.config.loader import ProjectConfigLoader
+        from shipgate.frontend.services.tool_versions import version_a_run_would_use
+        from shipgate.project.doctor import ProjectDoctor
+        from shipgate.runtime.environment import resolve_environment
+
+        root = project_root.resolve()
+        project = ProjectConfigLoader.load(config_path=None, project_root=root)
+        environment = resolve_environment(root, project.env)
+        return (
+            ProjectDoctor(
+                root,
+                project,
+                self._catalog_for(root),
+                installed_version=lambda tool: version_a_run_would_use(tool, root, environment),
+            )
+            .report()
+            .render()
+        )
+
+    @staticmethod
+    def prune_reports(project_root: Path, keep: int) -> str:
+        from shipgate.runtime.report_store import ReportStore
+
+        removed = ReportStore(project_root).prune(keep)
+        return f"Removed {removed} old run(s); kept the newest {keep}\n"
 
     @staticmethod
     def schema() -> str:

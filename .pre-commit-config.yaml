@@ -1,4 +1,5 @@
-# ShipGate dogfood: apply formatters, then check the project suite (shipgate.yaml).
+# ShipGate dogfood: one `shipgate precommit` installs (when needed), formats, then checks
+# the project suite (shipgate.yaml) in a single process.
 # djlint is outside the catalog (Jinja templates only).
 repos:
   - repo: local
@@ -16,21 +17,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-      - id: shipgate-install
-        name: shipgate install
-        entry: uv run shipgate install
-        language: system
-        pass_filenames: false
-        always_run: true
-      - id: shipgate-format
-        name: shipgate format
-        entry: uv run shipgate format --target .
-        language: system
-        pass_filenames: false
-        always_run: true
-      - id: shipgate-check
-        name: shipgate check
-        entry: env PYTHONPATH=src uv run shipgate check --target .
+      - id: shipgate-precommit
+        name: shipgate precommit (install, format, check)
+        entry: env PYTHONPATH=src uv run shipgate precommit --target .
         language: system
         pass_filenames: false
         always_run: true

@@ -1,3 +1,4 @@
+import dataclasses
 from pathlib import Path
 
 from shipgate.catalog.loader import CatalogLoader
@@ -5,7 +6,7 @@ from shipgate.domain.execution import ExecutionEnvironment, ResolvedRequest
 from shipgate.domain.modes import RunMode
 from shipgate.domain.options import NormalizedOptions
 from shipgate.domain.reports import CheckReport
-from shipgate.runtime.check_cache import CheckResultCache
+from shipgate.runtime.cache.check_cache import CheckResultCache
 
 
 def make_resolved_request(
@@ -240,3 +241,38 @@ def test_check_result_cache_results_false(tmp_path: Path):
     )
     cache.store(resolved, report)
     assert cache.lookup(resolved) is None
+
+
+def cached_report(resolved: ResolvedRequest) -> CheckReport:
+    return CheckReport(
+        check_id=resolved.tool.id, tool_id=resolved.tool.id, status="passed", exit_code=0
+    )
+
+
+def test_check_result_cache_misses_when_scoped_content_changes(tmp_path: Path):
+    (tmp_path / "cfg").mkdir()
+    target = tmp_path / "cfg" / "a.yaml"
+    target.write_text("key: 1\n", encoding="utf-8")
+    resolved = make_resolved_request(tmp_path, "yamllint.check", paths=(Path("cfg"),))
+    cache = CheckResultCache(tmp_path)
+    cache.store(resolved, cached_report(resolved))
+    assert cache.lookup(resolved) is not None
+    target.write_text("key: 2222\n", encoding="utf-8")
+    assert cache.lookup(resolved) is None
+
+
+def test_check_result_cache_honours_scope_respect_gitignore(tmp_path: Path):
+    (tmp_path / "cfg").mkdir()
+    (tmp_path / ".gitignore").write_text("generated.yaml\n", encoding="utf-8")
+    (tmp_path / "cfg" / "a.yaml").write_text("key: 1\n", encoding="utf-8")
+    ignored = tmp_path / "cfg" / "generated.yaml"
+    ignored.write_text("x: 1\n", encoding="utf-8")
+    respecting = make_resolved_request(tmp_path, "yamllint.check", paths=(Path("cfg"),))
+    including = dataclasses.replace(respecting, respect_gitignore=False)
+    cache = CheckResultCache(tmp_path)
+    cache.store(respecting, cached_report(respecting))
+    cache.store(including, cached_report(including))
+
+    ignored.write_text("x: 99999\n", encoding="utf-8")
+    assert cache.lookup(respecting) is not None
+    assert cache.lookup(including) is None

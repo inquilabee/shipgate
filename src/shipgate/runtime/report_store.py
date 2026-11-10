@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import itertools
 import json
+import shutil
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -10,12 +12,13 @@ from shipgate.core.json_io import dumps_indented
 from shipgate.domain.reports import RunReport
 from shipgate.errors import ExecutionError
 from shipgate.paths import PROJECT_REPORTS_DIR, PROJECT_REPORTS_FAILURES_DIR
-from shipgate.runtime.reports import validate_run_id
+from shipgate.runtime.reports import RUN_ID_PATTERN, validate_run_id
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 REPORT_FILENAME = "report.json"
+DEFAULT_KEEP_RUNS = 50
 
 
 class ReportStore:
@@ -65,6 +68,7 @@ class ReportStore:
                 report_path=str(failure_path.relative_to(self.project_root)),
             )
         self.save(finalized, metadata=metadata)
+        self.prune()
         return finalized
 
     def _write_failure_report(self, report: RunReport) -> Path:
@@ -80,11 +84,43 @@ class ReportStore:
         index = self._load_index()
         index = [e for e in index if e.get("run_id") != entry["run_id"]]
         index.insert(0, entry)
-        index = index[:100]
+        self._write_index(index[:100])
+
+    def _write_index(self, index: list[dict]) -> None:
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.index_path.with_suffix(".tmp")
         tmp.write_text(dumps_indented(index, trailing_newline=False), encoding="utf-8")
         tmp.replace(self.index_path)
+
+    def prune(self, keep: int = DEFAULT_KEEP_RUNS) -> int:
+        """Keep the newest *keep* runs; drop older ones from runs/, raw/ and failures/.
+
+        The index is trimmed to the survivors so the report UI never links to a
+        run that is gone. Returns how many runs were removed.
+        """
+        if keep < 1:
+            raise ExecutionError("keep must be at least 1", hint="use a positive run count")
+        newest_first = self._run_ids_newest_first()
+        for run_id, base in itertools.product(newest_first[keep:], self.run_roots()):
+            shutil.rmtree(self._contained_run_dir(base, run_id), ignore_errors=True)
+        survivors = set(newest_first[:keep])
+        index = self._load_index()
+        if any(entry.get("run_id") not in survivors for entry in index):
+            self._write_index([e for e in index if e.get("run_id") in survivors])
+        return max(len(newest_first) - keep, 0)
+
+    def run_roots(self) -> tuple[Path, ...]:
+        return (self.runs_dir, self.root / "raw", self.root / "failures")
+
+    def _run_ids_newest_first(self) -> list[str]:
+        """Run ids found on disk, by most recent activity (other dirs are left alone)."""
+        latest: dict[str, float] = {}
+        for base in self.run_roots():
+            children = base.iterdir() if base.is_dir() else ()
+            for child in children:
+                if child.is_dir() and RUN_ID_PATTERN.fullmatch(child.name):
+                    latest[child.name] = max(latest.get(child.name, 0.0), child.stat().st_mtime)
+        return sorted(latest, key=lambda run_id: (latest[run_id], run_id), reverse=True)
 
     def _load_index(self) -> list[dict]:
         return (

@@ -2,15 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from shipgate.ci import apply_ci_defaults, is_ci_environment
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.run_command import RunCommand
+from shipgate.paths import forget_resolved_dirs
 from shipgate.planning.utils.incremental import RunScopeSession, effective_incremental
 from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment
+from shipgate.runtime.session.timings import CheckTimings
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -49,6 +51,7 @@ class RunContext:
     parallel: bool
     fail_fast: bool
     scope_session: RunScopeSession
+    timings: CheckTimings = field(default_factory=CheckTimings)
 
 
 def resolve_error_format(command: RunCommand, project: ProjectConfig) -> str:
@@ -57,6 +60,7 @@ def resolve_error_format(command: RunCommand, project: ProjectConfig) -> str:
 
 
 def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> RunContext:
+    forget_resolved_dirs()
     project = ProjectConfigLoader.load(
         config_path=command.config_path,
         project_root=command.project_root,
@@ -69,7 +73,7 @@ def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> Run
         suite_override=command.suite,
         check_override=command.check,
     )
-    parallel, fail_fast = suite_execution_flags(catalog, suite_id, project)
+    parallel, fail_fast = suite_execution_flags(catalog, suite_id, project, mode)
     environment = resolve_environment(project_root, project.env)
     changed_only, since = effective_incremental(command, project)
     scope_session = RunScopeSession(

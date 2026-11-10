@@ -55,6 +55,11 @@ When the bundled catalog is not enough:
 - **Policy gates** — scaffold scripts under `.shipgate/gates/` and register them
   in the project catalog.
 
+A tool entry can set `timeout_seconds` (a positive integer). A tool that outlives
+it fails only its own check, with a `shipgate.timeout` finding and its partial
+output saved as raw output; the rest of the run completes. Without it the
+executor default of 600 seconds applies.
+
 Tool configs live under `.shipgate/configs/`. Project-specific allowlists go in
 `.shipgate/allowlists/`. See [Usage — project-local gates](usage.md#project-local-gates)
 and [Check flow](check-flow.md) for how YAML becomes a check run.

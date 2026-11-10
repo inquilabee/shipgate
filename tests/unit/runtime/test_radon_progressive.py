@@ -1,7 +1,5 @@
 from pathlib import Path
 
-from tests.unit.support.radon import resolved
-
 from shipgate.domain.reports import CheckReport
 from shipgate.paths import (
     PROJECT_CACHE_ENV,
@@ -16,6 +14,7 @@ from shipgate.paths import (
     parse_env_file,
 )
 from shipgate.runtime.progressive_average import apply_progressive_average
+from tests.unit.support.radon import resolved
 
 
 def test_progressive_p5_and_p10(tmp_path: Path):

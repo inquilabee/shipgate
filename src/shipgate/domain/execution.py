@@ -41,3 +41,4 @@ class ResolvedRequest:
     project_root: Path
     output_path: Path
     environment: ExecutionEnvironment
+    respect_gitignore: bool = True

@@ -27,6 +27,20 @@ shipgate list tools
 shipgate schema > failure-report.schema.json
 ```
 
+### Diagnose and tidy
+
+```bash
+shipgate check --timings               # how long every check took
+shipgate doctor                        # suite, what is in scope and why, policy files, tool versions
+shipgate reports prune --keep 20       # drop stored runs (and raw output) beyond the newest 20
+```
+
+A run of ten seconds or more also prints one line naming its slowest checks
+(not under `--quiet`). Saving a finished run keeps the newest 50 automatically.
+A catalog tool can set `timeout_seconds` to fail just that check, with a
+`shipgate.timeout` finding, when it hangs; see
+[Tools — project extensions](tools.md#project-extensions).
+
 ### One tool, one file
 
 ```bash
@@ -90,6 +104,12 @@ error-format: compact
 
 Live names: `shipgate list suites`.
 
+A suite runs as one flat list of tools, so only the suite you invoke sets
+`parallel` and `fail_fast`: `shipgate check --suite full` runs the `policy`
+members with `full`'s flags, not `policy`'s own. Checks run in parallel when the
+suite says so; `shipgate format` (apply mode) always runs one tool at a time
+because formatters write files.
+
 ## Error formats
 
 | Format | Role |
@@ -106,17 +126,22 @@ Live names: `shipgate list suites`.
 repos:
   - repo: local
     hooks:
-      - id: shipgate-format
-        name: shipgate format
-        entry: shipgate format --target .
+      - id: shipgate-precommit
+        name: shipgate precommit (install, format, check)
+        entry: shipgate precommit --target .
         language: system
         pass_filenames: false
-      - id: shipgate-check
-        name: shipgate check
-        entry: shipgate check --target .
-        language: system
-        pass_filenames: false
+        always_run: true
 ```
+
+`shipgate precommit` installs the managed tools (a no-op when they are already
+satisfied), formats, then checks, in one process, so a commit pays for one
+interpreter start and one config load instead of three. The first failing stage
+decides the exit code. It takes the same options as `check`.
+
+Keep the hook incremental: with the default `changed-only: true` policy it only
+looks at what changed. Reserve `--full-tree` for `make` and CI, where a whole-tree
+scan is the point.
 
 ```bash
 pre-commit install
