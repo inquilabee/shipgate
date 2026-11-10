@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from shipgate.baseline import load_baseline, save_baseline
@@ -82,6 +82,23 @@ class ShipGateApp:
         suite_id = command.suite or project.suite or "standard"
         install_suite(command.project_root, suite_id, catalog, force=force)
         return 0
+
+    def precommit(self, command: RunCommand) -> int:
+        """install -> format -> check in one process; the first non-zero code wins.
+
+        Install is a no-op when the managed tools are already satisfied. Format
+        always runs the formatter suite; the suite on *command* selects the check.
+        """
+        install = InstallCommand(
+            project_root=command.project_root,
+            config_path=command.config_path,
+            suite=command.suite,
+        )
+        return (
+            self.install(install)
+            or self.format(replace(command, suite=None, check=None))
+            or self.check(command)
+        )
 
     def check(self, command: RunCommand) -> int:
         exit_code, _report = self.run_suite(command, RunMode.CHECK)

@@ -271,10 +271,9 @@ class CliSession:
         raise typer.Exit(code)
 
     def dispatch_run(self, mode: str, command: RunCommand) -> int:
-        return (
-            self.app.format(command)
-            if mode == "format"
-            else (
-                self.app.baseline_update(command) if mode == "baseline" else self.app.check(command)
-            )
-        )
+        handlers = {
+            "format": self.app.format,
+            "precommit": self.app.precommit,
+            "baseline": self.app.baseline_update,
+        }
+        return handlers.get(mode, self.app.check)(command)

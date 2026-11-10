@@ -31,6 +31,7 @@ TOP_LEVEL_COMMANDS = frozenset(
         "refactor",
         "reports",
         "doctor",
+        "precommit",
     }
 )
 
@@ -194,6 +195,7 @@ def update_cmd(
 
 register_run_command(app, "format", mode="format")
 register_run_command(app, "check", mode="check")
+register_run_command(app, "precommit", mode="precommit")
 register_run_command(baseline_app, "update", mode="baseline")
 
 

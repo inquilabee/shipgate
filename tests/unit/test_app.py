@@ -1,4 +1,6 @@
-from shipgate.app import RunCommand, ShipGateApp
+from pathlib import Path
+
+from shipgate.app import InstallCommand, RunCommand, ShipGateApp
 from shipgate.catalog.loader import CatalogLoader
 from shipgate.runtime.executor import Executor, ProcessResult
 
@@ -153,3 +155,40 @@ def test_quiet_failure_suppresses_stderr(tmp_path, capsys):
     captured = capsys.readouterr()
     assert code == 1
     assert captured.err == ""
+
+
+class StageRecorder(ShipGateApp):
+    """ShipGateApp whose three stages just record that they ran and return a set code."""
+
+    def __init__(self, codes: dict[str, int]) -> None:
+        super().__init__()
+        self.codes = codes
+        self.calls: list[tuple[str, str | None]] = []
+
+    def install(self, command: InstallCommand) -> int:
+        self.calls.append(("install", command.suite))
+        return self.codes.get("install", 0)
+
+    def format(self, command: RunCommand) -> int:
+        self.calls.append(("format", command.suite))
+        return self.codes.get("format", 0)
+
+    def check(self, command: RunCommand) -> int:
+        self.calls.append(("check", command.suite))
+        return self.codes.get("check", 0)
+
+
+def test_precommit_runs_install_then_format_then_check(tmp_path: Path):
+    app = StageRecorder({})
+    code = app.precommit(RunCommand(project_root=tmp_path, suite="standard"))
+    # Format always uses its own suite; the requested suite picks the install and the check.
+    assert (code, app.calls) == (
+        0,
+        [("install", "standard"), ("format", None), ("check", "standard")],
+    )
+
+
+def test_precommit_stops_at_the_first_failing_stage_and_returns_its_code(tmp_path: Path):
+    app = StageRecorder({"format": 3})
+    assert app.precommit(RunCommand(project_root=tmp_path)) == 3
+    assert [stage for stage, _ in app.calls] == ["install", "format"]
