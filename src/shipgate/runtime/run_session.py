@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from shipgate.domain.run_command import RunCommand
+from shipgate.runtime.cache.file_digests import FileDigestIndex
 from shipgate.runtime.reports import generate_run_id
 from shipgate.runtime.session.check_runner import CheckRunner, build_run_report
 from shipgate.runtime.session.context import (
@@ -62,6 +63,7 @@ class RunSession:
             on_progress=on_progress,
             should_cancel=should_cancel,
         )
+        FileDigestIndex.for_root(context.project_root).save()
         report = build_run_report(
             run_id=run_id,
             suite_id=context.suite_id,

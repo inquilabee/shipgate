@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import time
@@ -10,17 +11,27 @@ from typing import TYPE_CHECKING
 
 from shipgate.domain.modes import RunMode
 from shipgate.gates.runtime import is_gate_tool
+from shipgate.paths import PROJECT_CACHE_DIR, resolve_entry
 from shipgate.planning.utils.gitignore import expand_scope
+from shipgate.runtime.cache.file_digests import FileDigestIndex
 
 if TYPE_CHECKING:
     from shipgate.domain.execution import ResolvedRequest
     from shipgate.domain.reports import CheckReport
+    from shipgate.planning.utils.incremental import RunScopeSession
 
 
 class CheckResultCache:
-    def __init__(self, project_root: Path, *, disabled: bool = False) -> None:
-        self._root = project_root / ".shipgate" / "cache" / "check-results"
+    def __init__(
+        self,
+        project_root: Path,
+        *,
+        disabled: bool = False,
+        scope_session: RunScopeSession | None = None,
+    ) -> None:
+        self._root = project_root / PROJECT_CACHE_DIR / "check-results"
         self._disabled = disabled
+        self._scope_session = scope_session
 
     def lookup(self, resolved: ResolvedRequest) -> CheckReport | None:
         if self._disabled or not self._is_cacheable(resolved):
@@ -65,22 +76,36 @@ class CheckResultCache:
         return f"{resolved.tool.id}-{digest[:16]}"
 
     def _scoped_content_digest(self, resolved: ResolvedRequest) -> str:
-        blob = bytearray()
         root = resolved.project_root.resolve()
+        digests = FileDigestIndex.for_root(root)
+        entries = []
         for file_path in self._scoped_input_files(resolved):
-            rel = file_path.resolve().relative_to(root).as_posix()
-            blob.extend(rel.encode())
-            blob.append(0)
-            blob.extend(file_path.read_bytes())
-            blob.append(0)
-        return hashlib.sha256(blob).hexdigest()
+            rel = resolve_entry(file_path).relative_to(root).as_posix()
+            entries.append(f"{rel}\0{digests.digest(file_path, rel)}\0")
+        return hashlib.sha256("".join(entries).encode()).hexdigest()
+
+    def _expand(self, root: Path, directory: Path, resolved: ResolvedRequest) -> tuple[Path, ...]:
+        """In-scope files under *directory*; the run session shares the expansion."""
+        session = self._scope_session
+        expand = (
+            expand_scope
+            if session is None
+            else functools.partial(
+                session.expand, include=(), exclude=(), git_visible=session.git_visible()
+            )
+        )
+        return expand(
+            root,
+            directory,
+            extensions=resolved.tool.scope.extensions,
+            globs=resolved.tool.scope.globs,
+            respect_gitignore=resolved.respect_gitignore,
+        )
 
     def _scoped_input_files(self, resolved: ResolvedRequest) -> tuple[Path, ...]:
         root = resolved.project_root.resolve()
         files: list[Path] = []
         seen: set[Path] = set()
-        extensions = resolved.tool.scope.extensions
-        globs = resolved.tool.scope.globs
         for raw in resolved.options.paths:
             candidate = raw if raw.is_absolute() else root / raw
             if not candidate.exists():
@@ -91,14 +116,8 @@ class CheckResultCache:
                 continue
             if not resolved_candidate.is_dir():
                 continue
-            for found in expand_scope(
-                root,
-                resolved_candidate,
-                extensions=extensions,
-                globs=globs,
-                respect_gitignore=True,
-            ):
-                self._remember_file(found.resolve(), files, seen)
+            for found in self._expand(root, resolved_candidate, resolved):
+                self._remember_file(resolve_entry(found), files, seen)
         files.sort(key=lambda path: path.relative_to(root).as_posix())
         return tuple(files)
 

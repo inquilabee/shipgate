@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from shipgate.ci import apply_ci_defaults, is_ci_environment
 from shipgate.config.loader import ProjectConfigLoader
 from shipgate.domain.run_command import RunCommand
+from shipgate.paths import forget_resolved_dirs
 from shipgate.planning.utils.incremental import RunScopeSession, effective_incremental
 from shipgate.planning.workflow import resolve_runnables, suite_execution_flags
 from shipgate.runtime.environment import resolve_environment
@@ -57,6 +58,7 @@ def resolve_error_format(command: RunCommand, project: ProjectConfig) -> str:
 
 
 def prepare_context(command: RunCommand, mode: RunMode, catalog: Catalog) -> RunContext:
+    forget_resolved_dirs()
     project = ProjectConfigLoader.load(
         config_path=command.config_path,
         project_root=command.project_root,

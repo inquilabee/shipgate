@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,7 +16,8 @@ PROJECT_CATALOG_DIR = SHIPGATE_DIR / "catalog"
 PROJECT_CONFIGS_DIR = SHIPGATE_DIR / "configs"
 PROJECT_GATES_DIR = SHIPGATE_DIR / "gates"
 PROJECT_GATE_CONFIGS_DIR = PROJECT_CONFIGS_DIR / "gates"
-PROJECT_CACHE_ENV = SHIPGATE_DIR / "cache" / ".env"
+PROJECT_CACHE_DIR = SHIPGATE_DIR / "cache"
+PROJECT_CACHE_ENV = PROJECT_CACHE_DIR / ".env"
 PROJECT_REPORTS_DIR = SHIPGATE_DIR / "reports"
 PROJECT_REPORTS_RAW_DIR = PROJECT_REPORTS_DIR / "raw"
 PROJECT_REPORTS_FAILURES_DIR = PROJECT_REPORTS_DIR / "failures"
@@ -214,10 +216,34 @@ def contained_child_or_none(root: Path, name: str) -> Path | None:
         return None
 
 
+@functools.lru_cache(maxsize=65536)
+def resolved_dir(directory: Path) -> Path:
+    return directory.resolve()
+
+
+def forget_resolved_dirs() -> None:
+    """Drop memoised directory realpaths; call at the start of each run."""
+    resolved_dir.cache_clear()
+
+
+def resolve_entry(path: Path) -> Path:
+    """``path.resolve()`` with the parent directory's realpath memoised.
+
+    Identical result, including following a symlink leaf, but one realpath per
+    directory instead of one per file: ``resolve()`` is an ``lstat`` per path
+    component, which dominates a scope walk on slow filesystems (WSL, network).
+    """
+    return (
+        path.resolve()
+        if path.name in {"", ".", ".."} or path.is_symlink()
+        else resolved_dir(path.parent) / path.name
+    )
+
+
 def relative_if_under(path: Path, root: Path) -> Path | None:
     """Return ``path`` relative to ``root``, or ``None`` if it is outside."""
     try:
-        rel = path.resolve().relative_to(root.resolve())
+        rel = resolve_entry(path).relative_to(resolved_dir(root))
     except ValueError:
         return None
     return rel if rel.parts else Path()

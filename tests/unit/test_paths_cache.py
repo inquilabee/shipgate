@@ -13,6 +13,7 @@ from shipgate.paths import (
     normalize_finding_path,
     parse_env_file,
     read_cached_project_root,
+    resolve_entry,
 )
 from shipgate.project.init import init_project
 
@@ -128,3 +129,23 @@ def test_reset_radon_cache_env_missing_file_is_noop(tmp_path: Path) -> None:
 
     path = reset_radon_cache_env(tmp_path)
     assert not path.is_file()
+
+
+def test_resolve_entry_matches_path_resolve_including_symlinks(tmp_path: Path) -> None:
+    """The memoised parent must never change what a path resolves to."""
+    real = tmp_path / "real"
+    (real / "sub").mkdir(parents=True)
+    (real / "sub" / "a.py").write_text("x\n", encoding="utf-8")
+    (tmp_path / "link_dir").symlink_to(real, target_is_directory=True)
+    (real / "link_file.py").symlink_to(real / "sub" / "a.py")
+    cases = [
+        real / "sub" / "a.py",
+        tmp_path / "link_dir" / "sub" / "a.py",
+        real / "link_file.py",
+        real / "sub" / "missing.py",
+        real / "sub" / ".." / "sub" / "a.py",
+        tmp_path / "link_dir",
+        tmp_path,
+    ]
+    for path in cases:
+        assert resolve_entry(path) == path.resolve(), path

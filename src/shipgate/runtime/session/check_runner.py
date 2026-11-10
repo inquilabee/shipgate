@@ -13,7 +13,7 @@ from shipgate.domain.reports import CheckReport, RunReport
 from shipgate.gates.runtime import is_gate_tool, prepare_gate_execution
 from shipgate.normalize import get_normalizer
 from shipgate.planning.check_resolver import SKIPPED_NO_MATCHING_FILES
-from shipgate.runtime.check_cache import CheckResultCache
+from shipgate.runtime.cache.check_cache import CheckResultCache
 from shipgate.runtime.environment import resolve_executable
 from shipgate.runtime.parallel import FailFastError, run_parallel
 from shipgate.runtime.progressive_average import apply_progressive_average
@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     from shipgate.domain.modes import RunMode
     from shipgate.domain.project import ProjectConfig
     from shipgate.domain.run_command import RunCommand
+    from shipgate.planning.utils.incremental import RunScopeSession
     from shipgate.planning.workflow import SelectedTool
     from shipgate.runtime.executor import ProcessResult
     from shipgate.runtime.session.context import RunContext
@@ -263,6 +264,7 @@ class CheckRunner:
             project=context.project,
             display_cli=command.display_cli,
             no_cache=command.no_cache,
+            scope_session=context.scope_session,
         )
 
     def execute_check(
@@ -273,8 +275,11 @@ class CheckRunner:
         *,
         display_cli: bool = False,
         no_cache: bool = False,
+        scope_session: RunScopeSession | None = None,
     ) -> CheckReport:
-        cache = CheckResultCache(resolved.project_root, disabled=no_cache)
+        cache = CheckResultCache(
+            resolved.project_root, disabled=no_cache, scope_session=scope_session
+        )
         cached = cache.lookup(resolved)
         if cached is not None:
             if display_cli:

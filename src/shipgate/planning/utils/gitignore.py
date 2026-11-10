@@ -8,7 +8,7 @@ from pathlib import Path
 import pathspec
 
 from shipgate.core.process import run_command
-from shipgate.paths import relative_if_under
+from shipgate.paths import relative_if_under, resolve_entry, resolved_dir
 from shipgate.planning.utils.git_visible import GitVisibleFiles
 
 ANYWHERE_IGNORED = (
@@ -106,7 +106,7 @@ def load_gitignore_spec(project_root: Path) -> pathspec.PathSpec | None:
 
 def is_ignored_by_git(project_root: Path, path: Path) -> bool:
     try:
-        rel = path.resolve().relative_to(project_root.resolve())
+        rel = resolve_entry(path).relative_to(resolved_dir(project_root))
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
@@ -165,7 +165,7 @@ def skip_scope_entry(
     git_visible: GitVisibleFiles | None = None,
 ) -> bool:
     try:
-        rel = path.resolve().relative_to(project_root.resolve())
+        rel = resolve_entry(path).relative_to(resolved_dir(project_root))
     except ValueError:
         return True
     rel_str = str(rel).replace("\\", "/")
