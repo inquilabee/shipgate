@@ -155,6 +155,61 @@ def should_ignore(
     )
 
 
+def config_exclusion(rel_str: str, extra_excludes: tuple[str, ...]) -> str | None:
+    return (
+        "ignored directory name (.venv, .git, site-packages, ...)"
+        if ignored_path_part(rel_str)
+        else None
+    ) or (
+        "excluded by the scope's exclude list"
+        if matches_ignore_prefix(rel_str, extra_excludes)
+        else None
+    )
+
+
+def gitignore_exclusion(
+    project_root: Path,
+    path: Path,
+    rel_str: str,
+    spec: pathspec.PathSpec | None,
+    git_visible: GitVisibleFiles | None,
+) -> str | None:
+    if matches_ignore_prefix(rel_str, default_ignores()):
+        return "ShipGate default ignore"
+    active_spec = spec if spec is not None else load_gitignore_spec(project_root)
+    return (
+        "matched by .gitignore or .git/info/exclude"
+        if active_spec is not None and active_spec.match_file(rel_str)
+        else None
+    ) or (
+        "ignored by git (nested .gitignore or global excludes)"
+        if ignored_by_git(project_root, path, rel_str, git_visible)
+        else None
+    )
+
+
+def exclusion_reason(
+    project_root: Path,
+    path: Path,
+    *,
+    extra_excludes: tuple[str, ...] = (),
+    spec: pathspec.PathSpec | None = None,
+    respect_gitignore: bool,
+    git_visible: GitVisibleFiles | None = None,
+) -> str | None:
+    """Why scope expansion skips *path*, or ``None`` when it is in scope."""
+    try:
+        rel = resolve_entry(path).relative_to(resolved_dir(project_root))
+    except ValueError:
+        return "outside the project"
+    rel_str = str(rel).replace("\\", "/")
+    return config_exclusion(rel_str, extra_excludes) or (
+        gitignore_exclusion(project_root, path, rel_str, spec, git_visible)
+        if respect_gitignore
+        else None
+    )
+
+
 def skip_scope_entry(
     project_root: Path,
     path: Path,
@@ -164,20 +219,16 @@ def skip_scope_entry(
     respect_gitignore: bool,
     git_visible: GitVisibleFiles | None = None,
 ) -> bool:
-    try:
-        rel = resolve_entry(path).relative_to(resolved_dir(project_root))
-    except ValueError:
-        return True
-    rel_str = str(rel).replace("\\", "/")
-    if ignored_path_part(rel_str) or matches_ignore_prefix(rel_str, extra_excludes):
-        return True
-    if not respect_gitignore:
-        return False
-    if matches_ignore_prefix(rel_str, default_ignores()):
-        return True
-    active_spec = spec if spec is not None else load_gitignore_spec(project_root)
-    return (active_spec is not None and active_spec.match_file(rel_str)) or ignored_by_git(
-        project_root, path, rel_str, git_visible
+    return (
+        exclusion_reason(
+            project_root,
+            path,
+            extra_excludes=extra_excludes,
+            spec=spec,
+            respect_gitignore=respect_gitignore,
+            git_visible=git_visible,
+        )
+        is not None
     )
 
 

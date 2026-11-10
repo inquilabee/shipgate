@@ -30,6 +30,7 @@ TOP_LEVEL_COMMANDS = frozenset(
         "radon",
         "refactor",
         "reports",
+        "doctor",
     }
 )
 
@@ -332,6 +333,12 @@ def radon_calibrate(
 def radon_reset() -> None:
     """Delete progressive radon baselines from .shipgate/cache/.env."""
     session().radon_reset()
+
+
+@app.command("doctor")
+def doctor_cmd() -> None:
+    """Show the resolved suite, what is in scope and why, policy files and tool versions."""
+    session().doctor()
 
 
 @reports_app.command("prune")

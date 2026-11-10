@@ -240,6 +240,9 @@ class CliSession:
             raise typer.Exit(exc.exit_code) from None
         self.write_text(text)
 
+    def doctor(self) -> None:
+        self.write_text(self.app.doctor(self.project_root()))
+
     def reports_prune(self, keep: int) -> None:
         self.write_text(self.app.prune_reports(self.project_root(), keep))
 

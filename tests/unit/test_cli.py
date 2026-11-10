@@ -64,10 +64,6 @@ def test_list_suites(capsys):
     assert "standard" in captured.out
 
 
-def test_reports_is_a_command_not_a_check_target():
-    assert normalize_argv(["reports", "prune", "--keep", "5"]) == [
-        "reports",
-        "prune",
-        "--keep",
-        "5",
-    ]
+@pytest.mark.parametrize("command", ["reports", "doctor"])
+def test_new_commands_are_not_rewritten_into_check_targets(command):
+    assert normalize_argv([command, "x"]) == [command, "x"]

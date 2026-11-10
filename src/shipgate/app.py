@@ -161,6 +161,26 @@ class ShipGateApp:
         reset_radon_cache_env(project_root)
         return f"Reset progressive radon baselines in {PROJECT_CACHE_ENV}\n"
 
+    def doctor(self, project_root: Path) -> str:
+        from shipgate.config.loader import ProjectConfigLoader
+        from shipgate.frontend.services.tool_versions import version_a_run_would_use
+        from shipgate.project.doctor import ProjectDoctor
+        from shipgate.runtime.environment import resolve_environment
+
+        root = project_root.resolve()
+        project = ProjectConfigLoader.load(config_path=None, project_root=root)
+        environment = resolve_environment(root, project.env)
+        return (
+            ProjectDoctor(
+                root,
+                project,
+                self._catalog_for(root),
+                installed_version=lambda tool: version_a_run_would_use(tool, root, environment),
+            )
+            .report()
+            .render()
+        )
+
     @staticmethod
     def prune_reports(project_root: Path, keep: int) -> str:
         from shipgate.runtime.report_store import ReportStore
