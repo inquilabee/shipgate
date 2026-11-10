@@ -4,6 +4,52 @@
 
 ## Unreleased
 
+Performance and diagnosability for the commit loop (issue #4). Measured on this
+repository (809 tracked files, Windows Subsystem for Linux): an uncached `full` run 18.1s -> ~5.5s, a
+cached `full` run 23.3s -> ~6s, the `pre-commit` suite 3.1s -> ~0.6s.
+
+### Added
+
+- `shipgate precommit`: install (a no-op when satisfied), format, then check in
+  one process; the first failing stage decides the exit code. This repository's
+  own hook uses it.
+- `shipgate doctor`: the resolved suite and its flags, each top-level scope entry
+  as in or out with the reason, whether policy files are committed, and each
+  tool's pin against the lockfile and the version a run would launch.
+- `--timings` on `check` / `format`, and a one-line "slowest checks" summary for
+  runs of ten seconds or more (not under `--quiet`).
+- `timeout_seconds` on a catalog tool: only that check fails (`shipgate.timeout`,
+  exit 124, partial output kept, not cached) and the rest of the run completes.
+- `shipgate reports prune [--keep N]`; saving a finished run now keeps the newest
+  50 runs across `runs/`, `raw/` and `failures/` and trims the index to match.
+
+### Changed
+
+- Scope expansion asks git once per run (`git ls-files`) instead of once per path,
+  and `--changed-only` starts from git's changed set instead of walking the tree.
+  Tracked files inside an ignored directory are now in scope, as in git.
+- The check cache reuses per-file digests from `.shipgate/cache/file-digests.json`
+  while `(mtime_ns, size)` match (files edited within two seconds of hashing are
+  re-hashed), honours each scope's `respect_gitignore`, and shares the run's scope
+  expansion. Existing cache entries are rebuilt once.
+- `Path.resolve()` is memoised per parent directory during a run; a symlink leaf is
+  still followed.
+- `python-quality`, `standard` and `pre-commit` run their checks in parallel.
+  Apply mode (`shipgate format`) is always sequential. Only the invoked suite's
+  `parallel` / `fail_fast` apply to the tools it contains; this is now documented.
+  Projects initialised earlier keep their copied `suites.yaml`.
+- `Executor.run` and `ExecutorProtocol.run` take `timeout_seconds`; custom
+  executors must accept it.
+- `runtime/check_cache.py` moved to `runtime/cache/check_cache.py`.
+
+### Not changed
+
+- `shipgate install` already short-circuits (v0.1.12).
+- `init` writes no pre-commit config, so there is no `--full-tree` default to
+  remove; the hook guidance is in the usage docs.
+- The second `ruff.lint` per commit stays: a passed apply run does not prove the
+  check is redundant once later formatters have rewritten files.
+
 ## v0.1.12
 
 ### Changed
